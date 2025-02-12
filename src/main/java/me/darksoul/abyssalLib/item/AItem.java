@@ -10,19 +10,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AItem {
+public abstract class AItem {
     private static final Map<String, List<NamespacedKey>> itemsRegistry = new HashMap<>();
 
     private final ItemStack item;
 
     public AItem(Material mat, NamespacedKey id) {
         putInMap(id.getNamespace(), id);
+        // Item setup
         item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         meta.setItemModel(id);
         meta.displayName(Component.translatable("item." + id.getNamespace() + id.getKey()));
         item.setItemMeta(meta);
+        setComponents();
     }
+
+    public abstract void setComponents();
 
     public ItemStack getItem() {
         return item;

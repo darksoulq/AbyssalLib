@@ -1,6 +1,5 @@
 package me.darksoul.abyssalLib;
 
-import me.darksoul.abyssalLib.resource.AResource;
 import me.darksoul.abyssalLib.resource.IPackager;
 import me.darksoul.abyssalLib.util.FileUtils;
 import org.bukkit.plugin.java.JavaPlugin;
