@@ -1,5 +1,6 @@
 package me.darksoul.abyssalLib.resource;
 
+import me.darksoul.abyssalLib.AMod;
 import me.darksoul.abyssalLib.AbyssalLib;
 import me.darksoul.abyssalLib.util.FileUtils;
 import org.bukkit.Bukkit;
@@ -8,7 +9,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.Plugin;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +36,7 @@ public class IPackager implements Listener {
 
         Bukkit.getScheduler().runTaskAsynchronously(instance, () -> {
             for (Map.Entry<String, List<String>> entry : AResource.getResources().entrySet()) {
-                Plugin plugin = AResource.getMods().get(entry.getKey());
+                Plugin plugin = AMod.getPlugin(entry.getKey());
                 List<String> filePaths = entry.getValue();
                 File namespaceFolder = new File(assetsFolder, entry.getKey());
 
@@ -48,7 +50,7 @@ public class IPackager implements Listener {
                     if (inputStream == null) {
                         continue;
                     }
-                    File file = new File(namespaceFolder, filepath);
+                    File file = new File(namespaceFolder, filepath.replaceFirst("^assets", ""));
                     File fileParents = file.getParentFile();
                     FileUtils.createDirectories(fileParents);
                     FileUtils.saveFile(inputStream, file);
