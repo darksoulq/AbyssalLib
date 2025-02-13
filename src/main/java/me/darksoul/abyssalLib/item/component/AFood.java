@@ -13,7 +13,7 @@ import org.bukkit.inventory.meta.components.UseCooldownComponent;
 
 import java.util.List;
 
-public class Food {
+public class AFood {
     public static void set(AItem item, int timeToEat, int nut, int sat, boolean canAlwaysEat) {
         // Make item consumable
         Consumable.Builder consumableProp = Consumable.consumable().consumeSeconds(timeToEat);
