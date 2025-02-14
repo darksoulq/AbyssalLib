@@ -6,28 +6,24 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AItem {
-    private static final Map<String, List<NamespacedKey>> itemsRegistry = new HashMap<>();
+    private static final Map<NamespacedKey, AItem> itemsRegistry = new HashMap<>();
 
     private final ItemStack item;
 
     public AItem(Material mat, NamespacedKey id) {
-        putInMap(id.getNamespace(), id);
         // Item setup
         item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         meta.setItemModel(id);
-        meta.displayName(Component.translatable("item." + id.getNamespace() + id.getKey()));
+        meta.displayName(Component.translatable("item." + id.getNamespace() + "." + id.getKey()));
         item.setItemMeta(meta);
         setComponents();
     }
 
     public abstract void setComponents();
-
     public ItemStack getItem() {
         return item;
     }
@@ -39,8 +35,19 @@ public abstract class AItem {
         return itemA.getItem().getType() == itemB.getType() &&
                 metaA.getItemModel() == metaB.getItemModel();
     }
-
-    private static void putInMap(String namespace, NamespacedKey key) {
-        itemsRegistry.computeIfAbsent(namespace, k -> new java.util.ArrayList<>()).add(key);
+    public static AItem getAItem(NamespacedKey id) {
+        return itemsRegistry.get(id);
+    }
+    public static Map<NamespacedKey, AItem> getItemsRegistry() {
+        return itemsRegistry;
+    }
+    public static List<String> getItemIDsAsString() {
+        Set<NamespacedKey> nKeysList = itemsRegistry.keySet();
+        List<String> IDs = new ArrayList<>();
+        nKeysList.forEach((key) -> {
+            IDs.add(key.toString());
+        });
+        Collections.sort(IDs);
+        return IDs;
     }
 }

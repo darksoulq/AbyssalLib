@@ -9,6 +9,7 @@ import io.papermc.paper.registry.set.RegistryKeySet;
 import me.darksoul.abyssalLib.item.AItem;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.block.BlockType;
+import org.bukkit.inventory.ItemStack;
 
 public class ATool {
     public static void set(AItem item, ToolType type, float speed) {
@@ -41,7 +42,7 @@ public class ATool {
                         speed,
                         TriState.TRUE
                 )
-        ).build();
+        ).damagePerBlock(1).build();
         item.getItem().setData(DataComponentTypes.TOOL, toolProps);
     }
 

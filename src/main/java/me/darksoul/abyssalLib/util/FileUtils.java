@@ -4,6 +4,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.*;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -110,5 +111,21 @@ public class FileUtils {
                 zos.closeEntry();
             }
         }
+    }
+
+    public static String getSHA1(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        FileInputStream fis = new FileInputStream(file);
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        while ((bytesRead = fis.read(buffer)) != -1) {
+            digest.update(buffer, 0, bytesRead);
+        }
+        fis.close();
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : digest.digest()) {
+            hexString.append(String.format("%02x", b));
+        }
+        return hexString.toString();
     }
 }

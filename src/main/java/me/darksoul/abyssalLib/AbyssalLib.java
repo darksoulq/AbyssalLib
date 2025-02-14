@@ -1,5 +1,7 @@
 package me.darksoul.abyssalLib;
 
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import me.darksoul.abyssalLib.command.ICommands;
 import me.darksoul.abyssalLib.resource.IPackager;
 import me.darksoul.abyssalLib.util.FileUtils;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,14 +19,18 @@ public final class AbyssalLib extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-//        AMod.register("abyssallib", instance);
         getServer().getPluginManager().registerEvents(new IPackager(), instance);
         try {
             createDefaultFiles();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-//        AResource.loadResources(instance);
+//        new ExampleMod();
+
+        // Command
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+            commands.registrar().register(ICommands.createCommand().build());
+        });
     }
 
     @Override

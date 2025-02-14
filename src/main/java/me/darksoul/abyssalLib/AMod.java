@@ -1,30 +1,48 @@
 package me.darksoul.abyssalLib;
 
+import me.darksoul.abyssalLib.item.AItem;
+import me.darksoul.abyssalLib.util.FileUtils;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AMod {
-    private static final ConcurrentHashMap<Plugin, String> _namespaces = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, Plugin> _mods = new ConcurrentHashMap<>();
+public abstract class AMod {
+    private static final List<AMod> _mods = new ArrayList<>();
+    private final List<String> _resources = new ArrayList<>();
+    private final Plugin plugin;
 
-    public static void register(String namespace, Plugin plugin) {
-        _mods.put(namespace, plugin);
+    public AMod(Plugin plugin) {
+        this.plugin = plugin;
+        loadResources(plugin);
+        setRegistries();
+        _mods.add(this);
     }
 
-    public static ConcurrentHashMap<String, Plugin> getMods() {
+    public abstract void setRegistries();
+    public void register(RegistryType type, AItem item) {
+        AItem.getItemsRegistry().put(item.getItem().getItemMeta().getItemModel(), item);
+    }
+
+    public Plugin getPlugin() {
+        return plugin;
+    }
+    public List<String> getResources() {
+        return _resources;
+    }
+
+    private void loadResources(Plugin plugin) {
+        List<String> files = FileUtils.getFilePathList(plugin, "assets/");
+        _resources.addAll(files);
+    }
+
+    public static List<AMod> getMods() {
         return _mods;
     }
 
-    public static ConcurrentHashMap<Plugin, String> getNamespaces() {
-        return _namespaces;
-    }
-
-    public static Plugin getPlugin(String namespace) {
-        return _mods.get(namespace);
-    }
-
-    public static String getNamespace(Plugin plugin) {
-        return _namespaces.get(plugin);
+    enum RegistryType {
+        ITEM,
+        BLOCK
     }
 }

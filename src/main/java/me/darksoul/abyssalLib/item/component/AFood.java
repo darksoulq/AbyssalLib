@@ -60,16 +60,4 @@ public class AFood {
         meta.setUseCooldown(cooldownProps);
         item.getItem().setItemMeta(meta);
     }
-
-    public static void setUseRemainder(AItem item, ItemStack remainder) {
-        ItemMeta meta = item.getItem().getItemMeta();
-        meta.setUseRemainder(remainder);
-        item.getItem().setItemMeta(meta);
-    }
-
-    public static void setUseRemainder(AItem item, AItem remainder) {
-        ItemMeta meta = item.getItem().getItemMeta();
-        meta.setUseRemainder(remainder.getItem());
-        item.getItem().setItemMeta(meta);
-    }
 }
