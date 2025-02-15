@@ -1,5 +1,6 @@
 package me.darksoul.abyssalLib.item;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -26,6 +27,9 @@ public abstract class AItem {
     public abstract void setComponents();
     public ItemStack getItem() {
         return item;
+    }
+    public void setStackSize(int maxSize) {
+        item.setData(DataComponentTypes.MAX_STACK_SIZE, maxSize);
     }
 
     public static boolean isSame(AItem itemA, ItemStack itemB) {

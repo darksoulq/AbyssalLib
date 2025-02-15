@@ -11,40 +11,72 @@ import net.kyori.adventure.util.TriState;
 import org.bukkit.block.BlockType;
 import org.bukkit.inventory.ItemStack;
 
-public class ATool {
-    public static void set(AItem item, ToolType type, float speed) {
-        RegistryKeySet<BlockType> blocks = RegistryAccess.registryAccess().getRegistry(
-                RegistryKey.BLOCK
-        ).getTag(BlockTypeTagKeys.AIR);
-        switch (type) {
-            case PICKAXE:
-                RegistryAccess.registryAccess()
-                        .getRegistry(RegistryKey.BLOCK)
-                        .getTag(BlockTypeTagKeys.MINEABLE_PICKAXE);
-                break;
-            case AXE:
-                RegistryAccess.registryAccess()
-                        .getRegistry(RegistryKey.BLOCK)
-                        .getTag(BlockTypeTagKeys.MINEABLE_AXE);
-                break;
-            case SHOVEL:
-                RegistryAccess.registryAccess()
-                        .getRegistry(RegistryKey.BLOCK)
-                        .getTag(BlockTypeTagKeys.MINEABLE_SHOVEL);
-                break;
-            case null, default:
-                return;
-        }
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-        Tool toolProps = Tool.tool().addRule(
-                Tool.rule(
-                        blocks,
-                        speed,
-                        TriState.TRUE
-                )
-        ).damagePerBlock(1).build();
-        item.getItem().setData(DataComponentTypes.TOOL, toolProps);
+public class ATool {
+
+    private final ItemStack item;
+    private final Tool.Builder toolProps;
+    private Collection<Tool.Rule> rules = new ArrayList<>();
+
+    public ATool(AItem aItem, ToolType type, float defaultSpeed) {
+        item = aItem.getItem();
+        toolProps = Tool.tool().defaultMiningSpeed(defaultSpeed);
+        RegistryKeySet<BlockType> blocks = switch (type) {
+            case PICKAXE -> RegistryAccess.registryAccess()
+                    .getRegistry(RegistryKey.BLOCK)
+                    .getTag(BlockTypeTagKeys.MINEABLE_PICKAXE);
+            case AXE -> RegistryAccess.registryAccess()
+                    .getRegistry(RegistryKey.BLOCK)
+                    .getTag(BlockTypeTagKeys.MINEABLE_AXE);
+            case SHOVEL -> RegistryAccess.registryAccess()
+                    .getRegistry(RegistryKey.BLOCK)
+                    .getTag(BlockTypeTagKeys.MINEABLE_SHOVEL);
+            case null -> RegistryAccess.registryAccess().getRegistry(
+                    RegistryKey.BLOCK
+            ).getTag(BlockTypeTagKeys.AIR);
+        };
+
+        Tool.Rule defaultRule = Tool.rule(
+                blocks,
+                defaultSpeed,
+                TriState.TRUE
+        );
+        rules.add(defaultRule);
     }
+
+    public ATool removeDefaultRule() {
+        rules.remove(0);
+        return this;
+    }
+    public ATool rule(Tool.Rule rule) {
+        rules.add(rule);
+        return this;
+    }
+    public ATool damagePerBlock(int amount) {
+        toolProps.damagePerBlock(amount);
+        return this;
+    }
+
+    public void build() {
+        toolProps.addRules(rules);
+        item.setData(DataComponentTypes.TOOL, toolProps);
+    }
+
+//    public static void set(AItem item, ToolType type, float speed) {
+//
+//
+//        Tool.Builder toolProps = Tool.tool().addRule(
+//                Tool.rule(
+//                        blocks,
+//                        speed,
+//                        TriState.TRUE
+//                )
+//        ).damagePerBlock(1);
+//        item.getItem().setData(DataComponentTypes.TOOL, toolProps);
+//    }
 
     public enum ToolType {
         PICKAXE,

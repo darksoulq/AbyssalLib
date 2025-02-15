@@ -14,50 +14,60 @@ import org.bukkit.inventory.meta.components.UseCooldownComponent;
 import java.util.List;
 
 public class AFood {
-    public static void set(AItem item, int timeToEat, int nut, int sat, boolean canAlwaysEat) {
-        // Make item consumable
-        Consumable.Builder consumableProp = Consumable.consumable().consumeSeconds(timeToEat);
-        item.getItem().setData(DataComponentTypes.CONSUMABLE, consumableProp);
 
-        // Set Food Properties
-        FoodProperties.Builder foodProps = FoodProperties.food().canAlwaysEat(canAlwaysEat)
-                .nutrition(nut).saturation(sat);
-        item.getItem().setData(DataComponentTypes.FOOD, foodProps);
+    private final ItemStack item;
+    private final Consumable.Builder consumableProps;
+    private final FoodProperties.Builder foodProps;
+
+    public AFood(AItem aItem) {
+        item = aItem.getItem();
+        consumableProps = Consumable.consumable();
+        foodProps = FoodProperties.food();
     }
 
-    public static void setEffects(AItem item, List<ConsumeEffect> effects) {
-        Consumable.Builder consumableProps = item.getItem().getData(DataComponentTypes.CONSUMABLE)
-                .toBuilder();
+    public AFood timeToEat(int time) {
+        consumableProps.consumeSeconds(time);
+        return this;
+    }
+    public AFood nutrition(int amount) {
+        foodProps.nutrition(amount);
+        return this;
+    }
+    public AFood saturation(int amount) {
+        foodProps.saturation(amount);
+        return this;
+    }
+    public AFood canAlwaysEat(boolean v) {
+        foodProps.canAlwaysEat(v);
+        return this;
+    }
+    public AFood effects(List<ConsumeEffect> effects) {
         consumableProps.addEffects(effects);
-        item.getItem().setData(DataComponentTypes.CONSUMABLE, consumableProps);
+        return this;
     }
-
-    public static void setParticles(AItem item, boolean v) {
-        Consumable.Builder consumableProps = item.getItem().getData(DataComponentTypes.CONSUMABLE)
-                .toBuilder();
+    public AFood particles(boolean v) {
         consumableProps.hasConsumeParticles(v);
-        item.getItem().setData(DataComponentTypes.CONSUMABLE, consumableProps);
+        return this;
     }
-
-    public static void setAnimation(AItem item, ItemUseAnimation anim) {
-        Consumable.Builder consumableProps = item.getItem().getData(DataComponentTypes.CONSUMABLE)
-                .toBuilder();
+    public AFood animation(ItemUseAnimation anim) {
         consumableProps.animation(anim);
-        item.getItem().setData(DataComponentTypes.CONSUMABLE, consumableProps);
+        return this;
     }
-
-    public static void setSound(AItem item, Key key) {
-        Consumable.Builder consumableProps = item.getItem().getData(DataComponentTypes.CONSUMABLE)
-                .toBuilder();
-        consumableProps.sound(key);
-        item.getItem().setData(DataComponentTypes.CONSUMABLE, consumableProps);
+    public AFood sound(Key soundID) {
+        consumableProps.sound(soundID);
+        return this;
     }
-
-    public static void setCooldown(AItem item, float v) {
-        ItemMeta meta = item.getItem().getItemMeta();
+    public AFood cooldown(float time) {
+        ItemMeta meta = item.getItemMeta();
         UseCooldownComponent cooldownProps = meta.getUseCooldown();
-        cooldownProps.setCooldownSeconds(v);
+        cooldownProps.setCooldownSeconds(time);
         meta.setUseCooldown(cooldownProps);
-        item.getItem().setItemMeta(meta);
+        item.setItemMeta(meta);
+        return this;
+    }
+
+    public void build() {
+        item.setData(DataComponentTypes.CONSUMABLE, consumableProps);
+        item.setData(DataComponentTypes.FOOD, foodProps);
     }
 }
