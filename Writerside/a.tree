@@ -6,7 +6,6 @@
                  name="abyssallib-docs"
                  start-page="Seting-up-the-AMod-class.md">
 
-    <toc-element topic="starter-topic.md"/>
     <toc-element topic="Seting-up-the-AMod-class.md"/>
     <toc-element topic="Items.md">
         <toc-element topic="Creating-an-item.md"/>
