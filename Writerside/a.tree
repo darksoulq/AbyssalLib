@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="a"
+                 name="abyssallib-docs"
+                 start-page="Seting-up-the-AMod-class.md">
+
+    <toc-element topic="starter-topic.md"/>
+    <toc-element topic="Seting-up-the-AMod-class.md"/>
+    <toc-element topic="Items.md">
+        <toc-element topic="Creating-an-item.md"/>
+        <toc-element topic="Adding-components-to-items.md"/>
+    </toc-element>
+</instance-profile>
