@@ -10,6 +10,7 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.components.UseCooldownComponent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class AFood {
     private final Consumable.Builder consumableProps;
     private final FoodProperties.Builder foodProps;
 
-    public AFood(AItem aItem) {
+    public AFood(@NotNull AItem aItem) {
         item = aItem.getItem();
         consumableProps = Consumable.consumable();
         foodProps = FoodProperties.food();

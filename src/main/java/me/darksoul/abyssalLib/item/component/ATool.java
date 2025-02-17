@@ -10,10 +10,10 @@ import me.darksoul.abyssalLib.item.AItem;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.block.BlockType;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class ATool {
 
@@ -21,7 +21,7 @@ public class ATool {
     private final Tool.Builder toolProps;
     private Collection<Tool.Rule> rules = new ArrayList<>();
 
-    public ATool(AItem aItem, ToolType type, float defaultSpeed) {
+    public ATool(@NotNull AItem aItem, ToolType type, float defaultSpeed) {
         item = aItem.getItem();
         toolProps = Tool.tool().defaultMiningSpeed(defaultSpeed);
         RegistryKeySet<BlockType> blocks = switch (type) {

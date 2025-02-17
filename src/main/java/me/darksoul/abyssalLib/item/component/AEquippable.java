@@ -7,12 +7,13 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 public class AEquippable {
     private final ItemStack item;
     private final Equippable.Builder equipProps;
 
-    public AEquippable(AItem aItem, EquipmentSlot slot) {
+    public AEquippable(@NotNull AItem aItem, EquipmentSlot slot) {
         item = aItem.getItem();
         equipProps = Equippable.equippable(slot);
     }

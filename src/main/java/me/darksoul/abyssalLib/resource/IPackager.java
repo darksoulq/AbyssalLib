@@ -2,12 +2,10 @@ package me.darksoul.abyssalLib.resource;
 
 import me.darksoul.abyssalLib.AMod;
 import me.darksoul.abyssalLib.AbyssalLib;
-import me.darksoul.abyssalLib.item.ExampleItem;
 import me.darksoul.abyssalLib.util.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.Plugin;
 

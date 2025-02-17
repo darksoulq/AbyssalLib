@@ -19,7 +19,7 @@ public abstract class AItem {
         item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         meta.setItemModel(id);
-        meta.displayName(Component.translatable("item." + id.getNamespace() + "." + id.getKey()));
+        meta.itemName(Component.translatable("item." + id.getNamespace() + "." + id.getKey()));
         item.setItemMeta(meta);
         setComponents();
     }

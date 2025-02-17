@@ -1,0 +1,4 @@
+host:
+  autohost: false
+  ip: "localhost"
+  port: 8080
