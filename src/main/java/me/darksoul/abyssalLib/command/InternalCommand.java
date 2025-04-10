@@ -8,7 +8,8 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
-import me.darksoul.abyssalLib.item.AItem;
+import me.darksoul.abyssalLib.item.Item;
+import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -16,15 +17,15 @@ import org.bukkit.entity.Player;
 
 import java.util.concurrent.CompletableFuture;
 
-public class ICommands {
+public class InternalCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> createCommand() {
         return Commands.literal("abyssallib")
                 .then(Commands.literal("give")
                         .then(Commands.argument("namespace_id", ArgumentTypes.namespacedKey())
                                 .requires(sender -> sender
                                         .getSender().hasPermission("abyssallib.admin.give"))
-                                .suggests(ICommands::giveSuggests)
-                                .executes(ICommands::giveExecutor)));
+                                .suggests(InternalCommand::giveSuggests)
+                                .executes(InternalCommand::giveExecutor)));
     }
 
     private static int giveExecutor(CommandContext<CommandSourceStack> ctx) {
@@ -36,20 +37,20 @@ public class ICommands {
             sender.sendPlainMessage("Only a player can run this command!");
             return Command.SINGLE_SUCCESS;
         }
-        if (!AItem.getItemIDsAsString().contains(namespaceId.toString())) {
+        if (!BuiltinRegistries.ITEMS.contains(namespaceId.asString())) {
             sender.sendPlainMessage("Not an item");
             return Command.SINGLE_SUCCESS;
         }
 
-        player.getInventory().addItem(AItem.getAItem(namespaceId).getItem());
+        player.getInventory().addItem(BuiltinRegistries.ITEMS.get(namespaceId.asString()));
 
         return Command.SINGLE_SUCCESS;
     }
 
     public static CompletableFuture<Suggestions> giveSuggests(final CommandContext<CommandSourceStack> ctx,
                                                               final SuggestionsBuilder builder) {
-        for (String id: AItem.getItemIDsAsString()) {
-            builder.suggest(id);
+        for (Item item: BuiltinRegistries.ITEMS.getAll()) {
+            builder.suggest(item.getId().toString());
         }
         return builder.buildFuture();
     }
