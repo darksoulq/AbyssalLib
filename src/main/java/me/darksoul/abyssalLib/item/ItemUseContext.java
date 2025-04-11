@@ -29,31 +29,31 @@ public class ItemUseContext {
         this.underlyingEvent = event;
     }
 
-    public Player getPlayer() {
+    public Player player() {
         return player;
     }
 
-    public ItemStack getItem() {
+    public ItemStack item() {
         return item;
     }
 
-    public EquipmentSlot getHand() {
+    public EquipmentSlot hand() {
         return hand;
     }
 
-    public Optional<Location> getClickLocation() {
+    public Optional<Location> clickLocation() {
         return Optional.ofNullable(clickLocation);
     }
 
-    public Optional<Block> getClickedBlock() {
+    public Optional<Block> clickedBlock() {
         return Optional.ofNullable(clickedBlock);
     }
 
-    public Optional<Entity> getTargetEntity() {
+    public Optional<Entity> targetEntity() {
         return Optional.ofNullable(targetEntity);
     }
 
-    public Optional<Event> getUnderlyingEvent() {
+    public Optional<Event> event() {
         return Optional.ofNullable(underlyingEvent);
     }
 }

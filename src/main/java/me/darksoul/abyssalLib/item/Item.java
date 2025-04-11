@@ -47,7 +47,7 @@ public class Item extends ItemStack {
     public void onUseEntity(ItemUseContext ctx) {}
 
     public void onInteract(ItemUseContext ctx) {
-        if (ctx.getUnderlyingEvent().orElse(null) instanceof org.bukkit.event.player.PlayerInteractEvent event) {
+        if (ctx.event().orElse(null) instanceof org.bukkit.event.player.PlayerInteractEvent event) {
             switch (event.getAction()) {
                 case RIGHT_CLICK_BLOCK -> {
                     onUseOnBlock(ctx);
@@ -57,6 +57,39 @@ public class Item extends ItemStack {
                 case LEFT_CLICK_AIR, LEFT_CLICK_BLOCK -> onLeftClick(ctx);
             }
         }
+    }
+
+    public void data(String key, String value) {
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(this);
+        CustomData dta = nms.get(DataComponents.CUSTOM_DATA);
+        if (dta == null) {
+            return;
+        }
+
+        CompoundTag tag = dta.copyTag();
+        if (tag.getCompound("CustomData").isPresent()) {
+            CompoundTag custom = tag.getCompound("CustomData").get();
+            if (!custom.contains(key)) {
+                custom.putString(key, value);
+                tag.put("CustomData", custom);
+                nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                this.setItemMeta(CraftItemStack.asBukkitCopy(nms).getItemMeta());
+            }
+        }
+    }
+
+    public String data(String key) {
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(this);
+        CustomData data = nms.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return null;
+        CompoundTag tag = data.copyTag();
+        if (tag.getCompound("CustomData").isPresent()) {
+            CompoundTag custom = tag.getCompound("CustomData").get();
+            if (custom.getString(key).isPresent()) {
+                return custom.getString(key).get();
+            }
+        }
+        return null;
     }
 
     public static Item from(ItemStack stack) {

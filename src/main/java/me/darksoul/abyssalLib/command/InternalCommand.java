@@ -8,6 +8,10 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import me.darksoul.abyssalLib.AbyssalLib;
+import me.darksoul.abyssalLib.config.Config;
+import me.darksoul.abyssalLib.gui.GuiManager;
+import me.darksoul.abyssalLib.gui.test.ExampleGui;
 import me.darksoul.abyssalLib.item.Item;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import org.bukkit.NamespacedKey;
@@ -25,7 +29,17 @@ public class InternalCommand {
                                 .requires(sender -> sender
                                         .getSender().hasPermission("abyssallib.admin.give"))
                                 .suggests(InternalCommand::giveSuggests)
-                                .executes(InternalCommand::giveExecutor)));
+                                .executes(InternalCommand::giveExecutor)))
+                .then(Commands.literal("reload")
+                        .executes((commandContext) -> {
+                            Config.reloadAll();
+                            return Command.SINGLE_SUCCESS;
+                        }))
+                .then(Commands.literal("testgui")
+                        .executes(context -> {
+                            AbyssalLib.GUI_MANAGER.openGui((Player) context.getSource().getSender(), new ExampleGui((Player) context.getSource().getSender()));
+                            return Command.SINGLE_SUCCESS;
+                        }));
     }
 
     private static int giveExecutor(CommandContext<CommandSourceStack> ctx) {

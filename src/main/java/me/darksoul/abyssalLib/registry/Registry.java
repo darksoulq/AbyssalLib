@@ -1,6 +1,9 @@
 package me.darksoul.abyssalLib.registry;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class Registry<T> {
     private final Map<String, RegistryEntry<T>> entries = new HashMap<>();
