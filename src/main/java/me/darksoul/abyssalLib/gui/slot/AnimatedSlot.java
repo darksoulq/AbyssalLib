@@ -1,8 +1,8 @@
 package me.darksoul.abyssalLib.gui.slot;
 
+import me.darksoul.abyssalLib.event.context.GuiClickContext;
+import me.darksoul.abyssalLib.event.context.GuiDragContext;
 import me.darksoul.abyssalLib.gui.AbyssalGui;
-import me.darksoul.abyssalLib.gui.GuiClickContext;
-import me.darksoul.abyssalLib.gui.GuiDragContext;
 import me.darksoul.abyssalLib.gui.Slot;
 import org.bukkit.inventory.ItemStack;
 

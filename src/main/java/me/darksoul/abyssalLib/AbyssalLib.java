@@ -1,16 +1,18 @@
 package me.darksoul.abyssalLib;
 
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import me.darksoul.abyssalLib.command.InternalCommand;
+import me.darksoul.abyssalLib.block.BlockManager;
+import me.darksoul.abyssalLib.block.test.ModBlocks;
+import me.darksoul.abyssalLib.block.test.TestBlock;
+import me.darksoul.abyssalLib.command.CommandBus;
 import me.darksoul.abyssalLib.config.Config;
 import me.darksoul.abyssalLib.config.ConfigSpec;
-import me.darksoul.abyssalLib.event.EventBus;
-import me.darksoul.abyssalLib.event.ItemEvents;
-import me.darksoul.abyssalLib.event.PackEvent;
+import me.darksoul.abyssalLib.event.*;
 import me.darksoul.abyssalLib.gui.GuiManager;
 import me.darksoul.abyssalLib.item.test.PlayerEvents;
 import me.darksoul.abyssalLib.item.test.TestItems;
 import me.darksoul.abyssalLib.mod.AbyssalMod;
+import me.darksoul.abyssalLib.recipe.test.TestRecipes;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import me.darksoul.abyssalLib.resource.PackServer;
 import me.darksoul.abyssalLib.resource.ResourcePack;
@@ -44,16 +46,19 @@ public final class AbyssalLib extends JavaPlugin {
         INSTANCE = this;
         isRPManagerInstalled = checkRPManager();
 
+        BlockManager.INSTANCE.load();
         GUI_MANAGER = new GuiManager();
         EventBus bus = new EventBus(this);
 
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
-            commands.registrar().register(InternalCommand.createCommand().build());
+            CommandBus.init(commands.registrar().getDispatcher());
         });
 
         bus.register(GUI_MANAGER);
         bus.register(new PlayerEvents());
+        bus.register(new BlockEvents());
         bus.register(new ItemEvents());
+        bus.register(new ServerEvents());
 
         GUI_MANAGER.startTicking();
 
@@ -68,11 +73,13 @@ public final class AbyssalLib extends JavaPlugin {
             PACK_SERVER = new PackServer();
             PACK_SERVER.start(CONFIG.getString("resource-pack.ip"), CONFIG.getInt("resource-pack.port"));
         }
-
+        // test
         BuiltinRegistries.MODS.registerMod(this.getClass());
 
         // Apply registries
         TestItems.ITEMS.apply();
+        ModBlocks.BLOCKS.apply();
+        TestRecipes.RECIPES.apply();
 
         // Glyph test
         GlyphManager.register(this, new Glyph(new ResourceLocation(MODID, "magic_wand"), 8, 8, true));

@@ -1,5 +1,6 @@
-package me.darksoul.abyssalLib.gui;
+package me.darksoul.abyssalLib.event.context;
 
+import me.darksoul.abyssalLib.gui.AbyssalGui;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;

@@ -2,6 +2,9 @@ package me.darksoul.abyssalLib.gui;
 
 import me.darksoul.abyssalLib.AbyssalLib;
 import me.darksoul.abyssalLib.event.SubscribeEvent;
+import me.darksoul.abyssalLib.event.context.GuiClickContext;
+import me.darksoul.abyssalLib.event.context.GuiCloseContext;
+import me.darksoul.abyssalLib.event.context.GuiDragContext;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;

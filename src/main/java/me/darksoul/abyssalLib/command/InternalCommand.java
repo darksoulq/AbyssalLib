@@ -10,7 +10,6 @@ import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import me.darksoul.abyssalLib.AbyssalLib;
 import me.darksoul.abyssalLib.config.Config;
-import me.darksoul.abyssalLib.gui.GuiManager;
 import me.darksoul.abyssalLib.gui.test.ExampleGui;
 import me.darksoul.abyssalLib.item.Item;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
@@ -21,25 +20,37 @@ import org.bukkit.entity.Player;
 
 import java.util.concurrent.CompletableFuture;
 
-public class InternalCommand {
-    public static LiteralArgumentBuilder<CommandSourceStack> createCommand() {
-        return Commands.literal("abyssallib")
-                .then(Commands.literal("give")
+public class InternalCommand extends AbyssalCommand {
+    @Override
+    public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(Commands.literal("give")
                         .then(Commands.argument("namespace_id", ArgumentTypes.namespacedKey())
                                 .requires(sender -> sender
                                         .getSender().hasPermission("abyssallib.admin.give"))
                                 .suggests(InternalCommand::giveSuggests)
-                                .executes(InternalCommand::giveExecutor)))
+                                .executes(InternalCommand::giveExecutor)
+                        )
+                )
                 .then(Commands.literal("reload")
-                        .executes((commandContext) -> {
-                            Config.reloadAll();
-                            return Command.SINGLE_SUCCESS;
-                        }))
+                        .then(Commands.literal("config")
+                                .executes((commandContext) -> {
+                                    Config.reloadAll();
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                        .then(Commands.literal("commmands")
+                                .executes(context -> {
+                                    CommandBus.INSTANCE.reloadAll();
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                )
                 .then(Commands.literal("testgui")
                         .executes(context -> {
                             AbyssalLib.GUI_MANAGER.openGui((Player) context.getSource().getSender(), new ExampleGui((Player) context.getSource().getSender()));
                             return Command.SINGLE_SUCCESS;
-                        }));
+                        })
+                );
     }
 
     private static int giveExecutor(CommandContext<CommandSourceStack> ctx) {
@@ -67,5 +78,10 @@ public class InternalCommand {
             builder.suggest(item.getId().toString());
         }
         return builder.buildFuture();
+    }
+
+    @Override
+    public String name() {
+        return "abyssallib";
     }
 }

@@ -1,5 +1,6 @@
-package me.darksoul.abyssalLib.item;
+package me.darksoul.abyssalLib.event.context;
 
+import me.darksoul.abyssalLib.item.Item;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;

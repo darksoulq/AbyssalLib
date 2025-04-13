@@ -1,7 +1,7 @@
 package me.darksoul.abyssalLib.item.test;
 
+import me.darksoul.abyssalLib.event.context.ItemUseContext;
 import me.darksoul.abyssalLib.item.Item;
-import me.darksoul.abyssalLib.item.ItemUseContext;
 import me.darksoul.abyssalLib.resource.glyph.GlyphManager;
 import me.darksoul.abyssalLib.util.ResourceLocation;
 import org.bukkit.Material;

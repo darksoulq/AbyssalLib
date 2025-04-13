@@ -1,5 +1,8 @@
 package me.darksoul.abyssalLib.gui;
 
+import me.darksoul.abyssalLib.event.context.GuiClickContext;
+import me.darksoul.abyssalLib.event.context.GuiCloseContext;
+import me.darksoul.abyssalLib.event.context.GuiDragContext;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -7,6 +10,9 @@ import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class AbyssalGui {
     protected final Player viewer;
@@ -89,4 +95,9 @@ public abstract class AbyssalGui {
     }
 
     public void onClose(GuiCloseContext ctx) {}
+
+    public Map<Integer, Slot> slotMap() {
+        return slots.stream()
+                .collect(Collectors.toMap(Slot::index, Function.identity()));
+    }
 }
