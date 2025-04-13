@@ -106,6 +106,26 @@ public class BlockManager {
         }
     }
 
+    public void saveBlockData(Location loc, BlockData data) {
+        Block block = blockCache.get(key(loc));
+        if (block == null) return;
+        block.setData(data);
+        blockCache.put(key(loc), block);
+
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "UPDATE blocks SET data = ? WHERE world = ? AND x = ? AND y = ? AND z = ?")) {
+            stmt.setString(1, gson.toJson(data.getRaw()));
+            stmt.setString(2, loc.getWorld().getName());
+            stmt.setInt(3, loc.getBlockX());
+            stmt.setInt(4, loc.getBlockY());
+            stmt.setInt(5, loc.getBlockZ());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private String key(Location loc) {
         return loc.getWorld().getName() + ";" + loc.getBlockX() + ";" + loc.getBlockY() + ";" + loc.getBlockZ();
     }
