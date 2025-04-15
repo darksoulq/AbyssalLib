@@ -11,7 +11,6 @@ import me.darksoul.abyssalLib.event.*;
 import me.darksoul.abyssalLib.gui.GuiManager;
 import me.darksoul.abyssalLib.item.test.PlayerEvents;
 import me.darksoul.abyssalLib.item.test.TestItems;
-import me.darksoul.abyssalLib.mod.AbyssalMod;
 import me.darksoul.abyssalLib.recipe.test.TestRecipes;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import me.darksoul.abyssalLib.resource.PackServer;
@@ -30,7 +29,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 
-@AbyssalMod(name="abyssallib")
 public final class AbyssalLib extends JavaPlugin {
     public static String MODID = "abyssallib";
     private static AbyssalLib INSTANCE;
@@ -74,8 +72,6 @@ public final class AbyssalLib extends JavaPlugin {
             PACK_SERVER.start(CONFIG.getString("resource-pack.ip"), CONFIG.getInt("resource-pack.port"));
         }
         // test
-        BuiltinRegistries.MODS.registerMod(this.getClass());
-
         // Apply registries
         TestItems.ITEMS.apply();
         ModBlocks.BLOCKS.apply();
