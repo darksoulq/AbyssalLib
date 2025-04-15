@@ -1,0 +1,38 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#3F56CE"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2025-04-15T23:41:26.6350384"><title>Advanced Items: Custom Behavior | abyssallib-docs</title><script type="application/json" id="virtual-toc-data">[{"id":"step-1-extend-the-item-class","level":0,"title":"Step 1: Extend the Item class","anchor":"#step-1-extend-the-item-class"},{"id":"step-2-register-your-custom-item","level":0,"title":"Step 2: Register Your Custom Item","anchor":"#step-2-register-your-custom-item"},{"id":"other-overridable-methods","level":0,"title":"Other Overridable Methods","anchor":"#other-overridable-methods"},{"id":"example-useonblock","level":0,"title":"Example UseOnBlock","anchor":"#example-useonblock"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.10.0-b419/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Advanced Items: Custom Behavior | abyssallib-docs"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="abyssallib-docs Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/advanced-items.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Advanced Items: Custom Behavior | abyssallib-docs"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/advanced-items.html#webpage",
+    "url": "writerside-documentation/advanced-items.html",
+    "name": "Advanced Items: Custom Behavior | abyssallib-docs",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "abyssallib-docs Help"
+}</script><!-- End Schema.org --></head><body data-id="Advanced-Items" data-main-title="Advanced Items: Custom Behavior" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Getting-Started.md|Getting Started///Items.md|Creating Items"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>abyssallib-docs  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="Advanced-Items" id="Advanced-Items.md">Advanced Items: Custom Behavior</h1><p id="hh2aqk_3">You can give your items custom functionality by subclassing the <code class="code" id="hh2aqk_10">Item</code> class and overriding behavior hooks like <code class="code" id="hh2aqk_11">onRightClick</code>, <code class="code" id="hh2aqk_12">onUseOnBlock</code>, etc.</p><p id="hh2aqk_4">These methods are automatically called by the Library when players use your item in the corresponding context.</p><section class="chapter"><h2 id="step-1-extend-the-item-class" data-toc="step-1-extend-the-item-class">Step 1: Extend the <code class="code" id="hh2aqk_17">Item</code> class</h2><p id="hh2aqk_14">Create a new class that extends <code class="code" id="hh2aqk_18">Item</code>, and override the methods you want to customize.</p><div class="code-block" data-lang="java">
+public class TeleportStick extends Item {
+    public TeleportStick(ResourceLocation id) {
+        super(id, Material.STICK);
+    }
+
+    @Override
+    public void onRightClick(ItemUseContext ctx) {
+        ctx.player().teleport(ctx.player().getLocation().add(0, 10, 0));
+        ctx.player().sendMessage(Component.text(&quot;Whoosh!&quot;));
+    }
+}
+</div></section><section class="chapter"><h2 id="step-2-register-your-custom-item" data-toc="step-2-register-your-custom-item">Step 2: Register Your Custom Item</h2><p id="hh2aqk_19">You can now register your item the same way as normal items (but only pass in id in this case).</p><div class="code-block" data-lang="java">
+public static final RegistryObject&lt;Item&gt; TELEPORT_STICK = ITEMS.register(&quot;teleport_stick&quot;, (name, id) -&gt;
+    new TeleportStick(id)
+);
+</div></section><section class="chapter"><h2 id="other-overridable-methods" data-toc="other-overridable-methods">Other Overridable Methods</h2><p id="hh2aqk_22">You can override any of the following to add behavior:</p><ul class="list _bullet" id="hh2aqk_23"><li class="list__item" id="hh2aqk_26"><p><code class="code" id="hh2aqk_30">onRightClick(ItemUseContext ctx)</code></p></li><li class="list__item" id="hh2aqk_27"><p><code class="code" id="hh2aqk_31">onUseOnBlock(ItemUseContext ctx)</code></p></li><li class="list__item" id="hh2aqk_28"><p><code class="code" id="hh2aqk_32">onUseEntity(ItemUseContext ctx)</code></p></li><li class="list__item" id="hh2aqk_29"><p><code class="code" id="hh2aqk_33">onAnvilPrepare(AnvilContext ctx)</code></p></li></ul><p id="hh2aqk_24">Each method provides full access to the context (player, item stack, block/entity, etc.) so you can do anything from teleporting to changing the world.</p></section><section class="chapter"><h2 id="example-useonblock" data-toc="example-useonblock">Example UseOnBlock</h2><div class="code-block" data-lang="java">
+@Override
+public void onUseOnBlock(ItemUseContext ctx) {
+    ctx.player().sendMessage(Component.text(&quot;You poked a &quot; + ctx.block().getType().name()));
+    ctx.block().getWorld().strikeLightning(block.getLocation());
+}
+</div><p id="hh2aqk_36">With these methods, your items can do pretty much anything you want.</p></section><div class="last-modified">Last modified: 15 April 2025</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="items.html" class="navigation-links__prev">Creating Items</a><a href="advanced-items-item-settings.html" class="navigation-links__next">Advanced Items: Item Settings</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.10.0-b419/app.js"></script></body></html>
