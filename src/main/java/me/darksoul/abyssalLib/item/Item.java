@@ -1,6 +1,8 @@
 package me.darksoul.abyssalLib.item;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import me.darksoul.abyssalLib.event.context.AnvilContext;
+import me.darksoul.abyssalLib.event.context.ItemUseContext;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import me.darksoul.abyssalLib.registry.Registry;
 import me.darksoul.abyssalLib.util.ResourceLocation;
@@ -45,6 +47,7 @@ public class Item extends ItemStack {
     public void onLeftClick(ItemUseContext ctx) {}
     public void onUseOnBlock(ItemUseContext ctx) {}
     public void onUseEntity(ItemUseContext ctx) {}
+    public void onAnvilPrepare(AnvilContext ctx) {}
 
     public void onInteract(ItemUseContext ctx) {
         if (ctx.event().orElse(null) instanceof org.bukkit.event.player.PlayerInteractEvent event) {
