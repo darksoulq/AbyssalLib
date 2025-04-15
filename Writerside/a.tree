@@ -4,11 +4,15 @@
 
 <instance-profile id="a"
                  name="abyssallib-docs"
-                 start-page="Seting-up-the-AMod-class.md">
+                  start-page="Getting-Started.md">
 
-    <toc-element topic="Seting-up-the-AMod-class.md"/>
-    <toc-element topic="Items.md">
-        <toc-element topic="Creating-an-item.md"/>
-        <toc-element topic="Adding-components-to-items.md"/>
+    <toc-element topic="Getting-Started.md">
+        <toc-element topic="Resources.md"/>
+        <toc-element topic="Items.md">
+            <toc-element topic="Advanced-Items.md"/>
+            <toc-element topic="Advanced-Items-Item-Settings.md"/>
+        </toc-element>
+        <toc-element topic="CraftinRecipes.md"/>
+        <toc-element topic="Events.md"/>
     </toc-element>
 </instance-profile>

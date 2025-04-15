@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rules SYSTEM "https://resources.jetbrains.com/writerside/1.0/redirection-rules.dtd">
+<rules>
+    <!-- format is as follows
+    <rule id="<unique id>">
+        <accepts>page.html</accepts>
+    </rule>
+    -->
+    <rule id="300d9565">
+        <description>Created after removal of "Creating an item" from abyssallib-docs</description>
+        <accepts>Creating-an-item.html</accepts>
+    </rule>
+    <rule id="12e2b311">
+        <description>Created after removal of "Adding components to items" from abyssallib-docs</description>
+        <accepts>Adding-components-to-items.html</accepts>
+    </rule>
+    <rule id="237cdce">
+        <description>Created after removal of "Seting up the AMod class" from abyssallib-docs</description>
+        <accepts>Seting-up-the-AMod-class.html</accepts>
+    </rule>
+    <rule id="353527a1">
+        <description>Created after removal of "Items" from abyssallib-docs</description>
+        <accepts>Items.html</accepts>
+    </rule>
+</rules>

@@ -3,9 +3,10 @@
 <buildprofiles xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/build-profiles.xsd"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <variables></variables>
     <build-profile instance="a">
         <variables>
+            <color-preset>soft</color-preset>
+            <primary-color>blueberry</primary-color>
             <noindex-content>false</noindex-content>
         </variables>
     </build-profile>
