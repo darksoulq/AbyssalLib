@@ -1,7 +1,6 @@
-package me.darksoul.abyssalLib.item.test;
+package me.darksoul.abyssalLib.event;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
-import me.darksoul.abyssalLib.event.SubscribeEvent;
 import me.darksoul.abyssalLib.resource.glyph.GlyphManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;

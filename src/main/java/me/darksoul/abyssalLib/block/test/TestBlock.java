@@ -11,7 +11,7 @@ import net.kyori.adventure.text.Component;
 public class TestBlock extends Block {
     public TestBlock(ResourceLocation id) {
         super(id);
-        getData().setBoolean("data_works", true);
+        getData().setInt("data_works", 1);
     }
 
     @Override
@@ -19,7 +19,9 @@ public class TestBlock extends Block {
         if (ctx.action().isRightClick()) {
             ctx.player().sendMessage(Component.text("Clicked a Custom Block!"));
         } else if (ctx.action().isLeftClick()) {
-            ctx.player().sendMessage(Component.text(getData().getString("data_works")));
+            ctx.player().sendMessage(Component.text(from(ctx.block()).getData().getInt("data_works")));
+            int x = from(ctx.block()).getData().getInt("data_works");
+            from(ctx.block()).getData().setInt("data_works", ++x);
         }
     }
 

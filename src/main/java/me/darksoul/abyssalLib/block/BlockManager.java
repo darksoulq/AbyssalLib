@@ -61,6 +61,7 @@ public class BlockManager {
                     Block block = (Block) clazz.getConstructor(ResourceLocation.class).newInstance(ResourceLocation.fromString(id));
                     String dataJson = rs.getString("data");
                     BlockData data = BlockData.fromJson(gson.fromJson(dataJson, JsonObject.class));
+                    setSaveCallback(loc, data);
                     block.setData(data);
                     blockCache.put(key(loc), block);
                 } catch (Exception ex) {
@@ -70,7 +71,12 @@ public class BlockManager {
         }
     }
 
+    private void setSaveCallback(Location loc, BlockData data) {
+        data.setSaveCallback(() -> saveBlockData(loc, data));
+    }
+
     public void setBlockAt(Location loc, Block block) {
+        setSaveCallback(loc, block.getData());
         blockCache.put(key(loc), block);
 
         try (PreparedStatement stmt = connection.prepareStatement(

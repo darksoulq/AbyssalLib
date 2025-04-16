@@ -66,8 +66,9 @@ public class BlockEvents {
     public void onBlockInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
         if (Block.from(event.getClickedBlock()) != null) {
-            event.setUseInteractedBlock(Event.Result.DENY);
-            event.setUseItemInHand(Event.Result.DENY);
+            if (event.getAction().isRightClick()) {
+                event.setCancelled(true);
+            }
             Block.from(event.getClickedBlock()).onInteract(new BlockInteractContext(
                     event.getPlayer(),
                     event.getClickedBlock(),
@@ -79,8 +80,5 @@ public class BlockEvents {
                     event
             ));
         }
-
-        if (event.getPlayer().getGameMode() == GameMode.CREATIVE && event.getAction().isLeftClick()) return;
-        event.setCancelled(true);
     }
 }

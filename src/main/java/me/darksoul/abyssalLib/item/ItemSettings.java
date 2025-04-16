@@ -49,8 +49,9 @@ public class ItemSettings {
         return this;
     }
 
-    public ItemSettings food(FoodProperties foodProperties) {
+    public ItemSettings food(FoodProperties foodProperties, float consumeSeconds) {
         owner.setData(DataComponentTypes.FOOD, foodProperties);
+        owner.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().consumeSeconds(consumeSeconds).build());
         return this;
     }
     public ItemSettings food(FoodProperties foodProperties, Consumable consumable) {
