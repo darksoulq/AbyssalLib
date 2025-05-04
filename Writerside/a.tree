@@ -8,11 +8,22 @@
 
     <toc-element topic="Getting-Started.md">
         <toc-element topic="Resources.md"/>
-        <toc-element topic="Items.md">
-            <toc-element topic="Advanced-Items.md"/>
+        <toc-element toc-title="Blocks"/>
+        <toc-element toc-title="Items">
+            <toc-element topic="Items.md"/>
             <toc-element topic="Advanced-Items-Item-Settings.md"/>
+            <toc-element topic="Advanced-Items.md"/>
         </toc-element>
+        <toc-element toc-title="Guis">
+            <toc-element topic="Overview.md"/>
+            <toc-element topic="ChestGui.md"/>
+            <toc-element topic="Slots.md"/>
+        </toc-element>
+        <toc-element toc-title="Tags"/>
+        <toc-element toc-title="LootTables"/>
         <toc-element topic="CraftinRecipes.md"/>
+        <toc-element topic="Commands.md"/>
         <toc-element topic="Events.md"/>
+        <toc-element topic="Config.md"/>
     </toc-element>
 </instance-profile>

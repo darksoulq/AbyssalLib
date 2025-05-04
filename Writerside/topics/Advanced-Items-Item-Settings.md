@@ -11,7 +11,7 @@ You get an `ItemSettings` instance via `new ItemSettings(item)`, and you can cha
 ```java
 public static final RegistryObject<Item> FIRE_TOOL = ITEMS.register("fire_tool", (name, id) -> {
     Item item = new Item(id, Material.DIAMOND_PICKAXE);
-    new ItemSettings(FIRE_TOOL.get())
+    item.settings()
         .durability(500)
         .fireResistant()
         .unbreakable();

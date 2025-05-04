@@ -22,4 +22,8 @@
         <description>Created after removal of "Items" from abyssallib-docs</description>
         <accepts>Items.html</accepts>
     </rule>
+    <rule id="7f6d40b2">
+        <description>Created after removal of "ChestGui" from abyssallib-docs</description>
+        <accepts>ChestGui.html</accepts>
+    </rule>
 </rules>

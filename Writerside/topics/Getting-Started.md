@@ -4,7 +4,7 @@ Welcome to the **AbyssalLib**!
 
 (This api and its docs are NOT complete, they may change, and more will be added over time)
 
-To start using this framework in your project, you'll need to add the provided `.jar` file as a library. This allows you to access the modding API's full feature set directly from your own plugin or mod.
+To start using this framework in your project, you'll need to add the provided `.jar` file as a library. This allows you to access the modding API's full feature set directly from your own plugin.
 
 ## 🔧 Installation
 
@@ -20,6 +20,6 @@ To start using this framework in your project, you'll need to add the provided `
 - Select your `AbyssalLib.jar`.
 - Click OK and make sure it's marked as "Compile" scope.
 
-You're now ready to start building mods with AbyssalLib!
+You're now ready to start building plugins with AbyssalLib!
 
 (the api will be available on maven central once its stable)
