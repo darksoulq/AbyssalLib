@@ -46,12 +46,11 @@ public class InternalCommand {
                                 })
                         )
                 )
-                .then(Commands.literal("gui")
-                        .then(Commands.literal("items").executes(context -> {
+                .then(Commands.literal("modmenu")
+                        .executes(context -> {
                             AbyssalLib.GUI_MANAGER.openGui((Player) context.getSource().getSender(), new ModMenu());
                             return Command.SINGLE_SUCCESS;
                         })
-                        )
                 );
     }
 
