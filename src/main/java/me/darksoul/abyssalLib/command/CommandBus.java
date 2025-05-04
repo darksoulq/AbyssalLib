@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,29 +14,53 @@ public class CommandBus {
 
     private final List<RegisteredCommand> registered = new ArrayList<>();
 
-    private record RegisteredCommand(String modid, AbyssalCommand command) {}
+    private record RegisteredCommand(String modid, Method method, Object handler) {}
 
-    public static CommandBus init(CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void init(CommandDispatcher<CommandSourceStack> dispatcher) {
         INSTANCE = new CommandBus();
         CommandBus.dispatcher = dispatcher;
-        return INSTANCE;
     }
 
-    public void register(String modid, AbyssalCommand command) {
-        registered.add(new RegisteredCommand(modid, command));
+    public void register(String modid, Object handler) {
+        for (Method method : handler.getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(AbyssalCommand.class)) {
+                AbyssalCommand command = method.getAnnotation(AbyssalCommand.class);
+                String commandName = command.name();
 
-        LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(command.name());
-        command.register(root);
+                registered.add(new RegisteredCommand(modid, method, handler));
 
-        getDispatcher().register(root);
+                LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(commandName);
+                if (method.getParameterCount() == 1 && method.getParameterTypes()[0] == LiteralArgumentBuilder.class) {
+                    try {
+                        method.invoke(handler, root);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    throw new IllegalArgumentException("Method " + method + " must have exactly one parameter of type LiteralArgumentBuilder.");
+                }
+
+                getDispatcher().register(root);
+            }
+        }
     }
 
     public void reloadAll() {
         unregisterAll();
 
         for (RegisteredCommand cmd : registered) {
-            LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(cmd.command.name());
-            cmd.command.register(root);
+            LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(cmd.method.getAnnotation(AbyssalCommand.class).name());
+
+            if (cmd.method.getParameterCount() == 1 && cmd.method.getParameterTypes()[0] == LiteralArgumentBuilder.class) {
+                try {
+                    cmd.method.invoke(cmd.handler, root);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                throw new IllegalArgumentException("Method " + cmd.method + " must have exactly one parameter of type LiteralArgumentBuilder.");
+            }
+
             getDispatcher().register(root);
         }
     }
@@ -47,7 +72,7 @@ public class CommandBus {
 
         for (var child : commandMap) {
             String name = child.getName();
-            boolean ours = registered.stream().anyMatch(r -> r.command.name().equals(name));
+            boolean ours = registered.stream().anyMatch(r -> r.method.getAnnotation(AbyssalCommand.class).name().equals(name));
             if (ours) toRemove.add(name);
         }
 

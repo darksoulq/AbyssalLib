@@ -1,39 +1,35 @@
 package me.darksoul.abyssalLib.registry;
 
-import com.destroystokyo.paper.loottable.LootableEntityInventory;
-
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-public class Registry<T> {
-    private final Map<String, RegistryEntry<T>> entries = new HashMap<>();
+public class Registry<T> extends HashMap<String, Registry.RegistryEntry<T>> {
 
     public void register(String id, RegistryEntry<T> entry) {
-        if (entries.containsKey(id)) {
+        if (super.containsKey(id)) {
             throw new IllegalStateException("ID '" + id + "' already registered.");
         }
-        entries.put(id, entry);
+        super.put(id, entry);
     }
 
     public boolean contains(String id) {
-        return entries.containsKey(id);
+        return super.containsKey(id);
     }
 
     public T get(String id) {
-        RegistryEntry<T> entry = entries.get(id);
+        RegistryEntry<T> entry = super.get(id);
         return entry != null ? entry.create(id) : null;
     }
 
     public Set<T> getAll() {
-        Set<T> toReturn = new HashSet<>();
-        entries.forEach((id, entry) -> toReturn.add(entry.create(id)));
-        return toReturn;
+        Set<T> result = new HashSet<>(size());
+        forEach((id, entry) -> result.add(entry.create(id)));
+        return result;
     }
 
     public RegistryEntry<T> getEntry(String id) {
-        return entries.get(id);
+        return super.get(id);
     }
 
     @FunctionalInterface

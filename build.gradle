@@ -23,12 +23,20 @@ repositories {
     maven {
         url = "https://maven.andante.dev/releases/"
     }
+    maven {
+        url 'https://repo.spongepowered.org/maven'
+    }
+    maven {
+        url = "https://maven.fabricmc.net/"
+    }
 }
 
 dependencies {
     paperweight.paperDevBundle("1.21.5-R0.1-SNAPSHOT")
+    compileOnly("space.vectrix.ignite:ignite-api:1.1.0")
+    compileOnly("net.fabricmc:sponge-mixin:0.15.2+mixin.0.8.7")
+    compileOnly("io.github.llamalad7:mixinextras-common:0.4.1")
     compileOnly("com.magmaguy:ResourcePackManager:1.2.2")
-    implementation("com.moandjiezana.toml:toml4j:0.7.2")
 }
 
 def targetJavaVersion = 21
@@ -60,4 +68,40 @@ processResources {
 
 tasks.runServer {
     minecraftVersion("1.21.5")
+}
+
+def pluginJarName = "${project.name}-${project.version}.jar"
+
+tasks.register("copyPluginToRun", Copy) {
+    dependsOn "build"
+
+    def pluginJar = file("build/libs/${pluginJarName}")
+    def pluginsDir = file("run/mods")
+
+    from pluginJar
+    into pluginsDir
+
+    doFirst {
+        pluginsDir.mkdirs()
+    }
+}
+
+tasks.register("runMixinServer") {
+    group = "run"
+    description = "Runs the Ignite server with mixins from the run directory."
+
+    dependsOn "copyPluginToRun"
+
+    doLast {
+        def igniteJar = file("run/ignite.jar")
+        if (!igniteJar.exists()) {
+            throw new GradleException("ignite.jar not found in /run folder")
+        }
+
+        exec {
+            workingDir = file("run")
+            executable = "java"
+            args = ["-Xms1G", "-Xmx1G", "-Dignite.mods=./mods", "-Dmixin.debug=true", "-jar", igniteJar.absolutePath, "--nogui"]
+        }
+    }
 }

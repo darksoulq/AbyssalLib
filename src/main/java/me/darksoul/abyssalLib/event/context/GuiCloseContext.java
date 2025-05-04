@@ -1,15 +1,15 @@
 package me.darksoul.abyssalLib.event.context;
 
-import me.darksoul.abyssalLib.gui.AbyssalGui;
+import me.darksoul.abyssalLib.gui.AbstractGui;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 
 public class GuiCloseContext {
     private final Player player;
     private final InventoryCloseEvent event;
-    private final AbyssalGui gui;
+    private final AbstractGui gui;
 
-    public GuiCloseContext(AbyssalGui gui, InventoryCloseEvent event) {
+    public GuiCloseContext(AbstractGui gui, InventoryCloseEvent event) {
         this.player = (Player) event.getPlayer();
         this.event = event;
         this.gui = gui;
@@ -19,7 +19,7 @@ public class GuiCloseContext {
         return player;
     }
 
-    public AbyssalGui gui() {
+    public AbstractGui gui() {
         return gui;
     }
 

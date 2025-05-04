@@ -20,7 +20,7 @@ public abstract class Slot {
     public abstract boolean canInsert(ItemStack stack);
     public abstract void onClick(GuiClickContext ctx);
     public abstract void onDrag(GuiDragContext ctx);
-    public abstract void onTick(AbyssalGui gui);
+    public abstract void onTick(AbstractGui gui);
     public int index() {
         return index;
     }

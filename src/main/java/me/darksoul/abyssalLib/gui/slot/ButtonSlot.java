@@ -2,7 +2,7 @@ package me.darksoul.abyssalLib.gui.slot;
 
 import me.darksoul.abyssalLib.event.context.GuiClickContext;
 import me.darksoul.abyssalLib.event.context.GuiDragContext;
-import me.darksoul.abyssalLib.gui.AbyssalGui;
+import me.darksoul.abyssalLib.gui.AbstractGui;
 import me.darksoul.abyssalLib.gui.Slot;
 import org.bukkit.inventory.ItemStack;
 
@@ -42,5 +42,5 @@ public class ButtonSlot extends Slot {
     public void onDrag(GuiDragContext ctx) {}
 
     @Override
-    public void onTick(AbyssalGui gui) {}
+    public void onTick(AbstractGui gui) {}
 }

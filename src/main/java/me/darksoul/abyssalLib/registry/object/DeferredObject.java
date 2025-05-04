@@ -1,13 +1,13 @@
-package me.darksoul.abyssalLib.registry;
+package me.darksoul.abyssalLib.registry.object;
 
 import java.util.function.Supplier;
 
-public class RegistryObject<T> implements Supplier<T> {
+public class DeferredObject<T> implements Supplier<T> {
     private final String id;
     private final Supplier<T> supplier;
     private T cached;
 
-    public RegistryObject(String id, Supplier<T> supplier) {
+    public DeferredObject(String id, Supplier<T> supplier) {
         this.id = id;
         this.supplier = supplier;
     }

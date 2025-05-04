@@ -72,4 +72,9 @@ public class ConfigSpec {
     public void set(String path, Object value) {
         values.put(path, value);
     }
+
+    @Override
+    public String toString() {
+        return values.toString();
+    }
 }

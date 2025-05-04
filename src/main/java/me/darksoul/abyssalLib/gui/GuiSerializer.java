@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class GuiSerializer {
 
-    public static String serialize(AbyssalGui gui) {
+    public static String serialize(AbstractGui gui) {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(output)) {
 
@@ -29,7 +29,7 @@ public class GuiSerializer {
         }
     }
 
-    public static void deserialize(String data, AbyssalGui gui) {
+    public static void deserialize(String data, AbstractGui gui) {
         try (ByteArrayInputStream input = new ByteArrayInputStream(Base64.getDecoder().decode(data));
              ObjectInputStream ois = new ObjectInputStream(input)) {
 

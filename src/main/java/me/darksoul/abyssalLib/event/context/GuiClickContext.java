@@ -1,6 +1,6 @@
 package me.darksoul.abyssalLib.event.context;
 
-import me.darksoul.abyssalLib.gui.AbyssalGui;
+import me.darksoul.abyssalLib.gui.AbstractGui;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -12,9 +12,9 @@ public class GuiClickContext {
     private final ItemStack clickedItem;
     private final int slotIndex;
     private final ClickType clickType;
-    private final AbyssalGui gui;
+    private final AbstractGui gui;
 
-    public GuiClickContext(AbyssalGui gui, InventoryClickEvent event) {
+    public GuiClickContext(AbstractGui gui, InventoryClickEvent event) {
         this.gui = gui;
         this.event = event;
         this.player = (Player) event.getWhoClicked();
@@ -59,7 +59,7 @@ public class GuiClickContext {
         return event.getHotbarButton();
     }
 
-    public AbyssalGui Gui() {
+    public AbstractGui Gui() {
         return gui;
     }
 

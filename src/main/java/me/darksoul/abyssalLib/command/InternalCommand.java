@@ -10,7 +10,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import me.darksoul.abyssalLib.AbyssalLib;
 import me.darksoul.abyssalLib.config.Config;
-import me.darksoul.abyssalLib.gui.test.ExampleGui;
+import me.darksoul.abyssalLib.gui.builtin.ModMenu;
 import me.darksoul.abyssalLib.item.Item;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import org.bukkit.NamespacedKey;
@@ -20,8 +20,9 @@ import org.bukkit.entity.Player;
 
 import java.util.concurrent.CompletableFuture;
 
-public class InternalCommand extends AbyssalCommand {
-    @Override
+public class InternalCommand {
+
+    @AbyssalCommand(name="abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
                         .then(Commands.argument("namespace_id", ArgumentTypes.namespacedKey())
@@ -45,11 +46,12 @@ public class InternalCommand extends AbyssalCommand {
                                 })
                         )
                 )
-                .then(Commands.literal("testgui")
-                        .executes(context -> {
-                            AbyssalLib.GUI_MANAGER.openGui((Player) context.getSource().getSender(), new ExampleGui((Player) context.getSource().getSender()));
+                .then(Commands.literal("gui")
+                        .then(Commands.literal("items").executes(context -> {
+                            AbyssalLib.GUI_MANAGER.openGui((Player) context.getSource().getSender(), new ModMenu());
                             return Command.SINGLE_SUCCESS;
                         })
+                        )
                 );
     }
 
@@ -78,10 +80,5 @@ public class InternalCommand extends AbyssalCommand {
             builder.suggest(item.getId().toString());
         }
         return builder.buildFuture();
-    }
-
-    @Override
-    public String name() {
-        return "abyssallib";
     }
 }

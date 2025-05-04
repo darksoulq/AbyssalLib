@@ -1,0 +1,24 @@
+{
+  "title": "Introduction to AbyssalLib",
+  "author": "Abyssal Dev",
+  "pages": [
+    [
+      "Welcome to the AbyssalLib!",
+      "This is a library designed to enhance your Minecraft experience.",
+      "Feel free to use all the features available!",
+      "<white>\uE000</white>"
+    ],
+    [
+      "Page 2: Let's explore some features.",
+      "First, we have item management, recipes, and custom events.",
+      "All of these can be customized to suit your needs.",
+      "<white>\uE000</white>"
+    ],
+    [
+      "Page 3: The End.",
+      "We hope this book was helpful.",
+      "For more information, refer to the documentation.",
+      "<white>\uE000</white>"
+    ]
+  ]
+}

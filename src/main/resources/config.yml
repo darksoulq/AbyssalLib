@@ -1,4 +1,0 @@
-resource-pack:
-  autohost: false # Enable this if you don't have ResourcePackManager plugin installed
-  ip: "127.0.0.1"
-  port: 8080
