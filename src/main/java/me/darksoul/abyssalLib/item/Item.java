@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class Item extends ItemStack {
     private final ResourceLocation id;
+    private final ItemSettings settings;
 
     public Item(ResourceLocation id, Material material) {
         super(material);
@@ -24,6 +25,7 @@ public class Item extends ItemStack {
         this.setData(DataComponentTypes.ITEM_NAME, Component.translatable("item." + id.namespace() + "." + id.path()));
         this.setData(DataComponentTypes.ITEM_MODEL, id.toNamespace());
         writeIdTag();
+        this.settings = new ItemSettings(this);
     }
 
     private void writeIdTag() {
@@ -93,6 +95,10 @@ public class Item extends ItemStack {
             }
         }
         return null;
+    }
+
+    public ItemSettings settings() {
+        return settings;
     }
 
     public static Item from(ItemStack stack) {
