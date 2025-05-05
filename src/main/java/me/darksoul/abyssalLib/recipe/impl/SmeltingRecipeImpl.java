@@ -1,5 +1,6 @@
-package me.darksoul.abyssalLib.recipe;
+package me.darksoul.abyssalLib.recipe.impl;
 
+import me.darksoul.abyssalLib.recipe.Recipe;
 import me.darksoul.abyssalLib.util.ResourceLocation;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.FurnaceRecipe;
@@ -7,10 +8,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
 
 public class SmeltingRecipeImpl extends Recipe {
-    private final ItemStack input;
-    private final ItemStack result;
-    private final float experience;
-    private final int cookingTime;
+    public final ItemStack input;
+    public final ItemStack result;
+    public final float experience;
+    public final int cookingTime;
 
     public SmeltingRecipeImpl(ResourceLocation id, ItemStack input, ItemStack result, float exp, int time) {
         super(id);

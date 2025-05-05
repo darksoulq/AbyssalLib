@@ -6,23 +6,25 @@ import me.darksoul.abyssalLib.event.context.GuiDragContext;
 import me.darksoul.abyssalLib.resource.glyph.GuiTexture;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryView;
+import org.bukkit.inventory.MenuType;
 
 import java.util.List;
 
 public abstract class ChestGui extends AbstractGui {
 
-    public ChestGui(Component title, int rows) {
-        super(title, rows * 9);
+    public ChestGui(Player player, Component title, int rows) {
+        super(player, title, typeByRows(rows));
     }
-    public ChestGui(GuiTexture texture, int rows) {
-        super(texture.getTitle(), rows * 9);
+    public ChestGui(Player player, GuiTexture texture, int rows) {
+        super(player, texture.getTitle(), typeByRows(rows));
     }
 
     public abstract void init(Player player);
 
     @Override
-    public void _init(Player player) {
-        init(player);
+    public void _init() {
+        init((Player) inventory().getPlayer());
         draw();
     }
 
@@ -34,11 +36,11 @@ public abstract class ChestGui extends AbstractGui {
     @Override
     public void draw() {
         if (slots.isEmpty()) {
-            inventory().clear();
+            inventory().getTopInventory().clear();
             return;
         }
         for (Slot slot : slots) {
-            inventory().setItem(slot.index, slot.item());
+            inventory().getTopInventory().setItem(slot.index, slot.item());
         }
     }
     @Override
@@ -55,13 +57,13 @@ public abstract class ChestGui extends AbstractGui {
     @Override
     public void drawPartial() {
         if (slots.isEmpty()) {
-            inventory().clear();
+            inventory().getTopInventory().clear();
             return;
         }
         List<Slot> changed = slots.stream()
                 .filter(slot -> slot.item() != inventory().getItem(slot.index)).toList();
         for (Slot slot : changed) {
-            inventory().setItem(slot.index, slot.item());
+            inventory().getTopInventory().setItem(slot.index, slot.item());
         }
     }
     @Override
@@ -87,5 +89,30 @@ public abstract class ChestGui extends AbstractGui {
                     .ifPresent(slot -> slot.onDrag(ctx));
         }
     }
+
     public void onClose(GuiCloseContext ctx) {}
+
+    private static MenuType typeByRows(int rows) {
+        switch (rows) {
+            case 1 -> {
+                return MenuType.GENERIC_9X1;
+            }
+            case 2 -> {
+                return MenuType.GENERIC_9X2;
+            }
+            case 3 -> {
+                return MenuType.GENERIC_9X3;
+            }
+            case 4 -> {
+                return MenuType.GENERIC_9X4;
+            }
+            case 5 -> {
+                return MenuType.GENERIC_9X5;
+            }
+            case 6 -> {
+                return MenuType.GENERIC_9X6;
+            }
+        }
+        return MenuType.GENERIC_9X6;
+    }
 }

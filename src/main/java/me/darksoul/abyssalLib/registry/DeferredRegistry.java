@@ -39,6 +39,7 @@ public class DeferredRegistry<T> extends LinkedHashMap<String, DeferredObject<T>
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
             AbyssalLib.getInstance().getLogger().info("Registry was cancelled for: " + modId);
+            return;
         }
         for (Map.Entry<String, DeferredObject<T>> entry : super.entrySet()) {
             DeferredObject<T> obj = entry.getValue();

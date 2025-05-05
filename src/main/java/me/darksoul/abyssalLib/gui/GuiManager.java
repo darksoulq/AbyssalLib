@@ -21,10 +21,10 @@ public class GuiManager {
         startTicking();
     }
 
-    public void openGui(Player player, AbstractGui gui) {
-        openGuis.put(player, gui);
-        player.openInventory(gui.inventory());
-        gui._init(player);
+    public void openGui(AbstractGui gui) {
+        openGuis.put((Player) gui.inventory().getPlayer(), gui);
+        gui.inventory().open();
+        gui._init();
     }
 
     public void closeGui(Player player) {
@@ -49,7 +49,7 @@ public class GuiManager {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         AbstractGui gui = openGuis.get(player);
-        if (gui == null || event.getClickedInventory() != gui.inventory()) return;
+        if (gui == null || event.getClickedInventory() != gui.inventory().getTopInventory() && event.getClickedInventory() != gui.inventory().getBottomInventory()) return;
         gui.handleClick(new GuiClickContext(gui, event));
     }
 
@@ -57,7 +57,7 @@ public class GuiManager {
     public void onDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         AbstractGui gui = openGuis.get(player);
-        if (gui == null || event.getInventory() != gui.inventory()) return;
+        if (gui == null || event.getInventory() != gui.inventory() && event.getInventory() != gui.inventory().getBottomInventory()) return;
         gui.handleDrag(new GuiDragContext(gui, event));
     }
 

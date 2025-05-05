@@ -1,8 +1,8 @@
 package me.darksoul.abyssalLib.registry;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import me.darksoul.abyssalLib.item.Item;
+
+import java.util.*;
 
 public class Registry<T> extends HashMap<String, Registry.RegistryEntry<T>> {
 
@@ -26,6 +26,23 @@ public class Registry<T> extends HashMap<String, Registry.RegistryEntry<T>> {
         Set<T> result = new HashSet<>(size());
         forEach((id, entry) -> result.add(entry.create(id)));
         return result;
+    }
+
+    public List<T> getFor(String modID) {
+        List<T> objects = new ArrayList<>();
+        forEach((id, entry) -> {
+            String modid = id.split(":")[0];
+            if (modid.equals(modID)) objects.add(entry.create(id));
+        });
+        return objects;
+    }
+
+    public Map<String, T> getMap() {
+        Map<String, T> map = new HashMap<>();
+        forEach((id, entry) -> {
+            map.put(id, entry.create(id));
+        });
+        return map;
     }
 
     public RegistryEntry<T> getEntry(String id) {

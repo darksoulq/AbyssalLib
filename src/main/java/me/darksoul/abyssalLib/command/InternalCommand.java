@@ -11,7 +11,10 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import me.darksoul.abyssalLib.AbyssalLib;
 import me.darksoul.abyssalLib.config.Config;
 import me.darksoul.abyssalLib.gui.builtin.ModMenu;
+import me.darksoul.abyssalLib.gui.builtin.RecipeMainMenu;
+import me.darksoul.abyssalLib.gui.builtin.RecipeViewer;
 import me.darksoul.abyssalLib.item.Item;
+import me.darksoul.abyssalLib.recipe.Recipe;
 import me.darksoul.abyssalLib.registry.BuiltinRegistries;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
@@ -34,24 +37,32 @@ public class InternalCommand {
                 )
                 .then(Commands.literal("reload")
                         .then(Commands.literal("config")
-                                .executes((commandContext) -> {
+                                .executes((ctz) -> {
                                     Config.reloadAll();
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
                         .then(Commands.literal("commmands")
-                                .executes(context -> {
+                                .executes(ctx -> {
                                     CommandBus.INSTANCE.reloadAll();
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
                 )
                 .then(Commands.literal("modmenu")
-                        .executes(context -> {
-                            AbyssalLib.GUI_MANAGER.openGui((Player) context.getSource().getSender(), new ModMenu());
+                        .executes(ctx -> {
+                            AbyssalLib.GUI_MANAGER.openGui(new ModMenu((Player) ctx.getSource().getSender()));
                             return Command.SINGLE_SUCCESS;
                         })
-                );
+                )
+                .then(Commands.literal("recipes")
+                        .executes(ctx -> {
+                            AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu((Player) ctx.getSource().getSender()));
+                            return Command.SINGLE_SUCCESS;
+                        })
+                        .then(Commands.argument("recipe_id", ArgumentTypes.namespacedKey())
+                                .suggests(InternalCommand::recipeSuggests)
+                                .executes(InternalCommand::recipesExecutor)));
     }
 
     private static int giveExecutor(CommandContext<CommandSourceStack> ctx) {
@@ -77,6 +88,33 @@ public class InternalCommand {
                                                               final SuggestionsBuilder builder) {
         for (Item item: BuiltinRegistries.ITEMS.getAll()) {
             builder.suggest(item.getId().toString());
+        }
+        return builder.buildFuture();
+    }
+
+    public static int recipesExecutor(CommandContext<CommandSourceStack> ctx) {
+        NamespacedKey namespacedKey = ctx.getArgument("recipe_id", NamespacedKey.class);
+        CommandSender sender = ctx.getSource().getSender();
+        Entity executor = ctx.getSource().getExecutor();
+
+        if (!(executor instanceof Player player)) {
+            sender.sendPlainMessage("Only a player can run this command!");
+            return Command.SINGLE_SUCCESS;
+        }
+        if (!BuiltinRegistries.RECIPES.contains(namespacedKey.asString())) {
+            sender.sendPlainMessage("Not a recipe");
+            return Command.SINGLE_SUCCESS;
+        }
+
+        AbyssalLib.GUI_MANAGER.openGui(new RecipeViewer(player, namespacedKey.asString()));
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    public static CompletableFuture<Suggestions> recipeSuggests(final CommandContext<CommandSourceStack> ctx,
+                                                              final SuggestionsBuilder builder) {
+        for (Recipe recipe : BuiltinRegistries.RECIPES.getAll()) {
+            builder.suggest(recipe.getId().namespace());
         }
         return builder.buildFuture();
     }

@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +32,8 @@ public class ModMenu extends ChestGui {
     private ViewMode mode = ViewMode.MODS;
     private String selectedMod = null;
 
-    public ModMenu() {
-        super(Component.translatable("space.-8")
+    public ModMenu(Player player) {
+        super(player, Component.translatable("space.-8")
                 .append(MiniMessage.miniMessage().deserialize(Glyph.replacePlaceholders("<white>:abyssallib:items_ui_main:</white>")))
                 .append(Component.text("Items")), 6);
         title = Component.translatable("space.-8")
@@ -40,8 +41,8 @@ public class ModMenu extends ChestGui {
                 .append(Component.text("Items"));
 
     }
-    public ModMenu(Component title) {
-        super(title, 6);
+    public ModMenu(Player player, Component title) {
+        super(player, title, 6);
         this.title = title;
     }
 
@@ -52,7 +53,7 @@ public class ModMenu extends ChestGui {
 
     private void fillGui(Player player) {
         slots.clear();
-        inventory().clear();
+        inventory().getTopInventory().clear();
 
         Component expectedTitle = (mode == ViewMode.MODS)
                 ? Component.translatable("space.-8")
@@ -83,10 +84,14 @@ public class ModMenu extends ChestGui {
 
     private void fillModList() {
         List<String> mods = new ArrayList<>();
-        for (Item item : BuiltinRegistries.ITEMS.getAll()) {
-            String modId = item.getId().toString().split(":")[0];
-            if (!mods.contains(modId)) mods.add(modId);
-        }
+        List<String> temp = new ArrayList<>();
+        BuiltinRegistries.ITEMS.getMap().forEach((id, item) -> {
+            String modid = id.split(":")[0];
+            if (!temp.contains(modid)) temp.add(modid);
+        });
+        temp.forEach(ids -> {
+            if (!BuiltinRegistries.ITEMS.getFor(ids).isEmpty() || Config.get(ids) != null) mods.add(ids);
+        });
 
         int totalPages = (int) Math.ceil((double) mods.size() / ITEMS_PER_PAGE);
         int startIndex = 0;
@@ -216,7 +221,7 @@ public class ModMenu extends ChestGui {
                     AbyssalLib.CHAT_INPUT_HANDLER.await(ctx.player(), input -> {
                         if (input.equalsIgnoreCase("cancel")) {
                             ctx.player().sendMessage(Component.text("Cancelled."));
-                            AbyssalLib.GUI_MANAGER.openGui(ctx.player(), this);
+                            AbyssalLib.GUI_MANAGER.openGui(this);
                             return;
                         }
 
@@ -234,7 +239,7 @@ public class ModMenu extends ChestGui {
                             ctx.player().sendMessage(Component.text("Invalid input. Use suffixes (`i`, `f`, `L`) or comma-separated lists."));
                         }
 
-                        AbyssalLib.GUI_MANAGER.openGui(ctx.player(), this);
+                        AbyssalLib.GUI_MANAGER.openGui(this);
                     });
                 }
             }));
@@ -260,17 +265,12 @@ public class ModMenu extends ChestGui {
     }
 
     private void fillItemList(String mod) {
-        List<Item> matchingItems = new ArrayList<>();
-        for (Item item : BuiltinRegistries.ITEMS.getAll()) {
-            if (item.getId().toString().startsWith(mod + ":")) {
-                matchingItems.add(item);
-            }
-        }
+        List<Item> itemList = BuiltinRegistries.ITEMS.getFor(mod);
 
-        int totalPages = (int) Math.ceil((double) matchingItems.size() / ITEMS_PER_PAGE);
+        int totalPages = (int) Math.ceil((double) itemList.size() / ITEMS_PER_PAGE);
         int startIndex = currentPage * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, matchingItems.size());
-        List<Item> pageItems = matchingItems.subList(startIndex, endIndex);
+        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, itemList.size());
+        List<Item> pageItems = itemList.subList(startIndex, endIndex);
 
         for (int i = 0; i < pageItems.size(); i++) {
             Item abyssalItem = pageItems.get(i);
@@ -299,11 +299,11 @@ public class ModMenu extends ChestGui {
 
     private void reopenWithTitle(Player player, Component title) {
         player.closeInventory();
-        ModMenu reopened = new ModMenu(title);
+        ModMenu reopened = new ModMenu(player, title);
         reopened.mode = this.mode;
         reopened.selectedMod = this.selectedMod;
         reopened.currentPage = this.currentPage;
-        AbyssalLib.GUI_MANAGER.openGui(player, reopened);
+        AbyssalLib.GUI_MANAGER.openGui(reopened);
     }
 
     private static class ItemStackHelper {

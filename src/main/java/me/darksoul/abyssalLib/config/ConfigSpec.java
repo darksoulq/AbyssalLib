@@ -40,6 +40,11 @@ public class ConfigSpec {
         return n != null ? n.doubleValue() : 0.0;
     }
 
+    public float getFloat(String path) {
+        Number n = get(path, Number.class);
+        return n != null ? n.floatValue() : 0.0f;
+    }
+
     public String getString(String path) {
         String s = get(path, String.class);
         return s != null ? s : "";
@@ -52,7 +57,7 @@ public class ConfigSpec {
             List<?> list = (List<?>) obj;
             for (Object item : list) {
                 if (item != null && !elementType.isInstance(item)) {
-                    return Collections.emptyList(); // type mismatch
+                    return Collections.emptyList();
                 }
             }
             return (List<T>) list;

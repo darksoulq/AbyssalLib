@@ -1,5 +1,6 @@
-package me.darksoul.abyssalLib.recipe;
+package me.darksoul.abyssalLib.recipe.impl;
 
+import me.darksoul.abyssalLib.recipe.Recipe;
 import me.darksoul.abyssalLib.util.ResourceLocation;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
@@ -9,9 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ShapedRecipeImpl extends Recipe {
-    private final ItemStack result;
-    private String[] shape;
-    private final Map<Character, ItemStack> ingredients = new HashMap<>();
+    public final ItemStack result;
+    public String[] shape;
+    public final Map<Character, ItemStack> ingredients = new HashMap<>();
 
     public ShapedRecipeImpl(ResourceLocation id, ItemStack result, String... shape) {
         super(id);
@@ -30,6 +31,23 @@ public class ShapedRecipeImpl extends Recipe {
     public ShapedRecipeImpl define(char key, ItemStack item) {
         ingredients.put(key, item);
         return this;
+    }
+
+    public int getWidth() {
+        return shape.length > 0 ? shape[0].length() : 0;
+    }
+
+    public int getHeight() {
+        return shape.length;
+    }
+
+    public ItemStack getIngredient(int index) {
+        int width = getWidth();
+        int x = index % width;
+        int y = index / width;
+        if (y >= shape.length || x >= shape[y].length()) return null;
+        char key = shape[y].charAt(x);
+        return ingredients.getOrDefault(key, null);
     }
 
     @Override

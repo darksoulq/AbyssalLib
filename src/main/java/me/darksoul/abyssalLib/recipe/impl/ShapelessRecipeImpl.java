@@ -1,5 +1,7 @@
-package me.darksoul.abyssalLib.recipe;
+package me.darksoul.abyssalLib.recipe.impl;
 
+import me.darksoul.abyssalLib.AbyssalLib;
+import me.darksoul.abyssalLib.recipe.Recipe;
 import me.darksoul.abyssalLib.util.ResourceLocation;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
@@ -9,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShapelessRecipeImpl extends Recipe {
-    private final ItemStack result;
-    private final List<ItemStack> ingredients = new ArrayList<>();
+    public final ItemStack result;
+    public final List<ItemStack> ingredients = new ArrayList<>();
 
     public ShapelessRecipeImpl(ResourceLocation id, ItemStack result) {
         super(id);
@@ -18,6 +20,10 @@ public class ShapelessRecipeImpl extends Recipe {
     }
 
     public ShapelessRecipeImpl addIngredient(ItemStack item) {
+        if (ingredients.size() >= 6) {
+            AbyssalLib.getInstance().getLogger().warning("Failed to add ingredient, only 6 ingredients can be added!");
+            return this;
+        }
         ingredients.add(item);
         return this;
     }
