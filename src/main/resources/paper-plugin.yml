@@ -1,6 +1,6 @@
 name: AbyssalLib
-version: '1.0-SNAPSHOT'
-main: me.darksoul.abyssalLib.AbyssalLib
+version: '1.1.0'
+main: io.github.darksoulq.abyssalLib.AbyssalLib
 api-version: '1.21'
 authors: [ DarkSoul ]
 
