@@ -69,4 +69,3 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 }
-build.dependsOn javadoc
