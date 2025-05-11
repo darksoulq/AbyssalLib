@@ -4,8 +4,8 @@ plugins {
     id 'xyz.jpenilla.run-paper' version '2.3.1'
 }
 
-group = 'darksoulq'
-version = '1.1.0-mc1.21.5'
+group = 'com.github.darksoulq'
+version = '1.1.1-mc1.21.5'
 
 def targetJavaVersion = 21
 
