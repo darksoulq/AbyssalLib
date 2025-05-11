@@ -26,13 +26,13 @@ public class MyMenu extends ChestGui {
     }
     @Override
     public void init(Player player) {
-        slot(new StaticSlot(index, item));
-        slot(new ButtonSlot(index, item, consumerOf<GuiClickContext>));
+        slot(Type.TOP, new StaticSlot(index, item));
+        slot(Type.TOP, new ButtonSlot(index, item, consumerOf<GuiClickContext>));
     }
 }
 ```
 
-- slot() method adds the slot to the slot list.
+- slot() method adds the slot to the slot list. (in the specified section (top or bottom inv))
 - Static/ButtonSlot are builtin slots, you can look at the implementations to understand how they work.
 
 ## Step 3: opening the Gui
