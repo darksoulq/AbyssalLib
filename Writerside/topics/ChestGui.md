@@ -39,7 +39,7 @@ public class MyMenu extends ChestGui {
 To open the Gui you MUST use the gui manager, otherwise context actions like onClick will NOT work!
 
 ```Java
-AbyssalLib.GUI_MANAGER.openGui(player new MyMenu());
+AbyssalLib.GUI_MANAGER.openGui(new MyMenu(player));
 ```
 
 Thats basically it!, you have successfully made you gui

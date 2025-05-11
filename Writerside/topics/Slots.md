@@ -34,11 +34,6 @@ public class MySlot extends Slot {
     }
 
     @Override
-    public void onDrag(GuiDragContext ctx) {
-
-    }
-
-    @Override
     public void onTick(AbstractGui gui) {
 
     }
@@ -79,8 +74,6 @@ public class AnimatedSlot extends Slot {
 
     @Override
     public void onClick(GuiClickContext ctx) {}
-    @Override
-    public void onDrag(GuiDragContext ctx) {}
     @Override
     public void onTick(AbstractGui gui) {
         gui.inventory().setItem(index, item());

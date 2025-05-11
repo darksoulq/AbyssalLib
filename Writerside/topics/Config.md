@@ -14,6 +14,11 @@ CONFIG.define("test.string", "127.0.0.1");
 CONFIG.define("test.int", 8080);
 ```
 
+or you can load a template config:
+```Java
+ConfigSpec CONFIG = new ConfigSpec(Myplugin.getResource(yourfile)); // this takes in InputSource
+```
+
 - .define() is used to define default values for the config.
 
 ## Step 2: Registering the config

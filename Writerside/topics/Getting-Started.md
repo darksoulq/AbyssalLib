@@ -1,25 +1,67 @@
 # Getting Started
 
-Welcome to the **AbyssalLib**!
+Welcome to **AbyssalLib**!
 
-(This api and its docs are NOT complete, they may change, and more will be added over time)
+(This API and its docs are NOT complete, they may change, and more will be added over time)
 
-To start using this framework in your project, you'll need to add the provided `.jar` file as a library. This allows you to access the modding API's full feature set directly from your own plugin.
+To start using this framework in your project, you'll need to add the dependency via JitPack.
 
 ## 🔧 Installation
 
-1. Download the latest version of the `AbyssalLib.jar` from the releases page or your distribution source.
-2. Drop the JAR into your project's `libs/` folder (or wherever you store external libraries).
-3. Make sure your build system (e.g., Maven, Gradle, or your IDE's project settings) includes the JAR in your classpath.
+1. Add the JitPack repository to your project's build system.
+    <tabs>
+    <tab title="Gradle">
+   For Gradle, add this to your `build.gradle`:
 
-## Example (IntelliJ IDEA):
+    ```gradle
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+    ```
+   </tab>
 
-- Go to `File > Project Structure > Modules`.
-- Click the `Dependencies` tab.
-- Click the `+` icon → `JARs or directories...`.
-- Select your `AbyssalLib.jar`.
-- Click OK and make sure it's marked as "Compile" scope.
+    <tab title="Maven">
+   For Maven, add this to your `pom.xml`:
+
+    ```xml
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+    ```
+   </tab>
+    </tabs>
+
+2. Add the `AbyssalLib` dependency to your project.
+
+   <tabs>
+   <tab title="Gradle">
+
+   For Gradle, add this to your `build.gradle`:
+
+   ```gradle
+    dependencies {
+        implementation 'com.github.darksoulq:AbyssalLib:Version'
+    }
+    ```
+   </tab>
+   <tab title="Maven">
+   For Maven, add this to your `pom.xml`:
+
+    ```xml
+    <dependencies>
+        <dependency>
+            <groupId>com.github.darksoulq</groupId>
+            <artifactId>AbyssalLib</artifactId>
+            <version>Version</version>
+        </dependency>
+    </dependencies>
+    ```
+   </tab>
+   </tabs>
+
+   *(Replace `Version` with the specific version tag you wish to use.)*
 
 You're now ready to start building plugins with AbyssalLib!
-
-(the api will be available on maven central once its stable)
