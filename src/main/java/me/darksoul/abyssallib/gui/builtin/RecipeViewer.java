@@ -76,7 +76,7 @@ public class RecipeViewer extends ChestGui {
         }
 
         slot(Type.TOP, new ButtonSlot(49, named(Material.AIR, "Back"), ctx -> {
-            AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu(ctx.player()));
+            AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu(ctx.player));
         }));
     }
 

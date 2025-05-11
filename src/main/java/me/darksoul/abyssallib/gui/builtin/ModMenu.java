@@ -106,20 +106,20 @@ public class ModMenu extends ChestGui {
                 selectedMod = mod;
                 currentPage = 0;
                 mode = ViewMode.MODMENU;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }));
         }
 
         slot(Type.TOP, new ButtonSlot(45, ItemStackHelper.named(Material.AIR, "Previous Page"), ctx -> {
             if (currentPage > 0) {
                 currentPage--;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }
         }));
         slot(Type.TOP, new ButtonSlot(53, ItemStackHelper.named(Material.AIR, "Next Page"), ctx -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }
         }));
     }
@@ -137,31 +137,31 @@ public class ModMenu extends ChestGui {
             slot(Type.TOP, new ButtonSlot(19, ItemStackHelper.named(Material.BOOK, "Config"), ctx -> {
                 currentPage = 0;
                 mode = ViewMode.CONFIG;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }));
             slot(Type.TOP, new ButtonSlot(25, ItemStackHelper.named(Material.IRON_SWORD, "Items"), ctx -> {
                 currentPage = 0;
                 mode = ViewMode.ITEMS;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }));
         } else if (availableOptions.contains("config")) {
             slot(Type.TOP, new ButtonSlot(22, ItemStackHelper.named(Material.BOOK, "Config"), ctx -> {
                 currentPage = 0;
                 mode = ViewMode.CONFIG;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }));
         } else if (availableOptions.contains("items")) {
             slot(Type.TOP, new ButtonSlot(22, ItemStackHelper.named(Material.IRON_SWORD, "Items"), ctx -> {
                 currentPage = 0;
                 mode = ViewMode.ITEMS;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }));
         }
         slot(Type.TOP, new ButtonSlot(49, ItemStackHelper.named(Material.AIR, "Back to Mods"), ctx -> {
             mode = ViewMode.MODS;
             selectedMod = null;
             currentPage = 0;
-            fillGui(ctx.player());
+            fillGui(ctx.player);
         }));
     }
 
@@ -209,17 +209,17 @@ public class ModMenu extends ChestGui {
                 if (value instanceof Boolean boolVal) {
                     spec.set(key, !boolVal);
                     Config.saveAll();
-                    fillGui(ctx.player());
+                    fillGui(ctx.player);
                     return;
                 }
 
                 if (value instanceof Number || value instanceof String || value instanceof List<?>) {
-                    ctx.player().closeInventory();
-                    ctx.player().sendMessage(Component.text("Enter new value for " + key + " in chat (or type 'cancel' to abort):"));
+                    ctx.player.closeInventory();
+                    ctx.player.sendMessage(Component.text("Enter new value for " + key + " in chat (or type 'cancel' to abort):"));
 
-                    AbyssalLib.CHAT_INPUT_HANDLER.await(ctx.player(), input -> {
+                    AbyssalLib.CHAT_INPUT_HANDLER.await(ctx.player, input -> {
                         if (input.equalsIgnoreCase("cancel")) {
-                            ctx.player().sendMessage(Component.text("Cancelled."));
+                            ctx.player.sendMessage(Component.text("Cancelled."));
                             AbyssalLib.GUI_MANAGER.openGui(this);
                             return;
                         }
@@ -235,7 +235,7 @@ public class ModMenu extends ChestGui {
                             spec.set(key, parsed);
                             Config.saveAll();
                         } catch (Exception e) {
-                            ctx.player().sendMessage(Component.text("Invalid input. Use suffixes (`i`, `f`, `L`) or comma-separated lists."));
+                            ctx.player.sendMessage(Component.text("Invalid input. Use suffixes (`i`, `f`, `L`) or comma-separated lists."));
                         }
 
                         AbyssalLib.GUI_MANAGER.openGui(this);
@@ -247,18 +247,18 @@ public class ModMenu extends ChestGui {
         slot(Type.TOP, new ButtonSlot(49, ItemStackHelper.named(Material.AIR, "Back"), ctx -> {
             mode = ViewMode.MODMENU;
             currentPage = 0;
-            fillGui(ctx.player());
+            fillGui(ctx.player);
         }));
         slot(Type.TOP, new ButtonSlot(45, ItemStackHelper.named(Material.AIR, "Previous Page"), ctx -> {
             if (currentPage > 0) {
                 currentPage--;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }
         }));
         slot(Type.TOP, new ButtonSlot(53, ItemStackHelper.named(Material.AIR, "Next Page"), ctx -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }
         }));
     }
@@ -274,24 +274,24 @@ public class ModMenu extends ChestGui {
         for (int i = 0; i < pageItems.size(); i++) {
             Item abyssalItem = pageItems.get(i);
             slot(Type.TOP, new ButtonSlot(i, abyssalItem, ctx -> {
-                ctx.player().give(abyssalItem);
+                ctx.player.give(abyssalItem);
             }));
         }
         slot(Type.TOP, new ButtonSlot(49, ItemStackHelper.named(Material.AIR, "Back"), ctx -> {
             mode = ViewMode.MODMENU;
             currentPage = 0;
-            fillGui(ctx.player());
+            fillGui(ctx.player);
         }));
         slot(Type.TOP, new ButtonSlot(45, ItemStackHelper.named(Material.AIR, "Previous Page"), ctx -> {
             if (currentPage > 0) {
                 currentPage--;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }
         }));
         slot(Type.TOP, new ButtonSlot(53, ItemStackHelper.named(Material.AIR, "Next Page"), ctx -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
-                fillGui(ctx.player());
+                fillGui(ctx.player);
             }
         }));
     }

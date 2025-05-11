@@ -75,7 +75,7 @@ public class RecipeMainMenu extends SearchGui {
 
             slot(Type.BOTTOM, new ButtonSlot(i + 9, icon, ctx -> {
                 restoreBottomMenu();
-                AbyssalLib.GUI_MANAGER.openGui(new RecipeViewer(ctx.player(), id));
+                AbyssalLib.GUI_MANAGER.openGui(new RecipeViewer(ctx.player, id));
             }));
         }
 

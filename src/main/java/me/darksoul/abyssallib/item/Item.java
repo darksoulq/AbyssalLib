@@ -104,7 +104,7 @@ public class Item extends ItemStack {
      * @param ctx the context of the item use event
      */
     public void onInteract(ItemUseContext ctx) {
-        if (ctx.event().orElse(null) instanceof org.bukkit.event.player.PlayerInteractEvent event) {
+        if (ctx.event instanceof org.bukkit.event.player.PlayerInteractEvent event) {
             switch (event.getAction()) {
                 case RIGHT_CLICK_BLOCK -> {
                     onUseOnBlock(ctx);

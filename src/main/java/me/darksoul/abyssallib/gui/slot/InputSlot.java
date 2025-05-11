@@ -28,8 +28,8 @@ public class InputSlot extends Slot {
     @Override
     public void onClick(GuiClickContext ctx) {
         ItemStack prev = item;
-        item(ctx.event().getCursor());
-        ctx.event().setCursor(prev);
+        item(ctx.event.getCursor());
+        ctx.event.setCursor(prev);
     }
 
     @Override

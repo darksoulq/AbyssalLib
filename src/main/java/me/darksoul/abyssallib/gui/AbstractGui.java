@@ -156,19 +156,19 @@ public abstract class AbstractGui {
     public void handleClick(GuiClickContext ctx) {
         // TOP
         Map<Integer, Slot> indexedSlots = new HashMap<>();
-        if (enableHandling(Type.TOP) && ctx.event().getClickedInventory() == ctx.gui().inventory(Type.TOP)) {
+        if (enableHandling(Type.TOP) && ctx.event.getClickedInventory() == ctx.gui.inventory(Type.TOP)) {
             for (Slot slot : slots.TOP) {
                 indexedSlots.put(slot.index(), slot);
             }
-            if (!indexedSlots.containsKey(ctx.event().getSlot())) ctx.cancel();
-            indexedSlots.get(ctx.slotIndex()).onClick(ctx);
+            if (!indexedSlots.containsKey(ctx.event.getSlot())) ctx.cancel();
+            indexedSlots.get(ctx.slot).onClick(ctx);
             // BOTTOM
-        } else if (enableHandling(Type.BOTTOM) && ctx.event().getClickedInventory() == ctx.gui().inventory(Type.BOTTOM)) {
+        } else if (enableHandling(Type.BOTTOM) && ctx.event.getClickedInventory() == ctx.gui.inventory(Type.BOTTOM)) {
             for (Slot slot : slots.BOTTOM) {
                 indexedSlots.put(slot.index(), slot);
             }
-            if (!indexedSlots.containsKey(ctx.event().getSlot())) ctx.cancel();
-            indexedSlots.get(ctx.slotIndex()).onClick(ctx);
+            if (!indexedSlots.containsKey(ctx.event.getSlot())) ctx.cancel();
+            indexedSlots.get(ctx.slot).onClick(ctx);
         }
     }
     /**
@@ -179,8 +179,8 @@ public abstract class AbstractGui {
      */
     public void handleDrag(GuiDragContext ctx) {
         if (enableHandling(Type.TOP) || enableHandling(Type.BOTTOM)) {
-            for (int rSlot : ctx.event().getRawSlots()) {
-                if (ctx.gui().view.getInventory(rSlot) == ctx.gui().inventory(Type.TOP)) {
+            for (int rSlot : ctx.event.getRawSlots()) {
+                if (ctx.gui.view.getInventory(rSlot) == ctx.gui.inventory(Type.TOP)) {
                     ctx.cancel();
                     return;
                 }

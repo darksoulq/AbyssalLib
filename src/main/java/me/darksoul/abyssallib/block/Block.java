@@ -56,7 +56,7 @@ public class Block implements Cloneable {
      * @param ctx The {@link BlockPlaceContext} containing the context of the block placement.
      */
     public void place(BlockPlaceContext ctx) {
-        BlockManager.INSTANCE.setBlockAt(ctx.block.getLocation(), this);
+        BlockManager.INSTANCE.setBlockAt(ctx.bukkitBlock.getLocation(), this);
         onPlace(ctx);
     }
 
