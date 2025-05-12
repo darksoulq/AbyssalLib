@@ -18,8 +18,8 @@ public class TeleportStick extends Item {
 
     @Override
     public void onRightClick(ItemUseContext ctx) {
-        ctx.player().teleport(ctx.player().getLocation().add(0, 10, 0));
-        ctx.player().sendMessage(Component.text("Whoosh!"));
+        ctx.player.teleport(ctx.player().getLocation().add(0, 10, 0));
+        ctx.player.sendMessage(Component.text("Whoosh!"));
     }
 }
 ```
@@ -56,8 +56,8 @@ Each method provides full access to the context (player, item stack, block/entit
 ```java
 @Override
 public void onUseOnBlock(ItemUseContext ctx) {
-    ctx.player().sendMessage(Component.text("You poked a " + ctx.block().getType().name()));
-    ctx.block().getWorld().strikeLightning(block.getLocation());
+    ctx.player.sendMessage(Component.text("You poked a " + ctx.block().getType().name()));
+    ctx.block.getWorld().strikeLightning(block.getLocation());
 }
 ```
 

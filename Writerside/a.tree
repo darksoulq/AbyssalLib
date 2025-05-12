@@ -22,8 +22,10 @@
         <toc-element toc-title="Tags"/>
         <toc-element toc-title="LootTables"/>
         <toc-element topic="CraftinRecipes.md"/>
+        <toc-element topic="Particles.md"/>
         <toc-element topic="Commands.md"/>
         <toc-element topic="Events.md"/>
         <toc-element topic="Config.md"/>
+        <toc-element topic="Database.md"/>
     </toc-element>
 </instance-profile>

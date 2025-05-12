@@ -76,7 +76,6 @@ public class AnimatedSlot extends Slot {
     public void onClick(GuiClickContext ctx) {}
     @Override
     public void onTick(AbstractGui gui) {
-        gui.inventory().setItem(index, item());
     }
 }
 ```
