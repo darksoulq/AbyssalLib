@@ -95,7 +95,7 @@ public class SqliteTableBuilder implements TableBuilder {
     /**
      * Sets the primary key columns for the table.
      *
-     * @param columns the names of the primary key columns
+     * @param keys the names of the primary key columns
      * @return this builder instance
      */
     @Override
