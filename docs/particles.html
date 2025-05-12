@@ -1,0 +1,78 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#3F56CE"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2025-05-12T22:12:17.7401649"><title>Particles | abyssallib-docs</title><script type="application/json" id="virtual-toc-data">[{"id":"basic-usage","level":0,"title":"Basic usage:","anchor":"#basic-usage"},{"id":"shapes-animations","level":0,"title":"Shapes \u0026 animations:","anchor":"#shapes-animations"},{"id":"repetition-and-timing","level":0,"title":"Repetition and Timing:","anchor":"#repetition-and-timing"},{"id":"conditional-cancellation","level":0,"title":"Conditional Cancellation:","anchor":"#conditional-cancellation"},{"id":"extending-with-custom-shapes","level":0,"title":"Extending with Custom Shapes:","anchor":"#extending-with-custom-shapes"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Particles | abyssallib-docs"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="abyssallib-docs Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/particles.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Particles | abyssallib-docs"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/particles.html#webpage",
+    "url": "writerside-documentation/particles.html",
+    "name": "Particles | abyssallib-docs",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "abyssallib-docs Help"
+}</script><!-- End Schema.org --></head><body data-id="Particles" data-main-title="Particles" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Getting-Started.md|Getting Started"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>abyssallib-docs  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="Particles" id="Particles.md">Particles</h1><p id="r8y2wq_3">The library provides a really simple but powerful particle system, the main concept is Shapes (shapeless particle spawns ARE possible!).</p><section class="chapter"><h2 id="basic-usage" data-toc="basic-usage">Basic usage:</h2><div class="code-block" data-lang="java">
+Particles.particle(Particle.FLAME)
+    .at(player.getLocation())
+    .count(10)
+    .offset(0.2, 0.5, 0.2)
+    .speed(0.01)
+    .start();
+</div></section><section class="chapter"><h2 id="shapes-animations" data-toc="shapes-animations">Shapes &amp; animations:</h2><p id="r8y2wq_10">The <code class="code" id="r8y2wq_16">shape(...)</code> method allows you to use predefined or custom particle formations. You can also use animated shapes like rotating circles or spheres. Built-in Shapes <code class="code" id="r8y2wq_17">(Shapes)</code></p><ul class="list _bullet" id="r8y2wq_11"><li class="list__item" id="r8y2wq_18"><p id="r8y2wq_22"><code class="code" id="r8y2wq_23">circle(radius, points)</code></p></li><li class="list__item" id="r8y2wq_19"><p id="r8y2wq_24"><code class="code" id="r8y2wq_25">sphere(radius, points)</code></p></li><li class="list__item" id="r8y2wq_20"><p id="r8y2wq_26"><code class="code" id="r8y2wq_27">cube(size)</code></p></li><li class="list__item" id="r8y2wq_21"><p id="r8y2wq_28"><code class="code" id="r8y2wq_29">pyramid(height, points)</code></p></li></ul><div class="code-block" data-lang="java">
+Particles.particle(Particle.CRIT)
+    .at(location)
+    .shape(Shapes.circle(1.5, 30))
+    .start();
+</div><p id="r8y2wq_13">Animated Shapes <code class="code" id="r8y2wq_30">(AnimatedShapes)</code></p><ul class="list _bullet" id="r8y2wq_14"><li class="list__item" id="r8y2wq_31"><p id="r8y2wq_33"><code class="code" id="r8y2wq_34">rotatingCircle(radius, points, rotationSpeed)</code></p></li><li class="list__item" id="r8y2wq_32"><p id="r8y2wq_35"><code class="code" id="r8y2wq_36">rotatingSphere(radius, points, rotationSpeed)</code></p></li></ul><div class="code-block" data-lang="java">
+Particles.particle(Particle.END_ROD)
+    .at(location)
+    .shape(AnimatedShapes.rotatingCircle(2, 50, 0.1))
+    .everyTicks(2)
+    .repeat(200)
+    .start();
+</div></section><section class="chapter"><h2 id="repetition-and-timing" data-toc="repetition-and-timing">Repetition and Timing:</h2><p id="r8y2wq_37">You can control how often the particle effect updates and how long it runs.</p><ul class="list _bullet" id="r8y2wq_38"><li class="list__item" id="r8y2wq_40"><p id="r8y2wq_42"><code class="code" id="r8y2wq_43">.everyTicks(ticks)</code> &mdash; Set how often to update (default: <code class="code" id="r8y2wq_44">1</code> tick).</p></li><li class="list__item" id="r8y2wq_41"><p id="r8y2wq_45"><code class="code" id="r8y2wq_46">.repeat(ticks)</code> &mdash; Set total duration. Use <code class="code" id="r8y2wq_47">-1</code> to run indefinitely.</p></li></ul><div class="code-block" data-lang="java">
+Particles.particle(Particle.HEART)
+    .at(location)
+    .shape(Shapes.pyramid(2, 16))
+    .everyTicks(10)
+    .repeat(100)
+    .start();
+</div></section><section class="chapter"><h2 id="conditional-cancellation" data-toc="conditional-cancellation">Conditional Cancellation:</h2><p id="r8y2wq_48">You can stop the effect dynamically using a condition:</p><div class="code-block" data-lang="java">
+Particles.particle(Particle.FLAME)
+    .at(location)
+    .cancelIf(() -&gt; !player.isOnline()) // cancels if the player logs out
+        .start();
+</div></section><section class="chapter"><h2 id="extending-with-custom-shapes" data-toc="extending-with-custom-shapes">Extending with Custom Shapes:</h2><p id="r8y2wq_50">You can define your own Shape by implementing the interface:</p><div class="code-block" data-lang="java">
+Shape spiral = origin -&gt; {
+    List&lt;Location&gt; points = new ArrayList&lt;&gt;();
+    for (int i = 0; i &lt; 100; i++) {
+        double t = i / 10.0;
+        double x = Math.cos(t) * t;
+        double z = Math.sin(t) * t;
+        double y = t * 0.1;
+        points.add(origin.clone().add(x, y, z));
+    }
+    return points;
+};
+
+Particles.particle(Particle.SMOKE_NORMAL)
+    .at(location)
+    .shape(spiral)
+    .start();
+</div><p id="r8y2wq_52">To animate the shape, override <code class="code" id="r8y2wq_54">animate(...)</code> as well:</p><div class="code-block" data-lang="java">
+Shape animated = new Shape() {
+    double angle = 0;
+
+    @Override
+    public List&lt;Location&gt; points(Location origin) {
+        // Generate based on angle
+    }
+
+    @Override
+    public void animate(Particles builder, Location origin, long tick) {
+        angle += 0.05;
+    }
+};
+</div></section><div class="last-modified">12 May 2025</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="craftinrecipes.html" class="navigation-links__prev">Recipes</a><a href="commands.html" class="navigation-links__next">Commands</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.js"></script></body></html>
