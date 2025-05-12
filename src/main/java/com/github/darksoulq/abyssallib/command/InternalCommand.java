@@ -6,8 +6,12 @@ import com.github.darksoulq.abyssallib.gui.builtin.ModMenu;
 import com.github.darksoulq.abyssallib.gui.builtin.RecipeMainMenu;
 import com.github.darksoulq.abyssallib.gui.builtin.RecipeViewer;
 import com.github.darksoulq.abyssallib.item.Item;
+import com.github.darksoulq.abyssallib.particle.AnimatedShapes;
+import com.github.darksoulq.abyssallib.particle.Particles;
+import com.github.darksoulq.abyssallib.particle.Shapes;
 import com.github.darksoulq.abyssallib.recipe.Recipe;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.util.ResourceLocation;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -17,6 +21,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -60,9 +65,14 @@ public class InternalCommand {
                             AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu((Player) ctx.getSource().getSender()));
                             return Command.SINGLE_SUCCESS;
                         })
-                        .then(Commands.argument("recipe_id", ArgumentTypes.namespacedKey())
-                                .suggests(InternalCommand::recipeSuggests)
-                                .executes(InternalCommand::recipesExecutor))
+                        .then(Commands.literal("open")
+                                .executes(ctx -> {
+                                    AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu((Player) ctx.getSource().getSender()));
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                                .then(Commands.argument("recipe_id", ArgumentTypes.namespacedKey())
+                                        .suggests(InternalCommand::recipeSuggests)
+                                        .executes(InternalCommand::recipesExecutor)))
                 );
     }
 

@@ -160,14 +160,20 @@ public abstract class AbstractGui {
             for (Slot slot : slots.TOP) {
                 indexedSlots.put(slot.index(), slot);
             }
-            if (!indexedSlots.containsKey(ctx.event.getSlot())) ctx.cancel();
+            if (!indexedSlots.containsKey(ctx.event.getSlot())) {
+                ctx.cancel();
+                return;
+            };
             indexedSlots.get(ctx.slot).onClick(ctx);
             // BOTTOM
         } else if (enableHandling(Type.BOTTOM) && ctx.event.getClickedInventory() == ctx.gui.inventory(Type.BOTTOM)) {
             for (Slot slot : slots.BOTTOM) {
                 indexedSlots.put(slot.index(), slot);
             }
-            if (!indexedSlots.containsKey(ctx.event.getSlot())) ctx.cancel();
+            if (!indexedSlots.containsKey(ctx.event.getSlot())) {
+                ctx.cancel();
+                return;
+            };
             indexedSlots.get(ctx.slot).onClick(ctx);
         }
     }

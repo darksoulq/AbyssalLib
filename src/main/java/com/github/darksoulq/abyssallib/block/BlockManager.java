@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.block;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.database.Database;
+import com.github.darksoulq.abyssallib.database.impl.sqlite.SqliteDatabase;
 import com.github.darksoulq.abyssallib.util.FileUtils;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
 import com.google.gson.JsonObject;
@@ -8,7 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
 import java.io.File;
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,33 +27,29 @@ public class BlockManager {
     /**
      * The database connection used to interact with the SQLite database storing block data.
      */
-    private Connection connection;
+    private Database database;
 
     /**
      * Loads the block data from the SQLite database, initializing the block cache.
      */
     public void load() {
         try {
-            File dbFile = new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db");
-            dbFile.getParentFile().mkdirs();
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
-
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS blocks (
-                    world TEXT,
-                    x INT,
-                    y INT,
-                    z INT,
-                    id TEXT,
-                    class TEXT,
-                    data TEXT,
-                    PRIMARY KEY(world, x, y, z)
-                )
-            """);
+            database = new SqliteDatabase( new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
+            database.connect();
+            database.executor().table("blocks").create()
+                    .ifNotExists()
+                    .column("world", "TEXT")
+                    .column("x", "INT")
+                    .column("y", "INT")
+                    .column("z", "INT")
+                    .column("id", "TEXT")
+                    .column("class", "TEXT")
+                    .column("data", "TEXT")
+                    .primaryKey("world", "x", "y", "z")
+                    .execute();
 
             loadCache();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -63,8 +61,9 @@ public class BlockManager {
      */
     private void loadCache() throws SQLException {
         blockCache.clear();
-        try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery("SELECT * FROM blocks")) {
-            while (rs.next()) {
+
+        try {
+            database.executor().table("blocks").select(rs -> {
                 String world = rs.getString("world");
                 int x = rs.getInt("x"), y = rs.getInt("y"), z = rs.getInt("z");
                 String id = rs.getString("id");
@@ -74,7 +73,8 @@ public class BlockManager {
 
                 try {
                     Class<?> clazz = Class.forName(className);
-                    Block block = (Block) clazz.getConstructor(ResourceLocation.class).newInstance(ResourceLocation.fromString(id));
+                    Block block = (Block) clazz.getConstructor(ResourceLocation.class)
+                            .newInstance(ResourceLocation.fromString(id));
                     String dataJson = rs.getString("data");
                     BlockData data = BlockData.fromJson(FileUtils.GSON.fromJson(dataJson, JsonObject.class));
                     setSaveCallback(loc, data);
@@ -83,7 +83,10 @@ public class BlockManager {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-            }
+                return null; // we don't need a return list; we're just iterating
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -107,17 +110,17 @@ public class BlockManager {
         setSaveCallback(loc, block.getData());
         blockCache.put(key(loc), block);
 
-        try (PreparedStatement stmt = connection.prepareStatement(
-                "INSERT OR REPLACE INTO blocks (world, x, y, z, id, class, data) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
-            stmt.setString(1, loc.getWorld().getName());
-            stmt.setInt(2, loc.getBlockX());
-            stmt.setInt(3, loc.getBlockY());
-            stmt.setInt(4, loc.getBlockZ());
-            stmt.setString(5, block.id().toString());
-            stmt.setString(6, block.getClass().getName());
-            stmt.setString(7, FileUtils.GSON.toJson(block.getData().getRaw()));
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+        try {
+            database.executor().table("blocks").insert()
+                    .value("world", loc.getWorld().getName())
+                    .value("x", loc.getBlockX())
+                    .value("y", loc.getBlockY())
+                    .value("z", loc.getBlockZ())
+                    .value("id", block.id().toString())
+                    .value("class", block.getClass().getName())
+                    .value("data", FileUtils.GSON.toJson(block.getData().getRaw()))
+                    .execute();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -139,14 +142,15 @@ public class BlockManager {
      */
     public void removeBlockAt(Location loc) {
         blockCache.remove(key(loc));
-        try (PreparedStatement stmt = connection.prepareStatement(
-                "DELETE FROM blocks WHERE world = ? AND x = ? AND y = ? AND z = ?")) {
-            stmt.setString(1, loc.getWorld().getName());
-            stmt.setInt(2, loc.getBlockX());
-            stmt.setInt(3, loc.getBlockY());
-            stmt.setInt(4, loc.getBlockZ());
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+        try {
+            database.executor().table("blocks").delete()
+                    .where("world = ? AND x = ? AND y = ? AND z = ?",
+                            loc.getWorld().getName(),
+                            loc.getBlockX(),
+                            loc.getBlockY(),
+                            loc.getBlockZ())
+                    .execute();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -163,15 +167,16 @@ public class BlockManager {
         block.setData(data);
         blockCache.put(key(loc), block);
 
-        try (PreparedStatement stmt = connection.prepareStatement(
-                "UPDATE blocks SET data = ? WHERE world = ? AND x = ? AND y = ? AND z = ?")) {
-            stmt.setString(1, FileUtils.GSON.toJson(data.getRaw()));
-            stmt.setString(2, loc.getWorld().getName());
-            stmt.setInt(3, loc.getBlockX());
-            stmt.setInt(4, loc.getBlockY());
-            stmt.setInt(5, loc.getBlockZ());
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+        try {
+            database.executor().table("blocks").update()
+                    .value("data", FileUtils.GSON.toJson(data.getRaw()))
+                    .where("world = ? AND x = ? AND y = ? AND z = ?",
+                            loc.getWorld().getName(),
+                            loc.getBlockX(),
+                            loc.getBlockY(),
+                            loc.getBlockZ())
+                    .execute();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -41,6 +41,7 @@ repositories {
 
 dependencies {
     paperweight.paperDevBundle('1.21.5-R0.1-SNAPSHOT')
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
     compileOnly 'com.magmaguy:ResourcePackManager:1.2.2'
 }
 

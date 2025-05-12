@@ -31,9 +31,10 @@ public class GuiEvents {
 
     @SubscribeEvent
     public void onClose(InventoryCloseEvent event) {
-        if (!(event.getPlayer() instanceof  Player player)) return;
+        if (!(event.getPlayer() instanceof Player player)) return;
         AbstractGui gui = AbyssalLib.GUI_MANAGER.openGuis.get(player);
         if (gui == null) return;
+        AbyssalLib.GUI_MANAGER.openGuis.remove(player);
         gui.onClose(new GuiCloseContext(gui, event));
     }
 }

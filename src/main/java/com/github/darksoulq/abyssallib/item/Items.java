@@ -9,5 +9,5 @@ public class Items {
     public static final DeferredRegistry<Item> ITEMS = DeferredRegistry.create(BuiltinRegistries.ITEMS, "abyssallib");
 
     public static final DeferredObject<Item> INVISIBLE_ITEM = ITEMS.register("invisible",
-            (name, id) -> new Item(id, Material.PAPER));
+            (name, id) -> new Item(id, Material.DIRT));
 }

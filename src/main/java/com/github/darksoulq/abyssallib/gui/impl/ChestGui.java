@@ -36,6 +36,11 @@ public abstract class ChestGui extends AbstractGui {
         init(player);
     }
 
+    @Override
+    public boolean enableHandling(Type type) {
+        return !type.equals(Type.BOTTOM);
+    }
+
     /**
      * Returns the corresponding {@link MenuType} for a specified number of rows.
      *
