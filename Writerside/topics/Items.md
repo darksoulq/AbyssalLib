@@ -7,12 +7,12 @@ To define a new item, create an instance of the `Item` class and register it usi
 ```java
 public static final DeferredRegistry<Item> ITEMS = DeferredRegistry.create(BuiltinRegistries.ITEMS, MODID);
 
-public static final RegistryObject<Item> MAGIC_WAND = ITEMS.register("example_item", (name, id) -> new Item(id, Material.DIAMOND));
+public static final DeferredObject<Item> MAGIC_WAND = ITEMS.register("example_item", (name, id) -> new Item(id, Material.DIAMOND));
 ```
 
 - `MODID` is your mod ID.
 - The registered name (`"example_item"`) will be used for the item's ID and texture name (`item.modid.item_name`, and `textures/item/item_name.png`).
-- You can customize the item with the `new ItemSettings(item)` builder (e.g., lore, behaviors, etc.).
+- You can customize the item with the `item.settings()` builder (e.g., lore, behaviors, etc.).
 
 ## Step 2: Apply the Registry
 

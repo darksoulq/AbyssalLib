@@ -9,17 +9,21 @@ the ConfigSpec will be used to define defaults, aswell as be updated if differen
 
 ```Java
 ConfigSpec CONFIG = new ConfigSpec();
-CONFIG.define("test.boolean", true);
-CONFIG.define("test.string", "127.0.0.1");
-CONFIG.define("test.int", 8080);
+CONFIG.define(ConfigType.BOOLEAN, "test.boolean", true);
+CONFIG.define(ConfigType.STRING, "test.string", "127.0.0.1");
+CONFIG.define(ConfigType.INT, "test.int", 8080);
+CONFIG.define(ConfigType.RESTRICTED_INT, "test.rint", 8080, List.of(8080, 8181))
 ```
+
+- RESTRICTED_* types need one extra argument, which is list of allowed values.
 
 or you can load a template config:
 ```Java
 ConfigSpec CONFIG = new ConfigSpec(Myplugin.getResource(yourfile)); // this takes in InputSource
 ```
 
-- .define() is used to define default values for the config.
+- `.define()` is used to define default values for the config.
+- By default file constructor, you cannot define variables that are of RESTRICTED type, you need to use `.define()` for it
 
 ## Step 2: Registering the config
 now you need to actually load it in (save it, or load if file exists)
