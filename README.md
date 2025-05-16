@@ -15,9 +15,11 @@ Features:
 - Glyph (chat image/gui textures/etc) API- Beta
 - Recipes API
 - Config API
-- Tags (for item tagging) API- Beta
-- Events API(easier to use layer for bukkit events)
-- Command API(easier to use layer over brigadier registration on paper)
+- Tags (for item tagging) API
+- Particle API
+- Database API
+- Events API (easier to use layer for bukkit events)
+- Command API (easier to use layer over brigadier registration on paper)
 - Automatic pack generation and sending
 
 Additional Features (Quality of Life):
