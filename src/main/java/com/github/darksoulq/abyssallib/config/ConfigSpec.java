@@ -6,228 +6,321 @@ import com.google.gson.JsonObject;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Represents a structured configuration specification that supports default values and runtime overrides.
- * Values are stored using dot-separated keys to support nesting.
+ * Represents a specification for configuration values. This class allows defining
+ * various typed configuration values, optionally with a set of allowed values.
+ * It supports automatic coercion, validation, and default fallback behavior.
  */
 public class ConfigSpec {
     /**
-     * A map holding the default values for configuration settings.
-     * These are loaded from the default configuration file.
+     * Enum representing the supported types for configuration values.
      */
-    private final Map<String, Object> defaults = new HashMap<>();
-    /**
-     * A map holding the current values for configuration settings.
-     * These values can be modified at runtime.
-     */
+    public enum ConfigType {
+        INT, FLOAT, BOOLEAN, STRING,
+        LIST_INT, LIST_FLOAT, LIST_BOOLEAN, LIST_STRING,
+        RESTRICTED_INT, RESTRICTED_FLOAT, RESTRICTED_BOOLEAN, RESTRICTED_STRING
+    }
+
+    private record Definition(ConfigType type, Object defaultValue, List<Object> allowedValues) {}
+
+    private final Map<String, Definition> definitions = new HashMap<>();
     private final Map<String, Object> values = new ConcurrentHashMap<>();
 
     /**
-     * Creates a new config spec and loads default values from the given input stream.
-     * This must be a JSON file located in the plugin resources.
+     * Constructs an empty config specification.
+     */
+    public ConfigSpec() {}
+    /**
+     * Constructs a config specification and loads default values from a JSON input stream.
      *
-     * @param defaultsFile The input stream pointing to a JSON file containing default config values.
+     * @param defaultsFile The input stream containing JSON defaults.
      */
     public ConfigSpec(InputStream defaultsFile) {
         loadDefaults(defaultsFile);
     }
 
     /**
-     * Creates an empty config spec with no default values.
-     * Values must be defined manually using {@link #define(String, Object)}.
-     */
-    public ConfigSpec() {
-    }
-
-    /**
-     * Loads the default configuration values from the given input stream.
-     * The configuration file is expected to be in JSON format.
+     * Loads default values from a JSON input stream.
      *
-     * @param inputStream The input stream pointing to a JSON file containing default config values.
+     * @param inputStream The input stream containing JSON.
      */
     private void loadDefaults(InputStream inputStream) {
         try (InputStreamReader reader = new InputStreamReader(inputStream)) {
             JsonElement jsonElement = FileUtils.GSON.fromJson(reader, JsonElement.class);
             if (jsonElement != null && jsonElement.isJsonObject()) {
-                JsonObject jsonObject = jsonElement.getAsJsonObject();
-                parseDefaults(jsonObject, "");
+                parseDefaults(jsonElement.getAsJsonObject(), "");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Recursively parses a JSON object and stores the default values in the defaults map.
-     * Each value is stored with a dot-separated key to support nesting.
-     *
-     * @param jsonObject The JSON object to parse.
-     * @param parentPath The current path being processed (used for nested values).
-     */
-    private void parseDefaults(JsonObject jsonObject, String parentPath) {
+    private void parseDefaults(JsonObject jsonObject, String path) {
         for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-            String fullPath = parentPath.isEmpty() ? entry.getKey() : parentPath + "." + entry.getKey();
+            String fullPath = path.isEmpty() ? entry.getKey() : path + "." + entry.getKey();
             JsonElement value = entry.getValue();
+
             if (value.isJsonObject()) {
                 parseDefaults(value.getAsJsonObject(), fullPath);
             } else {
-                defaults.put(fullPath, ConfigParser.parseValue(value));
+                Object parsed = ConfigParser.parseValue(value);
+                ConfigType type = inferConfigType(parsed);
+                define(type, fullPath, parsed);
             }
         }
     }
 
     /**
-     * Defines a new configuration value with a default. If a value for this path is not set, the default will be used.
+     * Infers the ConfigType from a parsed Java object.
      *
-     * @param path         The dot-separated key path.
-     * @param defaultValue The default value to use if no value is present.
-     * @param <T>          The type of the value.
+     * @param value The parsed value.
+     * @return The most appropriate ConfigType.
      */
-    public <T> void define(String path, T defaultValue) {
-        defaults.put(path, defaultValue);
-        values.putIfAbsent(path, defaultValue);
+    private ConfigType inferConfigType(Object value) {
+        if (value instanceof Integer) return ConfigType.INT;
+        if (value instanceof Float || value instanceof Double) return ConfigType.FLOAT;
+        if (value instanceof Boolean) return ConfigType.BOOLEAN;
+        if (value instanceof String) return ConfigType.STRING;
+        if (value instanceof List<?> list) {
+            if (list.isEmpty()) return ConfigType.LIST_STRING;
+            Object first = list.getFirst();
+            if (first instanceof Integer) return ConfigType.LIST_INT;
+            if (first instanceof Float || first instanceof Double) return ConfigType.LIST_FLOAT;
+            if (first instanceof Boolean) return ConfigType.LIST_BOOLEAN;
+            return ConfigType.LIST_STRING;
+        }
+        return ConfigType.STRING;
+    }
+
+
+    /**
+     * Defines a new configuration value.
+     *
+     * @param type         The type of the config value.
+     * @param path         The dot-separated path used to identify this value.
+     * @param defaultValue The default value to use if none is present.
+     * @param <T>          The value type.
+     */
+    public <T> void define(ConfigType type, String path, T defaultValue) {
+        define(type, path, defaultValue, null);
     }
 
     /**
-     * Retrieves the value at the given path, cast to the specified type.
+     * Defines a new configuration value with a set of allowed values.
      *
-     * @param path The dot-separated key path.
-     * @param type The expected type of the value.
-     * @param <T>  The type parameter.
-     * @return The value, or {@code null} if it is not present or not of the correct type.
+     * @param type          The type of the config value.
+     * @param path          The dot-separated path used to identify this value.
+     * @param defaultValue  The default value to use if none is present.
+     * @param allowedValues A list of allowed values (only applies to RESTRICTED_* types).
+     * @param <T>           The value type.
+     */
+    public <T> void define(ConfigType type, String path, T defaultValue, List<T> allowedValues) {
+        List<Object> allowed = allowedValues != null ? new ArrayList<>(allowedValues) : null;
+        Object safeDefault = coerceValue(type, defaultValue, allowed);
+        definitions.put(path, new Definition(type, safeDefault, allowed));
+        values.putIfAbsent(path, safeDefault);
+    }
+
+    /**
+     * Retrieves a typed config value by path.
+     *
+     * @param type The expected type.
+     * @param path The dot-separated path.
+     * @param <T>  The expected type.
+     * @return The config value or {@code null} if not found or type mismatch.
      */
     @SuppressWarnings("unchecked")
-    public <T> T get(String path, Class<T> type) {
+    public <T> T get(ConfigType type, String path) {
         Object val = values.get(path);
-        return (val != null && type.isInstance(val)) ? (T) val : null;
+        Definition def = definitions.get(path);
+
+        if (def == null || val == null) return null;
+
+        if (!type.equals(def.type)) return null;
+        if (def.type.name().startsWith("RESTRICTED") && def.allowedValues != null) {
+            if (!def.allowedValues.contains(val)) return (T) def.defaultValue;
+        }
+
+        return (T) val;
     }
 
     /**
-     * Retrieves the raw value at the given path.
+     * Sets a value at the specified path, coercing and validating it according to its definition.
      *
-     * @param path The dot-separated key path.
-     * @return The value, or {@code null} if not set.
+     * @param type  The expected type.
+     * @param path  The dot-separated path.
+     * @param value The new value.
+     */
+    public void set(ConfigType type, String path, Object value) {
+        Definition def = definitions.get(path);
+        if (def == null || !def.type.equals(type)) return;
+
+        Object coerced = coerceValue(type, value, def.allowedValues);
+        if (coerced != null) {
+            values.put(path, coerced);
+        }
+    }
+
+    /**
+     * Gets the raw untyped value at the specified path.
+     *
+     * @param path The dot-separated path.
+     * @return The value or {@code null}.
      */
     public Object get(String path) {
         return values.get(path);
     }
 
     /**
-     * Retrieves an integer value at the given path.
-     *
-     * @param path The dot-separated key path.
-     * @return The integer value, or {@code 0} if not found or not a number.
-     */
-    public int getInt(String path) {
-        Number n = get(path, Number.class);
-        return n != null ? n.intValue() : 0;
-    }
-
-    /**
-     * Retrieves a boolean value at the given path.
-     *
-     * @param path The dot-separated key path.
-     * @return The boolean value, or {@code false} if not found or not a boolean.
-     */
-    public boolean getBoolean(String path) {
-        Boolean b = get(path, Boolean.class);
-        return b != null ? b : false;
-    }
-
-    /**
-     * Retrieves a double value at the given path.
-     *
-     * @param path The dot-separated key path.
-     * @return The double value, or {@code 0.0} if not found or not a number.
-     */
-    public double getDouble(String path) {
-        Number n = get(path, Number.class);
-        return n != null ? n.doubleValue() : 0.0;
-    }
-
-    /**
-     * Retrieves a float value at the given path.
-     *
-     * @param path The dot-separated key path.
-     * @return The float value, or {@code 0.0f} if not found or not a number.
-     */
-    public float getFloat(String path) {
-        Number n = get(path, Number.class);
-        return n != null ? n.floatValue() : 0.0f;
-    }
-
-    /**
-     * Retrieves a string value at the given path.
-     *
-     * @param path The dot-separated key path.
-     * @return The string value, or an empty string if not found or not a string.
-     */
-    public String getString(String path) {
-        String s = get(path, String.class);
-        return s != null ? s : "";
-    }
-
-    /**
-     * Retrieves a list of values at the given path, ensuring all elements match the specified type.
-     *
-     * @param path        The dot-separated key path.
-     * @param elementType The expected class of each element in the list.
-     * @param <T>         The type of the elements.
-     * @return A list of values, or an empty list if not found or if type mismatch occurs.
-     */
-    @SuppressWarnings("unchecked")
-    public <T> List<T> getList(String path, Class<T> elementType) {
-        Object obj = values.get(path);
-        if (obj instanceof List<?>) {
-            List<?> list = (List<?>) obj;
-            for (Object item : list) {
-                if (item != null && !elementType.isInstance(item)) {
-                    return Collections.emptyList();
-                }
-            }
-            return (List<T>) list;
-        }
-        return Collections.emptyList();
-    }
-
-    /**
-     * Returns all current configuration values.
-     *
-     * @return A map of key-value pairs representing the current config state.
+     * Returns all current values (path → value).
      */
     public Map<String, Object> getAllValues() {
         return values;
     }
 
     /**
-     * Returns all defined default values.
-     *
-     * @return A map of key-value pairs representing all defaults.
+     * Returns all default values from definitions.
      */
     public Map<String, Object> getAllDefaults() {
+        Map<String, Object> defaults = new HashMap<>();
+        for (Map.Entry<String, Definition> entry : definitions.entrySet()) {
+            defaults.put(entry.getKey(), entry.getValue().defaultValue);
+        }
         return defaults;
     }
 
-    /**
-     * Sets the value for the given path. This overrides any default or previous value.
-     *
-     * @param path  The dot-separated key path.
-     * @param value The value to set.
-     */
-    public void set(String path, Object value) {
-        values.put(path, value);
+    /** Convenience typed getters **/
+
+    public int getInt(String path) {
+        Number n = get(ConfigType.INT, path);
+        return n != null ? n.intValue() : 0;
+    }
+
+    public float getFloat(String path) {
+        Number n = get(ConfigType.FLOAT, path);
+        return n != null ? n.floatValue() : 0.0f;
+    }
+
+    public double getDouble(String path) {
+        Number n = get(ConfigType.FLOAT, path);
+        return n != null ? n.doubleValue() : 0.0;
+    }
+
+    public boolean getBoolean(String path) {
+        Boolean b = get(ConfigType.BOOLEAN, path);
+        return b != null && b;
+    }
+
+    public String getString(String path) {
+        String s = get(ConfigType.STRING, path);
+        return s != null ? s : "";
+    }
+
+    public List<Integer> getIntList(String path) {
+        return get(ConfigType.LIST_INT, path);
+    }
+
+    public List<Float> getFloatList(String path) {
+        return get(ConfigType.LIST_FLOAT, path);
+    }
+
+    public List<Boolean> getBooleanList(String path) {
+        return get(ConfigType.LIST_BOOLEAN, path);
+    }
+
+    public List<String> getStringList(String path) {
+        return get(ConfigType.LIST_STRING, path);
     }
 
     /**
-     * Returns a string representation of all current values in the config.
+     * Attempts to coerce a given value into the specified {@link ConfigType}.
+     * Falls back to the first allowed value (if restricted) or null.
+     */
+    private Object coerceValue(ConfigType type, Object value, List<Object> allowed) {
+        try {
+            switch (type) {
+                case INT, RESTRICTED_INT -> {
+                    int i = (value instanceof Number) ? ((Number) value).intValue() : Integer.parseInt(value.toString());
+                    if (allowed == null || allowed.contains(i)) return i;
+                    return allowed != null ? allowed.getFirst() : null;
+                }
+                case FLOAT, RESTRICTED_FLOAT -> {
+                    float f = (value instanceof Number) ? ((Number) value).floatValue() : Float.parseFloat(value.toString());
+                    if (allowed == null || allowed.contains(f)) return f;
+                    return allowed != null ? allowed.getFirst() : null;
+                }
+                case BOOLEAN, RESTRICTED_BOOLEAN -> {
+                    boolean b = (value instanceof Boolean) ? (Boolean) value : Boolean.parseBoolean(value.toString());
+                    if (allowed == null || allowed.contains(b)) return b;
+                    return allowed != null ? allowed.getFirst() : null;
+                }
+                case STRING, RESTRICTED_STRING -> {
+                    String s = value.toString();
+                    if (allowed == null || allowed.contains(s)) return s;
+                    return allowed != null ? allowed.getFirst() : null;
+                }
+                case LIST_INT -> {
+                    if (value instanceof List<?>) {
+                        List<Integer> list = new ArrayList<>();
+                        for (Object o : (List<?>) value) list.add(Integer.parseInt(o.toString()));
+                        return list;
+                    }
+                }
+                case LIST_FLOAT -> {
+                    if (value instanceof List<?>) {
+                        List<Float> list = new ArrayList<>();
+                        for (Object o : (List<?>) value) list.add(Float.parseFloat(o.toString()));
+                        return list;
+                    }
+                }
+                case LIST_BOOLEAN -> {
+                    if (value instanceof List<?>) {
+                        List<Boolean> list = new ArrayList<>();
+                        for (Object o : (List<?>) value) list.add(Boolean.parseBoolean(o.toString()));
+                        return list;
+                    }
+                }
+                case LIST_STRING -> {
+                    if (value instanceof List<?>) {
+                        List<String> list = new ArrayList<>();
+                        for (Object o : (List<?>) value) list.add(o.toString());
+                        return list;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return allowed != null && !allowed.isEmpty() ? allowed.getFirst() : null;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the {@link ConfigType} of a defined path.
      *
-     * @return A stringified version of the current config values.
+     * @param path The path.
+     * @return The type, or {@code null} if not defined.
+     */
+    public ConfigType getDefinitionType(String path) {
+        Definition def = definitions.get(path);
+        return def != null ? def.type : null;
+    }
+
+    /**
+     * Returns the list of allowed values for a restricted path.
+     *
+     * @param path The path.
+     * @return A list of allowed values, or {@code null}.
+     */
+    public List<Object> getAllowedValues(String path) {
+        Definition def = definitions.get(path);
+        return def != null ? def.allowedValues : null;
+    }
+
+    /**
+     * Returns the string representation of current config values.
      */
     @Override
     public String toString() {

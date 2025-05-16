@@ -14,6 +14,7 @@ import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.resource.PackServer;
 import com.github.darksoulq.abyssallib.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.resource.glyph.Glyph;
+import com.github.darksoulq.abyssallib.tag.BuiltinTags;
 import com.github.darksoulq.abyssallib.util.ChatInputHandler;
 import com.github.darksoulq.abyssallib.util.Metrics;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
@@ -21,6 +22,8 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.List;
 
 public final class AbyssalLib extends JavaPlugin {
     public static String MODID = "abyssallib";
@@ -59,14 +62,14 @@ public final class AbyssalLib extends JavaPlugin {
         bus.register(new ServerEvents());
         bus.register(new GuiEvents());
 
-        createDefaultTags();
+        BuiltinTags.TAGS.apply();
         registerRecipeDeserializers();
         RecipeLoader.loadAll();
 
         CONFIG = new ConfigSpec();
-        CONFIG.define("resource-pack.autohost", true);
-        CONFIG.define("resource-pack.ip", "127.0.0.1");
-        CONFIG.define("resource-pack.port", 8080);
+        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "resource-pack.autohost", true);
+        CONFIG.define(ConfigSpec.ConfigType.STRING, "resource-pack.ip", "127.0.0.1");
+        CONFIG.define(ConfigSpec.ConfigType.INT, "resource-pack.port", 8080);
         Config.register(MODID, CONFIG);
 
         if (CONFIG.getBoolean("resource-pack.autohost")) {
@@ -85,17 +88,10 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
     }
 
-    private void createDefaultTags() {
-        BuiltinRegistries.ITEM_TAGS.createTag(new ResourceLocation(MODID, "axes"));
-        BuiltinRegistries.ITEM_TAGS.createTag(new ResourceLocation(MODID, "pickaxes"));
-        BuiltinRegistries.ITEM_TAGS.createTag(new ResourceLocation(MODID, "hoes"));
-        BuiltinRegistries.ITEM_TAGS.createTag(new ResourceLocation(MODID, "shovels"));
-        BuiltinRegistries.ITEM_TAGS.createTag(new ResourceLocation(MODID, "swords"));
-    }
     private void registerRecipeDeserializers() {
+        BrewingRecipeImpl.init();
         CampfireRecipeImpl.init();
         ShapedRecipeImpl.init();
         ShapelessRecipeImpl.init();

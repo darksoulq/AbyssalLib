@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
  * A class representing data for a block, which can store various types of values
  * in a {@link JsonObject}.
  */
-public class BlockData {
+public class BlockData implements Cloneable{
     /**
      * The internal JSON object storing the block's key-value data.
      */
@@ -157,5 +157,22 @@ public class BlockData {
         BlockData blockData = new BlockData();
         json.entrySet().forEach(entry -> blockData.data.add(entry.getKey(), entry.getValue()));
         return blockData;
+    }
+
+    /**
+     * Creates a deep clone of this {@link BlockData}, copying all internal data.
+     * The save callback is not copied to the clone.
+     *
+     * @return A new {@link BlockData} instance with identical data.
+     */
+    @Override
+    public BlockData clone() {
+        try {
+            BlockData cloned = (BlockData) super.clone();
+            JsonObject copiedJson = data.deepCopy();
+            return BlockData.fromJson(copiedJson);
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Cloning BlockData failed", e);
+        }
     }
 }

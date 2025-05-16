@@ -63,7 +63,10 @@ public class Config {
                 for (Map.Entry<String, JsonElement> entry : flat.entrySet()) {
                     Object parsed = ConfigParser.parseValue(entry.getValue());
                     if (parsed != null) {
-                        spec.set(entry.getKey(), parsed);
+                        ConfigSpec.ConfigType type = spec.getDefinitionType(entry.getKey());
+                        if (type != null) {
+                            spec.set(type, entry.getKey(), parsed);
+                        }
                     }
                 }
             } else {

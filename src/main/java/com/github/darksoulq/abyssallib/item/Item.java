@@ -1,9 +1,12 @@
 package com.github.darksoulq.abyssallib.item;
 
+import com.github.darksoulq.abyssallib.block.Block;
 import com.github.darksoulq.abyssallib.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.event.context.item.ItemUseContext;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.registry.Registry;
+import com.github.darksoulq.abyssallib.tag.ItemTag;
+import com.github.darksoulq.abyssallib.tag.Tag;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
@@ -204,6 +207,17 @@ public class Item extends ItemStack {
     }
 
     /**
+     * Checks whether this item is part of the specified {@link ItemTag}.
+     *
+     * @param id the {@link ResourceLocation} of the tag to check
+     * @return true if this item is included in the tag, false otherwise
+     */
+    public boolean hasTag(ResourceLocation id) {
+        ItemTag tag = (ItemTag) BuiltinRegistries.ITEM_TAGS.get(id.toString());
+        return tag.contains(this);
+    }
+
+    /**
      * Clones this item, creating a new instance with the same ID and material.
      *
      * @return a new cloned item
@@ -211,5 +225,16 @@ public class Item extends ItemStack {
     @Override
     public @NotNull Item clone() {
         return new Item(id, getType());
+    }
+
+    /**
+     * Converts this item to its corresponding {@link Block}, if it is a block item.
+     *
+     * @param item the item to convert
+     * @return the corresponding {@link Block}, or null if the item is not a block
+     */
+    public static Block asBlock(Item item) {
+        if (!BuiltinRegistries.BLOCK_ITEMS.containsKey(item.getId().toString())) return null;
+        return BuiltinRegistries.BLOCK_ITEMS.get(item.getId().toString());
     }
 }

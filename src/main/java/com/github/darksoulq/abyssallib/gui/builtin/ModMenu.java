@@ -207,7 +207,7 @@ public class ModMenu extends ChestGui {
 
             slot(Type.TOP, new ButtonSlot(i, display, ctx -> {
                 if (value instanceof Boolean boolVal) {
-                    spec.set(key, !boolVal);
+                    spec.set(spec.getDefinitionType(key), key, !boolVal);
                     Config.saveAll();
                     fillGui(ctx.player);
                     return;
@@ -232,7 +232,7 @@ public class ModMenu extends ChestGui {
                                 parsed = ConfigParser.parseTypedString(input);
                             }
 
-                            spec.set(key, parsed);
+                            spec.set(spec.getDefinitionType(key), key, parsed);
                             Config.saveAll();
                         } catch (Exception e) {
                             ctx.player.sendMessage(Component.text("Invalid input. Use suffixes (`i`, `f`, `L`) or comma-separated lists."));

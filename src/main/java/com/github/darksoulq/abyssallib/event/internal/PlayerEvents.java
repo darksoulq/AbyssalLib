@@ -5,7 +5,9 @@ import com.github.darksoulq.abyssallib.resource.glyph.Glyph;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
+import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class PlayerEvents {
     @SubscribeEvent

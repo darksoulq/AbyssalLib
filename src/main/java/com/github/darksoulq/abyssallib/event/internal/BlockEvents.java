@@ -1,15 +1,15 @@
 package com.github.darksoulq.abyssallib.event.internal;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.block.Block;
 import com.github.darksoulq.abyssallib.block.BlockManager;
 import com.github.darksoulq.abyssallib.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.event.context.block.BlockBreakContext;
-import com.github.darksoulq.abyssallib.event.context.block.BlockInteractContext;
-import com.github.darksoulq.abyssallib.event.context.block.BlockPlaceContext;
+import com.github.darksoulq.abyssallib.event.context.block.*;
 import com.github.darksoulq.abyssallib.event.custom.AbyssalBlockBreakEvent;
 import com.github.darksoulq.abyssallib.event.custom.AbyssalBlockInteractEvent;
 import com.github.darksoulq.abyssallib.event.custom.AbyssalBlockPlaceEvent;
 import com.github.darksoulq.abyssallib.item.Item;
+import com.github.darksoulq.abyssallib.loot.LootContext;
 import com.github.darksoulq.abyssallib.loot.LootTable;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import io.papermc.paper.event.entity.EntityMoveEvent;
@@ -23,22 +23,30 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 
+import java.util.List;
 import java.util.Random;
 
 public class BlockEvents {
     @SubscribeEvent
     public void onBlockPlace(BlockPlaceEvent event) {
         for (Block block : BuiltinRegistries.BLOCKS.getAll()) {
-            if (block.blockItem() == null) continue;
-            if (block.blockItem() == Item.from(event.getItemInHand())) {
-                AbyssalBlockPlaceEvent breakEvent = new AbyssalBlockPlaceEvent(event.getPlayer(), block, event.getItemInHand());
-                Bukkit.getPluginManager().callEvent(breakEvent);
-                if (breakEvent.isCancelled()) {
+            if (Block.asItem(block) != null ) {
+                if (Block.asItem(block) == Item.from(event.getItemInHand())) {
+                    AbyssalBlockPlaceEvent placeEvent = new AbyssalBlockPlaceEvent(event.getPlayer(), block, event.getItemInHand());
+                    Bukkit.getPluginManager().callEvent(placeEvent);
+                    if (placeEvent.isCancelled()) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                    block.place(new BlockPlaceContext(event));
+                    AbyssalLib.getInstance().getLogger().info(BlockManager.INSTANCE.blockCache().toString());
+                } else {
                     event.setCancelled(true);
-                    return;
                 }
-                block.place(new BlockPlaceContext(event));
             }
         }
     }
@@ -46,30 +54,32 @@ public class BlockEvents {
     @SubscribeEvent
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = Block.from(event.getBlock());
-        AbyssalBlockBreakEvent breakEvent = new AbyssalBlockBreakEvent(event.getPlayer(), block);
-        Bukkit.getPluginManager().callEvent(breakEvent);
-        if (breakEvent.isCancelled()) {
-            event.setCancelled(true);
-            return;
-        }
-        Location loc = event.getBlock().getLocation();
-        if (block == null) return;
-        Item item = block.blockItem();
-        if (item == null) return;
-        LootTable lootTable = block.lootTable();
-        event.setDropItems(false);
-        if (!(event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
-            event.setExpToDrop(block.exp());
-            if (lootTable == null) {
-                loc.getWorld().dropItem(loc, item);
-            } else {
-                lootTable.generateLoot(new Random()).forEach(stack -> {
-                    loc.getWorld().dropItem(loc, item);
-                });
+        if (block != null) {
+            AbyssalBlockBreakEvent breakEvent = new AbyssalBlockBreakEvent(event.getPlayer(), block);
+            Bukkit.getPluginManager().callEvent(breakEvent);
+            if (breakEvent.isCancelled()) {
+                event.setCancelled(true);
+                return;
             }
+            Location loc = event.getBlock().getLocation();
+            Item item = Block.asItem(block);
+            LootTable lootTable = block.lootTable();
+            event.setDropItems(false);
+            if (!(event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
+                event.setExpToDrop(block.exp());
+                if (lootTable == null && item != null) {
+                    loc.getWorld().dropItem(loc, item);
+                } else if (lootTable != null) {
+                    LootContext context = new LootContext();
+                    List<ItemStack> drops = lootTable.generate(context);
+                    for (ItemStack drop : drops) {
+                        loc.getWorld().dropItem(loc, drop);
+                    }
+                }
+            }
+            block.onBreak(new BlockBreakContext(event));
+            BlockManager.INSTANCE.removeBlockAt(loc);
         }
-        block.onBreak(new BlockBreakContext(event));
-        BlockManager.INSTANCE.removeBlockAt(event.getBlock().getLocation());
     }
 
     @SubscribeEvent
@@ -116,7 +126,11 @@ public class BlockEvents {
         for (org.bukkit.block.Block bukkitBlock : event.blockList()) {
             Block block = Block.from(bukkitBlock);
             if (block == null) continue;
-            block.onExplode();
+            ExplodeContext ctx = new BlockExplodeContext(event);
+            block.onExplode(ctx);
+            if (!ctx.shouldExplode()) {
+                event.blockList().remove(bukkitBlock);
+            }
         }
     }
 
@@ -125,7 +139,11 @@ public class BlockEvents {
         for (org.bukkit.block.Block bukkitBlock : event.blockList()) {
             Block block = Block.from(bukkitBlock);
             if (block == null) continue;
-            block.onExplode();
+            ExplodeContext ctx = new EntityExplodeContext(event);
+            block.onExplode(ctx);
+            if (!ctx.shouldExplode()) {
+                event.blockList().remove(bukkitBlock);
+            }
         }
     }
 

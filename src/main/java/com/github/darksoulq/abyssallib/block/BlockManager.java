@@ -190,4 +190,8 @@ public class BlockManager {
     private String key(Location loc) {
         return loc.getWorld().getName() + ";" + loc.getBlockX() + ";" + loc.getBlockY() + ";" + loc.getBlockZ();
     }
+
+    public Map<String, Block> blockCache() {
+        return blockCache;
+    }
 }

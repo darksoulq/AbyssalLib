@@ -1,7 +1,9 @@
 package com.github.darksoulq.abyssallib.registry;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.block.Block;
 import com.github.darksoulq.abyssallib.event.custom.RegistryApplyEvent;
+import com.github.darksoulq.abyssallib.item.Item;
 import com.github.darksoulq.abyssallib.registry.object.DeferredObject;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
 import org.bukkit.Bukkit;
@@ -85,6 +87,11 @@ public class DeferredRegistry<T> extends LinkedHashMap<String, DeferredObject<T>
         for (Map.Entry<String, DeferredObject<T>> entry : super.entrySet()) {
             DeferredObject<T> obj = entry.getValue();
             targetRegistry.register(obj.getId(), id -> obj.get());
+            if (obj.get() instanceof Block block && block.generateItem()) {
+                DeferredObject<Item> blockItem = new DeferredObject<>(obj.getId(), () -> block.item().get());
+                BuiltinRegistries.ITEMS.register(obj.getId(), (itemId) -> blockItem.get());
+                BuiltinRegistries.BLOCK_ITEMS.register(obj.getId(), (itemName) -> block);
+            }
         }
         super.clear();
     }

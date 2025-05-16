@@ -9,10 +9,9 @@ public class Registry<T> extends HashMap<String, Registry.RegistryEntry<T>> {
 
     public void register(String id, RegistryEntry<T> entry) {
         if (super.containsKey(id)) {
-            if (entry.create(id) instanceof Recipe) {
-                return;
+            if (!(entry.create(id) instanceof Recipe)) {
+                AbyssalLib.getInstance().getLogger().severe("ID '" + id + "' already registered. Skipping..");
             }
-            AbyssalLib.getInstance().getLogger().severe("ID '" + id + "' already registered. Skipping..");
             return;
         }
         super.put(id, entry);
