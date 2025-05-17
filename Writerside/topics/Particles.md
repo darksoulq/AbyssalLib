@@ -1,57 +1,58 @@
 # Particles
 
-The library provides a really simple but powerful particle system, the main concept is Shapes (shapeless particle spawns ARE possible!).
+AbyssalLib provides a simple yet powerful API for working with particle effects in Bukkit. It supports both freeform particle emissions and structured shapes, with support for animation, custom timing, and conditional cancellation.
 
 ## Basic usage:
+Spawn simple particles at a location:
 ```Java
-Particles.particle(Particle.FLAME)
-    .at(player.getLocation())
-    .count(10)
-    .offset(0.2, 0.5, 0.2)
-    .speed(0.01)
+Particles.of(Particle.FLAME)
+    .spawnAt(player.getLocation())
+    .withCount(10)
+    .withOffset(0.2, 0.5, 0.2)
+    .withSpeed(0.01)
     .start();
 ```
 
 ## Shapes & animations:
-The `shape(...)` method allows you to use predefined or custom particle formations. You can also use animated shapes like rotating circles or spheres.
-Built-in Shapes `(Shapes)`
+Use the usingShape(...) method to display particles in predefined or custom geometric patterns. Built-in animated variants also support dynamic movement.
+
+Built-in Shapes (`Shapes`)
 - `circle(radius, points)`
 - `sphere(radius, points)`
 - `cube(size)`
 - `pyramid(height, points)`
-
 ```Java
-Particles.particle(Particle.CRIT)
-    .at(location)
-    .shape(Shapes.circle(1.5, 30))
+Particles.of(Particle.CRIT)
+    .spawnAt(location)
+    .usingShape(Shapes.circle(1.5, 30))
     .start();
+
 ```
 
-Animated Shapes `(AnimatedShapes)`
+Animated Shapes (`AnimatedShapes`)
 - `rotatingCircle(radius, points, rotationSpeed)`
 - `rotatingSphere(radius, points, rotationSpeed)`
 
 ```Java
-Particles.particle(Particle.END_ROD)
-    .at(location)
-    .shape(AnimatedShapes.rotatingCircle(2, 50, 0.1))
-    .everyTicks(2)
-    .repeat(200)
+Particles.of(Particle.END_ROD)
+    .spawnAt(location)
+    .usingShape(AnimatedShapes.rotatingCircle(2, 50, 0.1))
+    .every(2)
+    .duration(200)
     .start();
 ```
 
 ## Repetition and Timing:
-You can control how often the particle effect updates and how long it runs.
-
-- `.everyTicks(ticks)` — Set how often to update (default: `1` tick).
-- `.repeat(ticks)` — Set total duration. Use `-1` to run indefinitely.
+Control how often and how long the effect runs:
+- `.every(ticks)` — Sets how often the effect updates (default: `1` tick)
+- `.duration(ticks)` — Total duration of the effect. Use `-1` to run forever.
 
 ```Java
-Particles.particle(Particle.HEART)
-    .at(location)
-    .shape(Shapes.pyramid(2, 16))
-    .everyTicks(10)
-    .repeat(100)
+Particles.of(Particle.HEART)
+    .spawnAt(location)
+    .usingShape(Shapes.pyramid(2, 16))
+    .every(10)
+    .duration(100)
     .start();
 ```
 
@@ -61,7 +62,7 @@ You can stop the effect dynamically using a condition:
 Particles.particle(Particle.FLAME)
     .at(location)
     .cancelIf(() -> !player.isOnline()) // cancels if the player logs out
-        .start();
+    .start();
 ```
 
 ## Extending with Custom Shapes:
@@ -79,9 +80,9 @@ Shape spiral = origin -> {
     return points;
 };
 
-Particles.particle(Particle.SMOKE_NORMAL)
-    .at(location)
-    .shape(spiral)
+Particles.of(Particle.SMOKE_NORMAL)
+    .spawnAt(location)
+    .usingShape(spiral)
     .start();
 ```
 To animate the shape, override `animate(...)` as well:
@@ -91,7 +92,11 @@ Shape animated = new Shape() {
 
     @Override
     public List<Location> points(Location origin) {
-        // Generate based on angle
+        List<Location> result = new ArrayList<>();
+        double x = Math.cos(angle);
+        double z = Math.sin(angle);
+        result.add(origin.clone().add(x, 0, z));
+        return result;
     }
 
     @Override
