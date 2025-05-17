@@ -6,7 +6,6 @@ import com.github.darksoulq.abyssallib.event.context.item.ItemUseContext;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.registry.Registry;
 import com.github.darksoulq.abyssallib.tag.ItemTag;
-import com.github.darksoulq.abyssallib.tag.Tag;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;

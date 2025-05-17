@@ -5,9 +5,9 @@ import com.github.darksoulq.abyssallib.block.Block;
 import com.github.darksoulq.abyssallib.block.BlockManager;
 import com.github.darksoulq.abyssallib.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.event.context.block.*;
-import com.github.darksoulq.abyssallib.event.custom.AbyssalBlockBreakEvent;
-import com.github.darksoulq.abyssallib.event.custom.AbyssalBlockInteractEvent;
-import com.github.darksoulq.abyssallib.event.custom.AbyssalBlockPlaceEvent;
+import com.github.darksoulq.abyssallib.event.custom.block.AbyssalBlockBreakEvent;
+import com.github.darksoulq.abyssallib.event.custom.block.AbyssalBlockInteractEvent;
+import com.github.darksoulq.abyssallib.event.custom.block.AbyssalBlockPlaceEvent;
 import com.github.darksoulq.abyssallib.item.Item;
 import com.github.darksoulq.abyssallib.loot.LootContext;
 import com.github.darksoulq.abyssallib.loot.LootTable;
@@ -24,11 +24,8 @@ import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.BoundingBox;
-import org.bukkit.util.Vector;
 
 import java.util.List;
-import java.util.Random;
 
 public class BlockEvents {
     @SubscribeEvent

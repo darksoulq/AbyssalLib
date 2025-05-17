@@ -3,11 +3,6 @@ package com.github.darksoulq.abyssallib.util;
 import com.github.darksoulq.abyssallib.gui.AbstractGui;
 import com.github.darksoulq.abyssallib.gui.slot.Slot;
 import com.google.gson.JsonObject;
-import io.papermc.paper.registry.PaperRegistries;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.*;

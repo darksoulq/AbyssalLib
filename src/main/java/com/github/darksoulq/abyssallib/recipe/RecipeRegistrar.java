@@ -2,9 +2,7 @@ package com.github.darksoulq.abyssallib.recipe;
 
 import com.github.darksoulq.abyssallib.recipe.impl.BrewingRecipeImpl;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
-import io.papermc.paper.potion.PaperPotionBrewer;
 import io.papermc.paper.potion.PotionMix;
-import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.potion.PotionBrewer;

@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.event.custom;
+package com.github.darksoulq.abyssallib.event.custom.block;
 
 import com.github.darksoulq.abyssallib.block.Block;
 import org.bukkit.Location;

@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.tag;
 
-import com.github.darksoulq.abyssallib.item.Item;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.registry.object.DeferredObject;

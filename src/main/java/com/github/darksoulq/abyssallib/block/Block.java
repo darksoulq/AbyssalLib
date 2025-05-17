@@ -9,7 +9,6 @@ import com.github.darksoulq.abyssallib.item.Item;
 import com.github.darksoulq.abyssallib.loot.LootTable;
 import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.tag.BlockTag;
-import com.github.darksoulq.abyssallib.tag.ItemTag;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;

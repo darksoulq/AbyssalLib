@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.tag;
 
 import com.github.darksoulq.abyssallib.block.Block;
-import com.github.darksoulq.abyssallib.item.Item;
 
 import java.util.HashSet;
 import java.util.Set;

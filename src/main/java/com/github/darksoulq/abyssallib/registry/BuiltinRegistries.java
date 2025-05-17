@@ -7,7 +7,6 @@ import com.github.darksoulq.abyssallib.recipe.CustomRecipe;
 import com.github.darksoulq.abyssallib.recipe.Recipe;
 import com.github.darksoulq.abyssallib.tag.BlockTag;
 import com.github.darksoulq.abyssallib.tag.ItemTag;
-import com.github.darksoulq.abyssallib.tag.Tag;
 
 public class BuiltinRegistries {
 

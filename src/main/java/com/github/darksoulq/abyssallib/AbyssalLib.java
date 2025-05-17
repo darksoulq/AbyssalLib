@@ -10,7 +10,6 @@ import com.github.darksoulq.abyssallib.gui.GuiManager;
 import com.github.darksoulq.abyssallib.item.Items;
 import com.github.darksoulq.abyssallib.recipe.RecipeLoader;
 import com.github.darksoulq.abyssallib.recipe.impl.*;
-import com.github.darksoulq.abyssallib.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.resource.PackServer;
 import com.github.darksoulq.abyssallib.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.resource.glyph.Glyph;
@@ -22,8 +21,6 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.List;
 
 public final class AbyssalLib extends JavaPlugin {
     public static String MODID = "abyssallib";

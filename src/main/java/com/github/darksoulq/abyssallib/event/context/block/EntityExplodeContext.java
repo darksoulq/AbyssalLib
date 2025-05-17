@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.event.context.block;
 
 import com.github.darksoulq.abyssallib.event.context.Context;
-import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 
 public class EntityExplodeContext extends Context<EntityExplodeEvent> implements ExplodeContext {
