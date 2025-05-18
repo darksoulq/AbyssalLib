@@ -22,6 +22,7 @@ public class Glyph {
     private static final List<Glyph> REGISTERED_GLYPHS = new ArrayList<>();
     private static char nextUnicode = '\ue000';
 
+    public final JavaPlugin plugin;
     private final ResourceLocation id;
     private final String placeholder;
     private final boolean inChat;
@@ -46,8 +47,9 @@ public class Glyph {
         this.height = height;
         this.ascent = ascent;
         this.inChat = inChat;
+        this.plugin = plugin;
 
-        register(plugin, this);
+        register(this);
     }
 
     public ResourceLocation id() { return id; }
@@ -62,12 +64,11 @@ public class Glyph {
     }
 
     /**
-     * Registers a glyph, adding it to the placeholder map and assigning a unique Unicode.
-     *
-     * @param plugin the plugin instance
+     * Registers a glyph, adding it to the placeholder map and assigning a unique Unicode
+     * .
      * @param glyph  the glyph to register
      */
-    public static void register(JavaPlugin plugin, Glyph glyph) {
+    public static void register(Glyph glyph) {
         if (PLACEHOLDER_MAP.containsKey(glyph.placeholder())) {
             AbyssalLib.getInstance().getLogger().severe("Placeholder already registered: " + glyph.placeholder());
             return;
@@ -85,7 +86,7 @@ public class Glyph {
         PLACEHOLDER_MAP.put(glyph.placeholder(), glyph.unicode());
         REGISTERED_GLYPHS.add(glyph);
 
-        GlyphWriter.write(plugin, glyph);
+        GlyphWriter.registerGlyph(glyph);
     }
 
     /**

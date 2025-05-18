@@ -13,6 +13,7 @@ import com.github.darksoulq.abyssallib.recipe.impl.*;
 import com.github.darksoulq.abyssallib.resource.PackServer;
 import com.github.darksoulq.abyssallib.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.resource.glyph.Glyph;
+import com.github.darksoulq.abyssallib.resource.glyph.GlyphWriter;
 import com.github.darksoulq.abyssallib.tag.BuiltinTags;
 import com.github.darksoulq.abyssallib.util.ChatInputHandler;
 import com.github.darksoulq.abyssallib.util.Metrics;
@@ -29,6 +30,7 @@ public final class AbyssalLib extends JavaPlugin {
     public static GuiManager GUI_MANAGER;
     public static ConfigSpec CONFIG;
     public static ChatInputHandler CHAT_INPUT_HANDLER;
+    public static EventBus EVENT_BUS;
 
     public static boolean isRPManagerInstalled = false;
 
@@ -45,19 +47,19 @@ public final class AbyssalLib extends JavaPlugin {
         BlockManager.INSTANCE.load();
         GUI_MANAGER = new GuiManager();
         CHAT_INPUT_HANDLER = new ChatInputHandler();
-        EventBus bus = new EventBus(this);
+        EVENT_BUS = new EventBus(this);
         RecipeLoader.init();
 
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
             CommandBus.init(commands.registrar().getDispatcher());
         });
 
-        bus.register(CHAT_INPUT_HANDLER);
-        bus.register(new PlayerEvents());
-        bus.register(new BlockEvents());
-        bus.register(new ItemEvents());
-        bus.register(new ServerEvents());
-        bus.register(new GuiEvents());
+        EVENT_BUS.register(CHAT_INPUT_HANDLER);
+        EVENT_BUS.register(new PlayerEvents());
+        EVENT_BUS.register(new BlockEvents());
+        EVENT_BUS.register(new ItemEvents());
+        EVENT_BUS.register(new ServerEvents());
+        EVENT_BUS.register(new GuiEvents());
 
         BuiltinTags.TAGS.apply();
         registerRecipeDeserializers();
@@ -70,17 +72,20 @@ public final class AbyssalLib extends JavaPlugin {
         Config.register(MODID, CONFIG);
 
         if (CONFIG.getBoolean("resource-pack.autohost")) {
-            bus.register(new PackEvent());
+            EVENT_BUS.register(new PackEvent());
             PACK_SERVER = new PackServer();
             PACK_SERVER.start(CONFIG.getString("resource-pack.ip"), CONFIG.getInt("resource-pack.port"));
         }
 
-        new ResourcePack(this, MODID).generate();
         // Apply registries
         Items.ITEMS.apply();
 
         new Glyph(this, new ResourceLocation(MODID, "items_ui_main"), 129, 13, false);
         new Glyph(this, new ResourceLocation(MODID, "items_ui_display"), 129, 13, false);
+
+        GlyphWriter.write(MODID);
+
+        new ResourcePack(this, MODID).generate();
     }
 
     @Override

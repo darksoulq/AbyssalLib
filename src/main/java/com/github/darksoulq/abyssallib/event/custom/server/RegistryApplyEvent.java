@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.event.custom;
+package com.github.darksoulq.abyssallib.event.custom.server;
 
 import com.github.darksoulq.abyssallib.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.registry.Registry;

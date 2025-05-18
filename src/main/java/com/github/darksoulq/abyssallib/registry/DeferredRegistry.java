@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.registry;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.block.Block;
-import com.github.darksoulq.abyssallib.event.custom.RegistryApplyEvent;
+import com.github.darksoulq.abyssallib.event.custom.server.RegistryApplyEvent;
 import com.github.darksoulq.abyssallib.item.Item;
 import com.github.darksoulq.abyssallib.registry.object.DeferredObject;
 import com.github.darksoulq.abyssallib.util.ResourceLocation;
