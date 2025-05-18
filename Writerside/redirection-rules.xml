@@ -26,4 +26,8 @@
         <description>Created after removal of "ChestGui" from abyssallib-docs</description>
         <accepts>ChestGui.html</accepts>
     </rule>
+    <rule id="72d90a75">
+        <description>Created after removal of "Glyphs" from abyssallib-docs</description>
+        <accepts>Glyphs.html</accepts>
+    </rule>
 </rules>

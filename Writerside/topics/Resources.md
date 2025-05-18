@@ -1,7 +1,11 @@
 # Resource Pack Generation
 ## How to Generate Your Resource Pack
 
-To generate your mod's resource pack, you **must** call the following line during plugin initialization (e.g., inside `onEnable()`, preferably at top):
+NOTE:
+
+`GlyphWriter.writeAll(MODID)` MUST be called before the generate method of `ResourcePack` for glyphs to be properly in the generated zip!
+
+To generate your mod's resource pack, you **must** call the following line during plugin initialization (e.g., inside `onEnable()`, preferably at bottom):
 
 ```java
 new Resourcepack(this, MODID).generate();
