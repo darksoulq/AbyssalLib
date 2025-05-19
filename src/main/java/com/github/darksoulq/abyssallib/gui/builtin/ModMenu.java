@@ -273,8 +273,8 @@ public class ModMenu extends ChestGui {
 
         for (int i = 0; i < pageItems.size(); i++) {
             Item abyssalItem = pageItems.get(i);
-            slot(Type.TOP, new ButtonSlot(i, abyssalItem, ctx -> {
-                ctx.player.give(abyssalItem);
+            slot(Type.TOP, new ButtonSlot(i, abyssalItem.stack(), ctx -> {
+                ctx.player.give(abyssalItem.stack());
             }));
         }
         slot(Type.TOP, new ButtonSlot(49, ItemStackHelper.named(Material.AIR, "Back"), ctx -> {

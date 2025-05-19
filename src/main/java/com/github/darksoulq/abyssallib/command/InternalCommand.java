@@ -85,7 +85,7 @@ public class InternalCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        player.getInventory().addItem(BuiltinRegistries.ITEMS.get(namespaceId.asString()));
+        player.getInventory().addItem(BuiltinRegistries.ITEMS.get(namespaceId.asString()).stack());
 
         return Command.SINGLE_SUCCESS;
     }

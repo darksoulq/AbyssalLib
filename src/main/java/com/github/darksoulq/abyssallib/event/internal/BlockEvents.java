@@ -65,7 +65,7 @@ public class BlockEvents {
             if (!(event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
                 event.setExpToDrop(block.exp());
                 if (lootTable == null && item != null) {
-                    loc.getWorld().dropItem(loc, item);
+                    loc.getWorld().dropItem(loc, item.stack());
                 } else if (lootTable != null) {
                     LootContext context = new LootContext();
                     List<ItemStack> drops = lootTable.generate(context);

@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * various item actions like right-click, left-click, and use on blocks or entities. The item also allows
  * for storing and retrieving custom data.
  */
-public class Item extends ItemStack {
+public class Item {
+    private final ItemStack stack;
     private final ResourceLocation id;
     private final ItemSettings settings;
 
@@ -36,10 +37,10 @@ public class Item extends ItemStack {
      * @param material the material for the item
      */
     public Item(ResourceLocation id, Material material) {
-        super(material);
+        stack = new ItemStack(material);
         this.id = id;
-        this.setData(DataComponentTypes.ITEM_NAME, Component.translatable("item." + id.namespace() + "." + id.path()));
-        this.setData(DataComponentTypes.ITEM_MODEL, id.toNamespace());
+        stack.setData(DataComponentTypes.ITEM_NAME, Component.translatable("item." + id.namespace() + "." + id.path()));
+        stack.setData(DataComponentTypes.ITEM_MODEL, id.toNamespace());
         writeIdTag();
         this.settings = new ItemSettings(this);
     }
@@ -48,7 +49,7 @@ public class Item extends ItemStack {
      * Writes the custom ID tag to the item NBT data.
      */
     private void writeIdTag() {
-        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(this);
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CompoundTag tag = new CompoundTag();
 
         CompoundTag custom = tag.getCompoundOrEmpty("CustomData");
@@ -57,7 +58,7 @@ public class Item extends ItemStack {
 
         nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         ItemStack updated = CraftItemStack.asBukkitCopy(nms);
-        this.setItemMeta(updated.getItemMeta());
+        stack.setItemMeta(updated.getItemMeta());
     }
 
     /**
@@ -125,7 +126,7 @@ public class Item extends ItemStack {
      * @param value the value of the custom data
      */
     public void data(String key, String value) {
-        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(this);
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CustomData dta = nms.get(DataComponents.CUSTOM_DATA);
         if (dta == null) {
             return;
@@ -138,7 +139,7 @@ public class Item extends ItemStack {
                 custom.putString(key, value);
                 tag.put("CustomData", custom);
                 nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                this.setItemMeta(CraftItemStack.asBukkitCopy(nms).getItemMeta());
+                stack.setItemMeta(CraftItemStack.asBukkitCopy(nms).getItemMeta());
             }
         }
     }
@@ -150,7 +151,7 @@ public class Item extends ItemStack {
      * @return the value of the custom data, or null if not present
      */
     public String data(String key) {
-        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(this);
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CustomData data = nms.get(DataComponents.CUSTOM_DATA);
         if (data == null) return null;
         CompoundTag tag = data.copyTag();
@@ -171,6 +172,7 @@ public class Item extends ItemStack {
     public ItemSettings settings() {
         return settings;
     }
+    public ItemStack stack() { return stack; }
 
     /**
      * Attempts to retrieve a registered {@link Item} instance from the given {@link ItemStack}.
@@ -223,7 +225,7 @@ public class Item extends ItemStack {
      */
     @Override
     public @NotNull Item clone() {
-        return new Item(id, getType());
+        return new Item(id, stack.getType());
     }
 
     /**
