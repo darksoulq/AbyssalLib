@@ -54,7 +54,7 @@ public class Serialization {
              ObjectOutputStream oos = new ObjectOutputStream(output)) {
 
             Map<Integer, Slot> slots = new HashMap<>();
-            for (Slot slot : gui.slots.TOP) {
+            for (Slot slot : gui.sharedSlots.TOP) {
                 slots.put(slot.index(), slot);
             }
             oos.writeInt(slots.size());
@@ -89,7 +89,7 @@ public class Serialization {
                 int index = ois.readInt();
                 ItemStack item = (ItemStack) ois.readObject();
 
-                Slot slot = gui.slots.TOP.get(index);
+                Slot slot = gui.sharedSlots.TOP.get(index);
                 if (slot != null) {
                     slot.item(item);
                 }

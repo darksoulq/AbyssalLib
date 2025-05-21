@@ -16,45 +16,43 @@ import java.util.Map;
 
 /**
  * A GUI that allows users to perform a search operation by entering text.
- * <p>
+ *
  * This class provides a search interface for players with an optional input slot for entering search terms.
  * It backs up the player's original inventory and restores it after closing the GUI.
  */
 public abstract class SearchGui extends AbstractGui {
     private static final Map<Player, ItemStack[]> backupMap = new HashMap<>();
 
-    private String text;
+    // Track the current search text per player (viewer)
+    private final Map<Player, String> texts = new HashMap<>();
+
     private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().stack();
     private final StaticSlot inputSlot;
 
     /**
-     * Constructs a new SearchGui with a player and a {@link GuiTexture} for the GUI's texture.
+     * Constructs a new SearchGui with a {@link GuiTexture} for the GUI's texture.
      *
-     * @param player the player who will view the GUI
      * @param texture the texture that defines the GUI title and appearance
      */
-    public SearchGui(Player player, GuiTexture texture) {
-        super(player, texture.getTitle(), MenuType.ANVIL);
+    public SearchGui(GuiTexture texture) {
+        super(texture.getTitle(), MenuType.ANVIL);
 
-        invisItem.editMeta((itemMeta -> {
-            itemMeta.itemName(Component.text().build());
-        }));
+        invisItem.editMeta(itemMeta -> itemMeta.itemName(Component.empty()));
         inputSlot = new StaticSlot(0, invisItem);
     }
+
     /**
-     * Constructs a new SearchGui with a player and a custom title.
+     * Constructs a new SearchGui with a custom title.
      *
-     * @param player the player who will view the GUI
      * @param title the title of the GUI
      */
-    public SearchGui(Player player, Component title) {
-        super(player, title, MenuType.ANVIL);
+    public SearchGui(Component title) {
+        super(title, MenuType.ANVIL);
 
-        invisItem.editMeta((itemMeta -> {
-            itemMeta.itemName(Component.text().build());
-        }));
+        invisItem.editMeta(itemMeta -> itemMeta.itemName(Component.empty()));
         inputSlot = new StaticSlot(0, invisItem);
     }
+
     /**
      * Initializes the search GUI with custom logic. This method must be implemented in subclasses.
      *
@@ -65,29 +63,30 @@ public abstract class SearchGui extends AbstractGui {
     /**
      * Gets the current search text entered by the player.
      *
+     * @param player the player whose search text to retrieve
      * @return the search text
      */
-    public String text() {
-        return text;
+    public String text(Player player) {
+        return texts.getOrDefault(player, "");
     }
 
     /**
-     * Initializes the GUI by setting up the input slot and backing up the player's inventory.
+     * Initializes the GUI for a specific player.
      *
      * @param player the player who is interacting with the GUI
      */
     @Override
     public void init(Player player) {
-        text = "";
+        texts.put(player, "");
 
-        ItemStack[] originalContents = inventory(Type.BOTTOM).getContents();
+        ItemStack[] originalContents = inventory(player, Type.BOTTOM).getContents();
         backupMap.put(player, Arrays.copyOf(originalContents, originalContents.length));
 
         if (allowInput()) {
-            slot(Type.TOP, inputSlot);
+            slot(player, Type.TOP, inputSlot);
         }
 
-        inventory(Type.BOTTOM).clear();
+        inventory(player, Type.BOTTOM).clear();
         _init(player);
     }
 
@@ -107,20 +106,23 @@ public abstract class SearchGui extends AbstractGui {
      * @param ctx the context of the GUI close event
      */
     public void _onClose(GuiCloseContext ctx) {}
+
     @Override
     public void onClose(GuiCloseContext ctx) {
-        slots.TOP.remove(inputSlot);
-        inventory(Type.TOP).setContents(new ItemStack[] {null, null, null});
-        restoreBottomMenu();
+        Player player = ctx.player;
+        playerSlots.getOrDefault(player, sharedSlots).TOP.remove(inputSlot);
+        inventory(player, Type.TOP).setContents(new ItemStack[] {null, null, null});
+        restoreBottomMenu(player);
+        texts.remove(player);
         _onClose(ctx);
     }
 
     /**
      * Restores the player's original inventory from the backup.
+     *
+     * @param player the player to restore inventory for
      */
-    public void restoreBottomMenu() {
-        Player player = (Player) view().getPlayer();
-
+    public void restoreBottomMenu(Player player) {
         if (backupMap.containsKey(player)) {
             player.getInventory().setContents(backupMap.get(player));
             backupMap.remove(player);

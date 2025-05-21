@@ -5,48 +5,74 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Manages the lifecycle of GUIs opened by players, including opening and ticking logic.
+ * Manages opening, closing, and ticking of GUIs.
+ * Supports shared GUIs across multiple players, and tracks ticking GUIs that require regular updates.
  */
 public class GuiManager {
+
+    /**
+     * A map of currently open GUIs per player.
+     */
     public final Map<Player, AbstractGui> openGuis = new HashMap<>();
 
     /**
-     * Constructs the GUI manager and starts the GUI ticking task. (called in {@link AbyssalLib}, access by {@link  AbyssalLib#GUI_MANAGER}
+     * A set of GUIs that require ticking (e.g., for animations or live updates).
+     */
+    private final Set<AbstractGui> tickingGuis = new HashSet<>();
+
+    /**
+     * Constructs the GuiManager and starts the ticking loop.
      */
     public GuiManager() {
         startTicking();
     }
 
     /**
-     * Opens a new GUI for the player associated with the given {@link AbstractGui} instance.
-     * <p>
-     * If a GUI is already open for the player, it will be closed before the new one is opened.
+     * Opens a GUI for a player. Closes any currently open GUI for that player.
      *
-     * @param gui The GUI to open.
+     * @param player the player for whom the GUI should be opened
+     * @param gui    the GUI to open
      */
-    public void openGui(AbstractGui gui) {
-        if (openGuis.containsKey((Player) gui.view().getPlayer())) {
-            openGuis.get((Player) gui.view().getPlayer()).view().close();
-            openGuis.remove((Player) gui.view().getPlayer());
+    public void openGui(Player player, AbstractGui gui) {
+        if (openGuis.containsKey(player)) {
+            AbstractGui oldGui = openGuis.remove(player);
+            oldGui.close(player);
         }
-        openGuis.put((Player) gui.view().getPlayer(), gui);
-        gui.view().open();
-        gui.init((Player) gui.view().getPlayer());
+
+        openGuis.put(player, gui);
+        tickingGuis.add(gui);
+        gui.open(player);
     }
 
     /**
-     * Starts a repeating task that calls {@link AbstractGui#tick()} on all open GUIs every server tick.
-     * This is used for updating dynamic GUI elements.
+     * Closes the GUI currently open for the given player.
+     * Removes the GUI from the ticking set if it has no remaining viewers.
+     *
+     * @param player the player whose GUI should be closed
+     */
+    public void closeGui(Player player) {
+        AbstractGui gui = openGuis.remove(player);
+        if (gui != null) {
+            gui.close(player);
+            if (gui.viewers().isEmpty()) {
+                tickingGuis.remove(gui);
+            }
+        }
+    }
+
+    /**
+     * Starts the ticking loop that calls {@code tick()} on all ticking GUIs every tick (1L interval).
      */
     public void startTicking() {
         new BukkitRunnable() {
             @Override
             public void run() {
-                for (Map.Entry<Player, AbstractGui> entry : openGuis.entrySet()) {
-                    AbstractGui gui = entry.getValue();
+                for (AbstractGui gui : tickingGuis) {
                     gui.tick();
                 }
             }

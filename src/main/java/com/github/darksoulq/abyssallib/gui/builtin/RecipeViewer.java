@@ -15,11 +15,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class RecipeViewer extends ChestGui {
-    private String selectedRecipeId = "";
+    private final String selectedRecipeId;
 
-    public RecipeViewer(Player player, String recipeId) {
-        super(player, Component.text("Recipe - " + recipeId), 6);
-        selectedRecipeId = recipeId;
+    public RecipeViewer(String recipeId) {
+        super(Component.text("Recipe - " + recipeId), 6);
+        this.selectedRecipeId = recipeId;
     }
 
     @Override
@@ -28,13 +28,9 @@ public class RecipeViewer extends ChestGui {
     }
 
     private void fillGui(Player player) {
-        slots.TOP.clear();
-        inventory(Type.TOP).clear();
+        sharedSlots.TOP.clear();
+        inventory(player, Type.TOP).clear();
 
-        fillRecipe();
-    }
-
-    private void fillRecipe() {
         Recipe recipe = BuiltinRegistries.RECIPES.get(selectedRecipeId);
         if (recipe == null) return;
 
@@ -75,7 +71,7 @@ public class RecipeViewer extends ChestGui {
         }
 
         slot(Type.TOP, new ButtonSlot(49, named(Material.AIR, "Back"), ctx -> {
-            AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu(ctx.player));
+            AbyssalLib.GUI_MANAGER.openGui(ctx.player, new RecipeMainMenu());
         }));
     }
 

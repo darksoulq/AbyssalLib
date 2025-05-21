@@ -51,18 +51,14 @@ public class InternalCommand {
                 )
                 .then(Commands.literal("modmenu")
                         .executes(ctx -> {
-                            AbyssalLib.GUI_MANAGER.openGui(new ModMenu((Player) ctx.getSource().getSender()));
+                            AbyssalLib.GUI_MANAGER.openGui((Player) ctx.getSource().getSender(), new ModMenu());
                             return Command.SINGLE_SUCCESS;
                         })
                 )
                 .then(Commands.literal("recipes")
-                        .executes(ctx -> {
-                            AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu((Player) ctx.getSource().getSender()));
-                            return Command.SINGLE_SUCCESS;
-                        })
                         .then(Commands.literal("open")
                                 .executes(ctx -> {
-                                    AbyssalLib.GUI_MANAGER.openGui(new RecipeMainMenu((Player) ctx.getSource().getSender()));
+                                    AbyssalLib.GUI_MANAGER.openGui((Player) ctx.getSource().getSender(), new RecipeMainMenu());
                                     return Command.SINGLE_SUCCESS;
                                 })
                                 .then(Commands.argument("recipe_id", ArgumentTypes.namespacedKey())
@@ -112,7 +108,7 @@ public class InternalCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        AbyssalLib.GUI_MANAGER.openGui(new RecipeViewer(player, namespacedKey.asString()));
+        AbyssalLib.GUI_MANAGER.openGui(player, new RecipeViewer(namespacedKey.asString()));
 
         return Command.SINGLE_SUCCESS;
     }
