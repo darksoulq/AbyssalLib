@@ -16,43 +16,43 @@ import java.util.Map;
 
 /**
  * A GUI that allows users to perform a search operation by entering text.
- *
+ * <p>
  * This class provides a search interface for players with an optional input slot for entering search terms.
  * It backs up the player's original inventory and restores it after closing the GUI.
  */
 public abstract class SearchGui extends AbstractGui {
     private static final Map<Player, ItemStack[]> backupMap = new HashMap<>();
 
-    // Track the current search text per player (viewer)
     private final Map<Player, String> texts = new HashMap<>();
-
     private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().stack();
     private final StaticSlot inputSlot;
 
     /**
-     * Constructs a new SearchGui with a {@link GuiTexture} for the GUI's texture.
+     * Constructs a new SearchGui with a player and a {@link GuiTexture} for the GUI's texture.
      *
      * @param texture the texture that defines the GUI title and appearance
      */
     public SearchGui(GuiTexture texture) {
         super(texture.getTitle(), MenuType.ANVIL);
 
-        invisItem.editMeta(itemMeta -> itemMeta.itemName(Component.empty()));
+        invisItem.editMeta((itemMeta -> {
+            itemMeta.itemName(Component.text().build());
+        }));
         inputSlot = new StaticSlot(0, invisItem);
     }
-
     /**
-     * Constructs a new SearchGui with a custom title.
+     * Constructs a new SearchGui with a player and a custom title.
      *
      * @param title the title of the GUI
      */
     public SearchGui(Component title) {
         super(title, MenuType.ANVIL);
 
-        invisItem.editMeta(itemMeta -> itemMeta.itemName(Component.empty()));
+        invisItem.editMeta((itemMeta -> {
+            itemMeta.itemName(Component.text().build());
+        }));
         inputSlot = new StaticSlot(0, invisItem);
     }
-
     /**
      * Initializes the search GUI with custom logic. This method must be implemented in subclasses.
      *
@@ -63,7 +63,6 @@ public abstract class SearchGui extends AbstractGui {
     /**
      * Gets the current search text entered by the player.
      *
-     * @param player the player whose search text to retrieve
      * @return the search text
      */
     public String text(Player player) {
@@ -71,7 +70,7 @@ public abstract class SearchGui extends AbstractGui {
     }
 
     /**
-     * Initializes the GUI for a specific player.
+     * Initializes the GUI by setting up the input slot and backing up the player's inventory.
      *
      * @param player the player who is interacting with the GUI
      */
@@ -83,7 +82,7 @@ public abstract class SearchGui extends AbstractGui {
         backupMap.put(player, Arrays.copyOf(originalContents, originalContents.length));
 
         if (allowInput()) {
-            slot(player, Type.TOP, inputSlot);
+            slot(Type.TOP, inputSlot);
         }
 
         inventory(player, Type.BOTTOM).clear();
@@ -106,21 +105,17 @@ public abstract class SearchGui extends AbstractGui {
      * @param ctx the context of the GUI close event
      */
     public void _onClose(GuiCloseContext ctx) {}
-
     @Override
     public void onClose(GuiCloseContext ctx) {
-        Player player = ctx.player;
-        playerSlots.getOrDefault(player, sharedSlots).TOP.remove(inputSlot);
-        inventory(player, Type.TOP).setContents(new ItemStack[] {null, null, null});
-        restoreBottomMenu(player);
-        texts.remove(player);
+        getSlotList(ctx.player, Type.TOP).remove(inputSlot);
+        inventory(ctx.player, Type.TOP).setContents(new ItemStack[] {null, null, null});
+        restoreBottomMenu(ctx.player);
+        viewers().remove(ctx.player);
         _onClose(ctx);
     }
 
     /**
      * Restores the player's original inventory from the backup.
-     *
-     * @param player the player to restore inventory for
      */
     public void restoreBottomMenu(Player player) {
         if (backupMap.containsKey(player)) {

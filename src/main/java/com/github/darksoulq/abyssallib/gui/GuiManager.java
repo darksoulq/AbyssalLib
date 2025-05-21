@@ -39,10 +39,7 @@ public class GuiManager {
      * @param gui    the GUI to open
      */
     public void openGui(Player player, AbstractGui gui) {
-        if (openGuis.containsKey(player)) {
-            AbstractGui oldGui = openGuis.remove(player);
-            oldGui.close(player);
-        }
+        closeGui(player);
 
         openGuis.put(player, gui);
         tickingGuis.add(gui);

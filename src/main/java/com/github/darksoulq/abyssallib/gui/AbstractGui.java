@@ -191,9 +191,9 @@ public abstract class AbstractGui {
             for (Slot slot : holder.TOP) slot.onTick(this);
             for (Slot slot : holder.BOTTOM) slot.onTick(this);
             drawFor(player);
+            onTick(player);
         }
 
-        onTick();
     }
 
     /**
@@ -282,7 +282,7 @@ public abstract class AbstractGui {
     /**
      * Called every tick. Can be overridden for GUI logic.
      */
-    public void onTick() {}
+    public void onTick(Player player) {}
 
     /**
      * Called when a player closes the GUI. Can be overridden.

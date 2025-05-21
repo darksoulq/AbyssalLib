@@ -51,26 +51,26 @@ public class RecipeViewer extends ChestGui {
                 int y = i / 3;
                 if (y < 3) {
                     int slotIndex = x + y * 9 + 10;
-                    slot(Type.TOP, new StaticSlot(slotIndex, inputs.get(i)));
+                    slot(player, Type.TOP, new StaticSlot(slotIndex, inputs.get(i)));
                 }
             }
-            slot(Type.TOP, new StaticSlot(24, shapeless.result));
+            slot(player, Type.TOP, new StaticSlot(24, shapeless.result));
         } else if (recipe instanceof SmeltingRecipeImpl smelting) {
-            slot(Type.TOP, new StaticSlot(20, smelting.input));
-            slot(Type.TOP, new StaticSlot(24, smelting.result));
+            slot(player, Type.TOP, new StaticSlot(20, smelting.input));
+            slot(player, Type.TOP, new StaticSlot(24, smelting.result));
         } else if (recipe instanceof CampfireRecipeImpl campfire) {
-            slot(Type.TOP, new StaticSlot(20, campfire.input));
-            slot(Type.TOP, new StaticSlot(24, campfire.result));
+            slot(player, Type.TOP, new StaticSlot(20, campfire.input));
+            slot(player, Type.TOP, new StaticSlot(24, campfire.result));
         } else if (recipe instanceof SmithingRecipeImpl smithing) {
-            slot(Type.TOP, new StaticSlot(19, smithing.base));
-            slot(Type.TOP, new StaticSlot(20, smithing.addition));
-            slot(Type.TOP, new StaticSlot(24, smithing.result));
+            slot(player, Type.TOP, new StaticSlot(19, smithing.base));
+            slot(player, Type.TOP, new StaticSlot(20, smithing.addition));
+            slot(player, Type.TOP, new StaticSlot(24, smithing.result));
         } else if (recipe instanceof StonecuttingRecipeImpl stonecutting) {
-            slot(Type.TOP, new StaticSlot(20, stonecutting.input));
-            slot(Type.TOP, new StaticSlot(24, stonecutting.result));
+            slot(player, Type.TOP, new StaticSlot(20, stonecutting.input));
+            slot(player, Type.TOP, new StaticSlot(24, stonecutting.result));
         }
 
-        slot(Type.TOP, new ButtonSlot(49, named(Material.AIR, "Back"), ctx -> {
+        slot(player, Type.TOP, new ButtonSlot(49, named(Material.AIR, "Back"), ctx -> {
             AbyssalLib.GUI_MANAGER.openGui(ctx.player, new RecipeMainMenu());
         }));
     }
