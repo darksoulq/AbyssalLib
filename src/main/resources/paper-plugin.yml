@@ -4,6 +4,8 @@ main: com.github.darksoulq.abyssallib.AbyssalLib
 api-version: '1.21'
 authors: [ DarkSoul ]
 
+bootstrapper: com.github.darksoulq.abyssallib.Bootstrap
+
 dependencies:
   server:
     ResourcePackManager:
