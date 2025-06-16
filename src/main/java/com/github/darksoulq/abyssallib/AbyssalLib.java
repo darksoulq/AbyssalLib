@@ -92,7 +92,7 @@ public final class AbyssalLib extends JavaPlugin {
 
         ItemDefinition def = ns.itemDefinition("test", root, false);
 
-        rp.register();
+        rp.register(false);
     }
 
     @Override
