@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.level.inventory.gui.impl;
 
 import com.github.darksoulq.abyssallib.server.event.context.gui.GuiCloseContext;
-import com.github.darksoulq.abyssallib.server.resource.glyph.GuiTexture;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.AbstractGui;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.slot.StaticSlot;
 import com.github.darksoulq.abyssallib.world.level.item.Items;
@@ -27,19 +26,6 @@ public abstract class SearchGui extends AbstractGui {
     private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().stack();
     private final StaticSlot inputSlot;
 
-    /**
-     * Constructs a new SearchGui with a player and a {@link GuiTexture} for the GUI's texture.
-     *
-     * @param texture the texture that defines the GUI title and appearance
-     */
-    public SearchGui(GuiTexture texture) {
-        super(texture.getTitle(), MenuType.ANVIL);
-
-        invisItem.editMeta((itemMeta -> {
-            itemMeta.itemName(Component.text().build());
-        }));
-        inputSlot = new StaticSlot(0, invisItem);
-    }
     /**
      * Constructs a new SearchGui with a player and a custom title.
      *

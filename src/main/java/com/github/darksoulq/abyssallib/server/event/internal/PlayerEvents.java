@@ -4,7 +4,6 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.player.PlayerEnterWaterEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.player.PlayerExitWaterEvent;
-import com.github.darksoulq.abyssallib.server.resource.glyph.Glyph;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
@@ -24,19 +23,6 @@ import org.bukkit.util.Vector;
 import java.util.HashMap;
 
 public class PlayerEvents {
-
-    @SubscribeEvent
-    public void onChat(AsyncChatEvent e) {
-        Component result = e.message();
-        for (String placeholder : Glyph.getChatMap().keySet()) {
-            result = e.message().replaceText(TextReplacementConfig.builder()
-                    .matchLiteral(placeholder)
-                    .replacement(Glyph.getChatMap().get(placeholder).toString())
-                    .build());
-        }
-
-        e.message(result);
-    }
 
     @SubscribeEvent
     public void onMove(PlayerMoveEvent event) {
@@ -59,11 +45,6 @@ public class PlayerEvents {
             PlayerExitWaterEvent exitEvent = new PlayerExitWaterEvent(player, toBlock.getLocation());
             Bukkit.getServer().getPluginManager().callEvent(exitEvent);
         }
-    }
-
-    @SubscribeEvent
-    public void onJoin(PlayerJoinEvent event) {
-        event.getPlayer().addCustomChatCompletions(Glyph.getChatMap().keySet().stream().sorted().toList());
     }
 
     @SubscribeEvent

@@ -1,117 +1,141 @@
 package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackDeleteEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.util.FileUtils;
-import com.google.gson.*;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+/**
+ * Handles creation, namespacing, and compilation of a resource pack.
+ * Output is written to a ZIP at {@code pluginFolder/pack/output.zip}.
+ */
 public class ResourcePack {
 
-    private final JavaPlugin plugin;
-    private final String modID;
-    private final Path outputZip;
-    private final File packGenFolder;
-    public static final Map<String, String> hashMap = new HashMap<>();
+    /** Plugin that owns this pack. */
+    private final Plugin plugin;
+
+    /** The modid. */
+    private final String modid;
+
+    /** Output path: {@code <plugin>/pack/resourcepack.zip} */
+    private final Path outputFile;
+
+    /** Files to write into the zip. */
+    private final Map<String, byte[]> files = new TreeMap<>();
+
+    /** Namespace containers for assets. */
+    private final Map<String, Namespace> namespaces = new HashMap<>();
+
+    /** Tracks UUIDs for registered packs (used by the sending server). */
     public static final Map<String, UUID> uuidMap = new HashMap<>();
 
-    public ResourcePack(JavaPlugin plugin, String modID) {
-        this.plugin = plugin;
-        this.modID = modID;
-        this.outputZip = plugin.getDataFolder().toPath().resolve("pack/resourcepack.zip");
-        this.packGenFolder = new File(outputZip.getParent().toFile(), "resourcepack");
+    /** Tracks SHA1 hashes of compiled packs. */
+    public static final Map<String, String> hashMap = new HashMap<>();
 
-        AbyssalLib.EVENT_BUS.register(this);
+    /**
+     * Creates a new resource pack instance.
+     *
+     * @param plugin Owning plugin
+     * @param modid     The modid
+     */
+    public ResourcePack(@NotNull Plugin plugin, @NotNull String modid) {
+        this.plugin = plugin;
+        this.modid = modid;
+        this.outputFile = plugin.getDataFolder().toPath().resolve("pack").resolve("resourcepack.zip");
+
+        uuidMap.put(modid, UUID.randomUUID());
     }
 
-    public void generate() {
-        try {
-            if (!outputZip.toFile().exists()) {
-                Files.createDirectories(outputZip.getParent());
-                FileUtils.createDirectories(packGenFolder);
-                File mcMetaF = new File(packGenFolder, "pack.mcmeta");
-                File assetsFolder = new File(packGenFolder, "assets");
-                FileUtils.createDirectories(assetsFolder);
+    /**
+     * Returns or creates a namespace container.
+     *
+     * @param namespace Domain (e.g. {@code myplugin})
+     * @return Namespace container
+     */
+    public @NotNull Namespace namespace(@NotNull String namespace) {
+        return namespaces.computeIfAbsent(namespace, ns -> new Namespace(ns, this));
+    }
 
-                List<String> filePaths = FileUtils.getFilePathList(plugin, "assets/");
+    /**
+     * @return All namespaces in this pack
+     */
+    public @NotNull Collection<Namespace> getNamespaces() {
+        return namespaces.values();
+    }
 
-                InputStream mcMeta = plugin.getResource("pack.mcmeta");
+    /**
+     * @return Final path to the compiled ZIP
+     */
+    public @NotNull Path getOutputFile() {
+        return outputFile;
+    }
 
-                if (mcMeta == null) {
-                    AbyssalLib.getInstance().getLogger().severe("pack.mcmeta not found for: " + plugin.getName());
-                    return;
+    /**
+     * @return Owning plugin
+     */
+    public @NotNull Plugin getPlugin() {
+        return plugin;
+    }
+
+    /**
+     * Compiles and zips the pack contents asynchronously.
+     * @param override whether to generate zip if it has been generated before
+     */
+    public void compile(boolean override) {
+        if (!override && outputFile.toFile().exists()) return;
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                files.clear();
+
+                for (Namespace ns : namespaces.values()) {
+                    ns.emit(files);
                 }
 
-                FileUtils.saveFile(mcMeta, mcMetaF);
-                for (String filepath : filePaths) {
-                    InputStream inputStream = plugin.getResource(filepath);
-                    if (inputStream == null) {
-                        continue;
-                    }
-                    File file = new File(assetsFolder, filepath.replaceFirst("^assets", ""));
-                    File fileParents = file.getParentFile();
-                    FileUtils.createDirectories(fileParents);
-                    if (filepath.equals("assets/minecraft/font/default.json") && file.exists()) {
-                        try (
-                                InputStream pluginFontStream = inputStream;
-                                Reader pluginReader = new InputStreamReader(pluginFontStream);
-                                Reader existingReader = new FileReader(file)
-                        ) {
-                            JsonObject pluginJson = JsonParser.parseReader(pluginReader).getAsJsonObject();
-                            JsonObject existingJson = JsonParser.parseReader(existingReader).getAsJsonObject();
+                put("pack.mcmeta", generatePackMeta());
 
-                            JsonArray existingProviders = existingJson.has("providers")
-                                    ? existingJson.getAsJsonArray("providers") : new JsonArray();
-                            JsonArray pluginProviders = pluginJson.has("providers")
-                                    ? pluginJson.getAsJsonArray("providers") : new JsonArray();
-
-                            for (JsonElement element : pluginProviders) {
-                                existingProviders.add(element);
-                            }
-
-                            existingJson.add("providers", existingProviders);
-
-                            try (Writer writer = new FileWriter(file)) {
-                                Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                                gson.toJson(existingJson, writer);
-                            }
-
-                        } catch (IOException e) {
-                            plugin.getLogger().severe("Failed to merge default.json: " + e.getMessage());
-                            e.printStackTrace();
+                try {
+                    Files.createDirectories(outputFile.getParent());
+                    try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(outputFile))) {
+                        for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+                            zip.putNextEntry(new ZipEntry(entry.getKey()));
+                            zip.write(entry.getValue());
+                            zip.closeEntry();
                         }
-                    } else {
-                        FileUtils.saveFile(inputStream, file);
                     }
+
+                    hashMap.put(modid, FileUtils.sha1(outputFile));
+                    AbyssalLib.EVENT_BUS.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
+
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to write resource pack: " + outputFile, e);
                 }
-
-                Bukkit.getScheduler().runTaskLater(AbyssalLib.getInstance(), () -> {
-                    FileUtils.zipFolder(packGenFolder, outputZip.toFile());
-                    plugin.getLogger().info("Generated resource pack at: " + outputZip.toAbsolutePath());
-
-                    ResourcePackGenerateEvent generateEvent = new ResourcePackGenerateEvent(modID, packGenFolder, outputZip.toFile());
-                    AbyssalLib.EVENT_BUS.post(generateEvent);
-
-                }, 20 * 2);
             }
+        }.runTaskAsynchronously(plugin);
+    }
 
-            Bukkit.getScheduler().runTaskLaterAsynchronously(AbyssalLib.getInstance(), () -> {
-                if (AbyssalLib.CONFIG.getBoolean("resource-pack.autohost")) {
-                    hashMap.put(modID, FileUtils.sha1(outputZip));
-                    uuidMap.put(modID, UUID.randomUUID());
-                    AbyssalLib.PACK_SERVER.registerResourcePack(modID, outputZip);
+    /**
+     * Compiles and registers the pack for sending to players.
+     * @param override whether to generate zip if it has been generated before.
+     */
+    public void register(boolean override) {
+        if (!override && outputFile.toFile().exists()) return;
+        compile(override);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (AbyssalLib.PACK_SERVER != null) {
+                    AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
                 } else if (AbyssalLib.isRPManagerInstalled) {
                     ResourcePackManagerAPI.registerResourcePack(
                             plugin.getName(),
@@ -123,34 +147,41 @@ public class ResourcePack {
                             null
                     );
                 }
-            }, 20 * 3);
-
-        } catch (Exception e) {
-            plugin.getLogger().severe("Failed to generate resource pack: " + e.getMessage());
-            e.printStackTrace();
-        }
+            }
+        }.runTaskLaterAsynchronously(plugin, 20);
     }
 
     /**
-     * Listener for resource pack generation to handle deletion.
+     * Adds a raw binary file to the pack.
+     *
+     * @param path Pack-relative path
+     * @param data File data
      */
-    @SubscribeEvent
-    public void onGenerate(ResourcePackGenerateEvent event) {
-        if (!event.modid().equals(this.modID)) return;
+    protected void put(@NotNull String path, byte @NotNull [] data) {
+        files.put(path, data);
+    }
 
-        ResourcePackDeleteEvent deleteEvent = new ResourcePackDeleteEvent(modID, packGenFolder, ResourcePackDeleteEvent.Cause.GENERATE);
-        AbyssalLib.EVENT_BUS.post(deleteEvent);
+    /**
+     * Adds a UTF-8 text file to the pack.
+     *
+     * @param path Pack-relative path
+     * @param text File content
+     */
+    protected void put(@NotNull String path, @NotNull String text) {
+        files.put(path, text.getBytes(StandardCharsets.UTF_8));
+    }
 
-        if (deleteEvent.isCancelled()) {
-            plugin.getLogger().info("Resource pack deletion cancelled for modid: " + modID);
-            return;
-        }
-
-        try {
-            FileUtils.deleteFolder(packGenFolder.toPath());
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to delete resource pack folder: " + e.getMessage());
-            e.printStackTrace();
-        }
+    /**
+     * Builds the default {@code pack.mcmeta} file as a string.
+     *
+     * @return JSON content of pack.mcmeta
+     */
+    private @NotNull String generatePackMeta() {
+        return "{\n" +
+                "  \"pack\": {\n" +
+                "    \"pack_format\": 55,\n" +
+                "    \"description\": \"" + modid + " internal Resource Pack\"\n" +
+                "  }\n" +
+                "}";
     }
 }

@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.level.inventory.gui.impl;
 
 import com.github.darksoulq.abyssallib.server.event.context.gui.GuiCloseContext;
-import com.github.darksoulq.abyssallib.server.resource.glyph.GuiTexture;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.AbstractGui;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.MenuType;
@@ -22,16 +21,6 @@ public abstract class ChestGui extends AbstractGui {
      */
     public ChestGui(Component title, int rows) {
         super(title, typeByRows(rows));
-    }
-
-    /**
-     * Constructs a new ChestGui with a {@link GuiTexture} for the title and a specified number of rows.
-     *
-     * @param texture the texture that defines the GUI title and any other visual elements
-     * @param rows    the number of rows for the inventory (1 to 6)
-     */
-    public ChestGui(GuiTexture texture, int rows) {
-        super(texture.getTitle(), typeByRows(rows));
     }
 
     @Override

@@ -24,12 +24,7 @@ public class ResourcePackGenerateEvent extends Event {
     private final String modid;
 
     /**
-     * The folder containing the generated resource pack contents.
-     */
-    private final File folder;
-
-    /**
-     * The zipped file (if applicable) of the generated resource pack.
+     * The zipped file of the generated resource pack.
      */
     private final File zip;
 
@@ -37,12 +32,10 @@ public class ResourcePackGenerateEvent extends Event {
      * Constructs a new ResourcePackGenerateEvent.
      *
      * @param modid  The mod ID responsible for the generation.
-     * @param folder The folder containing the unzipped resource pack files.
-     * @param zip    The zip file of the resource pack (can be null if not zipped).
+     * @param zip    The zip file of the resource pack.
      */
-    public ResourcePackGenerateEvent(String modid, File folder, File zip) {
+    public ResourcePackGenerateEvent(String modid, File zip) {
         this.modid = modid;
-        this.folder = folder;
         this.zip = zip;
     }
 
@@ -53,15 +46,6 @@ public class ResourcePackGenerateEvent extends Event {
      */
     public String modid() {
         return modid;
-    }
-
-    /**
-     * Gets the folder containing the resource pack files.
-     *
-     * @return The folder as a File object.
-     */
-    public File folder() {
-        return folder;
     }
 
     /**

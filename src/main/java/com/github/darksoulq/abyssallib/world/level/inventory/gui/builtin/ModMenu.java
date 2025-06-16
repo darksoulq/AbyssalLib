@@ -5,7 +5,6 @@ import com.github.darksoulq.abyssallib.server.config.legacy.Config;
 import com.github.darksoulq.abyssallib.server.config.legacy.ConfigParser;
 import com.github.darksoulq.abyssallib.server.config.legacy.ConfigSpec;
 import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
-import com.github.darksoulq.abyssallib.server.resource.glyph.Glyph;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.impl.ChestGui;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.slot.ButtonSlot;
@@ -34,10 +33,10 @@ public class ModMenu extends ChestGui {
 
     public ModMenu() {
         super(Component.translatable("space.-8")
-                .append(MiniMessage.miniMessage().deserialize(Glyph.replacePlaceholders("<white>:abyssallib:items_ui_main:</white>")))
+                .append(MiniMessage.miniMessage().deserialize("<white>:abyssallib:items_ui_main:</white>"))
                 .append(Component.text("Items")), 6);
         title = Component.translatable("space.-8")
-                .append(MiniMessage.miniMessage().deserialize(Glyph.replacePlaceholders("<white>:abyssallib:items_ui_main:</white>")))
+                .append(MiniMessage.miniMessage().deserialize("<white>:abyssallib:items_ui_main:</white>"))
                 .append(Component.text("Items"));
 
     }
@@ -57,10 +56,10 @@ public class ModMenu extends ChestGui {
 
         Component expectedTitle = (mode == ViewMode.MODS)
                 ? Component.translatable("space.-8")
-                .append(MiniMessage.miniMessage().deserialize(Glyph.replacePlaceholders("<white>:abyssallib:items_ui_main:</white>")))
+                .append(MiniMessage.miniMessage().deserialize("<white>:abyssallib:items_ui_main:</white>"))
                 .append(Component.text("Items"))
                 : Component.translatable("space.-8")
-                .append(MiniMessage.miniMessage().deserialize(Glyph.replacePlaceholders("<white>:abyssallib:items_ui_display:</white>")))
+                .append(MiniMessage.miniMessage().deserialize("<white>:abyssallib:items_ui_display:</white>"))
                 .append(Component.text("Items - " + selectedMod));
 
         if (!expectedTitle.equals(title)) {

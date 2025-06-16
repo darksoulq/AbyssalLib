@@ -3,12 +3,16 @@ package com.github.darksoulq.abyssallib;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.config.legacy.Config;
 import com.github.darksoulq.abyssallib.server.config.legacy.ConfigSpec;
+import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
+import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
-import com.github.darksoulq.abyssallib.server.resource.glyph.Glyph;
-import com.github.darksoulq.abyssallib.server.resource.glyph.GlyphWriter;
+import com.github.darksoulq.abyssallib.server.resource.asset.Font;
+import com.github.darksoulq.abyssallib.server.resource.asset.ItemDefinition;
+import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
+import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.util.Metrics;
 import com.github.darksoulq.abyssallib.world.level.block.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
@@ -34,6 +38,7 @@ public final class AbyssalLib extends JavaPlugin {
     public static ChatInputHandler CHAT_INPUT_HANDLER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
+    public static Datapack.Registrar DATAPACK_REGISTRAR;
 
     @Override
     public void onEnable() {
@@ -80,16 +85,22 @@ public final class AbyssalLib extends JavaPlugin {
 
         Items.ITEMS.apply();
 
-        new Glyph(this, Identifier.of(MODID, "items_ui_main"), 129, 13, false);
-        new Glyph(this, Identifier.of(MODID, "items_ui_display"), 129, 13, false);
-        GlyphWriter.write(MODID);
+        ResourcePack rp = new ResourcePack(this, MODID);
+        Namespace ns = rp.namespace("abyssallib");
 
-        new ResourcePack(this, MODID).generate();
+        Selector root = new Selector.Empty();
+
+        ItemDefinition def = ns.itemDefinition("test", root, false);
+
+        rp.register();
     }
 
     @Override
     public void onDisable() {
         BlockManager.INSTANCE.save();
+        if (PACK_SERVER != null) {
+            PACK_SERVER.stop();
+        }
     }
 
     private boolean checkRPManager() {
