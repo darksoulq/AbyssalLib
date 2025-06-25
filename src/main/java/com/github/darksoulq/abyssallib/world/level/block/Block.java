@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.level.block;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.level.data.tag.BlockTag;
@@ -16,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -23,7 +25,6 @@ import java.util.function.Supplier;
  * <p>
  * This class defines basic properties and behaviors for blocks, including material type,
  * unique identifier, entity association, and event hooks.
- * </p>
  */
 public class Block {
 
@@ -35,7 +36,7 @@ public class Block {
     /**
      * The Bukkit material representing this block.
      */
-    private final Material material;
+    private Material material = Material.DIRT;
 
     /**
      * The Bukkit location of this block instance.
@@ -48,19 +49,22 @@ public class Block {
     private BlockEntity entity;
 
     /**
-     * Whether to allow physics for the block (only applies to blocks with physics like sand)
+     * Whether to allow physics for the block (only applies to blocks with physics like sand).
      */
     public boolean allowPhysics = false;
 
     /**
-     * Constructs a new {@code Block} with the given identifier and material.
-     *
-     * @param id       the unique identifier for this block
-     * @param material the Bukkit {@link Material} representing this block
+     * The properties associated with this block.
      */
-    public Block(Identifier id, Material material) {
+    public BlockProperties properties = BlockProperties.of().build();
+
+    /**
+     * Constructs a new {@code Block} with the given identifier.
+     *
+     * @param id the unique identifier for this block
+     */
+    public Block(Identifier id) {
         this.id = id;
-        this.material = material;
     }
 
     /**
@@ -82,17 +86,16 @@ public class Block {
     }
 
     /**
-     * Returns whether this block generates an item representation when broken or dropped.
+     * Returns whether this block generates an item representation.
      *
      * @return {@code true} if this block generates an item, otherwise {@code false}
      */
     public boolean generateItem() {
-        return false;
+        return true;
     }
 
     /**
      * Returns a {@link Supplier} that creates a new {@link Item} representing this block.
-     * By default, it creates an {@code Item} using the block's id and material.
      *
      * @return a supplier for the item representation of this block
      */
@@ -102,12 +105,11 @@ public class Block {
 
     /**
      * Creates and returns a new {@link BlockEntity} for this block at the specified location.
-     * By default, returns {@code null}, meaning this block does not have an associated entity.
      *
      * @param loc the Bukkit location where the block entity should be created
      * @return a new {@link BlockEntity} instance, or {@code null} if none
      */
-    public BlockEntity createBlockEntity(org.bukkit.Location loc) {
+    public BlockEntity createBlockEntity(Location loc) {
         return null;
     }
 
@@ -150,10 +152,6 @@ public class Block {
 
     /**
      * Places this block into the world at the location specified by {@code bukkitBlock}.
-     * <p>
-     * Sets the block's material in the Bukkit world, creates a block entity if applicable,
-     * and registers this block with the {@link BlockManager}.
-     * </p>
      *
      * @param bukkitBlock the Bukkit block
      */
@@ -162,15 +160,16 @@ public class Block {
             AbyssalLib.getInstance().getLogger().severe("Invalid block material for " + id);
             return;
         }
-        bukkitBlock.setType(material);
 
+        bukkitBlock.setType(material);
         setLocation(bukkitBlock.getLocation());
 
         BlockEntity newEntity = createBlockEntity(getLocation());
         if (newEntity != null) {
             setEntity(newEntity);
-            BlockManager.INSTANCE.register(this);
         }
+
+        BlockManager.INSTANCE.register(this);
     }
 
     /**
@@ -225,48 +224,72 @@ public class Block {
         return BuiltinRegistries.ITEMS.get(block.id().toString());
     }
 
-    // ----- Event hooks -----
+    /**
+     * Indicates whether this block is equal to another object.
+     *
+     * @param o the object to compare
+     * @return {@code true} if equal, otherwise {@code false}
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Block block)) return false;
+        return Objects.equals(id, block.id);
+    }
+
+    /**
+     * Returns the hash code of this block.
+     *
+     * @return the hash code value
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 
     /**
      * Called when the block is placed.
      *
-     * @param player   The player placing the block
-     * @param loc  The location at which the block is being placed
-     * @param stack   The {@link ItemStack} used to place the block
-     * @return ActionResult to cancel vanilla event or allow it
+     * @param player the player placing the block
+     * @param loc the location at which the block is being placed
+     * @param stack the {@link ItemStack} used to place the block
+     * @return {@link ActionResult} to cancel vanilla event or allow it
      */
-    public ActionResult onPlaced(Player player, Location loc, ItemStack stack) { return ActionResult.PASS; }
+    public ActionResult onPlaced(Player player, Location loc, ItemStack stack) {
+        return ActionResult.PASS;
+    }
 
     /**
      * Called when the block is broken.
      *
-     * @param player   The player who broke the block
-     * @param loc  The location at which the bloco was broken
-     * @param tool   The {@link ItemStack} used to break the block
-     * @return ActionResult to cancel vanilla event or allow it
+     * @param player the player who broke the block
+     * @param loc the location at which the block was broken
+     * @param tool the {@link ItemStack} used to break the block
+     * @return {@link ActionResult} to cancel vanilla event or allow it
      */
-    public ActionResult onBreak(Player player, Location loc, ItemStack tool) { return ActionResult.PASS; }
+    public ActionResult onBreak(Player player, Location loc, ItemStack tool) {
+        return ActionResult.PASS;
+    }
 
     /**
-     * Called when the block is (about to be) broken by an explosion.
+     * Called when the block is destroyed by an explosion.
      *
-     * @param eCause   The (possibly null) source of the explosion ({@link Entity}.
-     * @param blockCause  The (possibly null) source of the explosion ({@link org.bukkit.block.Block}.
-     * @return ActionResult to cancel vanilla event or allow it
+     * @param eCause the source entity of the explosion, or {@code null}
+     * @param blockCause the source block of the explosion, or {@code null}
+     * @return {@link ActionResult} to cancel vanilla event or allow it
      */
     public ActionResult onDestroyedByExplosion(@Nullable Entity eCause, @Nullable org.bukkit.block.Block blockCause) {
         return ActionResult.PASS;
     }
 
     /**
-     * Called when a living entity lands on this block.
+     * Called when an entity lands on this block.
      *
      * @param entity the entity landing on the block
      */
     public void onLanded(Entity entity) {}
 
     /**
-     * Called when a living entity steps on this block.
+     * Called when an entity steps on this block.
      *
      * @param entity the entity stepping on the block
      */
@@ -275,7 +298,7 @@ public class Block {
     /**
      * Called when this block is hit by a projectile.
      *
-     * @param shooter The entity that shot this arrow
+     * @param shooter the entity that shot the projectile
      */
     public void onProjectileHit(Entity shooter) {}
 }

@@ -1,9 +1,9 @@
-package com.github.darksoulq.abyssallib.server.command;
+package com.github.darksoulq.abyssallib.server.command.internal;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.command.AbyssalCommand;
+import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.config.legacy.Config;
 import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
-import com.github.darksoulq.abyssallib.world.level.inventory.gui.builtin.ModMenu;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -25,14 +25,16 @@ public class InternalCommand {
     @AbyssalCommand(name="abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
+                        .requires(sender -> sender
+                                .getSender().hasPermission("abyssallib.admin.give"))
                         .then(Commands.argument("namespace_id", ArgumentTypes.namespacedKey())
-                                .requires(sender -> sender
-                                        .getSender().hasPermission("abyssallib.admin.give"))
                                 .suggests(InternalCommand::giveSuggests)
                                 .executes(InternalCommand::giveExecutor)
                         )
                 )
                 .then(Commands.literal("reload")
+                        .requires(sender -> sender
+                                .getSender().hasPermission("abyssallib.admin.give"))
                         .then(Commands.literal("config")
                                 .executes((ctz) -> {
                                     Config.reloadAll();
@@ -45,12 +47,6 @@ public class InternalCommand {
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
-                )
-                .then(Commands.literal("modmenu")
-                        .executes(ctx -> {
-                            AbyssalLib.GUI_MANAGER.openGui((Player) ctx.getSource().getSender(), new ModMenu());
-                            return Command.SINGLE_SUCCESS;
-                        })
                 );
     }
 
@@ -68,7 +64,7 @@ public class InternalCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        player.getInventory().addItem(BuiltinRegistries.ITEMS.get(namespaceId.asString()).stack());
+        player.getInventory().addItem(BuiltinRegistries.ITEMS.get(namespaceId.asString()).stack().clone());
 
         return Command.SINGLE_SUCCESS;
     }

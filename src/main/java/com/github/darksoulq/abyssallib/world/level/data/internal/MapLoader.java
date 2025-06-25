@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.level.data;
+package com.github.darksoulq.abyssallib.world.level.data.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.world.level.item.map.BaseMap;

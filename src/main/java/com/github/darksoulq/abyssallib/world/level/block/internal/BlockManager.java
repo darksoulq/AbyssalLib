@@ -1,10 +1,11 @@
-package com.github.darksoulq.abyssallib.world.level.block;
+package com.github.darksoulq.abyssallib.world.level.block.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.database.Database;
-import com.github.darksoulq.abyssallib.server.database.ResultMapper;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
 import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.world.level.block.Block;
+import com.github.darksoulq.abyssallib.world.level.block.BlockEntity;
 import com.google.gson.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -68,7 +69,7 @@ public class BlockManager {
             buildGson();
 
             // Load all saved blocks
-            List<BlockRow> rows = database.executor().table("blocks").select((ResultMapper<BlockRow>) rs -> {
+            List<BlockRow> rows = database.executor().table("blocks").select(rs -> {
                 String world = rs.getString("world");
                 int x = rs.getInt("x");
                 int y = rs.getInt("y");
@@ -224,11 +225,15 @@ public class BlockManager {
     /**
      * Saves all cached blocks and their associated entities to the database.
      * Updates existing rows or inserts new ones.
+     * @return saved The amount of saved blocks
      */
-    public void save() {
+    public int save() {
+        int saved = 0;
         for (Block block : blocks.values()) {
             save(block);
+            saved++;
         }
+        return saved;
     }
 
     /**

@@ -1,50 +1,30 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.player.PlayerEnterWaterEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.player.PlayerExitWaterEvent;
+import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
-import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextReplacementConfig;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 
 import java.util.HashMap;
 
 public class PlayerEvents {
 
     @SubscribeEvent
-    public void onMove(PlayerMoveEvent event) {
-        Player player = event.getPlayer();
+    public void onJoin(PlayerJoinEvent event) {
+        PacketInterceptor.inject(event.getPlayer());
+    }
 
-        Block fromBlock = event.getFrom().getBlock();
-        Block toBlock = event.getTo().getBlock();
-
-        boolean wasInWater = isWaterBlock(fromBlock);
-        boolean isInWater = isWaterBlock(toBlock);
-
-        Vector velocity = player.getVelocity();
-
-        if (!wasInWater && isInWater && velocity.getY() < -0.1) {
-            PlayerEnterWaterEvent fallEvent = new PlayerEnterWaterEvent(player, toBlock.getLocation(), velocity);
-            Bukkit.getServer().getPluginManager().callEvent(fallEvent);
-        }
-
-        if (wasInWater && !isInWater) {
-            PlayerExitWaterEvent exitEvent = new PlayerExitWaterEvent(player, toBlock.getLocation());
-            Bukkit.getServer().getPluginManager().callEvent(exitEvent);
-        }
+    @SubscribeEvent
+    public void onLeave(PlayerQuitEvent event) {
+        PacketInterceptor.uninject(event.getPlayer());
     }
 
     @SubscribeEvent
@@ -53,16 +33,17 @@ public class PlayerEvents {
             event.setCancelled(true);
             Item item = com.github.darksoulq.abyssallib.world.level.block.Block.asItem(com.github.darksoulq.abyssallib.world.level.block.Block.from(event.getBlock()));
             if (item == null) return;
-            HashMap<Integer, ItemStack> remaining = event.getPlayer().getInventory().addItem(item.stack().clone());
+            ItemStack stack = item.stack().clone();
+            HashMap<Integer, ItemStack> remaining = event.getPlayer().getInventory().addItem(stack);
             if (!remaining.isEmpty()) {
-                event.getPlayer().getInventory().setItem(EquipmentSlot.HAND, item.stack().clone());
+                stack = stack.clone();
+                stack.setAmount(remaining.values().stream().toList().getFirst().getAmount());
+                event.getPlayer().getInventory().setItem(EquipmentSlot.HAND,
+                        stack);
             }
         }
     }
 
-    /**
-     * Checks if the block directly below the player's feet is solid.
-     */
     private boolean isBlockSolidBelow(Player player) {
         Location loc = player.getLocation().clone().subtract(0, 0.1, 0);
         Block blockBelow = loc.getBlock();

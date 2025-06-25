@@ -1,14 +1,13 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.block.AbyssalBlockBreakEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.block.AbyssalBlockPlaceEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEvent;
 import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
-import com.github.darksoulq.abyssallib.world.level.block.BlockManager;
+import com.github.darksoulq.abyssallib.world.level.block.BlockProperties;
+import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
@@ -16,6 +15,8 @@ import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -35,14 +36,9 @@ public class BlockEvents {
         for (Block block : BuiltinRegistries.BLOCKS.getAll().values()) {
             Item blockItem = Block.asItem(block);
             if (blockItem == null) continue;
+            blockItem = blockItem.clone();
 
             if (blockItem.equals(Item.from(handItem))) {
-                AbyssalBlockPlaceEvent placeEvent = new AbyssalBlockPlaceEvent(event.getPlayer(), block, handItem);
-                AbyssalLib.EVENT_BUS.post(placeEvent);
-                if (placeEvent.isCancelled()) {
-                    event.setCancelled(true);
-                    return;
-                }
                 ActionResult result = block.onPlaced(event.getPlayer(), event.getBlock().getLocation(),
                         handItem);
                 if (result == ActionResult.CANCEL) {
@@ -54,7 +50,9 @@ public class BlockEvents {
                 return;
             }
         }
-        event.setCancelled(true);
+        if (Item.from(handItem) != null) {
+            event.setCancelled(true);
+        }
     }
 
     @SubscribeEvent
@@ -62,39 +60,55 @@ public class BlockEvents {
         Block block = Block.from(event.getBlock());
         if (block == null) return;
 
-        AbyssalBlockBreakEvent breakEvent = new AbyssalBlockBreakEvent(event.getPlayer(), block);
+        Player player = event.getPlayer();
+        Location loc = event.getBlock().getLocation();
+        ItemStack stack = player.getInventory().getItemInMainHand();
+        BlockProperties props = block.properties;
+
+        BlockBrokenEvent breakEvent = new BlockBrokenEvent(player, block);
         Bukkit.getPluginManager().callEvent(breakEvent);
         if (breakEvent.isCancelled()) {
             event.setCancelled(true);
             return;
         }
-        ActionResult result = block.onBreak(event.getPlayer(), event.getBlock().getLocation(),
-                event.getPlayer().getActiveItem());
-        if (result == ActionResult.CANCEL) {
+
+        if (block.onBreak(player, loc, stack) == ActionResult.CANCEL) {
             event.setCancelled(true);
             return;
         }
 
-        Location loc = event.getBlock().getLocation();
-        Item blockItem = Block.asItem(block);
-        LootTable lootTable = block.lootTable();
-
         event.setDropItems(false);
 
-        if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-            event.setExpToDrop(block.exp());
-            if (lootTable == null) {
-                if (blockItem != null) {
-                    loc.getWorld().dropItem(loc, blockItem.stack());
-                }
-            } else {
-                LootContext context = new LootContext();
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            boolean isCorrect = props.isCorrectTool(stack);
+            if (!isCorrect) return;
+
+            boolean silkTouch = props.requireSilkTouch && stack.containsEnchantment(Enchantment.SILK_TOUCH);
+            boolean allowFortune = props.allowFortune;
+            int fortuneLevel = allowFortune ? stack.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
+
+            LootTable lootTable = block.lootTable();
+            if (lootTable != null) {
+                LootContext context = new LootContext(fortuneLevel);
                 List<ItemStack> drops = lootTable.generate(context);
                 for (ItemStack drop : drops) {
                     loc.getWorld().dropItem(loc, drop);
                 }
+            } else if (props.requireSilkTouch && silkTouch) {
+                Item blockItem = Block.asItem(block);
+                if (blockItem != null) {
+                    loc.getWorld().dropItem(loc, blockItem.clone().stack().clone());
+                }
+            } else if (!props.requireSilkTouch) {
+                Item blockItem = Block.asItem(block);
+                if (blockItem != null) {
+                    loc.getWorld().dropItem(loc, blockItem.clone().stack().clone());
+                }
             }
+
+            event.setExpToDrop(block.exp());
         }
+
         BlockManager.INSTANCE.remove(loc);
     }
 
@@ -163,6 +177,13 @@ public class BlockEvents {
         Block block = Block.from(event.getHitBlock());
         if (block != null) {
             block.onProjectileHit(event.getEntity());
+        }
+    }
+
+    @SubscribeEvent
+    public void onBlockDamage(BlockDamageEvent event) {
+        if (Block.from(event.getBlock()) != null) {
+            event.setInstaBreak(false);
         }
     }
 

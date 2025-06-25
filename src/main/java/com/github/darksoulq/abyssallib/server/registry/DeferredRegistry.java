@@ -10,44 +10,75 @@ import com.github.darksoulq.abyssallib.world.level.item.Item;
 import org.bukkit.Bukkit;
 
 import java.util.*;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
- * Defers registrations until apply() is called.
- * Allows batch registration with mod namespacing.
+ * A registry that defers registration of objects until explicitly applied.
+ *
+ * @param <T> The type of objects being registered.
  */
 public final class DeferredRegistry<T> {
 
+    /**
+     * The target registry to apply registered entries to.
+     */
     private final Registry<T> targetRegistry;
+
+    /**
+     * The mod ID used for namespacing.
+     */
     private final String modId;
+
+    /**
+     * The map of name to deferred registration objects.
+     */
     private final Map<String, DeferredObject<T>> deferredObjects = new LinkedHashMap<>();
 
+    /**
+     * Constructs a new deferred registry.
+     *
+     * @param targetRegistry The registry to apply registrations to.
+     * @param modId          The mod ID used for namespacing.
+     */
     private DeferredRegistry(Registry<T> targetRegistry, String modId) {
         this.targetRegistry = Objects.requireNonNull(targetRegistry, "targetRegistry");
         this.modId = Objects.requireNonNull(modId, "modId");
     }
 
+    /**
+     * Creates a new deferred registry for a specific target and mod ID.
+     *
+     * @param targetRegistry The registry to apply registrations to.
+     * @param modId          The mod ID used for namespacing.
+     * @param <T>            The type of objects being registered.
+     * @return A new DeferredRegistry instance.
+     */
     public static <T> DeferredRegistry<T> create(Registry<T> targetRegistry, String modId) {
         return new DeferredRegistry<>(targetRegistry, modId);
     }
 
     /**
-     * Register a deferred object with simple name and supplier.
-     * @throws IllegalStateException if duplicate.
+     * Registers a new object by name using the provided supplier.
+     *
+     * @param name     The name of the object (unqualified).
+     * @param supplier A function that takes an {@link Identifier} and returns an object to register.
+     * @return The deferred object wrapper.
+     * @throws IllegalStateException If the name is already registered.
      */
-    public DeferredObject<T> register(String name, BiFunction<String, Identifier, T> supplier) {
+    public DeferredObject<T> register(String name, Function<Identifier, T> supplier) {
         if (deferredObjects.containsKey(name)) {
             throw new IllegalStateException("Duplicate deferred registration: " + modId + ":" + name);
         }
         Identifier id = Identifier.of(modId, name);
-        DeferredObject<T> deferredObject = new DeferredObject<>(id.toString(), () -> supplier.apply(name, id));
+        DeferredObject<T> deferredObject = new DeferredObject<>(id.toString(), () -> supplier.apply(id));
         deferredObjects.put(name, deferredObject);
         return deferredObject;
     }
 
     /**
-     * Apply all deferred registrations to the target registry.
-     * Fires RegistryApplyEvent that can cancel the whole batch.
+     * Applies all deferred registrations to the target registry.
+     * <p>
+     * Triggers a {@link RegistryApplyEvent}, which may be cancelled to prevent registration.
      */
     public void apply() {
         RegistryApplyEvent<T> event = new RegistryApplyEvent<>(targetRegistry, this);
@@ -62,7 +93,6 @@ public final class DeferredRegistry<T> {
 
         for (DeferredObject<T> obj : objects) {
             T value = obj.get();
-
             targetRegistry.register(obj.getId(), value);
 
             if (value instanceof DamageType) {
@@ -75,19 +105,28 @@ public final class DeferredRegistry<T> {
                 BuiltinRegistries.BLOCK_ITEMS.register(obj.getId(), block);
             }
         }
+
         if (!damageTypes.isEmpty()) {
             AbyssalLib.DAMAGE_TYPE_REGISTRAR.register(damageTypes);
         }
+
         deferredObjects.clear();
     }
 
     /**
-     * Returns all deferred objects registered so far.
+     * Returns an unmodifiable collection of all deferred objects.
+     *
+     * @return A collection of {@link DeferredObject}.
      */
     public Collection<DeferredObject<T>> getDeferredObjects() {
         return Collections.unmodifiableCollection(deferredObjects.values());
     }
 
+    /**
+     * Returns the mod ID associated with this registry.
+     *
+     * @return The mod ID string.
+     */
     public String getModId() {
         return modId;
     }

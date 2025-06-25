@@ -7,6 +7,7 @@ import io.papermc.paper.registry.keys.DamageTypeKeys;
 import org.bukkit.damage.DamageEffect;
 import org.bukkit.damage.DamageScaling;
 import org.bukkit.damage.DeathMessageType;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ import java.util.List;
  * Instances are registered automatically via a {@code DeferredRegistry}
  * in plugin bootstrap.</p>
  */
+@ApiStatus.Experimental
 public class DamageType {
 
     /** Unique identifier of the damage type. */
@@ -77,6 +79,7 @@ public class DamageType {
      * It is automatically invoked when a {@code DeferredRegistry<DamageType>} is applied via
      * {@code #apply} in {@code PluginBootstrap}.</p>
      */
+    @ApiStatus.Internal
     public static class Registrar {
 
         private RegistryFreezeEvent<org.bukkit.damage.DamageType, DamageTypeRegistryEntry.Builder> event;

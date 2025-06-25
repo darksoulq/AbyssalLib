@@ -7,6 +7,8 @@ import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.github.darksoulq.abyssallib.world.level.data.tag.ItemTag;
+import com.github.darksoulq.abyssallib.world.level.item.tool.ToolTier;
+import com.github.darksoulq.abyssallib.world.level.item.tool.ToolType;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
@@ -16,7 +18,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.component.CustomData;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
@@ -26,10 +27,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a custom item with additional functionality on top of the standard {@link ItemStack}.
@@ -39,13 +37,24 @@ import java.util.Set;
  * various item actions like right-click, left-click, and use on blocks or entities. The item also allows
  * for storing and retrieving custom data.
  */
-public class Item {
+public class Item implements Cloneable {
     /** Backing Bukkit item stack */
     private ItemStack stack;
     /** Unique identifier for this custom item */
     private final Identifier id;
     /** Settings for additional configuration and behavior */
     private final ItemSettings settings;
+
+    /**
+     * The tier level of the tool represented by this item (e.g., wood, stone, iron).
+     */
+    private ToolTier toolTier = ToolTier.WOOD;
+
+    /**
+     * The type of tool this item represents (e.g., pickaxe, axe, shovel).
+     */
+    private ToolType toolType = ToolType.OTHER;
+
     /**
      * Contains lore and hidden tag control for the item's tooltip.
      */
@@ -253,7 +262,7 @@ public class Item {
      * </p>
      *
      * @param stack the Bukkit {@code ItemStack} to inspect
-     * @return the corresponding {@code Item} if registered and found, or {@code null} if not an Abyssal item
+     * @return the corresponding clone of {@code Item} if registered and found (using the provided ItemStack as the stack for the Item), or {@code null} if not an Abyssal item
      */
     public static Item from(ItemStack stack) {
         if (stack == null || stack.getType().isAir()) return null;
@@ -270,7 +279,7 @@ public class Item {
                 if (idStr.isEmpty()) return null;
 
                 Identifier id = Identifier.of(idStr);
-                Item entry = BuiltinRegistries.ITEMS.get(id.toString());
+                Item entry = BuiltinRegistries.ITEMS.get(id.toString()).clone();
                 entry.stack = stack;
 
                 return entry;
@@ -291,17 +300,37 @@ public class Item {
     }
 
     /**
-     * Clones this item.
+     * Clones this item. (exluding ItemStack)
      *
      * @return a new cloned item
      */
     @Override
     public @NotNull Item clone() {
         try {
-            return (Item) super.clone();
+            Item cloned = (Item) super.clone();
+            cloned.stack = this.stack;
+            cloned.tooltip.lines = new ArrayList<>(this.tooltip.lines);
+            cloned.tooltip.hiddenComponents = new HashSet<>(this.tooltip.hiddenComponents);
+            cloned.tooltip.hide = this.tooltip.hide;
+            cloned.tooltip.style = this.tooltip.style;
+            cloned.toolTier = this.toolTier;
+            cloned.toolType = this.toolType;
+            return cloned;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Item item)) return false;
+        return Objects.equals(id, item.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 
     /**
@@ -314,6 +343,25 @@ public class Item {
         if (!BuiltinRegistries.BLOCK_ITEMS.contains(item.getId().toString())) return null;
         return BuiltinRegistries.BLOCK_ITEMS.get(item.getId().toString());
     }
+
+    /**
+     * Gets the tool tier of this item.
+     *
+     * @return the tool tier
+     */
+    public ToolTier getTier() {
+        return toolTier;
+    }
+
+    /**
+     * Gets the tool type of this item.
+     *
+     * @return the tool type
+     */
+    public ToolType getToolType() {
+        return toolType;
+    }
+
 
     /**
      * Represents a tooltip controller for a custom item.

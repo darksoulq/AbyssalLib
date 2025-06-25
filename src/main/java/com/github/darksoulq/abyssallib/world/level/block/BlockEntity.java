@@ -4,7 +4,7 @@ package com.github.darksoulq.abyssallib.world.level.block;
  * Represents the entity data associated with a custom {@link Block}.
  * <p>
  * A {@code BlockEntity} stores additional state and behavior for a block that requires more than just
- * a material type, such as inventories, timers, or other dynamic data.
+ * a material type.
  * </p>
  * <p>
  * This is an abstract base class intended to be extended by specific block entity implementations.

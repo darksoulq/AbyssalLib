@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -92,7 +93,10 @@ public class ResourcePack {
      * @param override whether to generate zip if it has been generated before
      */
     public void compile(boolean override) {
-        if (!override && outputFile.toFile().exists()) return;
+        if (!override && outputFile.toFile().exists()) {
+            hashMap.put(modid, FileUtils.sha1(outputFile));
+            return;
+        }
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -115,7 +119,12 @@ public class ResourcePack {
                     }
 
                     hashMap.put(modid, FileUtils.sha1(outputFile));
-                    AbyssalLib.EVENT_BUS.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            AbyssalLib.EVENT_BUS.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
+                        }
+                    }.runTask(AbyssalLib.getInstance());
 
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to write resource pack: " + outputFile, e);
@@ -129,7 +138,6 @@ public class ResourcePack {
      * @param override whether to generate zip if it has been generated before.
      */
     public void register(boolean override) {
-        if (!override && outputFile.toFile().exists()) return;
         compile(override);
         new BukkitRunnable() {
             @Override

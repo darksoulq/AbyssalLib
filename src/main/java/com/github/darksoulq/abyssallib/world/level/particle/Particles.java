@@ -322,7 +322,7 @@ public class Particles {
 
         for (Location point : spawnPoints) {
             ItemDisplay displayEntity = point.getWorld().spawn(point.clone(), ItemDisplay.class);
-            displayEntity.setItemStack(display.stack());
+            displayEntity.setItemStack(display.stack().clone());
             displayEntity.setBillboard(Display.Billboard.HORIZONTAL);
             displays.add(displayEntity);
         }

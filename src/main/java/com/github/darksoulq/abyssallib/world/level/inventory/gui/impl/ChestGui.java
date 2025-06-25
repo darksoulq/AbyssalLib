@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.level.inventory.gui.impl;
 
-import com.github.darksoulq.abyssallib.server.event.context.gui.GuiCloseContext;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.AbstractGui;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.MenuType;
@@ -24,20 +23,8 @@ public abstract class ChestGui extends AbstractGui {
     }
 
     @Override
-    public boolean enableHandling(Type type) {
+    public boolean shouldHandle(Type type) {
         return type == Type.TOP;
-    }
-
-    /**
-     * Handles additional custom close logic when the GUI is closed.
-     *
-     * @param ctx the context of the GUI close event
-     */
-    public void _onClose(GuiCloseContext ctx) {}
-    @Override
-    public void onClose(GuiCloseContext ctx) {
-        viewers().remove(ctx.player);
-        _onClose(ctx);
     }
 
     /**

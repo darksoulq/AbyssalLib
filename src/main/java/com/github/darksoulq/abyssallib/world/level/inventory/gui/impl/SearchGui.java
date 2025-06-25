@@ -1,11 +1,12 @@
 package com.github.darksoulq.abyssallib.world.level.inventory.gui.impl;
 
-import com.github.darksoulq.abyssallib.server.event.context.gui.GuiCloseContext;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.AbstractGui;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.slot.StaticSlot;
 import com.github.darksoulq.abyssallib.world.level.item.Items;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
 
@@ -23,7 +24,7 @@ public abstract class SearchGui extends AbstractGui {
     private static final Map<Player, ItemStack[]> backupMap = new HashMap<>();
 
     private final Map<Player, String> texts = new HashMap<>();
-    private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().stack();
+    private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().stack().clone();
     private final StaticSlot inputSlot;
 
     /**
@@ -37,7 +38,7 @@ public abstract class SearchGui extends AbstractGui {
         invisItem.editMeta((itemMeta -> {
             itemMeta.itemName(Component.text().build());
         }));
-        inputSlot = new StaticSlot(0, invisItem);
+        inputSlot = new StaticSlot(0, Type.TOP, invisItem);
     }
     /**
      * Initializes the search GUI with custom logic. This method must be implemented in subclasses.
@@ -87,17 +88,15 @@ public abstract class SearchGui extends AbstractGui {
     /**
      * Handles additional custom close logic when the GUI is closed.
      * This method is called after the player's inventory has been restored.
-     *
-     * @param ctx the context of the GUI close event
      */
-    public void _onClose(GuiCloseContext ctx) {}
+    public void _onClose(Inventory inventory, Player player, InventoryCloseEvent.Reason reason) {}
+
     @Override
-    public void onClose(GuiCloseContext ctx) {
-        getSlotList(ctx.player, Type.TOP).remove(inputSlot);
-        inventory(ctx.player, Type.TOP).setContents(new ItemStack[] {null, null, null});
-        restoreBottomMenu(ctx.player);
-        viewers().remove(ctx.player);
-        _onClose(ctx);
+    public void onClose(Inventory inventory, Player player, InventoryCloseEvent.Reason reason) {
+        getSlotList(player, Type.TOP).remove(inputSlot);
+        inventory(player, Type.TOP).setContents(new ItemStack[] {null, null, null});
+        restoreBottomMenu(player);
+        _onClose(inventory, player, reason);
     }
 
     /**

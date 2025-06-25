@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.world.level.item.map;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.world.level.data.MapLoader;
+import com.github.darksoulq.abyssallib.world.level.data.internal.MapLoader;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

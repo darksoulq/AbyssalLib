@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.util.Map;

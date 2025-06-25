@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.level.data;
 
 import net.kyori.adventure.key.Key;
+import net.minecraft.resources.ResourceLocation;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,6 +94,10 @@ public class Identifier {
      */
     public @NotNull Key toKey() {
         return Key.key(namespace, path);
+    }
+
+    public @NotNull ResourceLocation toResourceLocation() {
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
     }
 
     /**

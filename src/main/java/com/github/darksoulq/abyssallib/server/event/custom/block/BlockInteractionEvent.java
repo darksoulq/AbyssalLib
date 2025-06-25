@@ -12,55 +12,71 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Custom event triggered when a player interacts with a block in the Abyssal mod framework.
- * This event is cancellable, allowing you to prevent block interactions.
+ * An event that is triggered when a player interacts with a custom block.
+ * <p>
+ * This event is {@link Cancellable}, meaning the interaction can be prevented by a plugin.
+ * </p>
  */
-public class AbyssalBlockInteractEvent extends Event implements Cancellable {
+public class BlockInteractionEvent extends Event implements Cancellable {
+
     /**
-     * List of event handlers for this event
+     * The handler list for this event. Required by Bukkit's event system.
      */
     private static final HandlerList handlers = new HandlerList();
 
     /**
-     * The block being interacted with
+     * The block being interacted with.
      */
     private final Block block;
+
     /**
-     * The face of the block being interacted with
+     * The face of the block that was interacted with.
      */
     private final BlockFace face;
+
     /**
-     * The location where the interaction occurred
+     * The location where the interaction occurred.
      */
     private final Location interaction;
+
     /**
-     * The action performed by the player (e.g., right-click, left-click)
+     * The type of action performed (e.g., right-click, left-click).
      */
     private final Action action;
+
     /**
-     * The item being used by the player during the interaction
+     * The item used by the player during the interaction.
      */
     private final ItemStack item;
+
     /**
-     * The player interacting with the block
+     * The player interacting with the block.
      */
     private final Player player;
+
     /**
-     * Flag to determine if the event is cancelled
+     * Whether the event is cancelled.
      */
     private boolean cancelled = false;
 
     /**
-     * Constructs a new AbyssalBlockInteractEvent.
+     * Constructs a new {@code BlockInteractionEvent}.
      *
      * @param player      The player interacting with the block.
      * @param block       The block being interacted with.
      * @param face        The face of the block being interacted with.
-     * @param interaction The location of the interaction.
-     * @param action      The action performed by the player (e.g., right-click, left-click).
+     * @param interaction The location where the interaction occurred.
+     * @param action      The action performed by the player.
      * @param item        The item used by the player during the interaction.
      */
-    public AbyssalBlockInteractEvent(Player player, Block block, BlockFace face, Location interaction, Action action, ItemStack item) {
+    public BlockInteractionEvent(
+            @NotNull Player player,
+            @NotNull Block block,
+            @NotNull BlockFace face,
+            @NotNull Location interaction,
+            @NotNull Action action,
+            @NotNull ItemStack item
+    ) {
         this.player = player;
         this.block = block;
         this.face = face;
@@ -74,64 +90,59 @@ public class AbyssalBlockInteractEvent extends Event implements Cancellable {
      *
      * @return The block being interacted with.
      */
-    public Block block() {
+    public @NotNull Block getBlock() {
         return block;
     }
+
     /**
      * Gets the player interacting with the block.
      *
      * @return The player interacting with the block.
      */
-    public Player player() {
+    public @NotNull Player getPlayer() {
         return player;
     }
+
     /**
      * Gets the face of the block being interacted with.
      *
      * @return The face of the block being interacted with.
      */
-    public BlockFace blockFace() {
+    public @NotNull BlockFace getBlockFace() {
         return face;
     }
+
     /**
-     * Gets the location of the interaction.
+     * Gets the location where the interaction occurred.
      *
      * @return The location of the interaction.
      */
-    public Location interactionPoint() {
+    public @NotNull Location getInteractionPoint() {
         return interaction;
     }
+
     /**
      * Gets the action performed by the player (e.g., right-click, left-click).
      *
      * @return The action performed by the player.
      */
-    public Action action() {
+    public @NotNull Action getAction() {
         return action;
     }
+
     /**
      * Gets the item used by the player during the interaction.
      *
-     * @return The item being used.
+     * @return The item used by the player.
      */
-    public ItemStack item() {
+    public @NotNull ItemStack getItem() {
         return item;
     }
 
     /**
-     * Gets the list of handlers for this event.
+     * Checks whether the event is cancelled.
      *
-     * @return The handler list.
-     */
-    @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlers;
-    }
-
-    /**
-     * Checks if the event is cancelled.
-     *
-     * @return True if the event is cancelled, otherwise false.
+     * @return {@code true} if the event is cancelled; {@code false} otherwise.
      */
     @Override
     public boolean isCancelled() {
@@ -139,13 +150,22 @@ public class AbyssalBlockInteractEvent extends Event implements Cancellable {
     }
 
     /**
-     * Sets the cancellation state of the event.
+     * Sets the cancellation state of this event.
      *
-     * @param cancel True to cancel the event, false to allow it to proceed.
+     * @param cancel {@code true} to cancel the event, {@code false} to allow it to proceed.
      */
     @Override
     public void setCancelled(boolean cancel) {
-        cancelled = cancel;
+        this.cancelled = cancel;
     }
 
+    /**
+     * Gets the list of handlers listening to this event.
+     *
+     * @return The handler list.
+     */
+    @Override
+    public @NotNull HandlerList getHandlers() {
+        return handlers;
+    }
 }

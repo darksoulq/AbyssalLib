@@ -12,47 +12,57 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
- * Loads datapack files from {@code /data/} within the plugin JAR and compiles them into a ZIP
- * written to {@code <plugin>/pack/datapack.zip}. To be registered in the {@code PluginLifecycleEvent.Bootstrap}.
+ * Handles the loading, compilation, and registration of embedded datapacks from within a plugin JAR.
+ * <p>
+ * Files located under {@code /data/} inside the plugin JAR are compiled into a ZIP file
+ * located at {@code <plugin>/pack/datapack.zip} and registered using Paper's
+ * {@link DatapackRegistrar}.
+ * </p>
+ * <p>
+ * This class should be used during the {@code PluginBootstrap#bootstrap} phase.
+ * </p>
  */
 @ApiStatus.Experimental
 public class Datapack {
 
     /**
-     * Owning plugin instance.
+     * The plugin instance that owns this datapack.
      */
     private final Plugin plugin;
 
     /**
-     * The mod ID / namespace for the datapack (e.g. {@code mymod}).
+     * The namespace or mod ID associated with this datapack.
      */
     private final String modid;
 
     /**
-     * Output path to compiled ZIP file.
+     * The output path where the compiled datapack ZIP file is written.
      */
     private final Path outputFile;
 
     /**
-     * Files included in the final datapack zip. Keys are relative paths.
+     * Map of file paths to file contents that will be included in the final ZIP.
+     * The map is sorted to ensure deterministic output order.
      */
     private final TreeMap<String, byte[]> files = new TreeMap<>();
 
     /**
-     * Constructs a new Datapack tied to the specified plugin and modid.
+     * Constructs a new {@code Datapack} instance associated with the specified plugin and mod ID.
      *
-     * @param plugin the plugin owning this datapack
-     * @param modid  the mod identifier used in descriptions
+     * @param plugin the plugin that owns this datapack
+     * @param modid  the namespace or mod ID for this datapack
      */
     public Datapack(@NotNull Plugin plugin, @NotNull String modid) {
         this.plugin = plugin;
@@ -61,8 +71,10 @@ public class Datapack {
     }
 
     /**
-     * Compiles the datapack by loading files from the JAR's {@code /data} directory
-     * and writing them into a ZIP file. Also generates a default {@code pack.mcmeta}.
+     * Compiles the datapack by extracting files from the plugin JAR's {@code /data/} directory,
+     * generating the {@code pack.mcmeta}, and writing all contents into a ZIP file.
+     *
+     * @throws RuntimeException if an I/O error occurs during processing
      */
     public void compile() {
         files.clear();
@@ -89,10 +101,10 @@ public class Datapack {
     }
 
     /**
-     * Registers this datapack via Paper's {@link DatapackRegistrar}.
-     * Must be called during the {@code PluginBootstrap#bootstrap} phase.
+     * Registers the datapack with Paper using {@link AbyssalLib#DATAPACK_REGISTRAR}.
+     * This method should be called during the {@code PluginBootstrap#bootstrap} phase.
      *
-     * @param title the title shown to the player in the datapack list
+     * @param title the display title of the datapack in the UI
      */
     public void register(@NotNull Component title) {
         compile();
@@ -100,7 +112,9 @@ public class Datapack {
     }
 
     /**
-     * Reads all files in the JAR under {@code /data/} and stores them in the internal file map.
+     * Loads all files under {@code /data/} from the plugin's JAR and adds them to the internal file map.
+     *
+     * @throws IOException if the JAR file cannot be read
      */
     private void loadFromJar() throws IOException {
         Path jarPath = Paths.get(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
@@ -121,10 +135,11 @@ public class Datapack {
     }
 
     /**
-     * Reads an entire input stream into a byte array.
+     * Reads all bytes from the given {@link InputStream}.
      *
-     * @param in the input stream
-     * @return all bytes from the stream
+     * @param in the input stream to read from
+     * @return a byte array containing the entire contents of the stream
+     * @throws IOException if an I/O error occurs
      */
     private byte[] readAllBytes(InputStream in) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -137,9 +152,9 @@ public class Datapack {
     }
 
     /**
-     * Generates the default {@code pack.mcmeta} JSON contents.
+     * Generates the contents of the {@code pack.mcmeta} file.
      *
-     * @return the pack.mcmeta file as UTF-8 string
+     * @return the JSON string for the {@code pack.mcmeta} file
      */
     private @NotNull String generatePackMeta() {
         return "{\n" +
@@ -151,45 +166,62 @@ public class Datapack {
     }
 
     /**
-     * Inserts a UTF-8 encoded text file into the final pack.
+     * Adds a UTF-8 encoded text file to the datapack contents.
      *
-     * @param path    the file path inside the pack
-     * @param content the text content
+     * @param path    the internal path of the file within the datapack
+     * @param content the file content as a UTF-8 string
      */
     private void put(@NotNull String path, @NotNull String content) {
         files.put(path, content.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Inserts a binary file into the final pack.
+     * Adds a binary file to the datapack contents.
      *
-     * @param path the file path inside the pack
-     * @param data the file contents
+     * @param path the internal path of the file within the datapack
+     * @param data the file data as a byte array
      */
     private void put(@NotNull String path, byte[] data) {
         files.put(path, data);
     }
 
     /**
-     * Returns the final output path of the datapack ZIP file.
+     * Gets the output path of the compiled datapack ZIP file.
      *
-     * @return the output path
+     * @return the path to the datapack ZIP file
      */
     public @NotNull Path getOutputFile() {
         return outputFile;
     }
 
     /**
-     * Internal-only helper used by AbyssalLib to register datapacks via Paper.
+     * Helper class used internally by AbyssalLib to register datapacks with Paper.
      */
     @ApiStatus.Internal
     public static class Registrar {
+
+        /**
+         * The Paper {@link DatapackRegistrar} used to register datapacks.
+         */
         private final DatapackRegistrar registrar;
 
+        /**
+         * Constructs a new {@code Registrar} instance using the specified {@link DatapackRegistrar}.
+         *
+         * @param registrar the registrar to use for datapack registration
+         */
         public Registrar(@NotNull DatapackRegistrar registrar) {
             this.registrar = registrar;
         }
 
+        /**
+         * Registers a datapack from a given ZIP file.
+         *
+         * @param path  the path to the ZIP file
+         * @param id    the namespace or mod ID for the datapack
+         * @param title the title displayed in the UI
+         * @throws RuntimeException if registration fails due to I/O issues
+         */
         public void register(@NotNull Path path, @NotNull String id, @NotNull Component title) {
             try {
                 registrar.discoverPack(path, id, config -> {

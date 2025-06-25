@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.util;
 
 import com.google.gson.Gson;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.URL;
@@ -64,7 +65,7 @@ public class FileUtils {
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }
@@ -178,7 +179,6 @@ public class FileUtils {
 
             byte[] hashBytes = digest.digest();
 
-            // Convert to hex
             StringBuilder sb = new StringBuilder();
             for (byte b : hashBytes) {
                 sb.append(String.format("%02x", b));

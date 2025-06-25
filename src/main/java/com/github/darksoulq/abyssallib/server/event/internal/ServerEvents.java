@@ -2,10 +2,10 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
-import com.github.darksoulq.abyssallib.server.command.InternalCommand;
+import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.world.level.block.BlockManager;
-import com.github.darksoulq.abyssallib.world.level.data.MapLoader;
+import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.level.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.level.inventory.recipe.RecipeRegistrar;
 import org.bukkit.event.server.ServerLoadEvent;
 

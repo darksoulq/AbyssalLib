@@ -175,7 +175,7 @@ public class SqliteTableQuery implements TableQuery {
             setValues(stmt, whereParams);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) results.add(mapper.map(rs));
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
 

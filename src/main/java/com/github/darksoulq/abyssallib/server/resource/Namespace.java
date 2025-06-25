@@ -6,7 +6,9 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A logical asset container for a given namespace inside a resource pack.
@@ -41,7 +43,7 @@ public class Namespace {
     /**
      * Creates a texture asset with autoload from plugin JAR.
      *
-     * @param path Asset path (e.g. {@code item/sword.png})
+     * @param path Asset path (e.g. {@code item/sword})
      * @return Texture asset
      */
     public @NotNull Texture texture(@NotNull String path) {
@@ -51,7 +53,7 @@ public class Namespace {
     /**
      * Creates a texture asset.
      *
-     * @param path Asset path (e.g. {@code item/sword.png})
+     * @param path Asset path (e.g. {@code item/sword})
      * @param data Optional texture bytes. If {@code null}, tries to load from plugin JAR.
      * @return Texture asset
      */
@@ -67,7 +69,7 @@ public class Namespace {
      * Creates a font asset.
      *
      * @param name     Font name (e.g. {@code default})
-     * @param autoLoad If true, loads {@code resourcepack/font/<name>.json} from plugin JAR
+     * @param autoLoad If true, loads {@code resourcepack/font/<name>} from plugin JAR
      * @return Font asset
      */
     public @NotNull Font font(@NotNull String name, boolean autoLoad) {
@@ -82,7 +84,7 @@ public class Namespace {
      * Creates a model asset.
      *
      * @param name     Model name (without extension)
-     * @param autoLoad If true, loads model from {@code resourcepack/models/<name>.json} in plugin JAR
+     * @param autoLoad If true, loads model from {@code resourcepack/models/<name>} in plugin JAR
      * @return Model asset
      */
     public @NotNull Model model(@NotNull String name, boolean autoLoad) {
@@ -97,7 +99,7 @@ public class Namespace {
      * Creates a language file asset.
      *
      * @param locale   Locale code (e.g. {@code en_us})
-     * @param autoLoad If true, loads from {@code resourcepack/lang/<locale>.json} in plugin JAR
+     * @param autoLoad If true, loads from {@code resourcepack/lang/<locale>} in plugin JAR
      * @return Lang asset
      */
     public @NotNull Lang lang(@NotNull String locale, boolean autoLoad) {

@@ -4,10 +4,10 @@ import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector
 import com.google.gson.GsonBuilder;
 import org.bukkit.plugin.Plugin;
 
-import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ItemDefinition implements Asset {
     private final String namespace;

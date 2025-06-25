@@ -6,21 +6,20 @@ import com.github.darksoulq.abyssallib.server.config.legacy.ConfigSpec;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
+import com.github.darksoulq.abyssallib.server.packet.internal.BlockBreakListener;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
-import com.github.darksoulq.abyssallib.server.resource.asset.Font;
 import com.github.darksoulq.abyssallib.server.resource.asset.ItemDefinition;
+import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.util.Metrics;
-import com.github.darksoulq.abyssallib.world.level.block.BlockManager;
-import com.github.darksoulq.abyssallib.world.level.data.Identifier;
+import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.tag.BuiltinTags;
 import com.github.darksoulq.abyssallib.world.level.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.level.item.Items;
-
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -48,8 +47,8 @@ public final class AbyssalLib extends JavaPlugin {
         new BukkitRunnable() {
             @Override
             public void run() {
-                BlockManager.INSTANCE.save();
-                getLogger().info("Saving blocks...");
+                int saved = BlockManager.INSTANCE.save();
+                getLogger().info("Saved " + saved + " blocks");
             }
         }.runTaskTimerAsynchronously(this, 0, 20L * 60 * 5);
 
@@ -63,6 +62,8 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new ItemEvents());
         EVENT_BUS.register(new ServerEvents());
         EVENT_BUS.register(new GuiEvents());
+
+        new BlockBreakListener().register();
 
         BuiltinTags.TAGS.apply();
 
@@ -88,9 +89,14 @@ public final class AbyssalLib extends JavaPlugin {
         ResourcePack rp = new ResourcePack(this, MODID);
         Namespace ns = rp.namespace("abyssallib");
 
-        Selector root = new Selector.Empty();
+        Texture invisTexture = ns.texture("invis");
+        Model invisModel = ns.model("invis", false);
+        invisModel.parent("minecraft:item/generated");
+        invisModel.texture("layer0", invisTexture);
 
-        ItemDefinition def = ns.itemDefinition("test", root, false);
+        Selector invisSelector = new Selector.Model(invisModel);
+
+        ItemDefinition def = ns.itemDefinition("invisible", invisSelector, false);
 
         rp.register(false);
     }
