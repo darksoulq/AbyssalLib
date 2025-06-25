@@ -9,6 +9,9 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Transformation;
+import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +32,7 @@ public class Particles {
     private final Particle type;
 
     /** The Item to spawn, conflicts with Particle */
-    private final Item display;
+    private final ItemStack display;
 
     /** The static origin location where the particle effect starts, used if emitter is not set. */
     private Location origin;
@@ -48,6 +51,27 @@ public class Particles {
 
     /** An optional shape that defines spatial placement of the particles. */
     private Shape shape;
+
+    /** X-axis scale factor for {@link ItemDisplay} particles. */
+    private float scaleX = 1f;
+
+    /** Y-axis scale factor for {@link ItemDisplay} particles. */
+    private float scaleY = 1f;
+
+    /** Z-axis scale factor for {@link ItemDisplay} particles. */
+    private float scaleZ = 1f;
+
+    /** The Billboard mode to apply to {@link ItemDisplay} entities. */
+    private Display.Billboard billboard = Display.Billboard.HORIZONTAL;
+
+    /** Rotation around the X-axis in degrees (tilt forward/backward). */
+    private float xRotation = 0f;
+
+    /** Rotation around the Y-axis in degrees (turn left/right). */
+    private float yRotation = 0f;
+
+    /** Rotation around the Z-axis in degrees (roll clockwise). */
+    private float zRotation = 0f;
 
     /** Optional additional data for the particle (e.g., color, block type). */
     private Object data = null;
@@ -83,7 +107,7 @@ public class Particles {
      * @param displayItem the Item to spawn
      * @return a new {@code Particles} instance
      */
-    public static Particles of(Item displayItem) {
+    public static Particles of(ItemStack displayItem) {
         return new Particles(displayItem);
     }
 
@@ -100,9 +124,9 @@ public class Particles {
     /**
      * Private constructor used by {@link #of(Particle)}.
      *
-     * @param display the ItemDisplay to use as a psrticle
+     * @param display the ItemDisplay to use as a particle
      */
-    private Particles(Item display) {
+    private Particles(ItemStack display) {
         this.type = null;
         this.display = display;
     }
@@ -177,6 +201,58 @@ public class Particles {
         this.shape = shape;
         return this;
     }
+
+    /**
+     * Sets a uniform scale factor for {@link ItemDisplay} particles on all axes.
+     *
+     * @param scale the uniform scale factor (default is 1.0)
+     * @return this builder instance
+     */
+    public Particles withScale(float scale) {
+        return withScale(scale, scale, scale);
+    }
+
+    /**
+     * Sets the scale factors for {@link ItemDisplay} particles independently on each axis.
+     *
+     * @param x the X-axis scale factor
+     * @param y the Y-axis scale factor
+     * @param z the Z-axis scale factor
+     * @return this builder instance
+     */
+    public Particles withScale(float x, float y, float z) {
+        this.scaleX = x;
+        this.scaleY = y;
+        this.scaleZ = z;
+        return this;
+    }
+
+    /**
+     * Sets the billboard mode for {@link ItemDisplay} particles.
+     *
+     * @param billboard the billboard behavior
+     * @return this builder instance
+     */
+    public Particles withBillboard(Display.Billboard billboard) {
+        this.billboard = billboard;
+        return this;
+    }
+
+    /**
+     * Sets the rotation for {@link ItemDisplay} particles around the X, Y, and Z axes.
+     *
+     * @param xDeg rotation around X-axis in degrees (pitch)
+     * @param yDeg rotation around Y-axis in degrees (yaw)
+     * @param zDeg rotation around Z-axis in degrees (roll)
+     * @return this builder instance
+     */
+    public Particles withRotation(float xDeg, float yDeg, float zDeg) {
+        this.xRotation = xDeg;
+        this.yRotation = yDeg;
+        this.zRotation = zDeg;
+        return this;
+    }
+
 
     /**
      * Adds optional custom data to the particles (e.g., {@code DustOptions}, {@code MaterialData}).
@@ -322,8 +398,23 @@ public class Particles {
 
         for (Location point : spawnPoints) {
             ItemDisplay displayEntity = point.getWorld().spawn(point.clone(), ItemDisplay.class);
-            displayEntity.setItemStack(display.stack().clone());
-            displayEntity.setBillboard(Display.Billboard.HORIZONTAL);
+            displayEntity.setItemStack(display.clone());
+            displayEntity.setBillboard(billboard);
+
+            Transformation transform = displayEntity.getTransformation();
+            transform.getScale().set(scaleX, scaleY, scaleZ);
+
+            double xRad = Math.toRadians(xRotation);
+            double yRad = Math.toRadians(yRotation);
+            double zRad = Math.toRadians(zRotation);
+
+            Quaternionf q = new Quaternionf()
+                    .rotateX((float) xRad)
+                    .rotateY((float) yRad)
+                    .rotateZ((float) zRad);
+
+            transform.getLeftRotation().set(q);
+            displayEntity.setTransformation(transform);
             displays.add(displayEntity);
         }
 
