@@ -4,13 +4,18 @@ import com.github.darksoulq.abyssallib.server.database.QueryExecutor;
 import com.github.darksoulq.abyssallib.server.database.TableQuery;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
  * Implementation of the {@link QueryExecutor} interface for MySQL.
  * Provides methods to execute queries and interact with tables in a MySQL database.
+ * <p>
+ * Note: This class is not thread-safe. Each thread should obtain its own executor
+ * or ensure external synchronization when executing statements.
  */
 public class MySQLQueryExecutor implements QueryExecutor {
+
     /**
      * The JDBC connection to the MySQL database.
      */
@@ -38,14 +43,26 @@ public class MySQLQueryExecutor implements QueryExecutor {
 
     /**
      * Executes a raw SQL statement on the MySQL database.
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * executor.executeRaw("DELETE FROM users WHERE id = 1");
+     * }</pre>
      *
      * @param sql the raw SQL query to execute
-     * @throws Exception if an error occurs during the execution of the SQL statement
+     * @throws SQLException if an error occurs during execution
+     * @throws IllegalStateException if the database connection is closed
      */
     @Override
     public void executeRaw(String sql) throws Exception {
+        if (connection == null || connection.isClosed()) {
+            throw new IllegalStateException("Cannot execute SQL: connection is closed or null.");
+        }
+
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
+        } catch (SQLException ex) {
+            throw new SQLException("Failed to execute SQL: " + sql, ex);
         }
     }
 }

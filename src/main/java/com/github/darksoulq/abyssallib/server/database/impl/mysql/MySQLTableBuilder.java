@@ -4,50 +4,56 @@ import com.github.darksoulq.abyssallib.server.database.TableBuilder;
 
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implementation of the {@link TableBuilder} interface for MySQL.
  * Used to construct and execute SQL queries to create a table with various constraints.
  */
 public class MySQLTableBuilder implements TableBuilder {
+
     /**
      * The MySQL database connection.
      */
     private final Connection conn;
+
     /**
      * The name of the table to create.
      */
     private final String table;
+
     /**
      * Whether to include IF NOT EXISTS clause in the CREATE TABLE statement.
      */
     private boolean ifNotExists = false;
+
     /**
-     * The list of column definitions.
+     * List of column definitions.
      */
     private final List<String> columns = new ArrayList<>();
+
     /**
-     * The list of primary key column names.
+     * List of primary key column names.
      */
     private final List<String> primaryKeys = new ArrayList<>();
+
     /**
-     * The list of foreign key constraints.
+     * List of foreign key constraints.
      */
     private final List<String> foreignKeys = new ArrayList<>();
+
     /**
-     * The list of unique constraints.
+     * List of unique constraints.
      */
-    private final List<String> uniqueColumns = new ArrayList<>();
+    private final List<String> uniqueConstraints = new ArrayList<>();
+
     /**
-     * The list of check constraints.
+     * List of check constraints.
      */
     private final List<String> checkConstraints = new ArrayList<>();
+
     /**
-     * A map of column names to default values.
+     * Map of column names to their default values.
      */
     private final Map<String, String> defaultValues = new HashMap<>();
 
@@ -63,9 +69,9 @@ public class MySQLTableBuilder implements TableBuilder {
     }
 
     /**
-     * Specifies that the table should be created only if it doesn't already exist.
+     * Adds IF NOT EXISTS to the CREATE TABLE clause.
      *
-     * @return the current {@link TableBuilder} instance
+     * @return this builder instance
      */
     @Override
     public TableBuilder ifNotExists() {
@@ -74,123 +80,138 @@ public class MySQLTableBuilder implements TableBuilder {
     }
 
     /**
-     * Adds a column to the table definition.
+     * Adds a column to the table.
      *
-     * @param name the name of the column
-     * @param type the data type of the column
-     * @return the current {@link TableBuilder} instance
+     * @param name the column name
+     * @param type the SQL data type
+     * @return this builder instance
      */
     @Override
     public TableBuilder column(String name, String type) {
-        StringBuilder columnDef = new StringBuilder(name + " " + type);
-
-        // Apply default value if exists
-        if (defaultValues.containsKey(name)) {
-            columnDef.append(" DEFAULT ").append(defaultValues.get(name));
+        if (name == null || name.isBlank() || type == null || type.isBlank()) {
+            throw new IllegalArgumentException("Column name and type must be non-empty.");
         }
 
-        columns.add(columnDef.toString());
+        StringBuilder column = new StringBuilder(name).append(" ").append(type);
+        if (defaultValues.containsKey(name)) {
+            column.append(" DEFAULT ").append(defaultValues.get(name));
+        }
+
+        columns.add(column.toString());
         return this;
     }
 
     /**
-     * Adds primary keys to the table definition.
+     * Defines one or more primary key columns.
      *
-     * @param keys the columns to be used as primary keys
-     * @return the current {@link TableBuilder} instance
+     * @param keys the primary key column names
+     * @return this builder instance
      */
     @Override
     public TableBuilder primaryKey(String... keys) {
-        primaryKeys.addAll(List.of(keys));
+        Collections.addAll(primaryKeys, keys);
         return this;
     }
 
     /**
-     * Adds a foreign key constraint to the table.
+     * Adds a foreign key constraint.
      *
-     * @param column         the column that references another table
-     * @param referencesTable the table being referenced
-     * @param referencesColumn the column being referenced in the other table
-     * @return the current {@link TableBuilder} instance
+     * @param column           the referencing column
+     * @param referencesTable  the referenced table
+     * @param referencesColumn the referenced column
+     * @return this builder instance
      */
     @Override
     public TableBuilder foreignKey(String column, String referencesTable, String referencesColumn) {
+        if (column == null || referencesTable == null || referencesColumn == null) {
+            throw new IllegalArgumentException("Foreign key parameters must not be null.");
+        }
+
         foreignKeys.add("FOREIGN KEY (" + column + ") REFERENCES " + referencesTable + " (" + referencesColumn + ")");
         return this;
     }
 
     /**
-     * Adds unique constraints to the table.
+     * Adds a unique constraint to the given columns.
      *
-     * @param columns the columns that should have a unique constraint
-     * @return the current {@link TableBuilder} instance
+     * @param columns the column names
+     * @return this builder instance
      */
     @Override
     public TableBuilder unique(String... columns) {
-        uniqueColumns.add("UNIQUE (" + String.join(", ", columns) + ")");
+        if (columns.length > 0) {
+            uniqueConstraints.add("UNIQUE (" + String.join(", ", columns) + ")");
+        }
         return this;
     }
 
     /**
      * Adds a check constraint to the table.
      *
-     * @param expression the condition for the check constraint
-     * @return the current {@link TableBuilder} instance
+     * @param expression the SQL condition
+     * @return this builder instance
      */
     @Override
     public TableBuilder check(String expression) {
-        checkConstraints.add("CHECK (" + expression + ")");
+        if (expression != null && !expression.isBlank()) {
+            checkConstraints.add("CHECK (" + expression + ")");
+        }
         return this;
     }
 
     /**
-     * Specifies a default value for a column.
+     * Specifies a default value for the given column.
      *
-     * @param column      the column to set the default value for
-     * @param defaultValue the default value to set
-     * @return the current {@link TableBuilder} instance
+     * @param column       the column name
+     * @param defaultValue the SQL literal default value
+     * @return this builder instance
      */
     @Override
     public TableBuilder defaultValue(String column, String defaultValue) {
+        if (column == null || defaultValue == null) {
+            throw new IllegalArgumentException("Default value parameters must not be null.");
+        }
+
         defaultValues.put(column, defaultValue);
         return this;
     }
 
     /**
-     * Executes the SQL statement to create the table with the defined constraints and options.
+     * Builds and executes the CREATE TABLE SQL statement.
      *
-     * @throws RuntimeException if the table creation fails
+     * @throws RuntimeException if SQL execution fails
      */
     @Override
     public void execute() {
+        if (columns.isEmpty()) {
+            throw new IllegalStateException("Cannot create table with no columns.");
+        }
+
         StringBuilder sql = new StringBuilder("CREATE TABLE ");
         if (ifNotExists) sql.append("IF NOT EXISTS ");
         sql.append(table).append(" (");
 
-        sql.append(String.join(", ", columns));
+        List<String> allDefinitions = new ArrayList<>(columns);
 
         if (!primaryKeys.isEmpty()) {
-            sql.append(", PRIMARY KEY(").append(String.join(", ", primaryKeys)).append(")");
+            allDefinitions.add("PRIMARY KEY (" + String.join(", ", primaryKeys) + ")");
         }
-
         if (!foreignKeys.isEmpty()) {
-            sql.append(", ").append(String.join(", ", foreignKeys));
+            allDefinitions.addAll(foreignKeys);
         }
-
-        if (!uniqueColumns.isEmpty()) {
-            sql.append(", ").append(String.join(", ", uniqueColumns));
+        if (!uniqueConstraints.isEmpty()) {
+            allDefinitions.addAll(uniqueConstraints);
         }
-
         if (!checkConstraints.isEmpty()) {
-            sql.append(", ").append(String.join(", ", checkConstraints));
+            allDefinitions.addAll(checkConstraints);
         }
 
-        sql.append(")");
+        sql.append(String.join(", ", allDefinitions)).append(")");
 
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql.toString());
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create table: " + table, e);
+            throw new RuntimeException("Failed to create table '" + table + "': " + e.getMessage(), e);
         }
     }
 }
