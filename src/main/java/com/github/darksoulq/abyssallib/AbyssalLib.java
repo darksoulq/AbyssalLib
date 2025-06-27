@@ -14,6 +14,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.ItemDefinition;
 import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
+import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.util.Metrics;
 import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.tag.BuiltinTags;
@@ -89,13 +90,14 @@ public final class AbyssalLib extends JavaPlugin {
         ResourcePack rp = new ResourcePack(this, MODID);
         Namespace ns = rp.namespace("abyssallib");
 
+        TextOffset.init(ns);
+
         Texture invisTexture = ns.texture("invis");
         Model invisModel = ns.model("invis", false);
         invisModel.parent("minecraft:item/generated");
         invisModel.texture("layer0", invisTexture);
 
         Selector invisSelector = new Selector.Model(invisModel);
-
         ItemDefinition def = ns.itemDefinition("invisible", invisSelector, false);
 
         rp.register(false);

@@ -1,52 +1,50 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
+import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.google.gson.*;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import org.apache.fontbox.ttf.*;
+import org.apache.pdfbox.io.RandomAccessReadBufferedFile;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
- * Represents a custom font resource for Minecraft.
- * Supports auto-generation and auto-loading of glyphs using bitmap textures.
+ * Represents a Minecraft font resource supporting bitmap, space, TTF, and Unihex providers,
+ * with full Unicode occupation tracking.
  */
 @ApiStatus.Experimental
 public class Font implements Asset {
 
-    /**
-     * The namespace this font belongs to.
-     */
+    /** Namespace of this font (e.g., plugin or resource pack namespace). */
     private final String namespace;
 
-    /**
-     * The font identifier (filename without extension).
-     */
+    /** Identifier of this font (e.g., file name without extension). */
     private final String id;
 
-    /**
-     * List of glyphs contained in this font.
-     */
-    private final List<@NotNull Glyph> glyphs = new ArrayList<>();
+    /** Ordered list of glyph groups, grouped by provider type. */
+    private final List<LinkedList<Glyph>> glyphGroups = new LinkedList<>();
 
-    /**
-     * Set of Unicode characters already used in this font.
-     */
+    /** Tracks used Unicode characters to prevent duplication. */
     private final Set<Character> occupied = new HashSet<>();
 
-    /**
-     * Current base Unicode to assign from Private Use Area (PUA).
-     */
+    /** Base Unicode code point for private-use area allocations. */
     private int unicodeBase = 0xE000;
 
     /**
-     * Constructs an empty font with a given namespace and ID.
+     * Constructs a new empty Font.
      *
-     * @param namespace the resource pack namespace
-     * @param id        the font file ID (without extension)
+     * @param namespace The font's namespace.
+     * @param id        The font's identifier (usually filename without extension).
      */
     public Font(@NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
@@ -54,139 +52,377 @@ public class Font implements Asset {
     }
 
     /**
-     * Automatically loads the font from the plugin JAR at:
-     * {@code resourcepack/{namespace}/font/{id}.json}
+     * Loads a font definition from plugin resources, supports only single-char bitmap providers.
      *
-     * @param plugin    the plugin to load from
-     * @param namespace the resource pack namespace
-     * @param id        the font file ID (without extension)
+     * @param plugin    The plugin providing the resource.
+     * @param namespace Namespace for this font.
+     * @param id        Font identifier (without .json).
      */
     public Font(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
         this.id = id;
-
         String path = "resourcepack/" + namespace + "/font/" + id + ".json";
         try (InputStream in = plugin.getResource(path)) {
-            if (in == null) throw new IllegalStateException("Font file not found at: " + path);
-
-            JsonObject json = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
-            JsonArray providers = json.getAsJsonArray("providers");
-
+            if (in == null) throw new IllegalStateException("Font not found: " + path);
+            JsonArray providers = JsonParser.parseReader(
+                            new InputStreamReader(in, StandardCharsets.UTF_8))
+                    .getAsJsonObject()
+                    .getAsJsonArray("providers");
             for (JsonElement el : providers) {
-                JsonObject provider = el.getAsJsonObject();
-                if (!"bitmap".equals(provider.get("type").getAsString())) continue;
-
-                String file = provider.get("file").getAsString();
-                int ascent = provider.has("ascent") ? provider.get("ascent").getAsInt() : 8;
-                int height = provider.has("height") ? provider.get("height").getAsInt() : 8;
-                Integer advance = provider.has("advance") ? provider.get("advance").getAsInt() : null;
-
-                Texture texture = new Texture(plugin, namespace, file);
-
-                JsonArray chars = provider.getAsJsonArray("chars");
-                for (JsonElement ch : chars) {
-                    char c = ch.getAsString().charAt(0);
-                    glyphs.add(new Glyph(texture, c, height, ascent, advance));
-                    occupied.add(c);
+                JsonObject p = el.getAsJsonObject();
+                if ("bitmap".equals(p.get("type").getAsString())) {
+                    JsonArray chars = p.getAsJsonArray("chars");
+                    if (chars.size() == 1 && chars.get(0).getAsString().length() == 1) {
+                        String file = p.get("file").getAsString();
+                        int h = p.has("height") ? p.get("height").getAsInt() : 8;
+                        int a = p.has("ascent") ? p.get("ascent").getAsInt() : h;
+                        char c = chars.get(0).getAsString().charAt(0);
+                        Texture tex = new Texture(plugin, namespace, file);
+                        addTextureGlyph(tex, c, h, a);
+                    }
                 }
             }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load font from JAR", e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
-     * Creates and adds a new glyph with auto-assigned Unicode character.
+     * Creates an offset glyph that affects spacing only.
      *
-     * @param texture the glyph texture
-     * @param height  glyph height
-     * @param ascent  glyph ascent
-     * @return the created {@link Glyph}
+     * @param pixelOffset The horizontal offset in pixels.
+     * @return The created {@link OffsetGlyph}.
      */
-    public @NotNull Glyph glyph(@NotNull Texture texture, int height, int ascent) {
-        return glyph(texture, height, ascent, null);
-    }
-
-    /**
-     * Creates and adds a new glyph with optional advance and auto-assigned Unicode character.
-     *
-     * @param texture the glyph texture
-     * @param height  glyph height
-     * @param ascent  glyph ascent
-     * @param advance optional advance value (can be {@code null})
-     * @return the created {@link Glyph}
-     */
-    public @NotNull Glyph glyph(@NotNull Texture texture, int height, int ascent, Integer advance) {
-        char assigned = getNextAvailableUnicode();
-        Glyph g = new Glyph(texture, assigned, height, ascent, advance);
-        glyphs.add(g);
-        occupied.add(assigned);
+    public @NotNull OffsetGlyph offset(int pixelOffset) {
+        char c = nextUnicode();
+        OffsetGlyph g = new OffsetGlyph(Identifier.of(namespace, id), c, pixelOffset);
+        LinkedList<Glyph> list = new LinkedList<>();
+        list.add(g);
+        glyphGroups.add(list);
+        occupied.add(c);
         return g;
     }
 
     /**
-     * Finds and returns the next unused character in the Private Use Area (U+E000–U+F8FF).
+     * Registers a TrueType font provider.
      *
-     * @return the assigned character
-     * @throws IllegalStateException if no free character is available
+     * @param ttfFile    The TTF file.
+     * @param shiftX     X offset for rendering.
+     * @param shiftY     Y offset for rendering.
+     * @param size       Size of font in pixels.
+     * @param oversample Oversample factor.
+     * @throws IOException If the file fails to load or parse.
      */
-    private char getNextAvailableUnicode() {
+    public void ttf(@NotNull File ttfFile, int shiftX, int shiftY, int size, int oversample) throws IOException {
+        Set<Character> chars = readTtfUnicodes(ttfFile);
+        for (char c : chars) ensureNotOccupied(c);
+        occupied.addAll(chars);
+        LinkedList<Glyph> gl = new LinkedList<>();
+        gl.add(new TtfFont(Identifier.of(namespace, id), ttfFile.getPath(), shiftX, shiftY, size, oversample));
+        glyphGroups.add(gl);
+    }
+
+    /**
+     * Registers a Unihex ZIP provider.
+     *
+     * @param zipFile   ZIP file containing .hex glyphs.
+     * @param overrides List of overrides for character sizing.
+     * @throws IOException If loading the ZIP fails.
+     */
+    public void unihex(@NotNull File zipFile, @NotNull List<UnihexFont.Override> overrides) throws IOException {
+        Set<Character> chars = readUnihexUnicodes(zipFile);
+        for (char c : chars) ensureNotOccupied(c);
+        occupied.addAll(chars);
+        LinkedList<Glyph> gl = new LinkedList<>();
+        gl.add(new UnihexFont(Identifier.of(namespace, id), zipFile.getPath(), overrides));
+        glyphGroups.add(gl);
+    }
+
+    /**
+     * Converts a texture atlas into glyphs split into rows.
+     *
+     * @param texture  Texture data.
+     * @param spriteW  Width of a single glyph.
+     * @param spriteH  Height of a single glyph.
+     * @param height   Glyph visual height.
+     * @param ascent   Glyph ascent.
+     * @return Glyphs grouped by texture rows.
+     */
+    public @NotNull List<LinkedList<Glyph>> glyphs(
+            @NotNull Texture texture,
+            int spriteW,
+            int spriteH,
+            int height,
+            int ascent
+    ) {
+        int[] size = getImageSize(texture.data());
+        int textureWidth = size[0];
+        int textureHeight = size[1];
+
+        List<LinkedList<Glyph>> result = new ArrayList<>();
+        int cols = textureWidth / spriteW;
+        int rows = textureHeight / spriteH;
+
+        for (int r = 0; r < rows; r++) {
+            LinkedList<Glyph> line = new LinkedList<>();
+            for (int c = 0; c < cols; c++) {
+                char ch = nextUnicode();
+                TextureGlyph tg = new TextureGlyph(Identifier.of(namespace, id), texture, ch, height, ascent);
+                line.add(tg);
+                occupied.add(ch);
+            }
+            result.add(line);
+            glyphGroups.add(line);
+        }
+
+        return result;
+    }
+
+    /**
+     * Emits this font to a JSON file.
+     *
+     * @param files Output file map for resource pack building.
+     */
+    @Override
+    public void emit(@NotNull Map<String, byte[]> files) {
+        JsonArray providers = new JsonArray();
+        Map<Texture, LinkedList<TextureGlyph>> bitmaps = new LinkedHashMap<>();
+        LinkedList<OffsetGlyph> spaces = new LinkedList<>();
+
+        for (LinkedList<Glyph> group : glyphGroups) {
+            if (group.isEmpty()) continue;
+            Glyph f = group.getFirst();
+            if (f instanceof TextureGlyph) {
+                group.forEach(g -> {
+                    TextureGlyph t = (TextureGlyph) g;
+                    bitmaps.computeIfAbsent(t.texture(), k -> new LinkedList<>()).add(t);
+                });
+            } else if (f instanceof OffsetGlyph) {
+                group.forEach(g -> spaces.add((OffsetGlyph) g));
+            } else if (f instanceof TtfFont t) {
+                providers.add(t.toJson());
+            } else if (f instanceof UnihexFont u) {
+                providers.add(u.toJson());
+            }
+        }
+
+        bitmaps.forEach((tex, list) -> providers.add(toBitmapProvider(list)));
+        if (!spaces.isEmpty()) providers.add(toSpaceProvider(spaces));
+
+        JsonObject root = new JsonObject();
+        root.add("providers", providers);
+        files.put("assets/" + namespace + "/font/" + id + ".json",
+                new GsonBuilder().setPrettyPrinting().create()
+                        .toJson(root).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Builds a JSON bitmap provider from a list of {@link TextureGlyph}s.
+     *
+     * @param list List of glyphs sharing the same texture, height, and ascent.
+     * @return JSON representation of a bitmap provider.
+     */
+    private JsonObject toBitmapProvider(List<TextureGlyph> list) {
+        TextureGlyph s = list.get(0);
+        JsonObject p = new JsonObject();
+        p.addProperty("type", "bitmap");
+        p.addProperty("file", s.texture().file());
+        p.addProperty("height", s.height());
+        p.addProperty("ascent", s.ascent());
+        JsonArray arr = new JsonArray();
+        list.forEach(t -> arr.add(String.valueOf(t.character())));
+        p.add("chars", arr);
+        return p;
+    }
+
+    /**
+     * Builds a JSON space provider from a list of {@link OffsetGlyph}s.
+     *
+     * @param list List of spacing glyphs with character and advance values.
+     * @return JSON representation of a space provider.
+     */
+    private JsonObject toSpaceProvider(List<OffsetGlyph> list) {
+        JsonObject p = new JsonObject();
+        p.addProperty("type", "space");
+        JsonObject adv = new JsonObject();
+        list.forEach(o -> adv.addProperty(String.valueOf(o.character()), o.advance()));
+        p.add("advances", adv);
+        return p;
+    }
+
+    /**
+     * Generates the next available Unicode character from the Private Use Area.
+     *
+     * @return A free Unicode character not already used by another glyph.
+     * @throws IllegalStateException If the Private Use Area is exhausted.
+     */
+    private char nextUnicode() {
         while (unicodeBase <= 0xF8FF) {
             char c = (char) unicodeBase++;
             if (!occupied.contains(c)) return c;
         }
-        throw new IllegalStateException("No free Unicode chars left in Private Use Area.");
+        throw new IllegalStateException("PUA exhausted");
     }
 
     /**
-     * Emits the font JSON file to the output map.
+     * Adds a single {@link TextureGlyph} to the font using a specified character.
      *
-     * @param files the file output map
+     * @param texture The texture this glyph uses.
+     * @param c       The Unicode character for this glyph.
+     * @param h       The height of the glyph in pixels.
+     * @param a       The ascent of the glyph in pixels.
      */
-    @Override
-    public void emit(@NotNull Map<String, byte[]> files) {
-        JsonObject root = new JsonObject();
-        JsonArray providers = new JsonArray();
+    private void addTextureGlyph(@NotNull Texture texture, char c, int h, int a) {
+        TextureGlyph g = new TextureGlyph(Identifier.of(namespace, id), texture, c, h, a);
+        LinkedList<Glyph> list = new LinkedList<>();
+        list.add(g);
+        glyphGroups.add(list);
+        occupied.add(c);
+    }
 
-        for (Glyph glyph : glyphs) {
-            JsonObject provider = new JsonObject();
-            provider.addProperty("type", "bitmap");
-            provider.addProperty("file", glyph.texture().file());
-            provider.addProperty("height", glyph.height());
-            provider.addProperty("ascent", glyph.ascent());
+    /**
+     * Ensures the given Unicode character is not already in use.
+     *
+     * @param c The character to check.
+     * @throws IllegalStateException If the character is already occupied.
+     */
+    private void ensureNotOccupied(char c) {
+        if (occupied.contains(c)) throw new IllegalStateException(
+                "Unicode U+" + Integer.toHexString(c).toUpperCase() + " already occupied");
+    }
 
-            if (glyph.advance() != null) {
-                provider.addProperty("advance", glyph.advance());
-            }
-
-            JsonArray chars = new JsonArray();
-            chars.add(String.valueOf(glyph.character()));
-            provider.add("chars", chars);
-
-            providers.add(provider);
+    /**
+     * Determines the width and height of an image given its byte array.
+     *
+     * @param imageData Raw image data.
+     * @return An array of two integers: [width, height].
+     * @throws RuntimeException If the image is invalid or cannot be read.
+     */
+    private int[] getImageSize(byte[] imageData) {
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageData));
+            if (image == null) throw new IllegalArgumentException("Invalid image data.");
+            return new int[]{ image.getWidth(), image.getHeight() };
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read image dimensions", e);
         }
-
-        root.add("providers", providers);
-
-        files.put("assets/" + namespace + "/font/" + id + ".json",
-                new GsonBuilder().setPrettyPrinting().create().toJson(root).getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Represents a single font glyph entry in a bitmap font provider.
+     * Extracts all Unicode characters defined in a TTF file.
      *
-     * @param texture   the bitmap texture used for the glyph
-     * @param character the character code assigned
-     * @param height    the height of the glyph
-     * @param ascent    the ascent of the glyph
-     * @param advance   optional advance value
+     * @param file TTF file to analyze.
+     * @return Set of all characters with associated glyphs in the font.
+     * @throws IOException If the file cannot be read or parsed.
      */
-    public record Glyph(
-            @NotNull Texture texture,
-            char character,
-            int height,
-            int ascent,
-            Integer advance
-    ) {}
+    private Set<Character> readTtfUnicodes(File file) throws IOException {
+        Set<Character> set = new HashSet<>();
+        try (TrueTypeFont ttf = new TTFParser().parse(new RandomAccessReadBufferedFile(file))) {
+            CmapTable cmapTable = ttf.getCmap();
+            if (cmapTable != null) {
+                for (CmapSubtable cmap : cmapTable.getCmaps()) {
+                    for (int cp = 0; cp <= Character.MAX_VALUE; cp++) {
+                        int gid = cmap.getGlyphId(cp);
+                        if (gid > 0) {
+                            set.add((char) cp);
+                        }
+                    }
+                }
+            }
+        }
+        return set;
+    }
+
+    /**
+     * Scans a Unihex font ZIP archive for all character files.
+     *
+     * @param zip ZIP archive containing Unihex .hex files.
+     * @return Set of Unicode characters declared in the file names.
+     * @throws IOException If the archive fails to open or parse.
+     */
+    private Set<Character> readUnihexUnicodes(File zip) throws IOException {
+        Set<Character> set = new HashSet<>();
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zip))) {
+            ZipEntry e;
+            while ((e = zis.getNextEntry()) != null) {
+                String name = new File(e.getName()).getName();
+                if (name.matches("[0-9A-Fa-f]{4,6}\\.hex")) {
+                    int cp = Integer.parseInt(name.replace(".hex", ""), 16);
+                    set.add((char) cp);
+                }
+            }
+        }
+        return set;
+    }
+
+    /**
+     * Represents a font glyph.
+     */
+    public sealed interface Glyph permits TextureGlyph, OffsetGlyph, TtfFont, UnihexFont {}
+
+    /**
+     * A glyph from a bitmap texture.
+     */
+    public record TextureGlyph(Identifier fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
+        public TextComponent toComponent() {
+            return Component.text(character).font(fontId.toNamespace());
+        }
+    }
+
+    /**
+     * A spacing glyph that adjusts character advance.
+     */
+    public record OffsetGlyph(Identifier fontId, char character, int advance) implements Glyph {
+        public TextComponent toComponent() {
+            return Component.text(character).font(fontId.toNamespace());
+        }
+    }
+
+    /**
+     * TTF font provider.
+     */
+    public record TtfFont(Identifier fontId, String file, int shiftX, int shiftY, int size, int oversample) implements Glyph {
+        /**
+         * @return the json representation.
+         */
+        public JsonObject toJson() {
+            JsonObject p = new JsonObject();
+            p.addProperty("type", "ttf");
+            p.addProperty("file", file);
+            p.addProperty("size", size);
+            p.addProperty("oversample", oversample);
+            JsonArray shift = new JsonArray();
+            shift.add(shiftX);
+            shift.add(shiftY);
+            p.add("shift", shift);
+            return p;
+        }
+    }
+
+    /**
+     * Unihex font provider with size overrides.
+     */
+    public record UnihexFont(Identifier fontId, String file, List<Override> sizeOverrides) implements Glyph {
+        public record Override(int from, int to, int left, int right) {}
+
+        /**
+         * @return the json representation.
+         */
+        public JsonObject toJson() {
+            JsonObject p = new JsonObject();
+            p.addProperty("type", "unihex");
+            p.addProperty("hex_file", file);
+            JsonArray arr = new JsonArray();
+            for (Override o : sizeOverrides) {
+                JsonObject j = new JsonObject();
+                j.addProperty("from", o.from());
+                j.addProperty("to", o.to());
+                j.addProperty("left", o.left());
+                j.addProperty("right", o.right());
+                arr.add(j);
+            }
+            p.add("size_overrides", arr);
+            return p;
+        }
+    }
 }

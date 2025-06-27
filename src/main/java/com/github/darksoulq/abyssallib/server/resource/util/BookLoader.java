@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.server.resource;
+package com.github.darksoulq.abyssallib.server.resource.util;
 
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.google.gson.*;

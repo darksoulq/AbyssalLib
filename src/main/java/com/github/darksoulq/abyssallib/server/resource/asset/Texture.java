@@ -64,6 +64,13 @@ public class Texture implements Asset {
     }
 
     /**
+     * @return the image data of the texture
+     */
+    public @NotNull byte[] data() {
+        return data;
+    }
+
+    /**
      * Emits this texture into the pack output map.
      *
      * @param files File output map

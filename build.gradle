@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.github.darksoulq'
-version = '1.2.8-mc1.21.5'
+version = '1.3.0-mc1.21.5'
 
 def targetJavaVersion = 21
 
@@ -40,6 +40,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle('1.21.6-R0.1-SNAPSHOT')
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+    implementation 'org.apache.pdfbox:fontbox:3.0.5'
     compileOnly 'com.magmaguy:ResourcePackManager:1.2.2'
 }
 
