@@ -139,6 +139,25 @@ public class Font implements Asset {
     }
 
     /**
+     * Creates a texture glyph (bitmap glyph)
+     * DO MOT USE THIS IF MULTIPLE GLYPHS ARE TO USE SAME TEXTURE! (e.g a glyph spritesheet)
+     *
+     * @param texture The texture used by the glyph
+     * @param height The height of the image
+     * @param ascent The ascent of the glyph
+     * @return The glyph that has been created
+     */
+    public @NotNull TextureGlyph glyph(Texture texture, int height, int ascent) {
+        char c = nextUnicode();
+        TextureGlyph g = new TextureGlyph(Identifier.of(namespace, id), texture, c, height, ascent);
+        LinkedList<Glyph> gl = new LinkedList<>();
+        gl.add(g);
+        occupied.add(c);
+        glyphGroups.add(gl);
+        return g;
+    }
+
+    /**
      * Converts a texture atlas into glyphs split into rows.
      *
      * @param texture  Texture data.
@@ -367,6 +386,9 @@ public class Font implements Asset {
         public TextComponent toComponent() {
             return Component.text(character).font(fontId.toNamespace());
         }
+        public String toMiniMessageString() {
+            return "<font:" + fontId.toString() + ">" + character + "</font>";
+        }
     }
 
     /**
@@ -375,6 +397,9 @@ public class Font implements Asset {
     public record OffsetGlyph(Identifier fontId, char character, int advance) implements Glyph {
         public TextComponent toComponent() {
             return Component.text(character).font(fontId.toNamespace());
+        }
+        public String toMiniMessageString() {
+            return "<font:" + fontId.toString() + ">" + character + "</font>";
         }
     }
 
