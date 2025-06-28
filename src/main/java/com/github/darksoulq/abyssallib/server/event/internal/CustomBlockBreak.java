@@ -1,13 +1,12 @@
-package com.github.darksoulq.abyssallib.server.packet.internal;
+package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.server.packet.PacketEvents;
-import com.github.darksoulq.abyssallib.server.packet.PacketPriority;
+import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.server.PacketReceiveEvent;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -16,13 +15,14 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
-public class BlockBreakListener {
+public class CustomBlockBreak {
 
     private record BreakState(Location location, float progress, int stage, float speed) {}
 
@@ -31,17 +31,15 @@ public class BlockBreakListener {
     private final Map<UUID, BreakState> activeBreaks = new HashMap<>();
     private final Map<UUID, Collection<AttributeModifier>> savedModifiers = new HashMap<>();
 
-    public void register() {
-        PacketEvents.listenIncoming(ServerboundPlayerActionPacket.class, PacketPriority.NORMAL, this::handlePacket, false);
-    }
-
-    private boolean handlePacket(ServerPlayer nmsPlayer, ServerboundPlayerActionPacket packet) {
-        Player player = nmsPlayer.getBukkitEntity();
+    @SubscribeEvent
+    public void handlePacket(PacketReceiveEvent event) {
+        if (!(event.getPacket() instanceof ServerboundPlayerActionPacket packet)) return;
+        Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         Location loc = new Location(player.getWorld(), packet.getPos().getX(), packet.getPos().getY(), packet.getPos().getZ());
 
         Block custom = Block.from(loc.getBlock());
-        if (custom == null) return false;
+        if (custom == null) return;
 
         BlockProperties props = custom.properties;
         ItemStack tool = player.getInventory().getItemInMainHand();
@@ -51,11 +49,15 @@ public class BlockBreakListener {
             case START_DESTROY_BLOCK -> {
                 if (player.getGameMode() == GameMode.CREATIVE) {
                     player.breakBlock(loc.getBlock());
-                    return true;
+                    event.setCancelled(true);
+                    return;
                 }
 
                 float speed = getBreakSpeed(player, props, tool);
-                if (speed <= 0f) return true;
+                if (speed <= 0f) {
+                    event.setCancelled(true);
+                    return;
+                }
 
                 AttributeInstance attr = player.getAttribute(Attribute.BLOCK_BREAK_SPEED);
                 if (attr != null) applyModifier(attr, uuid);
@@ -66,7 +68,8 @@ public class BlockBreakListener {
                 activeBreaks.put(uuid, new BreakState(loc, 0f, 0, speed));
 
                 new BreakProgress(player, players).runTaskTimer(AbyssalLib.getInstance(), 0, 1);
-                return true;
+                event.setCancelled(true);
+                return;
             }
 
             case ABORT_DESTROY_BLOCK, STOP_DESTROY_BLOCK -> {
@@ -75,7 +78,8 @@ public class BlockBreakListener {
                     p.sendBlockDamage(loc, 0f);
                 }
                 restoreAttribute(player.getAttribute(Attribute.BLOCK_BREAK_SPEED), uuid);
-                return true;
+                event.setCancelled(true);
+                return;
             }
 
             default -> {
@@ -86,8 +90,13 @@ public class BlockBreakListener {
                 restoreAttribute(player.getAttribute(Attribute.BLOCK_BREAK_SPEED), uuid);
             }
         }
+    }
 
-        return false;
+    @SubscribeEvent
+    public void onBlockDamage(BlockDamageEvent event) {
+        if (Block.from(event.getBlock()) != null) {
+            event.setInstaBreak(false);
+        }
     }
 
     private float getBreakSpeed(Player player, BlockProperties props, ItemStack tool) {

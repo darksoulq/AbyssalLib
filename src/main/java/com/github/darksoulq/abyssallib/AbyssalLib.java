@@ -6,7 +6,7 @@ import com.github.darksoulq.abyssallib.server.config.legacy.ConfigSpec;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
-import com.github.darksoulq.abyssallib.server.packet.internal.BlockBreakListener;
+import com.github.darksoulq.abyssallib.server.event.internal.CustomBlockBreak;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
@@ -64,8 +64,6 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new ServerEvents());
         EVENT_BUS.register(new GuiEvents());
 
-        new BlockBreakListener().register();
-
         BuiltinTags.TAGS.apply();
 
         CONFIG = new ConfigSpec();
@@ -73,6 +71,7 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG.define(ConfigSpec.ConfigType.STRING, "resource-pack.ip", "127.0.0.1");
         CONFIG.define(ConfigSpec.ConfigType.INT, "resource-pack.port", 8080);
         CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "metrics.enabled", true);
+        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "features.custom_block_breaking", false);
         Config.register(MODID, CONFIG);
 
         if (CONFIG.getBoolean("resource-pack.autohost")) {
@@ -83,6 +82,10 @@ public final class AbyssalLib extends JavaPlugin {
 
         if (CONFIG.getBoolean("metrics.enabled")) {
             new Metrics(this, 25772);
+        }
+
+        if (CONFIG.getBoolean("features.custom_block_breaking")) {
+            EVENT_BUS.register(new CustomBlockBreak());
         }
 
         Items.ITEMS.apply();

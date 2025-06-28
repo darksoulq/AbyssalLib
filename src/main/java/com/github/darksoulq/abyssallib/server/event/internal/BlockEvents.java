@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEvent;
@@ -177,13 +178,6 @@ public class BlockEvents {
         Block block = Block.from(event.getHitBlock());
         if (block != null) {
             block.onProjectileHit(event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onBlockDamage(BlockDamageEvent event) {
-        if (Block.from(event.getBlock()) != null) {
-            event.setInstaBreak(false);
         }
     }
 
