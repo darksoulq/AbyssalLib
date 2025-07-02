@@ -68,6 +68,16 @@ public class Block {
     }
 
     /**
+     * Constructs a new {@code Block} with the given identifier and block material.
+     *
+     * @param id the unique identifier for this block
+     */
+    public Block(Identifier id, Material material) {
+        this.id = id;
+        this.material = material;
+    }
+
+    /**
      * Returns the unique identifier of this block.
      *
      * @return the {@link Identifier} of the block

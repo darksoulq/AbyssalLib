@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.database.Database;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -12,18 +13,18 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Represents persistent per-player attribute data. Provides access to attributes stored in memory
+ * Represents persistent per-entity attribute data. Provides access to attributes stored in memory
  * and persisted in a local database. This class is thread-safe.
  */
-public class PlayerAttributes {
+public class EntityAttributes {
 
     /**
-     * A thread-safe cache of loaded PlayerData instances, keyed by player UUID.
+     * A thread-safe cache of loaded EntityAttributes instances, keyed by entity UUID.
      */
-    private static final Map<UUID, PlayerAttributes> CACHE = new ConcurrentHashMap<>();
+    private static final Map<UUID, EntityAttributes> CACHE = new ConcurrentHashMap<>();
 
     /**
-     * The UUID of the player this data belongs to.
+     * The UUID of the entity this data belongs to.
      */
     private final UUID uuid;
 
@@ -36,7 +37,7 @@ public class PlayerAttributes {
      * The backing SQLite database for attribute persistence.
      */
     private static final Database database = new SqliteDatabase(
-            new File(AbyssalLib.getInstance().getDataFolder(), "player.db")
+            new File(AbyssalLib.getInstance().getDataFolder(), "entity_data.db")
     );
 
     /**
@@ -44,28 +45,28 @@ public class PlayerAttributes {
      *
      * @param uuid the UUID of the player
      */
-    private PlayerAttributes(UUID uuid) {
+    private EntityAttributes(UUID uuid) {
         this.uuid = uuid;
     }
 
     /**
-     * Gets the PlayerData for the given {@link Player} instance.
+     * Gets the EntityAttributes for the given {@link Entity} instance.
      *
-     * @param player the player
-     * @return the player's data wrapper
+     * @param entity the entity
+     * @return the entity's data wrapper
      */
-    public static PlayerAttributes of(Player player) {
-        return of(player.getUniqueId());
+    public static EntityAttributes of(Entity entity) {
+        return of(entity.getUniqueId());
     }
 
     /**
-     * Gets the PlayerData for the given player UUID, loading from memory or creating a new instance.
+     * Gets the EntityAttributes for the given entity UUID, loading from memory or creating a new instance.
      *
-     * @param uuid the player's UUID
-     * @return the PlayerData instance
+     * @param uuid the entity's UUID
+     * @return the EntityAttributes instance
      */
-    public static PlayerAttributes of(UUID uuid) {
-        return CACHE.computeIfAbsent(uuid, PlayerAttributes::new);
+    public static EntityAttributes of(UUID uuid) {
+        return CACHE.computeIfAbsent(uuid, EntityAttributes::new);
     }
 
     /**
@@ -141,11 +142,11 @@ public class PlayerAttributes {
     }
 
     /**
-     * Loads all attribute data for this player asynchronously from the database.
+     * Loads all attribute data for this entity asynchronously from the database.
      */
     public void load() {
         Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
-            var rows = database.executor().table("player_data")
+            var rows = database.executor().table("entity_data")
                     .where("uuid = ?", uuid.toString())
                     .select(rs -> Map.entry(rs.getString("key"), rs.getString("value")));
 
@@ -167,7 +168,7 @@ public class PlayerAttributes {
      */
     private void save(String key, String value) {
         Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
-            database.executor().table("player_data").insert()
+            database.executor().table("entity_data").insert()
                     .value("uuid", uuid.toString())
                     .value("key", key)
                     .value("value", value)
@@ -176,10 +177,10 @@ public class PlayerAttributes {
     }
 
     /**
-     * Initializes the player_data database table with required schema if it doesn't already exist.
+     * Initializes the entity_data database table with required schema if it doesn't already exist.
      */
     public static void initTable() {
-        database.executor().table("player_data").create()
+        database.executor().table("entity_data").create()
                 .ifNotExists()
                 .column("uuid", "TEXT")
                 .column("key", "TEXT")

@@ -68,11 +68,6 @@ public class PacketSendEvent extends Event implements Cancellable {
         this.cancelled = cancel;
     }
 
-    /**
-     * Bukkit requirement to retrieve the handler list statically.
-     *
-     * @return handler list
-     */
     public static HandlerList getHandlerList() {
         return HANDLERS;
     }
