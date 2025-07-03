@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
+import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 import org.bukkit.Location;
@@ -20,6 +21,7 @@ public class PlayerEvents {
     @SubscribeEvent
     public void onJoin(PlayerJoinEvent event) {
         PacketInterceptor.inject(event.getPlayer());
+        EntityAttributes.of(event.getPlayer()).load();
     }
 
     @SubscribeEvent

@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
+import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.block.Block;
@@ -107,6 +108,14 @@ public class ItemEvents {
         Item item = Item.from(event.getRecipe().getResult());
         if (item != null) {
             item.onCraft(player);
+        }
+    }
+
+    @SubscribeEvent
+    public void onSlotChange(PlayerInventorySlotChangeEvent event) {
+        Item item = Item.from(event.getNewItemStack());
+        if (item != null) {
+            event.setShouldTriggerAdvancements(false);
         }
     }
 

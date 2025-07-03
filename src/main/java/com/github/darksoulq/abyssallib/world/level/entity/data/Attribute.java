@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.level.data.player;
+package com.github.darksoulq.abyssallib.world.level.entity.data;
 
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 

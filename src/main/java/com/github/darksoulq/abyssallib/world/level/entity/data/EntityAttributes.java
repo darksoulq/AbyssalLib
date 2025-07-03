@@ -1,11 +1,10 @@
-package com.github.darksoulq.abyssallib.world.level.data.player;
+package com.github.darksoulq.abyssallib.world.level.entity.data;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.database.Database;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.Map;
@@ -36,9 +35,18 @@ public class EntityAttributes {
     /**
      * The backing SQLite database for attribute persistence.
      */
-    private static final Database database = new SqliteDatabase(
+    private static final Database DATABASE = new SqliteDatabase(
             new File(AbyssalLib.getInstance().getDataFolder(), "entity_data.db")
     );
+
+    public static void init() {
+        try {
+            DATABASE.connect();
+            initTable();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Private constructor. Use {@link #of(UUID)} to create or fetch a PlayerData instance.
@@ -146,7 +154,7 @@ public class EntityAttributes {
      */
     public void load() {
         Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
-            var rows = database.executor().table("entity_data")
+            var rows = DATABASE.executor().table("entity_data")
                     .where("uuid = ?", uuid.toString())
                     .select(rs -> Map.entry(rs.getString("key"), rs.getString("value")));
 
@@ -168,7 +176,7 @@ public class EntityAttributes {
      */
     private void save(String key, String value) {
         Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
-            database.executor().table("entity_data").insert()
+            DATABASE.executor().table("entity_data").insert()
                     .value("uuid", uuid.toString())
                     .value("key", key)
                     .value("value", value)
@@ -180,7 +188,7 @@ public class EntityAttributes {
      * Initializes the entity_data database table with required schema if it doesn't already exist.
      */
     public static void initTable() {
-        database.executor().table("entity_data").create()
+        DATABASE.executor().table("entity_data").create()
                 .ifNotExists()
                 .column("uuid", "TEXT")
                 .column("key", "TEXT")

@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.level.data.player;
+package com.github.darksoulq.abyssallib.world.level.entity.data;
 
 /**
  * Defines arithmetic operations that can be applied to numeric attributes via {@link AttributeModifier}.

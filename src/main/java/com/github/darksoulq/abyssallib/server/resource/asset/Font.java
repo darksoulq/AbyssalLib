@@ -73,7 +73,7 @@ public class Font implements Asset {
                 if ("bitmap".equals(p.get("type").getAsString())) {
                     JsonArray chars = p.getAsJsonArray("chars");
                     if (chars.size() == 1 && chars.get(0).getAsString().length() == 1) {
-                        String file = p.get("file").getAsString();
+                        String file = p.get("file").getAsString().replaceFirst("\\.png$", "");
                         int h = p.has("height") ? p.get("height").getAsInt() : 8;
                         int a = p.has("ascent") ? p.get("ascent").getAsInt() : h;
                         char c = chars.get(0).getAsString().charAt(0);
@@ -93,13 +93,11 @@ public class Font implements Asset {
      * @param pixelOffset The horizontal offset in pixels.
      * @return The created {@link OffsetGlyph}.
      */
-    public @NotNull OffsetGlyph offset(int pixelOffset) {
-        char c = nextUnicode();
-        OffsetGlyph g = new OffsetGlyph(Identifier.of(namespace, id), c, pixelOffset);
+    public @NotNull OffsetGlyph offset(int pixelOffset, char unicode) {
+        OffsetGlyph g = new OffsetGlyph(Identifier.of(namespace, id), unicode, pixelOffset);
         LinkedList<Glyph> list = new LinkedList<>();
         list.add(g);
         glyphGroups.add(list);
-        occupied.add(c);
         return g;
     }
 
@@ -245,7 +243,7 @@ public class Font implements Asset {
         TextureGlyph s = list.get(0);
         JsonObject p = new JsonObject();
         p.addProperty("type", "bitmap");
-        p.addProperty("file", s.texture().file());
+        p.addProperty("file", s.texture().file() + ".png");
         p.addProperty("height", s.height());
         p.addProperty("ascent", s.ascent());
         JsonArray arr = new JsonArray();

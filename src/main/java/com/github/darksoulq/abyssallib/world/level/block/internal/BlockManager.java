@@ -22,35 +22,31 @@ import java.util.Map;
  * Manages custom blocks including their registration, persistence, and loading from a database.
  */
 public class BlockManager {
-    /**
-     * Singleton instance of the BlockManager.
-     */
-    public static final BlockManager INSTANCE = new BlockManager();
 
     /**
      * Map storing blocks keyed by their location keys.
      */
-    public final Map<String, Block> blocks = new HashMap<>();
+    public static final Map<String, Block> blocks = new HashMap<>();
 
     /**
      * List of registered Gson type adapters for custom serialization/deserialization.
      */
-    private final List<TypeAdapterRegistration<?>> adapters = new ArrayList<>();
+    private static final List<TypeAdapterRegistration<?>> adapters = new ArrayList<>();
 
     /**
      * Database instance used for persisting blocks.
      */
-    private Database database;
+    private static Database database;
 
     /**
      * Gson instance configured with registered type adapters for JSON (de)serialization.
      */
-    private Gson gson;
+    private static Gson gson;
 
     /**
      * Loads blocks from the database, initializes the database if necessary, and sets up Gson.
      */
-    public void load() {
+    public static void load() {
         try {
             database = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
             database.connect();
@@ -105,7 +101,7 @@ public class BlockManager {
     /**
      * Builds the Gson instance using the registered type adapters.
      */
-    private void buildGson() {
+    private static void buildGson() {
         GsonBuilder builder = new GsonBuilder()
                 .serializeNulls()
                 .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.TRANSIENT)
@@ -115,7 +111,7 @@ public class BlockManager {
             builder.registerTypeAdapter(reg.clazz, reg.adapter);
         }
 
-        this.gson = builder.create();
+        gson = builder.create();
     }
 
     /**
@@ -125,11 +121,12 @@ public class BlockManager {
      * @param json   The JSON string containing serialized field data.
      * @throws Exception If an error occurs during field reflection or JSON parsing.
      */
-    private void populateFieldsFromJson(BlockEntity entity, String json) throws Exception {
+    private static void populateFieldsFromJson(BlockEntity entity, String json) throws Exception {
+        if (json == null || json.isEmpty() || json.equals("{}")) return;
+
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
         for (Field field : entity.getClass().getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
-
             field.setAccessible(true);
             String name = field.getName();
             if (jsonObject.has(name)) {
@@ -140,12 +137,13 @@ public class BlockManager {
         }
     }
 
+
     /**
      * Registers or updates a block in the manager and saves it to the database.
      *
      * @param block The block to register.
      */
-    public void register(Block block) {
+    public static void register(Block block) {
         Location loc = block.getLocation();
         if (loc == null) return;
 
@@ -159,7 +157,7 @@ public class BlockManager {
      * @param loc The location to query.
      * @return The block at the location or {@code null} if none is registered.
      */
-    public Block get(Location loc) {
+    public static Block get(Location loc) {
         return blocks.get(locKey(loc));
     }
 
@@ -168,7 +166,7 @@ public class BlockManager {
      *
      * @param loc The location of the block to remove.
      */
-    public void remove(Location loc) {
+    public static void remove(Location loc) {
         blocks.remove(locKey(loc));
         try {
             database.executor().table("blocks").delete()
@@ -187,25 +185,31 @@ public class BlockManager {
      *
      * @param block The block to save.
      */
-    public void save(Block block) {
+    public static void save(Block block) {
         try {
-            BlockEntity entity = block.entity();
-            if (entity == null) return;
-
-            entity.onSave();
             Location loc = block.getLocation();
+            if (loc == null) return;
 
-            JsonObject jsonObject = new JsonObject();
-            for (Field field : entity.getClass().getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
+            BlockEntity entity = block.entity();
+            String json;
 
-                field.setAccessible(true);
-                Object value = field.get(entity);
-                JsonElement elem = gson.toJsonTree(value);
-                jsonObject.add(field.getName(), elem);
+            if (entity != null) {
+                entity.onSave();
+
+                JsonObject jsonObject = new JsonObject();
+                for (Field field : entity.getClass().getDeclaredFields()) {
+                    if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
+
+                    field.setAccessible(true);
+                    Object value = field.get(entity);
+                    JsonElement elem = gson.toJsonTree(value);
+                    jsonObject.add(field.getName(), elem);
+                }
+
+                json = gson.toJson(jsonObject);
+            } else {
+                json = "{}";
             }
-
-            String json = gson.toJson(jsonObject);
 
             database.executor().table("blocks").insert()
                     .value("world", loc.getWorld().getName())
@@ -222,12 +226,13 @@ public class BlockManager {
         }
     }
 
+
     /**
      * Saves all cached blocks and their associated entities to the database.
      * Updates existing rows or inserts new ones.
      * @return saved The amount of saved blocks
      */
-    public int save() {
+    public static int save() {
         int saved = 0;
         for (Block block : blocks.values()) {
             save(block);
@@ -242,7 +247,7 @@ public class BlockManager {
      * @param loc The location to convert.
      * @return A string key representing the location.
      */
-    private String locKey(Location loc) {
+    private static String locKey(Location loc) {
         return loc.getWorld().getName() + ":" + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 
@@ -254,7 +259,7 @@ public class BlockManager {
      * @param adapter The Gson adapter instance (serializer/deserializer).
      * @param <T>     The type of the class.
      */
-    public <T> void registerTypeAdapter(Class<T> clazz, Object adapter) {
+    public static <T> void registerTypeAdapter(Class<T> clazz, Object adapter) {
         adapters.add(new TypeAdapterRegistration<>(clazz, adapter));
         buildGson(); // Rebuild Gson instance with the new adapter
     }

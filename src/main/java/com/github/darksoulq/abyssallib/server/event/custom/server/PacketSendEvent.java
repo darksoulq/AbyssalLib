@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.custom.server;
 
+import com.destroystokyo.paper.event.brigadier.AsyncPlayerSendSuggestionsEvent;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -34,8 +35,10 @@ public class PacketSendEvent extends Event implements Cancellable {
      *
      * @param player the Bukkit player to whom the packet is being sent
      * @param packet the NMS packet being sent
+     * @param isAsync whether the event is Async
      */
-    public PacketSendEvent(Player player, Packet<?> packet) {
+    public PacketSendEvent(Player player, Packet<?> packet, boolean isAsync) {
+        super(isAsync);
         this.player = player;
         this.packet = packet;
     }

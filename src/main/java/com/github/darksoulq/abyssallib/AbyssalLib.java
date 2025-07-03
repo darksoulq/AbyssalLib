@@ -48,10 +48,10 @@ public final class AbyssalLib extends JavaPlugin {
         new BukkitRunnable() {
             @Override
             public void run() {
-                int saved = BlockManager.INSTANCE.save();
+                int saved = BlockManager.save();
                 getLogger().info("Saved " + saved + " blocks");
             }
-        }.runTaskTimerAsynchronously(this, 0, 20L * 60 * 5);
+        }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
 
         GUI_MANAGER = new GuiManager();
         CHAT_INPUT_HANDLER = new ChatInputHandler();
@@ -108,7 +108,7 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        BlockManager.INSTANCE.save();
+        BlockManager.save();
         if (PACK_SERVER != null) {
             PACK_SERVER.stop();
         }

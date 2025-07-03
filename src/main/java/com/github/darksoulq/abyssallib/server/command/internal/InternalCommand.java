@@ -43,7 +43,7 @@ public class InternalCommand {
                         )
                         .then(Commands.literal("commmands")
                                 .executes(ctx -> {
-                                    CommandBus.INSTANCE.reloadAll();
+                                    CommandBus.reloadAll();
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )

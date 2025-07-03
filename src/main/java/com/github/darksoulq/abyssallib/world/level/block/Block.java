@@ -179,7 +179,7 @@ public class Block {
             setEntity(newEntity);
         }
 
-        BlockManager.INSTANCE.register(this);
+        BlockManager.register(this);
     }
 
     /**
@@ -220,7 +220,7 @@ public class Block {
      */
     public static Block from(org.bukkit.block.Block bukkitBlock) {
         if (bukkitBlock == null) return null;
-        return BlockManager.INSTANCE.get(bukkitBlock.getLocation());
+        return BlockManager.get(bukkitBlock.getLocation());
     }
 
     /**

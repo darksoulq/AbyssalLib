@@ -4,6 +4,11 @@ import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.asset.Font;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Utility for generating invisible font-based glyph offsets to fine-tune horizontal text alignment.
@@ -28,6 +33,9 @@ public class TextOffset {
     /** Invisible glyph that shifts text right by 100 pixels. */
     private static Font.OffsetGlyph PX_P_100;
 
+    /** Internal Bitmap for glyphs **/
+    private static @NotNull List<LinkedList<Font.Glyph>> GLYPHS = new ArrayList<>();
+
     /**
      * Initializes the offset font glyphs for both positive and negative pixel shifts.
      *
@@ -35,15 +43,21 @@ public class TextOffset {
      */
     @ApiStatus.Internal
     public static void init(Namespace ns) {
-        Font OFFSET_FONT = ns.font("offset", false);
+        Font fn = ns.font("offset", false);
 
-        PX_N_1 = OFFSET_FONT.offset(-1);
-        PX_N_10 = OFFSET_FONT.offset(-10);
-        PX_N_100 = OFFSET_FONT.offset(-100);
-
-        PX_P_1 = OFFSET_FONT.offset(1);
-        PX_P_10 = OFFSET_FONT.offset(10);
-        PX_P_100 = OFFSET_FONT.offset(100);
+        GLYPHS = fn.glyphs(ns.texture("offset/transparent"), 8, 8, 8, 8);
+        LinkedList<Font.Glyph> temp = GLYPHS.getFirst();
+        for (int i = 0; i < temp.size(); i++) {
+            Font.TextureGlyph g = (Font.TextureGlyph) temp.get(i);
+            switch (i) {
+                case 0 -> PX_N_1 = fn.offset(-1, g.character());
+                case 1 -> PX_N_10 = fn.offset(-10, g.character());
+                case 2 -> PX_N_100 = fn.offset(-100, g.character());
+                case 3 -> PX_P_1 = fn.offset(1, g.character());
+                case 4 -> PX_P_10 = fn.offset(10, g.character());
+                case 5 -> PX_P_100 = fn.offset(100, g.character());
+            }
+        }
     }
 
     /**

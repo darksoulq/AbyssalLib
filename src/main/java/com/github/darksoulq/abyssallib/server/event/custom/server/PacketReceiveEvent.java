@@ -33,9 +33,11 @@ public class PacketReceiveEvent extends Event implements Cancellable {
      * Constructs a new PacketReceiveEvent.
      *
      * @param player the Bukkit player who sent the packet
-     * @param packet the NMS packet being received
+     * @param packet the NMS packet being receive
+     * @param isAsync whether the event is Async
      */
-    public PacketReceiveEvent(Player player, Packet<?> packet) {
+    public PacketReceiveEvent(Player player, Packet<?> packet, boolean isAsync) {
+        super(isAsync);
         this.player = player;
         this.packet = packet;
     }

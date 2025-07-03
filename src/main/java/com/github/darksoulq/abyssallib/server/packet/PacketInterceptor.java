@@ -50,7 +50,7 @@ public final class PacketInterceptor {
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                 if (msg instanceof Packet<?> packet) {
-                    PacketReceiveEvent event = new PacketReceiveEvent(player, packet);
+                    PacketReceiveEvent event = new PacketReceiveEvent(player, packet, true);
                     Bukkit.getPluginManager().callEvent(event);
                     if (event.isCancelled()) return;
                 }
@@ -61,7 +61,7 @@ public final class PacketInterceptor {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
                 if (msg instanceof Packet<?> packet) {
-                    PacketSendEvent event = new PacketSendEvent(player, packet);
+                    PacketSendEvent event = new PacketSendEvent(player, packet, true);
                     Bukkit.getPluginManager().callEvent(event);
                     if (event.isCancelled()) {
                         promise.setSuccess();
