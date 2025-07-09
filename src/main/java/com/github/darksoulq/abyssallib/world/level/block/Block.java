@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  * This class defines basic properties and behaviors for blocks, including material type,
  * unique identifier, entity association, and event hooks.
  */
-public class Block {
+public class Block implements Cloneable {
 
     /**
      * The unique identifier of this block.
@@ -110,7 +110,11 @@ public class Block {
      * @return a supplier for the item representation of this block
      */
     public Supplier<Item> getItem() {
-        return () -> new Item(id, material);
+        return () -> {
+            Item item = new Item(id, material);
+            item.getSettings().blockItem(this);
+            return item;
+        };
     }
 
     /**
@@ -165,21 +169,23 @@ public class Block {
      *
      * @param bukkitBlock the Bukkit block
      */
-    public void place(org.bukkit.block.Block bukkitBlock) {
+    public void place(org.bukkit.block.Block bukkitBlock, boolean loading) {
         if (!material.isBlock()) {
             AbyssalLib.getInstance().getLogger().severe("Invalid block material for " + id);
             return;
         }
 
-        bukkitBlock.setType(material);
         setLocation(bukkitBlock.getLocation());
 
-        BlockEntity newEntity = createBlockEntity(getLocation());
-        if (newEntity != null) {
-            setEntity(newEntity);
-        }
+        if (!loading) {
+            bukkitBlock.setType(material);
+            BlockEntity newEntity = createBlockEntity(getLocation());
+            if (newEntity != null) {
+                setEntity(newEntity);
+            }
 
-        BlockManager.register(this);
+            BlockManager.register(this);
+        }
     }
 
     /**
@@ -254,6 +260,22 @@ public class Block {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    /**
+     * Clones this block
+     *
+     * @return The cloned block
+     */
+    @Override
+    public Block clone() {
+        try {
+            Block cloned = (Block) super.clone();
+            cloned.setLocation(this.getLocation().clone());
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

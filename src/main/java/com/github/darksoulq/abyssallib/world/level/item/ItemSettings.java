@@ -1,5 +1,7 @@
 package com.github.darksoulq.abyssallib.world.level.item;
 
+import com.github.darksoulq.abyssallib.world.level.block.Block;
+import com.github.darksoulq.abyssallib.world.level.data.CTag;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -93,6 +95,19 @@ public class ItemSettings {
     public ItemSettings food(FoodProperties foodProperties, Consumable consumable) {
         owner.getStack().setData(DataComponentTypes.CONSUMABLE, consumable);
         owner.getStack().setData(DataComponentTypes.FOOD, foodProperties);
+        return this;
+    }
+
+    /**
+     * Makes this item able to place a {@link Block}
+     *
+     * @param block the block to be placeable
+     * @return the updated {@link ItemSettings} instance
+     */
+    public ItemSettings blockItem(Block block) {
+        CTag cont = owner.getData();
+        cont.set("BlockItem", block.getId().toString());
+        owner.setData(cont);
         return this;
     }
 

@@ -10,13 +10,13 @@ import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.level.data.CTag;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import io.papermc.paper.event.entity.EntityMoveEvent;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
+import org.bukkit.*;
+import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.*;
@@ -35,13 +35,12 @@ public class BlockEvents {
     @SubscribeEvent
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack handItem = event.getItemInHand();
+        Item heldItem = Item.from(handItem);
+        if (heldItem == null) return;
+        CTag data = heldItem.getData();
 
         for (Block block : BuiltinRegistries.BLOCKS.getAll().values()) {
-            Item blockItem = Block.asItem(block);
-            if (blockItem == null) continue;
-            blockItem = blockItem.clone();
-
-            if (blockItem.equals(Item.from(handItem))) {
+            if (data.has("BlockItem") && data.getString("BlockItem").get().equals(block.getId().toString())) {
                 ActionResult result = block.onPlaced(event.getPlayer(), event.getBlock().getLocation(),
                         handItem);
                 if (result == ActionResult.CANCEL) {
@@ -49,13 +48,11 @@ public class BlockEvents {
                     return;
                 }
 
-                block.place(event.getBlock());
+                block.place(event.getBlock(), false);
                 return;
             }
         }
-        if (Item.from(handItem) != null) {
-            event.setCancelled(true);
-        }
+        event.setCancelled(true);
     }
 
     @SubscribeEvent
@@ -68,7 +65,11 @@ public class BlockEvents {
         ItemStack stack = player.getInventory().getItemInMainHand();
         BlockProperties props = block.properties;
 
-        BlockBrokenEvent breakEvent = new BlockBrokenEvent(player, block);
+        boolean silkTouch = props.requireSilkTouch && stack.containsEnchantment(Enchantment.SILK_TOUCH);
+        boolean allowFortune = props.allowFortune;
+        int fortuneLevel = allowFortune ? stack.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
+
+        BlockBrokenEvent breakEvent = new BlockBrokenEvent(player, block, fortuneLevel);
         Bukkit.getPluginManager().callEvent(breakEvent);
         if (breakEvent.isCancelled()) {
             event.setCancelled(true);
@@ -86,26 +87,26 @@ public class BlockEvents {
             boolean isCorrect = props.isCorrectTool(stack);
             if (!isCorrect) return;
 
-            boolean silkTouch = props.requireSilkTouch && stack.containsEnchantment(Enchantment.SILK_TOUCH);
-            boolean allowFortune = props.allowFortune;
-            int fortuneLevel = allowFortune ? stack.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
-
             LootTable lootTable = block.getLootTable();
-            if (lootTable != null) {
+            if (!breakEvent.getBaseDrops() && breakEvent.getNewDrops() != null) {
+                for (ItemStack drop : breakEvent.getNewDrops()) {
+                    loc.getWorld().dropItemNaturally(loc, drop);
+                }
+            } else if (breakEvent.getBaseDrops() && lootTable != null) {
                 LootContext context = new LootContext(fortuneLevel);
                 List<ItemStack> drops = lootTable.generate(context);
                 for (ItemStack drop : drops) {
-                    loc.getWorld().dropItem(loc, drop);
+                    loc.getWorld().dropItemNaturally(loc, drop);
                 }
-            } else if (props.requireSilkTouch && silkTouch) {
+            } else if (breakEvent.getBaseDrops() && props.requireSilkTouch && silkTouch) {
                 Item blockItem = Block.asItem(block);
                 if (blockItem != null) {
-                    loc.getWorld().dropItem(loc, blockItem.clone().getStack().clone());
+                    loc.getWorld().dropItemNaturally(loc, blockItem.clone().getStack().clone());
                 }
-            } else if (!props.requireSilkTouch) {
+            } else if (breakEvent.getBaseDrops() && !props.requireSilkTouch) {
                 Item blockItem = Block.asItem(block);
                 if (blockItem != null) {
-                    loc.getWorld().dropItem(loc, blockItem.clone().getStack().clone());
+                    loc.getWorld().dropItemNaturally(loc, blockItem.clone().getStack().clone());
                 }
             }
 
@@ -117,7 +118,41 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onInteract(PlayerInteractEvent event) {
-        Block block = Block.from(event.getClickedBlock());
+        org.bukkit.block.Block bukkitBlock = event.getClickedBlock();
+        Block block = Block.from(bukkitBlock);
+        ItemStack handItem = event.getItem();
+        Item heldItem = Item.from(handItem);
+
+        if (heldItem != null && bukkitBlock != null) {
+            CTag data = heldItem.getData();
+
+            if (data.has("BlockItem")) {
+                String blockId = data.getString("BlockItem").get();
+
+                if (BuiltinRegistries.BLOCKS.contains(blockId)) {
+                    Block toPlace = BuiltinRegistries.BLOCKS.get(blockId).clone();
+                    BlockFace face = event.getBlockFace();
+                    Location placeLoc = bukkitBlock.getLocation().add(face.getModX(), face.getModY(), face.getModZ());
+                    World world = placeLoc.getWorld();
+
+                    if (world != null) {
+                        org.bukkit.block.Block target = placeLoc.getBlock();
+
+                        if (target.isEmpty() || !target.getType().isSolid()) {
+                            ActionResult result = block.onPlaced(event.getPlayer(), placeLoc, handItem);
+
+                            if (result == ActionResult.PASS) {
+                                toPlace.place(target, false);
+                                handItem.setAmount(handItem.getAmount() - 1);
+                                Material material = toPlace.getMaterial();
+                                world.playSound(placeLoc, material.createBlockData().getSoundGroup().getPlaceSound(), SoundCategory.BLOCKS, 1.0f, 1.0f);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (block != null) {
             BlockInteractionEvent blockInt = AbyssalLib.EVENT_BUS.post(new BlockInteractionEvent(
                     event.getPlayer(),
@@ -127,6 +162,7 @@ public class BlockEvents {
                     event.getAction(),
                     event.getItem()
             ));
+
             if (blockInt.isCancelled()) {
                 event.setCancelled(true);
             }

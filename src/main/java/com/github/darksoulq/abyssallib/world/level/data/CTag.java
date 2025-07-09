@@ -36,6 +36,10 @@ public class CTag {
         baseTag.putByteArray(key, value);
     }
 
+    public boolean has(String key) {
+        return baseTag.contains(key);
+    }
+
     public Optional<String> getString(String key) {
         return baseTag.getString(key);
     }

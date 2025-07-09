@@ -83,16 +83,9 @@ public class Item implements Cloneable {
      * Writes the custom ID tag to the item NBT data.
      */
     private void writeIdTag() {
-        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
-        CompoundTag tag = new CompoundTag();
-
-        CompoundTag custom = tag.getCompoundOrEmpty("CustomData");
-        custom.putString("AbyssalItemId", id.toString());
-        tag.put("CustomData", custom);
-
-        nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-        ItemStack updated = CraftItemStack.asBukkitCopy(nms);
-        stack.setItemMeta(updated.getItemMeta());
+        CTag cont = getData();
+        cont.set("AbyssalItemId", id.toString());
+        setData(cont);
     }
 
     /**

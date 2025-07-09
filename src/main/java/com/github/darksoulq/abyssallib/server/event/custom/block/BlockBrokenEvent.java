@@ -5,7 +5,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * An event that is called when a custom block is broken by a player.
@@ -31,7 +34,22 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     private final Player player;
 
     /**
-     * Whether or not the event is cancelled.
+     * Whether the api should handle loot drops for the block
+     */
+    private boolean baseDrops = true;
+
+    /**
+     * The drops to use if {@code baseDrops} is false
+     */
+    private List<ItemStack> newDrops = null;
+
+    /**
+     * Fortune level of the item used to break the block
+     */
+    private int fortuneLevel;
+
+    /**
+     * Whether the event is cancelled.
      */
     private boolean cancelled = false;
 
@@ -41,9 +59,10 @@ public class BlockBrokenEvent extends Event implements Cancellable {
      * @param player The player breaking the block.
      * @param block  The custom block being broken.
      */
-    public BlockBrokenEvent(@NotNull Player player, @NotNull Block block) {
+    public BlockBrokenEvent(@NotNull Player player, @NotNull Block block, int fortuneLevel) {
         this.player = player;
         this.block = block;
+        this.fortuneLevel = fortuneLevel;
     }
 
     /**
@@ -62,6 +81,50 @@ public class BlockBrokenEvent extends Event implements Cancellable {
      */
     public @NotNull Player getPlayer() {
         return player;
+    }
+
+    /**
+     * Sets whether the api should handle block drops
+     *
+     * @param shouldDrop should api handle it
+     */
+    public void setBaseDrops(boolean shouldDrop) {
+        baseDrops = shouldDrop;
+    }
+
+    /**
+     * Gets whether api should handle block drops or not
+     *
+     * @return whether api should handle the drops
+     */
+    public boolean getBaseDrops() {
+        return baseDrops;
+    }
+
+    /**
+     * Gets the drops to use in case {@code setBaseDrops(false)} has been set
+     *
+     * @param drops the drops to use.
+     */
+    public void setDrops(List<ItemStack> drops) {
+        newDrops = drops;
+    }
+
+    /**
+     * Gets the item list to use as new drops.
+     * @return the item stack list
+     */
+    public List<ItemStack> getNewDrops() {
+        return newDrops;
+    }
+
+    /**
+     * The level of fortune on the item that broke the block
+     *
+     * @return fortune level.
+     */
+    public int getFortuneLevel() {
+        return fortuneLevel;
     }
 
     /**

@@ -77,11 +77,12 @@ public class BlockManager {
 
             for (BlockRow row : rows) {
                 Location loc = new Location(Bukkit.getWorld(row.world), row.x, row.y, row.z);
-                Block block = BuiltinRegistries.BLOCKS.get(row.blockId);
+                Block block = BuiltinRegistries.BLOCKS.get(row.blockId).clone();
                 if (block == null) {
                     AbyssalLib.getInstance().getLogger().warning("Unknown block id in DB: " + row.blockId);
                     continue;
                 }
+                block.place(loc.getBlock(), true);
 
                 BlockEntity entity = block.createBlockEntity(loc);
                 if (entity != null) {
