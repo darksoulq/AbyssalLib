@@ -35,7 +35,7 @@ public class PlayerEvents {
             event.setCancelled(true);
             Item item = com.github.darksoulq.abyssallib.world.level.block.Block.asItem(com.github.darksoulq.abyssallib.world.level.block.Block.from(event.getBlock()));
             if (item == null) return;
-            ItemStack stack = item.stack().clone();
+            ItemStack stack = item.getStack().clone();
             HashMap<Integer, ItemStack> remaining = event.getPlayer().getInventory().addItem(stack);
             if (!remaining.isEmpty()) {
                 stack = stack.clone();

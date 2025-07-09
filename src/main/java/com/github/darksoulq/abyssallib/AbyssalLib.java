@@ -72,6 +72,7 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG.define(ConfigSpec.ConfigType.INT, "resource-pack.port", 8080);
         CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "metrics.enabled", true);
         CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "features.custom_block_breaking", false);
+        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "debug.show_registered_recipe_ids", true);
         Config.register(MODID, CONFIG);
 
         if (CONFIG.getBoolean("resource-pack.autohost")) {

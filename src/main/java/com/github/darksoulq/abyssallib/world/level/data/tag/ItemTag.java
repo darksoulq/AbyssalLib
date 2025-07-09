@@ -2,19 +2,21 @@ package com.github.darksoulq.abyssallib.world.level.data.tag;
 
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ItemTag implements Tag<Item>{
     private final String id;
-    private final Set<Item> entries = new HashSet<>();
+    private final Map<String, Item> entries = new HashMap<>();
 
     public ItemTag(String id) {
         this.id = id;
     }
 
     public ItemTag add(Item entry) {
-        entries.add(entry);
+        entries.put(entry.getId().toString(), entry);
         return this;
     }
 
@@ -25,11 +27,11 @@ public class ItemTag implements Tag<Item>{
 
     @Override
     public boolean contains(Item entry) {
-        return entries.contains(entry);
+        return entries.containsKey(entry.getId().toString());
     }
 
     @Override
     public Set<Item> values() {
-        return Set.copyOf(entries);
+        return Set.copyOf(entries.values());
     }
 }

@@ -24,7 +24,7 @@ public abstract class SearchGui extends AbstractGui {
     private static final Map<Player, ItemStack[]> backupMap = new HashMap<>();
 
     private final Map<Player, String> texts = new HashMap<>();
-    private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().stack().clone();
+    private final ItemStack invisItem = Items.INVISIBLE_ITEM.get().getStack().clone();
     private final StaticSlot inputSlot;
 
     /**

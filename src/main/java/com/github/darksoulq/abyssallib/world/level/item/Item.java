@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
+import com.github.darksoulq.abyssallib.world.level.data.CTag;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.github.darksoulq.abyssallib.world.level.data.tag.ItemTag;
 import com.github.darksoulq.abyssallib.world.level.item.tool.ToolTier;
@@ -75,8 +76,6 @@ public class Item implements Cloneable {
         stack.setData(DataComponentTypes.ITEM_NAME, Component.translatable("item." + id.namespace() + "." + id.path()));
         stack.setData(DataComponentTypes.ITEM_MODEL, id.toNamespace());
         writeIdTag();
-        
-        updateTooltip();
         this.settings = new ItemSettings(this);
     }
 
@@ -197,46 +196,36 @@ public class Item implements Cloneable {
     }
 
     /**
-     * Sets a custom piece of data for this item.
-     *
-     * @param key the key for the custom data
-     * @param value the value of the custom data
+     * returns the CTag for setting/getting custom data (must be set using #setData to apply changes)
      */
-    public void data(String key, String value) {
+    public CTag getData() {
         net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CustomData dta = nms.get(DataComponents.CUSTOM_DATA);
         if (dta == null) {
-            return;
+            dta = CustomData.EMPTY;
         }
 
         CompoundTag tag = dta.copyTag();
         if (tag.getCompound("CustomData").isPresent()) {
             CompoundTag custom = tag.getCompound("CustomData").get();
-                custom.putString(key, value);
-                tag.put("CustomData", custom);
-                nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                stack.setItemMeta(CraftItemStack.asBukkitCopy(nms).getItemMeta());
+                return new CTag(custom);
+        } else {
+            tag.put("CustomData", new CompoundTag());
+            return new CTag(tag.getCompound("CustomData").get());
         }
     }
 
     /**
-     * Gets a custom piece of data for this item.
-     *
-     * @param key the key for the custom data
-     * @return the value of the custom data, or null if not present
+     * Sets the data container for the item.
      */
-    public String data(String key) {
+    public void setData(CTag container) {
         net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CustomData data = nms.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return null;
-        CompoundTag tag = data.copyTag();
-        if (tag.getCompound("CustomData").isPresent()) {
-            CompoundTag custom = tag.getCompound("CustomData").get();
-            if (custom.getString(key).isPresent()) {
-                return custom.getString(key).get();
-            }
+        if (data == null) {
+            data = CustomData.EMPTY;
         }
-        return null;
+        data= data.update(tag -> tag.put("CustomData", container.toVanilla()));
+        nms.set(DataComponents.CUSTOM_DATA, data);
     }
 
     /**
@@ -244,7 +233,7 @@ public class Item implements Cloneable {
      *
      * @return the item settings
      */
-    public ItemSettings settings() {
+    public ItemSettings getSettings() {
         return settings;
     }
     /**
@@ -252,7 +241,7 @@ public class Item implements Cloneable {
      *
      * @return ItemStack instance
      */
-    public ItemStack stack() { return stack; }
+    public ItemStack getStack() { return stack; }
 
     /**
      * Attempts to retrieve a registered {@link Item} instance from the given {@link ItemStack}.
@@ -300,7 +289,7 @@ public class Item implements Cloneable {
     }
 
     /**
-     * Clones this item. (exluding ItemStack)
+     * Clones this item.
      *
      * @return a new cloned item
      */
@@ -308,7 +297,7 @@ public class Item implements Cloneable {
     public @NotNull Item clone() {
         try {
             Item cloned = (Item) super.clone();
-            cloned.stack = this.stack;
+            cloned.stack = this.stack.clone();
             cloned.tooltip.lines = new ArrayList<>(this.tooltip.lines);
             cloned.tooltip.hiddenComponents = new HashSet<>(this.tooltip.hiddenComponents);
             cloned.tooltip.hide = this.tooltip.hide;

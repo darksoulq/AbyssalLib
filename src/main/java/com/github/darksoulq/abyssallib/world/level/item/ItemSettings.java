@@ -51,7 +51,7 @@ public class ItemSettings {
         for (Attrib attrib : attribs) {
             builder.addModifier(attrib.attribute, attrib.modifier);
         }
-        owner.stack().setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, builder.build());
+        owner.getStack().setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, builder.build());
         return this;
     }
 
@@ -66,7 +66,7 @@ public class ItemSettings {
         for (AttribWithSlot attrib : attribs) {
             builder.addModifier(attrib.attribute, attrib.modifier, attrib.slotGroup);
         }
-        owner.stack().setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, builder.build());
+        owner.getStack().setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, builder.build());
         return this;
     }
 
@@ -78,8 +78,8 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings food(FoodProperties foodProperties, float consumeSeconds) {
-        owner.stack().setData(DataComponentTypes.FOOD, foodProperties);
-        owner.stack().setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().consumeSeconds(consumeSeconds).build());
+        owner.getStack().setData(DataComponentTypes.FOOD, foodProperties);
+        owner.getStack().setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().consumeSeconds(consumeSeconds).build());
         return this;
     }
 
@@ -91,8 +91,8 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings food(FoodProperties foodProperties, Consumable consumable) {
-        owner.stack().setData(DataComponentTypes.CONSUMABLE, consumable);
-        owner.stack().setData(DataComponentTypes.FOOD, foodProperties);
+        owner.getStack().setData(DataComponentTypes.CONSUMABLE, consumable);
+        owner.getStack().setData(DataComponentTypes.FOOD, foodProperties);
         return this;
     }
 
@@ -103,7 +103,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings usingConvertsTo(ItemStack item) {
-        owner.stack().setData(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(item));
+        owner.getStack().setData(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(item));
         return this;
     }
 
@@ -114,7 +114,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings useCooldown(float useCooldown) {
-        owner.stack().setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(useCooldown).build());
+        owner.getStack().setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(useCooldown).build());
         return this;
     }
 
@@ -125,7 +125,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings stackSize(int size) {
-        owner.stack().setData(DataComponentTypes.MAX_STACK_SIZE, size);
+        owner.getStack().setData(DataComponentTypes.MAX_STACK_SIZE, size);
         return this;
     }
 
@@ -136,9 +136,9 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings durability(int durability) {
-        owner.stack().setData(DataComponentTypes.MAX_DAMAGE, durability);
-        owner.stack().setData(DataComponentTypes.MAX_STACK_SIZE, 1);
-        owner.stack().setData(DataComponentTypes.DAMAGE, 0);
+        owner.getStack().setData(DataComponentTypes.MAX_DAMAGE, durability);
+        owner.getStack().setData(DataComponentTypes.MAX_STACK_SIZE, 1);
+        owner.getStack().setData(DataComponentTypes.DAMAGE, 0);
         return this;
     }
 
@@ -149,7 +149,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings rarity(ItemRarity rarity) {
-        owner.stack().setData(DataComponentTypes.RARITY, rarity);
+        owner.getStack().setData(DataComponentTypes.RARITY, rarity);
         return this;
     }
 
@@ -159,7 +159,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings fireResistant() {
-        owner.stack().setData(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(DamageTypeTagKeys.IS_FIRE));
+        owner.getStack().setData(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(DamageTypeTagKeys.IS_FIRE));
         return this;
     }
 
@@ -170,7 +170,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings jukeboxPlayable(JukeboxSong song) {
-        owner.stack().setData(DataComponentTypes.JUKEBOX_PLAYABLE, JukeboxPlayable.jukeboxPlayable(song).build());
+        owner.getStack().setData(DataComponentTypes.JUKEBOX_PLAYABLE, JukeboxPlayable.jukeboxPlayable(song).build());
         return this;
     }
 
@@ -181,7 +181,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings enchantable(int enchantmentLevel) {
-        owner.stack().setData(DataComponentTypes.ENCHANTABLE, Enchantable.enchantable(enchantmentLevel));
+        owner.getStack().setData(DataComponentTypes.ENCHANTABLE, Enchantable.enchantable(enchantmentLevel));
         return this;
     }
 
@@ -192,7 +192,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings repairable(List<ItemType> itemTypes) {
-        owner.stack().setData(DataComponentTypes.REPAIRABLE, Repairable.repairable(RegistrySet.keySetFromValues(RegistryKey.ITEM, itemTypes)));
+        owner.getStack().setData(DataComponentTypes.REPAIRABLE, Repairable.repairable(RegistrySet.keySetFromValues(RegistryKey.ITEM, itemTypes)));
         return this;
     }
 
@@ -203,7 +203,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings equippable(EquipmentSlot slot) {
-        owner.stack().setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).assetId(owner.getId().toNamespace()).build());
+        owner.getStack().setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).assetId(owner.getId().toNamespace()).build());
         return this;
     }
 
@@ -214,7 +214,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings equippableUnswappable(EquipmentSlot slot) {
-        owner.stack().setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).swappable(false).assetId(owner.getId().toNamespace()).build());
+        owner.getStack().setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).swappable(false).assetId(owner.getId().toNamespace()).build());
         return this;
     }
 
@@ -227,7 +227,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings tool(List<Tool.Rule> toolRules, int defaultMiningSpeed, int damagePerBlock) {
-        owner.stack().setData(DataComponentTypes.TOOL, Tool.tool().addRules(toolRules).defaultMiningSpeed(defaultMiningSpeed).damagePerBlock(damagePerBlock).build());
+        owner.getStack().setData(DataComponentTypes.TOOL, Tool.tool().addRules(toolRules).defaultMiningSpeed(defaultMiningSpeed).damagePerBlock(damagePerBlock).build());
         return this;
     }
 
@@ -239,7 +239,7 @@ public class ItemSettings {
      */
     public ItemSettings lore(ItemLore lore) {
         owner.tooltip.lines = lore.lines();
-        owner.stack().setData(DataComponentTypes.LORE, lore);
+        owner.getStack().setData(DataComponentTypes.LORE, lore);
         return this;
     }
 
@@ -249,7 +249,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings unbreakable() {
-        owner.stack().setData(DataComponentTypes.UNBREAKABLE);
+        owner.getStack().setData(DataComponentTypes.UNBREAKABLE);
         return this;
     }
 
@@ -261,7 +261,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings weapon(int damage, int disableBlockingForSeconds) {
-        owner.stack().setData(DataComponentTypes.WEAPON, Weapon.weapon()
+        owner.getStack().setData(DataComponentTypes.WEAPON, Weapon.weapon()
                 .itemDamagePerAttack(damage)
                 .disableBlockingForSeconds(disableBlockingForSeconds)
                 .build());
@@ -275,7 +275,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings noteBlockSound(Identifier soundId) {
-        owner.stack().setData(DataComponentTypes.NOTE_BLOCK_SOUND, InstrumentKeys.create(soundId.toNamespace()));
+        owner.getStack().setData(DataComponentTypes.NOTE_BLOCK_SOUND, InstrumentKeys.create(soundId.toNamespace()));
         return this;
     }
 
@@ -289,7 +289,7 @@ public class ItemSettings {
     public ItemSettings tooltip(boolean hideTooltip, Set<DataComponentType> hiddenComponents) {
         owner.tooltip.hide(hideTooltip);
         owner.tooltip.hiddenComponents = hiddenComponents;
-        owner.stack().setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(hideTooltip).hiddenComponents(hiddenComponents).build());
+        owner.getStack().setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(hideTooltip).hiddenComponents(hiddenComponents).build());
         return this;
     }
 
@@ -300,7 +300,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings showEnchantGlint(boolean v) {
-        owner.stack().setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, v);
+        owner.getStack().setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, v);
         return this;
     }
 
@@ -310,7 +310,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings intangibleProjectile() {
-        owner.stack().setData(DataComponentTypes.INTANGIBLE_PROJECTILE);
+        owner.getStack().setData(DataComponentTypes.INTANGIBLE_PROJECTILE);
         return this;
     }
 
@@ -321,7 +321,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings damageResistant(TagKey<DamageType> types) {
-        owner.stack().setData(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(types));
+        owner.getStack().setData(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(types));
         return this;
     }
 
@@ -331,7 +331,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings glider() {
-        owner.stack().setData(DataComponentTypes.GLIDER);
+        owner.getStack().setData(DataComponentTypes.GLIDER);
         return this;
     }
 
@@ -342,7 +342,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings storedEnchants(Map<Enchantment, Integer> enchants) {
-        owner.stack().setData(DataComponentTypes.STORED_ENCHANTMENTS, ItemEnchantments.itemEnchantments().addAll(enchants).build());
+        owner.getStack().setData(DataComponentTypes.STORED_ENCHANTMENTS, ItemEnchantments.itemEnchantments().addAll(enchants).build());
         return this;
     }
 
@@ -353,7 +353,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings mapColor(Color color) {
-        owner.stack().setData(DataComponentTypes.MAP_COLOR, MapItemColor.mapItemColor().color(color).build());
+        owner.getStack().setData(DataComponentTypes.MAP_COLOR, MapItemColor.mapItemColor().color(color).build());
         return this;
     }
 
@@ -364,7 +364,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings dyedColor(Color color) {
-        owner.stack().setData(DataComponentTypes.DYED_COLOR, DyedItemColor.dyedItemColor().color(color).build());
+        owner.getStack().setData(DataComponentTypes.DYED_COLOR, DyedItemColor.dyedItemColor().color(color).build());
         return this;
     }
 
@@ -375,7 +375,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings chargedProjectiles(List<ItemStack> items) {
-        owner.stack().setData(DataComponentTypes.CHARGED_PROJECTILES, ChargedProjectiles.chargedProjectiles().addAll(items).build());
+        owner.getStack().setData(DataComponentTypes.CHARGED_PROJECTILES, ChargedProjectiles.chargedProjectiles().addAll(items).build());
         return this;
     }
 
@@ -385,7 +385,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings bundleContents() {
-        owner.stack().setData(DataComponentTypes.BUNDLE_CONTENTS, BundleContents.bundleContents().build());
+        owner.getStack().setData(DataComponentTypes.BUNDLE_CONTENTS, BundleContents.bundleContents().build());
         return this;
     }
 
@@ -396,7 +396,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings bundleContents(List<ItemStack> items) {
-        owner.stack().setData(DataComponentTypes.BUNDLE_CONTENTS, BundleContents.bundleContents().addAll(items).build());
+        owner.getStack().setData(DataComponentTypes.BUNDLE_CONTENTS, BundleContents.bundleContents().addAll(items).build());
         return this;
     }
 
@@ -408,7 +408,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings potionContents(Color color, List<PotionEffect> effects) {
-        owner.stack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().customColor(color).addCustomEffects(effects).build());
+        owner.getStack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().customColor(color).addCustomEffects(effects).build());
         return this;
     }
 
@@ -420,7 +420,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings potionContents(Color color, PotionType type) {
-        owner.stack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().potion(type).customColor(color).build());
+        owner.getStack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().potion(type).customColor(color).build());
         return this;
     }
 
@@ -431,7 +431,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings potionContents(List<PotionEffect> effects) {
-        owner.stack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().addCustomEffects(effects).build());
+        owner.getStack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().addCustomEffects(effects).build());
         return this;
     }
 
@@ -442,7 +442,7 @@ public class ItemSettings {
      * @return the updated {@link ItemSettings} instance
      */
     public ItemSettings potionContents(PotionType type) {
-        owner.stack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().potion(type).build());
+        owner.getStack().setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().potion(type).build());
         return this;
     }
 

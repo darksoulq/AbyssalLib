@@ -90,7 +90,7 @@ public class BlockEvents {
             boolean allowFortune = props.allowFortune;
             int fortuneLevel = allowFortune ? stack.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
 
-            LootTable lootTable = block.lootTable();
+            LootTable lootTable = block.getLootTable();
             if (lootTable != null) {
                 LootContext context = new LootContext(fortuneLevel);
                 List<ItemStack> drops = lootTable.generate(context);
@@ -100,12 +100,12 @@ public class BlockEvents {
             } else if (props.requireSilkTouch && silkTouch) {
                 Item blockItem = Block.asItem(block);
                 if (blockItem != null) {
-                    loc.getWorld().dropItem(loc, blockItem.clone().stack().clone());
+                    loc.getWorld().dropItem(loc, blockItem.clone().getStack().clone());
                 }
             } else if (!props.requireSilkTouch) {
                 Item blockItem = Block.asItem(block);
                 if (blockItem != null) {
-                    loc.getWorld().dropItem(loc, blockItem.clone().stack().clone());
+                    loc.getWorld().dropItem(loc, blockItem.clone().getStack().clone());
                 }
             }
 
@@ -286,10 +286,10 @@ public class BlockEvents {
     @SubscribeEvent
     public void onServerTick(ServerTickEndEvent event) {
         for (Block block : BlockManager.blocks.values()) {
-            if (block.entity() != null) {
-                block.entity().serverTick();
+            if (block.getEntity() != null) {
+                block.getEntity().serverTick();
                 if (ThreadLocalRandom.current().nextFloat() < 0.1f) {
-                    block.entity().randomTick();
+                    block.getEntity().randomTick();
                 }
             }
         }

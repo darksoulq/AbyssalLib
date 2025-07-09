@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -126,6 +127,15 @@ public class EntityAttributes {
         if (raw == null) return null;
         T base = deserialize(raw, attr.type(), null);
         return attr.applyModifiers(base);
+    }
+
+    /**
+     * Retrieves all the Attributes that are currrently on the entity.
+     *
+     * @return List of all attributes
+     */
+    public Map<String, String> getAllAttributes() {
+        return rawValues;
     }
 
     /**

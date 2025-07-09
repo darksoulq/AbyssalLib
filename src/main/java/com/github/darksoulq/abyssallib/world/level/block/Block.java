@@ -82,7 +82,7 @@ public class Block {
      *
      * @return the {@link Identifier} of the block
      */
-    public Identifier id() {
+    public Identifier getId() {
         return id;
     }
 
@@ -91,7 +91,7 @@ public class Block {
      *
      * @return the {@link Material} of the block
      */
-    public Material material() {
+    public Material getMaterial() {
         return material;
     }
 
@@ -109,7 +109,7 @@ public class Block {
      *
      * @return a supplier for the item representation of this block
      */
-    public Supplier<Item> item() {
+    public Supplier<Item> getItem() {
         return () -> new Item(id, material);
     }
 
@@ -156,7 +156,7 @@ public class Block {
      *
      * @return the associated block entity, or {@code null} if none
      */
-    public BlockEntity entity() {
+    public BlockEntity getEntity() {
         return entity;
     }
 
@@ -187,7 +187,7 @@ public class Block {
      *
      * @return the {@link LootTable} for this block or {@code null}
      */
-    public LootTable lootTable() {
+    public LootTable getLootTable() {
         return null;
     }
 
@@ -231,7 +231,7 @@ public class Block {
      */
     public static Item asItem(Block block) {
         if (!block.generateItem()) return null;
-        return BuiltinRegistries.ITEMS.get(block.id().toString());
+        return BuiltinRegistries.ITEMS.get(block.getId().toString());
     }
 
     /**

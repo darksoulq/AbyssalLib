@@ -38,7 +38,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle('1.21.6-R0.1-SNAPSHOT')
+    paperweight.paperDevBundle('1.21.7-R0.1-SNAPSHOT')
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
     implementation 'org.apache.pdfbox:fontbox:3.0.5'
     compileOnly 'com.magmaguy:ResourcePackManager:1.2.2'

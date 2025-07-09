@@ -10,6 +10,9 @@ public class CTag {
     public CTag() {
         baseTag = new CompoundTag();
     }
+    public CTag(CompoundTag base) {
+        baseTag = base;
+    }
 
     public void set(String key, String value) {
         baseTag.putString(key, value);

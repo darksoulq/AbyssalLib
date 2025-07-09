@@ -190,7 +190,7 @@ public class BlockManager {
             Location loc = block.getLocation();
             if (loc == null) return;
 
-            BlockEntity entity = block.entity();
+            BlockEntity entity = block.getEntity();
             String json;
 
             if (entity != null) {
@@ -216,7 +216,7 @@ public class BlockManager {
                     .value("x", loc.getBlockX())
                     .value("y", loc.getBlockY())
                     .value("z", loc.getBlockZ())
-                    .value("block_id", block.id().toString())
+                    .value("block_id", block.getId().toString())
                     .value("data_json", json)
                     .execute();
 
