@@ -4,7 +4,6 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
 import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;

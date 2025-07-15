@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.server.command.internal;
 import com.github.darksoulq.abyssallib.server.command.AbyssalCommand;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.config.legacy.Config;
-import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import com.mojang.brigadier.Command;
@@ -76,18 +76,18 @@ public class InternalCommand {
             sender.sendPlainMessage("Only a player can run this command!");
             return Command.SINGLE_SUCCESS;
         }
-        if (!BuiltinRegistries.ITEMS.contains(namespaceId.asString())) {
+        if (!Registries.ITEMS.contains(namespaceId.asString())) {
             sender.sendPlainMessage("Not an item");
             return Command.SINGLE_SUCCESS;
         }
 
-        player.getInventory().addItem(BuiltinRegistries.ITEMS.get(namespaceId.asString()).getStack().clone());
+        player.getInventory().addItem(Registries.ITEMS.get(namespaceId.asString()).getStack().clone());
 
         return Command.SINGLE_SUCCESS;
     }
     public static CompletableFuture<Suggestions> giveSuggests(final CommandContext<CommandSourceStack> ctx,
                                                               final SuggestionsBuilder builder) {
-        for (Item item: BuiltinRegistries.ITEMS.getAll().values()) {
+        for (Item item: Registries.ITEMS.getAll().values()) {
             builder.suggest(item.getId().toString());
         }
         return builder.buildFuture();

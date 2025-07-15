@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.level.entity.internal;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.database.Database;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
-import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.github.darksoulq.abyssallib.world.level.entity.Entity;
 import org.bukkit.Bukkit;
@@ -33,7 +33,7 @@ public class EntityManager {
             List<Entity<? extends LivingEntity>> loaded = database.executor().table("entities").select(rs -> {
                UUID uuid = UUID.fromString(rs.getString("entity_uuid"));
                Identifier id = Identifier.of(rs.getString("entity_id"));
-               Entity<? extends LivingEntity> entity = BuiltinRegistries.ENTITIES.get(id.toString());
+               Entity<? extends LivingEntity> entity = Registries.ENTITIES.get(id.toString());
                if (entity == null || (Bukkit.getEntity(entity.uuid) != null
                        && !Bukkit.getEntity(entity.uuid).isDead())) return null;
                entity.uuid = uuid;

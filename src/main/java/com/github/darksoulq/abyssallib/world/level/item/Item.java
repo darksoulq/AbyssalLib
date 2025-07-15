@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.level.item;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
-import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.data.CTag;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
@@ -217,8 +217,12 @@ public class Item implements Cloneable {
         if (data == null) {
             data = CustomData.EMPTY;
         }
-        data= data.update(tag -> tag.put("CustomData", container.toVanilla()));
+        CompoundTag tag = data.copyTag();
+        tag.put("CustomData", container.toVanilla());
+        data = CustomData.of(tag);
         nms.set(DataComponents.CUSTOM_DATA, data);
+        ItemStack updated = CraftItemStack.asBukkitCopy(nms);
+        stack.setItemMeta(updated.getItemMeta());
     }
 
     /**
@@ -261,7 +265,7 @@ public class Item implements Cloneable {
                 if (idStr.isEmpty()) return null;
 
                 Identifier id = Identifier.of(idStr);
-                Item entry = BuiltinRegistries.ITEMS.get(id.toString()).clone();
+                Item entry = Registries.ITEMS.get(id.toString()).clone();
                 entry.stack = stack;
 
                 return entry;
@@ -277,7 +281,7 @@ public class Item implements Cloneable {
      * @return true if this item is included in the tag, false otherwise
      */
     public boolean hasTag(Identifier id) {
-        ItemTag tag = (ItemTag) BuiltinRegistries.ITEM_TAGS.get(id.toString());
+        ItemTag tag = (ItemTag) Registries.ITEM_TAGS.get(id.toString());
         return tag.contains(this);
     }
 
@@ -322,8 +326,8 @@ public class Item implements Cloneable {
      * @return the corresponding {@link Block}, or null if the item is not a block
      */
     public static Block asBlock(Item item) {
-        if (!BuiltinRegistries.BLOCK_ITEMS.contains(item.getId().toString())) return null;
-        return BuiltinRegistries.BLOCK_ITEMS.get(item.getId().toString());
+        if (!Registries.BLOCK_ITEMS.contains(item.getId().toString())) return null;
+        return Registries.BLOCK_ITEMS.get(item.getId().toString());
     }
 
     /**

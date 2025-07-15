@@ -9,7 +9,7 @@ import com.github.darksoulq.abyssallib.world.level.entity.Entity;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import org.bukkit.entity.LivingEntity;
 
-public class BuiltinRegistries {
+public class Registries {
 
     public static final Registry<Item> ITEMS = new Registry<>(null);
     public static final Registry<Block> BLOCKS = new Registry<>(null);

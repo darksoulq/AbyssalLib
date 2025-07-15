@@ -1,7 +1,8 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
-import com.github.darksoulq.abyssallib.server.config.legacy.Config;
+import com.github.darksoulq.abyssallib.server.config.internal.Config;
+import com.github.darksoulq.abyssallib.server.config.ConfigType;
 import com.github.darksoulq.abyssallib.server.config.legacy.ConfigSpec;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
@@ -34,7 +35,6 @@ public final class AbyssalLib extends JavaPlugin {
     public static boolean isRPManagerInstalled = false;
     public static PackServer PACK_SERVER;
     public static GuiManager GUI_MANAGER;
-    public static ConfigSpec CONFIG;
     public static ChatInputHandler CHAT_INPUT_HANDLER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
@@ -66,26 +66,19 @@ public final class AbyssalLib extends JavaPlugin {
 
         BuiltinTags.TAGS.apply();
 
-        CONFIG = new ConfigSpec();
-        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "resource-pack.autohost", true);
-        CONFIG.define(ConfigSpec.ConfigType.STRING, "resource-pack.ip", "127.0.0.1");
-        CONFIG.define(ConfigSpec.ConfigType.INT, "resource-pack.port", 8080);
-        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "metrics.enabled", true);
-        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "features.custom_block_breaking", false);
-        CONFIG.define(ConfigSpec.ConfigType.BOOLEAN, "debug.show_registered_recipe_ids", true);
-        Config.register(MODID, CONFIG);
+        com.github.darksoulq.abyssallib.server.config.Config.register(Config.class, ConfigType.YAML);
 
-        if (CONFIG.getBoolean("resource-pack.autohost")) {
+        if (Config.ResourcePack.autoHost) {
             EVENT_BUS.register(new PackEvent());
             PACK_SERVER = new PackServer();
-            PACK_SERVER.start(CONFIG.getString("resource-pack.ip"), CONFIG.getInt("resource-pack.port"));
+            PACK_SERVER.start(Config.ResourcePack.ip, Config.ResourcePack.port);
         }
 
-        if (CONFIG.getBoolean("metrics.enabled")) {
+        if (Config.Metrics.enabled) {
             new Metrics(this, 25772);
         }
 
-        if (CONFIG.getBoolean("features.custom_block_breaking")) {
+        if (Config.Features.customBlockBreaking) {
             EVENT_BUS.register(new CustomBlockBreak());
         }
 

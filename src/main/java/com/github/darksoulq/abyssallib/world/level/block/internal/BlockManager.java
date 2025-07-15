@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.level.block.internal;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.database.Database;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
-import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.block.BlockEntity;
 import com.google.gson.*;
@@ -77,7 +77,7 @@ public class BlockManager {
 
             for (BlockRow row : rows) {
                 Location loc = new Location(Bukkit.getWorld(row.world), row.x, row.y, row.z);
-                Block block = BuiltinRegistries.BLOCKS.get(row.blockId).clone();
+                Block block = Registries.BLOCKS.get(row.blockId).clone();
                 if (block == null) {
                     AbyssalLib.getInstance().getLogger().warning("Unknown block id in DB: " + row.blockId);
                     continue;

@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.level.block;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
-import com.github.darksoulq.abyssallib.server.registry.BuiltinRegistries;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
@@ -213,7 +213,7 @@ public class Block implements Cloneable {
      * @return {@code true} if this block has the tag, otherwise {@code false}
      */
     public boolean hasTag(Identifier id) {
-        BlockTag tag = BuiltinRegistries.BLOCK_TAGS.get(id.toString());
+        BlockTag tag = Registries.BLOCK_TAGS.get(id.toString());
         return tag != null && tag.contains(this);
     }
 
@@ -237,7 +237,7 @@ public class Block implements Cloneable {
      */
     public static Item asItem(Block block) {
         if (!block.generateItem()) return null;
-        return BuiltinRegistries.ITEMS.get(block.getId().toString());
+        return Registries.ITEMS.get(block.getId().toString());
     }
 
     /**

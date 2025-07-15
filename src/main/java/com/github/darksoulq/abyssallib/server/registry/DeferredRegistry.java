@@ -101,8 +101,13 @@ public final class DeferredRegistry<T> {
 
             if (value instanceof Block block && block.generateItem()) {
                 Item blockItem = block.getItem().get();
-                BuiltinRegistries.ITEMS.register(obj.getId(), blockItem);
-                BuiltinRegistries.BLOCK_ITEMS.register(obj.getId(), block);
+                Registries.ITEMS.register(obj.getId(), blockItem);
+                Registries.BLOCK_ITEMS.register(obj.getId(), block);
+            }
+
+            if (value instanceof Item item && item.getData().has("BlockItem")) {
+                Registries.BLOCK_ITEMS.register(item.getId().toString(),
+                        Registries.BLOCKS.get(item.getData().getString("BlockItem").get()));
             }
         }
 
