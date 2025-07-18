@@ -1,9 +1,9 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
+import com.github.darksoulq.abyssallib.server.config.ConfigManager;
 import com.github.darksoulq.abyssallib.server.config.internal.Config;
 import com.github.darksoulq.abyssallib.server.config.ConfigType;
-import com.github.darksoulq.abyssallib.server.config.legacy.ConfigSpec;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
@@ -34,8 +34,6 @@ public final class AbyssalLib extends JavaPlugin {
 
     public static boolean isRPManagerInstalled = false;
     public static PackServer PACK_SERVER;
-    public static GuiManager GUI_MANAGER;
-    public static ChatInputHandler CHAT_INPUT_HANDLER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
     public static Datapack.Registrar DATAPACK_REGISTRAR;
@@ -53,20 +51,20 @@ public final class AbyssalLib extends JavaPlugin {
             }
         }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
 
-        GUI_MANAGER = new GuiManager();
-        CHAT_INPUT_HANDLER = new ChatInputHandler();
         EVENT_BUS = new EventBus(this);
 
-        EVENT_BUS.register(CHAT_INPUT_HANDLER);
+        EVENT_BUS.register(new ChatInputHandler());
         EVENT_BUS.register(new PlayerEvents());
         EVENT_BUS.register(new BlockEvents());
         EVENT_BUS.register(new ItemEvents());
         EVENT_BUS.register(new ServerEvents());
         EVENT_BUS.register(new GuiEvents());
 
+        GuiManager.init(this);
+
         BuiltinTags.TAGS.apply();
 
-        com.github.darksoulq.abyssallib.server.config.Config.register(Config.class, ConfigType.YAML);
+        ConfigManager.register(Config.class, ConfigType.YAML);
 
         if (Config.ResourcePack.autoHost) {
             EVENT_BUS.register(new PackEvent());
@@ -89,12 +87,12 @@ public final class AbyssalLib extends JavaPlugin {
 
         TextOffset.init(ns);
 
-        Texture invisTexture = ns.texture("invis");
+        Texture invisTexture = ns.texture("item/invis");
         Model invisModel = ns.model("invis", false);
         invisModel.parent("minecraft:item/generated");
         invisModel.texture("layer0", invisTexture);
 
-        Selector invisSelector = new Selector.Model(invisModel);
+        Selector.Model invisSelector = new Selector.Model(invisModel);
         ItemDefinition def = ns.itemDefinition("invisible", invisSelector, false);
 
         rp.register(false);

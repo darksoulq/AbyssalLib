@@ -24,7 +24,7 @@ public class ChatInputHandler {
     /**
      * Map of player UUIDs to their pending chat input handlers.
      */
-    private final Map<UUID, Consumer<String>> inputMap = new ConcurrentHashMap<>();
+    private static final Map<UUID, Consumer<String>> inputMap = new ConcurrentHashMap<>();
 
     /**
      * Prompts the player and captures their next chat message with a default prompt and no timeout.
@@ -32,7 +32,7 @@ public class ChatInputHandler {
      * @param player       the player to listen to
      * @param inputHandler the function that handles their next message
      */
-    public void await(Player player, Consumer<String> inputHandler) {
+    public static void await(Player player, Consumer<String> inputHandler) {
         registerAwait(player, inputHandler, MiniMessage.miniMessage()
                 .deserialize("<gray>[<bold>Abyssal</bold></gray>] Please type your input in chat."), -1);
     }
@@ -44,7 +44,7 @@ public class ChatInputHandler {
      * @param inputHandler the function that handles their next message
      * @param prompt       the message to send as a prompt
      */
-    public void await(Player player, Consumer<String> inputHandler, Component prompt) {
+    public static void await(Player player, Consumer<String> inputHandler, Component prompt) {
         registerAwait(player, inputHandler, prompt, -1);
     }
 
@@ -55,7 +55,7 @@ public class ChatInputHandler {
      * @param inputHandler the function that handles their next message
      * @param timeoutTicks number of ticks before the input expires; -1 for no timeout
      */
-    public void await(Player player, Consumer<String> inputHandler, long timeoutTicks) {
+    public static void await(Player player, Consumer<String> inputHandler, long timeoutTicks) {
         registerAwait(player, inputHandler, MiniMessage.miniMessage()
                 .deserialize("<gray>[<bold>Abyssal</bold></gray>] Please type your input in chat."), timeoutTicks);
     }
@@ -68,7 +68,7 @@ public class ChatInputHandler {
      * @param prompt       the message to send as a prompt
      * @param timeoutTicks number of ticks before the input expires; -1 for no timeout
      */
-    public void await(Player player, Consumer<String> inputHandler, Component prompt, long timeoutTicks) {
+    public static void await(Player player, Consumer<String> inputHandler, Component prompt, long timeoutTicks) {
         registerAwait(player, inputHandler, prompt, timeoutTicks);
     }
 
@@ -78,14 +78,14 @@ public class ChatInputHandler {
      * @param player the player whose input is to be cancelled
      * @return true if there was an active input to cancel, false otherwise
      */
-    public boolean cancel(Player player) {
+    public static boolean cancel(Player player) {
         return inputMap.remove(player.getUniqueId()) != null;
     }
 
     /**
      * Internal method that registers the player and schedules expiration (if any).
      */
-    private void registerAwait(Player player, Consumer<String> inputHandler, Component prompt, long timeoutTicks) {
+    private static void registerAwait(Player player, Consumer<String> inputHandler, Component prompt, long timeoutTicks) {
         UUID uuid = player.getUniqueId();
         inputMap.put(uuid, inputHandler);
 

@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus;
  * Utility for generating invisible font-based glyph offsets to fine-tune horizontal text alignment.
  */
 public class TextOffset {
+    private static int[] widths = {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1};
+
     /**
      * Initializes the offset font glyphs and lang.
      *
@@ -43,19 +45,17 @@ public class TextOffset {
         if (pixelOffset == 0) return "";
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<font:abyssallib:offset>");
-
-        int remaining = pixelOffset;
-        int[] widths = {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1};
-
         for (int width : widths) {
+            sb.append("<font:abyssallib:offset>");
+
+            int remaining = pixelOffset;
+
             while (Math.abs(remaining) >= width) {
                 sb.append("<lang:space.").append(remaining > 0 ? width : -width).append(">");
                 remaining += remaining > 0 ? -width : width;
             }
+            sb.append("</font>");
         }
-
-        sb.append("</font>");
         return sb.toString();
     }
 

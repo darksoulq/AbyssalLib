@@ -11,7 +11,7 @@ import java.lang.reflect.*;
 import java.nio.file.*;
 import java.util.*;
 
-public class Config {
+public class ConfigManager {
     static {
         SerializerRegistry.register(UUID.class, new BuiltinSerializers.UUIDSerializer());
         SerializerRegistry.register(ItemStack.class, new BuiltinSerializers.ItemStackSerializer());
