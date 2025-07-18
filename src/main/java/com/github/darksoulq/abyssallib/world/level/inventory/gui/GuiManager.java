@@ -17,6 +17,7 @@ public class GuiManager {
 
     public static void open(HumanEntity player, Gui gui) {
         InventoryView view = gui.getMenuType().create(player, gui.getTitle());
+        view.open();
         GuiView guiView = new GuiView(gui, view);
         openViews.put(view, guiView);
         gui.getOnOpen().accept(guiView);
@@ -28,6 +29,7 @@ public class GuiManager {
         if (guiView != null) {
             guiView.close(player);
         }
+        view.close();
     }
 
     public static void init(Plugin pl) {
