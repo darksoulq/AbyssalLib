@@ -203,27 +203,32 @@ public class Font implements Asset {
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
         JsonArray providers = new JsonArray();
-        Map<Texture, LinkedList<TextureGlyph>> bitmaps = new LinkedHashMap<>();
+
+        // Map of (texture, height, ascent) → glyphs
+        Map<BitmapKey, LinkedList<TextureGlyph>> bitmapGroups = new LinkedHashMap<>();
         LinkedList<OffsetGlyph> spaces = new LinkedList<>();
 
         for (LinkedList<Glyph> group : glyphGroups) {
             if (group.isEmpty()) continue;
-            Glyph f = group.getFirst();
-            if (f instanceof TextureGlyph) {
-                group.forEach(g -> {
+
+            Glyph first = group.getFirst();
+
+            if (first instanceof TextureGlyph) {
+                for (Glyph g : group) {
                     TextureGlyph t = (TextureGlyph) g;
-                    bitmaps.computeIfAbsent(t.texture(), k -> new LinkedList<>()).add(t);
-                });
-            } else if (f instanceof OffsetGlyph) {
+                    BitmapKey key = new BitmapKey(t.texture(), t.height(), t.ascent());
+                    bitmapGroups.computeIfAbsent(key, k -> new LinkedList<>()).add(t);
+                }
+            } else if (first instanceof OffsetGlyph) {
                 group.forEach(g -> spaces.add((OffsetGlyph) g));
-            } else if (f instanceof TtfFont t) {
-                providers.add(t.toJson());
-            } else if (f instanceof UnihexFont u) {
-                providers.add(u.toJson());
+            } else if (first instanceof TtfFont ttf) {
+                providers.add(ttf.toJson());
+            } else if (first instanceof UnihexFont unihex) {
+                providers.add(unihex.toJson());
             }
         }
 
-        bitmaps.forEach((tex, list) -> providers.add(toBitmapProvider(list)));
+        bitmapGroups.forEach((key, glyphs) -> providers.add(toBitmapProvider(glyphs, key)));
         if (!spaces.isEmpty()) providers.add(toSpaceProvider(spaces));
 
         JsonObject root = new JsonObject();
@@ -234,22 +239,26 @@ public class Font implements Asset {
     }
 
     /**
-     * Builds a JSON bitmap provider from a list of {@link TextureGlyph}s.
+     * Builds a JSON bitmap provider from a list of {@link TextureGlyph}s and their associated key.
      *
      * @param list List of glyphs sharing the same texture, height, and ascent.
+     * @param key  Composite key that holds the texture, height, and ascent.
      * @return JSON representation of a bitmap provider.
      */
-    private JsonObject toBitmapProvider(List<TextureGlyph> list) {
-        TextureGlyph s = list.get(0);
-        JsonObject p = new JsonObject();
-        p.addProperty("type", "bitmap");
-        p.addProperty("file", s.texture().file() + ".png");
-        p.addProperty("height", s.height());
-        p.addProperty("ascent", s.ascent());
-        JsonArray arr = new JsonArray();
-        list.forEach(t -> arr.add(String.valueOf(t.character())));
-        p.add("chars", arr);
-        return p;
+    private JsonObject toBitmapProvider(List<TextureGlyph> list, BitmapKey key) {
+        JsonObject provider = new JsonObject();
+        provider.addProperty("type", "bitmap");
+        provider.addProperty("file", key.texture().file() + ".png");
+        provider.addProperty("height", key.height());
+        provider.addProperty("ascent", key.ascent());
+
+        JsonArray chars = new JsonArray();
+        for (TextureGlyph glyph : list) {
+            chars.add(String.valueOf(glyph.character()));
+        }
+        provider.add("chars", chars);
+
+        return provider;
     }
 
     /**
@@ -376,6 +385,15 @@ public class Font implements Asset {
      * Represents a font glyph.
      */
     public sealed interface Glyph permits TextureGlyph, OffsetGlyph, TtfFont, UnihexFont {}
+
+    /**
+     * Represents a unique bitmap provider group
+     *
+     * @param texture the texture of the groupd
+     * @param height the height of the griup
+     * @param ascent the ascent of the group
+     */
+    private record BitmapKey(Texture texture, int height, int ascent) {}
 
     /**
      * A glyph from a bitmap texture.
