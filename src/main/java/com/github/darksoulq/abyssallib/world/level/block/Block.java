@@ -202,7 +202,7 @@ public class Block implements Cloneable {
      *
      * @return the XP amount, or 0 if none
      */
-    public int exp() {
+    public int getExpToDrop(Player player, int fortuneLevel, boolean silkTouch) {
         return 0;
     }
 

@@ -19,8 +19,8 @@ public class GuiManager {
         InventoryView view = gui.getMenuType().create(player, gui.getTitle());
         view.open();
         GuiView guiView = new GuiView(gui, view);
-        openViews.put(view, guiView);
         gui.getOnOpen().accept(guiView);
+        openViews.put(view, guiView);
     }
 
     public static void close(HumanEntity player) {

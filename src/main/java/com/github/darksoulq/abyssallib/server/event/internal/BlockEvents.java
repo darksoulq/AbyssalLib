@@ -92,7 +92,7 @@ public class BlockEvents {
 
         if (player.getGameMode() != GameMode.CREATIVE) {
             dropBlockLoot(loc, block, stack, breakEvent, silkTouch, fortuneLevel);
-            event.setExpToDrop(block.exp());
+            event.setExpToDrop(block.getExpToDrop(player, fortuneLevel, silkTouch));
         }
 
         BlockManager.remove(loc);

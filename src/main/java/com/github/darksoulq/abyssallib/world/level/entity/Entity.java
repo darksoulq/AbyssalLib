@@ -17,8 +17,8 @@ import java.util.*;
 
 public class Entity<T extends LivingEntity> implements Cloneable {
     public UUID uuid;
-    private final Identifier id;
-    private final Class<T> baseClass;
+    private Identifier id;
+    private Class<T> baseClass;
 
     private final Map<Integer, Goal> pathfinderGoals = new LinkedHashMap<>();
     private final Map<Integer, Goal> targetGoals = new LinkedHashMap<>();
@@ -33,7 +33,6 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     public void addGoal(int priority, Goal goal) {
         pathfinderGoals.put(priority, goal);
     }
-
     public void addTargetGoal(int priority, Goal goal) {
         targetGoals.put(priority, goal);
     }
@@ -41,27 +40,13 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     public void setAttribute(Attribute attribute, double value) {
         attributes.put(attribute, value);
     }
-
     public void addAttributeModifier(Attribute attribute, AttributeModifier modifier) {
         modifiers.computeIfAbsent(attribute, k -> new ArrayList<>()).add(modifier);
     }
 
     public void spawn(Location loc) {
-        if (uuid != null) return;
-        T entity = loc.getWorld().spawn(loc, baseClass);
-        this.uuid = entity.getUniqueId();
-
-        EntitySpawnEvent event = AbyssalLib.EVENT_BUS
-                .post(new EntitySpawnEvent(this, EntitySpawnEvent.SpawnReason.PLUGIN));
-        if (event.isCancelled()) {
-            entity.remove();
-            return;
-        }
-
-        applyGoals(entity);
-        applyAttributes(entity);
+        spawn(loc, EntitySpawnEvent.SpawnReason.PLUGIN);
     }
-
     public void spawn(Location loc, EntitySpawnEvent.SpawnReason reason) {
         if (uuid != null) return;
         T entity = loc.getWorld().spawn(loc, baseClass);
@@ -77,19 +62,9 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         applyGoals(entity);
         applyAttributes(entity);
     }
-
     public void spawn(LivingEntity entity) {
-        if (uuid != null) return;
-        this.uuid = entity.getUniqueId();
-
-        EntitySpawnEvent event = AbyssalLib.EVENT_BUS
-                .post(new EntitySpawnEvent(this, EntitySpawnEvent.SpawnReason.PLUGIN));
-        if (event.isCancelled()) return;
-
-        applyGoals(entity);
-        applyAttributes(entity);
+        spawn(entity, EntitySpawnEvent.SpawnReason.PLUGIN);
     }
-
     public void spawn(LivingEntity entity, EntitySpawnEvent.SpawnReason reason) {
         if (uuid != null) return;
         this.uuid = entity.getUniqueId();
@@ -113,7 +88,6 @@ public class Entity<T extends LivingEntity> implements Cloneable {
                 NMSGoalHandler.addTargetGoal(entity, goal, priority)
         );
     }
-
     public void applyAttributes(LivingEntity entity) {
         for (Map.Entry<Attribute, Double> entry : attributes.entrySet()) {
             AttributeInstance instance = entity.getAttribute(entry.getKey());
@@ -151,9 +125,11 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     }
 
     @Override
-    public Entity<T> clone() {
-        Entity<T> copy = new Entity<>(this.id, this.baseClass);
+    public Entity<T> clone() throws CloneNotSupportedException {
+        Entity<T> copy = (Entity<T>) super.clone();
 
+        copy.id = id;
+        copy.baseClass = baseClass;
         this.pathfinderGoals.forEach(copy::addGoal);
         this.targetGoals.forEach(copy::addTargetGoal);
         this.attributes.forEach(copy::setAttribute);
