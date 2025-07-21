@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiElement;
@@ -8,22 +9,36 @@ import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiView;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 
 public class GuiEvents {
+    @SubscribeEvent
+    public void onDropPickup(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            GuiView view = GuiManager.openViews.get(player.getOpenInventory());
+            if (view == null) return;
+            if (!view.getGui().hasFlag(GuiFlag.DISABLE_BOTTOM)) event.setCancelled(false);
+        }
+    }
+
+    @SubscribeEvent
+    public void onAdvancementGet(PlayerAdvancementCriterionGrantEvent event) {
+        GuiView view = GuiManager.openViews.get(event.getPlayer().getOpenInventory());
+        if (view == null) return;
+        if (view.getGui().hasFlag(GuiFlag.DISABLE_ADVANCEMENTS)) event.setCancelled(false);
+    }
+
     @SubscribeEvent
     public void onSetSlot(PlayerInventorySlotChangeEvent event) {
         Item item = Item.from(event.getNewItemStack());
         if (item != null) {
             event.setShouldTriggerAdvancements(false);
-            return;
         }
-
-        GuiView view = GuiManager.openViews.get(event.getPlayer().getOpenInventory());
-        if (view == null) return;
-        if (view.getGui().hasFlag(GuiFlag.DISABLE_ADVANCEMENTS)) event.setShouldTriggerAdvancements(false);
     }
 
     @SubscribeEvent
