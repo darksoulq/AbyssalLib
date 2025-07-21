@@ -62,7 +62,7 @@ public class Gui {
     }
 
     public EnumSet<GuiFlag> getFlags() {
-        return flags.clone();
+        return flags;
     }
 
     public Component getTitle() {
