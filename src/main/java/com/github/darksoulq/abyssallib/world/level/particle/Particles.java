@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.level.particle;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.world.level.item.Item;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;

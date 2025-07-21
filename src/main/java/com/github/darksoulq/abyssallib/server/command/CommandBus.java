@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.command;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;

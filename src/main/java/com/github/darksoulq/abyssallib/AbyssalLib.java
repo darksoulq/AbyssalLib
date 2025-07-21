@@ -2,12 +2,11 @@ package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.config.ConfigManager;
-import com.github.darksoulq.abyssallib.server.config.internal.Config;
 import com.github.darksoulq.abyssallib.server.config.ConfigType;
+import com.github.darksoulq.abyssallib.server.config.internal.Config;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
-import com.github.darksoulq.abyssallib.server.event.internal.CustomBlockBreak;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;

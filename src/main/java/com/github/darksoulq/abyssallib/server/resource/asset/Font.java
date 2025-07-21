@@ -4,7 +4,10 @@ import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 import com.google.gson.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import org.apache.fontbox.ttf.*;
+import org.apache.fontbox.ttf.CmapSubtable;
+import org.apache.fontbox.ttf.CmapTable;
+import org.apache.fontbox.ttf.TTFParser;
+import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.RandomAccessReadBufferedFile;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
@@ -204,9 +207,17 @@ public class Font implements Asset {
     public void emit(@NotNull Map<String, byte[]> files) {
         JsonArray providers = new JsonArray();
 
-        // Map of (texture, height, ascent) → glyphs
         Map<BitmapKey, LinkedList<TextureGlyph>> bitmapGroups = new LinkedHashMap<>();
         LinkedList<OffsetGlyph> spaces = new LinkedList<>();
+
+        for (LinkedList<Glyph> group : glyphGroups) {
+            if (group.isEmpty()) continue;
+
+            Glyph first = group.getFirst();
+            if (first instanceof OffsetGlyph) {
+                group.forEach(g -> spaces.add((OffsetGlyph) g));
+            }
+        }
 
         for (LinkedList<Glyph> group : glyphGroups) {
             if (group.isEmpty()) continue;
@@ -219,8 +230,6 @@ public class Font implements Asset {
                     BitmapKey key = new BitmapKey(t.texture(), t.height(), t.ascent());
                     bitmapGroups.computeIfAbsent(key, k -> new LinkedList<>()).add(t);
                 }
-            } else if (first instanceof OffsetGlyph) {
-                group.forEach(g -> spaces.add((OffsetGlyph) g));
             } else if (first instanceof TtfFont ttf) {
                 providers.add(ttf.toJson());
             } else if (first instanceof UnihexFont unihex) {
@@ -228,11 +237,12 @@ public class Font implements Asset {
             }
         }
 
-        bitmapGroups.forEach((key, glyphs) -> providers.add(toBitmapProvider(glyphs, key)));
         if (!spaces.isEmpty()) providers.add(toSpaceProvider(spaces));
+        bitmapGroups.forEach((key, glyphs) -> providers.add(toBitmapProvider(glyphs, key)));
 
         JsonObject root = new JsonObject();
         root.add("providers", providers);
+
         files.put("assets/" + namespace + "/font/" + id + ".json",
                 new GsonBuilder().setPrettyPrinting().create()
                         .toJson(root).getBytes(StandardCharsets.UTF_8));

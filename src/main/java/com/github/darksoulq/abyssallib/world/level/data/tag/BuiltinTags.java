@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.world.level.data.tag;
 
-import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.registry.object.DeferredObject;
 
 public class BuiltinTags {

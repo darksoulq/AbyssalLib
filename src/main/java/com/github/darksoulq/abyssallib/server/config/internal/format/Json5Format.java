@@ -1,12 +1,15 @@
 package com.github.darksoulq.abyssallib.server.config.internal.format;
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Json5Format implements ConfigFormat {
 

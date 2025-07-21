@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.world.level.inventory.gui;
 
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nullable;
 import java.util.Map;

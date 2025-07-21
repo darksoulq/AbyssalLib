@@ -3,7 +3,8 @@ package com.github.darksoulq.abyssallib.world.level.entity.data;
 import com.github.darksoulq.abyssallib.world.level.data.Identifier;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Represents a player attribute with a specific type and default value,

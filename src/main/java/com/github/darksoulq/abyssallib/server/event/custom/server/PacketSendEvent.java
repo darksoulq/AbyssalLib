@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.event.custom.server;
 
-import com.destroystokyo.paper.event.brigadier.AsyncPlayerSendSuggestionsEvent;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;

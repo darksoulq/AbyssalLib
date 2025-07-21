@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.world.level.data.tag;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 

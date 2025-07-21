@@ -4,7 +4,10 @@ import com.github.darksoulq.abyssallib.server.database.ResultMapper;
 import com.github.darksoulq.abyssallib.server.database.TableBuilder;
 import com.github.darksoulq.abyssallib.server.database.TableQuery;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 /**

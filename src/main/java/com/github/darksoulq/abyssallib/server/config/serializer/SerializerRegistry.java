@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.config.serializer;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SerializerRegistry {
     private static final Map<Class<?>, ConfigSerializer<?>> global = new HashMap<>();

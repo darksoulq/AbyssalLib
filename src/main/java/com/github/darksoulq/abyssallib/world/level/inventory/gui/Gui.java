@@ -12,6 +12,7 @@ public class Gui {
     private final Map<SlotPosition, GuiElement> elements = new HashMap<>();
     private final List<GuiLayer> layers = new ArrayList<>();
     private final List<Consumer<GuiView>> tickers = new ArrayList<>();
+    private final EnumSet<GuiFlag> flags;
     Consumer<GuiView> onOpen;
     Consumer<GuiView> onClose;
 
@@ -19,6 +20,7 @@ public class Gui {
                Map<SlotPosition, GuiElement> elements,
                List<GuiLayer> layers,
                List<Consumer<GuiView>> tickers,
+               EnumSet<GuiFlag> flags,
                Consumer<GuiView> onOpen,
                Consumer<GuiView> onClose) {
         this.menuType = menuType;
@@ -26,6 +28,7 @@ public class Gui {
         this.elements.putAll(elements);
         this.layers.addAll(layers);
         this.tickers.addAll(tickers);
+        this.flags = flags;
         this.onOpen = onOpen;
         this.onClose = onClose;
     }
@@ -54,6 +57,14 @@ public class Gui {
         return elements;
     }
 
+    public boolean hasFlag(GuiFlag flag) {
+        return flags.contains(flag);
+    }
+
+    public EnumSet<GuiFlag> getFlags() {
+        return flags.clone();
+    }
+
     public Component getTitle() {
         return title;
     }
@@ -64,6 +75,7 @@ public class Gui {
         private final Map<SlotPosition, GuiElement> elements = new HashMap<>();
         private final List<GuiLayer> layers = new ArrayList<>();
         private final List<Consumer<GuiView>> tickers = new ArrayList<>();
+        private final EnumSet<GuiFlag> flags = EnumSet.noneOf(GuiFlag.class);
         private Consumer<GuiView> onOpen = v -> {};
         private Consumer<GuiView> onClose = v -> {};
 
@@ -97,8 +109,18 @@ public class Gui {
             return this;
         }
 
+        public Builder addFlag(GuiFlag flag) {
+            this.flags.add(flag);
+            return this;
+        }
+
+        public Builder addFlags(GuiFlag... flags) {
+            this.flags.addAll(Arrays.asList(flags));
+            return this;
+        }
+
         public Gui build() {
-            return new Gui(menuType, title, elements, layers, tickers, onOpen, onClose);
+            return new Gui(menuType, title, elements, layers, tickers, flags, onOpen, onClose);
         }
     }
 }

@@ -3,13 +3,28 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiElement;
+import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiFlag;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiView;
+import com.github.darksoulq.abyssallib.world.level.item.Item;
+import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 
 public class GuiEvents {
+    @SubscribeEvent
+    public void onSetSlot(PlayerInventorySlotChangeEvent event) {
+        Item item = Item.from(event.getNewItemStack());
+        if (item != null) {
+            event.setShouldTriggerAdvancements(false);
+            return;
+        }
+
+        GuiView view = GuiManager.openViews.get(event.getPlayer().getOpenInventory());
+        if (view == null) return;
+        if (view.getGui().hasFlag(GuiFlag.DISABLE_ADVANCEMENTS)) event.setShouldTriggerAdvancements(false);
+    }
 
     @SubscribeEvent
     public void onClick(InventoryClickEvent event) {
@@ -19,6 +34,8 @@ public class GuiEvents {
         int rawSlot = event.getRawSlot();
         boolean top = rawSlot < view.getTop().getSize();
         GuiView.Segment segment = top ? GuiView.Segment.TOP : GuiView.Segment.BOTTOM;
+        if (top && view.getGui().hasFlag(GuiFlag.DISABLE_TOP)) return;
+        if (!top && view.getGui().hasFlag(GuiFlag.DISABLE_BOTTOM)) return;
         int slot = event.getSlot();
 
         GuiElement element = view.getElementAt(segment, slot);
@@ -40,6 +57,8 @@ public class GuiEvents {
         for (int rawSlot : event.getRawSlots()) {
             boolean top = rawSlot < view.getTop().getSize();
             GuiView.Segment segment = top ? GuiView.Segment.TOP : GuiView.Segment.BOTTOM;
+            if (top && view.getGui().hasFlag(GuiFlag.DISABLE_TOP)) continue;
+            if (!top && view.getGui().hasFlag(GuiFlag.DISABLE_BOTTOM)) continue;
             int slot = view.getInventoryView().convertSlot(rawSlot);
 
             GuiElement el = view.getElementAt(segment, slot);
