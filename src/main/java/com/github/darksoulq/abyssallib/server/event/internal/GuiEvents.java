@@ -29,10 +29,8 @@ public class GuiEvents {
     public void onCriterionGrant(PlayerAdvancementCriterionGrantEvent event) {
         GuiView view = GuiManager.openViews.get(event.getPlayer().getOpenInventory());
         if (view == null) return;
-        System.out.println(view.getGui().getFlags());
         if (view.getGui().hasFlag(GuiFlag.DISABLE_ADVANCEMENTS)) {
             event.setCancelled(true);
-            AbyssalLib.getInstance().getLogger().info(String.valueOf(event.isCancelled()));
         };
     }
 
