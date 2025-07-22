@@ -21,7 +21,7 @@ public class GuiEvents {
         if (event.getEntity() instanceof Player player) {
             GuiView view = GuiManager.openViews.get(player.getOpenInventory());
             if (view == null) return;
-            if (!view.getGui().hasFlag(GuiFlag.DISABLE_BOTTOM)) event.setCancelled(true);
+            if (view.getGui().hasFlag(GuiFlag.DISABLE_ITEM_PICKUP)) event.setCancelled(true);
         }
     }
 
@@ -61,7 +61,6 @@ public class GuiEvents {
         GuiView view = GuiManager.openViews.get(event.getView());
         if (view == null) return;
 
-        boolean cancel = false;
         for (int rawSlot : event.getRawSlots()) {
             boolean top = rawSlot < view.getTop().getSize();
             GuiView.Segment segment = top ? GuiView.Segment.TOP : GuiView.Segment.BOTTOM;
@@ -71,11 +70,9 @@ public class GuiEvents {
 
             GuiElement el = view.getElementAt(segment, slot);
             if (el == null || el.onDrag(view, event.getNewItems()) == ActionResult.CANCEL) {
-                cancel = true;
+                event.setCancelled(true);
             }
         }
-
-        event.setCancelled(cancel);
     }
 
     @SubscribeEvent
