@@ -100,6 +100,7 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onInteract(PlayerInteractEvent event) {
+        if (event.getPlayer().getGameMode() == GameMode.CREATIVE && event.getAction().isLeftClick()) return;
         org.bukkit.block.Block bukkitBlock = event.getClickedBlock();
         if (bukkitBlock == null) return;
 
@@ -108,38 +109,6 @@ public class BlockEvents {
         if (heldItem == null) return;
 
         Block clickedBlock = Block.from(bukkitBlock);
-        CTag data = heldItem.getData();
-
-        if (data.has("BlockItem")) {
-            String blockId = data.getString("BlockItem").get();
-            if (!Registries.BLOCKS.contains(blockId)) return;
-
-            Block toPlace = Registries.BLOCKS.get(blockId).clone();
-            BlockFace face = event.getBlockFace();
-            Location placeLoc = bukkitBlock.getLocation().add(face.getModX(), face.getModY(), face.getModZ());
-            World world = placeLoc.getWorld();
-            if (world == null) return;
-
-            org.bukkit.block.Block targetBlock = placeLoc.getBlock();
-            if (!targetBlock.isEmpty() && targetBlock.getType().isSolid() && !targetBlock.isReplaceable()) return;
-
-            toPlace.place(targetBlock, false);
-            handItem.setAmount(handItem.getAmount() - 1);
-
-            Material mat = toPlace.getMaterial();
-            world.playSound(placeLoc, mat.createBlockData().getSoundGroup().getPlaceSound(), SoundCategory.BLOCKS, 1.0f, 1.0f);
-
-            BlockPlacedEvent placeEvent = AbyssalLib.EVENT_BUS.post(new BlockPlacedEvent(
-                    event.getPlayer(), toPlace, handItem
-            ));
-
-            ActionResult result = clickedBlock.onPlaced(event.getPlayer(), placeLoc, handItem);
-            if (result == ActionResult.CANCEL || placeEvent.isCancelled()) {
-                BlockManager.remove(placeLoc);
-                targetBlock.setType(Material.AIR);
-            }
-        }
-
         if (clickedBlock != null) {
             BlockInteractionEvent blockEvent = AbyssalLib.EVENT_BUS.post(new BlockInteractionEvent(
                     event.getPlayer(),
