@@ -17,7 +17,6 @@ import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.*;
-import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.*;
@@ -25,13 +24,43 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BlockEvents {
+    @SubscribeEvent
+    public void onChunkLoad(ChunkLoadEvent event) {
+        if (event.isNewChunk()) return;
+        List<Block> blocks = BlockManager.getBlocksInChunk(event.getChunk());
+        if (blocks.isEmpty()) return;
+        for (Block block : blocks) {
+            BlockManager.INACTIVE_BLOCKS.remove(block);
+            if (!BlockManager.ACTIVE_BLOCKS.contains(block)) {
+                BlockManager.ACTIVE_BLOCKS.add(block);
+                block.onLoad();
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onChunkUnload(ChunkUnloadEvent event) {
+        List<Block> blocks = BlockManager.getBlocksInChunk(event.getChunk());
+        if (blocks.isEmpty()) return;
+        for (Block block : blocks) {
+            BlockManager.ACTIVE_BLOCKS.remove(block);
+            if (!BlockManager.INACTIVE_BLOCKS.contains(block)) {
+                BlockManager.INACTIVE_BLOCKS.add(block);
+                block.onUnLoad();
+            }
+        }
+    }
 
     @SubscribeEvent
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -41,7 +70,8 @@ public class BlockEvents {
         if (heldItem == null) return;
         CTag data = heldItem.getData();
 
-        for (Block block : Registries.BLOCKS.getAll().values()) {
+        for (Block base : Registries.BLOCKS.getAll().values()) {
+            Block block = base.clone();
             block.place(event.getBlock(), false);
             if (data.has("BlockItem") && data.getString("BlockItem").get().equals(block.getId().toString())) {
                 BlockPlacedEvent placeEvent = AbyssalLib.EVENT_BUS.post(new BlockPlacedEvent(
@@ -297,7 +327,7 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onServerTick(ServerTickEndEvent event) {
-        for (Block block : BlockManager.blocks.values()) {
+        for (Block block : BlockManager.ACTIVE_BLOCKS) {
             if (block.getEntity() != null) {
                 block.getEntity().serverTick();
                 if (ThreadLocalRandom.current().nextFloat() < 0.001f) {

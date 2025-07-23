@@ -8,6 +8,7 @@ import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.block.BlockEntity;
 import com.google.gson.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 
 import java.io.File;
@@ -26,33 +27,35 @@ public class BlockManager {
     /**
      * Map storing blocks keyed by their location keys.
      */
-    public static final Map<String, Block> blocks = new HashMap<>();
+    public static final Map<String, Block> BLOCKS = new HashMap<>();
+    public static final List<Block> ACTIVE_BLOCKS = new ArrayList<>();
+    public static final List<Block> INACTIVE_BLOCKS = new ArrayList<>();
 
     /**
      * List of registered Gson type adapters for custom serialization/deserialization.
      */
-    private static final List<TypeAdapterRegistration<?>> adapters = new ArrayList<>();
+    private static final List<TypeAdapterRegistration<?>> ADAPTERS = new ArrayList<>();
 
     /**
      * Database instance used for persisting blocks.
      */
-    private static Database database;
+    private static Database DATABASE;
 
     /**
      * Gson instance configured with registered type adapters for JSON (de)serialization.
      */
-    private static Gson gson;
+    private static Gson GSON;
 
     /**
      * Loads blocks from the database, initializes the database if necessary, and sets up Gson.
      */
     public static void load() {
         try {
-            database = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
-            database.connect();
+            DATABASE = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
+            DATABASE.connect();
 
             // Create blocks table if it doesn't exist
-            database.executor().table("blocks").create()
+            DATABASE.executor().table("blocks").create()
                     .ifNotExists()
                     .column("world", "TEXT")
                     .column("x", "INTEGER")
@@ -65,7 +68,7 @@ public class BlockManager {
             buildGson();
 
             // Load all saved blocks
-            List<BlockRow> rows = database.executor().table("blocks").select(rs -> {
+            List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
                 String world = rs.getString("world");
                 int x = rs.getInt("x");
                 int y = rs.getInt("y");
@@ -91,7 +94,12 @@ public class BlockManager {
                     block.setEntity(entity);
                 }
 
-                blocks.put(locKey(loc), block);
+                BLOCKS.put(locKey(loc), block);
+                if (loc.isChunkLoaded()) {
+                    ACTIVE_BLOCKS.add(block);
+                } else {
+                    INACTIVE_BLOCKS.add(block);
+                }
             }
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + e.getMessage());
@@ -108,11 +116,11 @@ public class BlockManager {
                 .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.TRANSIENT)
                 .setPrettyPrinting();
 
-        for (TypeAdapterRegistration<?> reg : adapters) {
+        for (TypeAdapterRegistration<?> reg : ADAPTERS) {
             builder.registerTypeAdapter(reg.clazz, reg.adapter);
         }
 
-        gson = builder.create();
+        GSON = builder.create();
     }
 
     /**
@@ -132,7 +140,7 @@ public class BlockManager {
             String name = field.getName();
             if (jsonObject.has(name)) {
                 JsonElement elem = jsonObject.get(name);
-                Object value = gson.fromJson(elem, field.getType());
+                Object value = GSON.fromJson(elem, field.getType());
                 field.set(entity, value);
             }
         }
@@ -148,7 +156,8 @@ public class BlockManager {
         Location loc = block.getLocation();
         if (loc == null) return;
 
-        blocks.put(locKey(loc), block);
+        BLOCKS.put(locKey(loc), block);
+        ACTIVE_BLOCKS.add(block);
         save(block);
     }
 
@@ -159,7 +168,7 @@ public class BlockManager {
      * @return The block at the location or {@code null} if none is registered.
      */
     public static Block get(Location loc) {
-        return blocks.get(locKey(loc));
+        return BLOCKS.get(locKey(loc));
     }
 
     /**
@@ -168,9 +177,9 @@ public class BlockManager {
      * @param loc The location of the block to remove.
      */
     public static void remove(Location loc) {
-        blocks.remove(locKey(loc));
+        BLOCKS.remove(locKey(loc));
         try {
-            database.executor().table("blocks").delete()
+            DATABASE.executor().table("blocks").delete()
                     .where("world", loc.getWorld().getName())
                     .where("x", loc.getBlockX())
                     .where("y", loc.getBlockY())
@@ -203,16 +212,16 @@ public class BlockManager {
 
                     field.setAccessible(true);
                     Object value = field.get(entity);
-                    JsonElement elem = gson.toJsonTree(value);
+                    JsonElement elem = GSON.toJsonTree(value);
                     jsonObject.add(field.getName(), elem);
                 }
 
-                json = gson.toJson(jsonObject);
+                json = GSON.toJson(jsonObject);
             } else {
                 json = "{}";
             }
 
-            database.executor().table("blocks").insert()
+            DATABASE.executor().table("blocks").insert()
                     .value("world", loc.getWorld().getName())
                     .value("x", loc.getBlockX())
                     .value("y", loc.getBlockY())
@@ -235,11 +244,27 @@ public class BlockManager {
      */
     public static int save() {
         int saved = 0;
-        for (Block block : blocks.values()) {
+        for (Block block : BLOCKS.values()) {
             save(block);
             saved++;
         }
         return saved;
+    }
+
+    public static List<Block> getBlocksInChunk(Chunk chunk) {
+        List<Block> blocks = new ArrayList<>();
+        String worldName = chunk.getWorld().getName();
+
+        for (Block block : BLOCKS.values()) {
+            Location loc = block.getLocation();
+            if (!loc.getWorld().getName().equals(worldName)) continue;
+            int cx = loc.getBlockX() >> 4;
+            int cz = loc.getBlockZ() >> 4;
+            if (cx == chunk.getX() && cz == chunk.getZ()) {
+                blocks.add(block);
+            }
+        }
+        return blocks;
     }
 
     /**
@@ -261,7 +286,7 @@ public class BlockManager {
      * @param <T>     The type of the class.
      */
     public static <T> void registerTypeAdapter(Class<T> clazz, Object adapter) {
-        adapters.add(new TypeAdapterRegistration<>(clazz, adapter));
+        ADAPTERS.add(new TypeAdapterRegistration<>(clazz, adapter));
         buildGson(); // Rebuild Gson instance with the new adapter
     }
 

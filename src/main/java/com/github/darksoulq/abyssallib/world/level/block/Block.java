@@ -185,6 +185,8 @@ public class Block implements Cloneable {
             }
 
             BlockManager.register(this);
+        } else {
+            onLoad();
         }
     }
 
@@ -271,12 +273,14 @@ public class Block implements Cloneable {
     public Block clone() {
         try {
             Block cloned = (Block) super.clone();
-            cloned.setLocation(this.getLocation().clone());
             return cloned;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
     }
+
+    public void onLoad() {}
+    public void onUnLoad() {}
 
     /**
      * Called when the block is placed.
