@@ -14,10 +14,9 @@ import org.bukkit.Location;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.*;
 
 /**
  * Manages custom blocks including their registration, persistence, and loading from a database.
@@ -107,9 +106,6 @@ public class BlockManager {
         }
     }
 
-    /**
-     * Builds the Gson instance using the registered type adapters.
-     */
     private static void buildGson() {
         GsonBuilder builder = new GsonBuilder()
                 .serializeNulls()
@@ -117,7 +113,11 @@ public class BlockManager {
                 .setPrettyPrinting();
 
         for (TypeAdapterRegistration<?> reg : ADAPTERS) {
-            builder.registerTypeAdapter(reg.clazz, reg.adapter);
+            if (reg.hierarchy) {
+                builder.registerTypeHierarchyAdapter(reg.clazz, reg.adapter);
+            } else {
+                builder.registerTypeAdapter(reg.clazz, reg.adapter);
+            }
         }
 
         GSON = builder.create();
@@ -277,46 +277,28 @@ public class BlockManager {
         return loc.getWorld().getName() + ":" + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 
-    /**
-     * Registers a custom Gson serializer/deserializer pair for a specific class.
-     * Must be called before loading or saving blocks for the adapters to take effect.
-     *
-     * @param clazz   The class for which the adapter applies.
-     * @param adapter The Gson adapter instance (serializer/deserializer).
-     * @param <T>     The type of the class.
-     */
     public static <T> void registerTypeAdapter(Class<T> clazz, Object adapter) {
-        ADAPTERS.add(new TypeAdapterRegistration<>(clazz, adapter));
-        buildGson(); // Rebuild Gson instance with the new adapter
+        ADAPTERS.add(new TypeAdapterRegistration<>(clazz, adapter, false));
+        buildGson();
     }
 
-    /**
-     * Internal holder class for Gson type adapter registrations.
-     *
-     * @param <T> The type for which the adapter is registered.
-     */
+    public static <T> void registerTypeHierarchyAdapter(Class<T> clazz, Object adapter) {
+        ADAPTERS.add(new TypeAdapterRegistration<>(clazz, adapter, true));
+        buildGson();
+    }
+
     private static class TypeAdapterRegistration<T> {
-        /**
-         * The class to register the adapter for.
-         */
         final Class<T> clazz;
-
-        /**
-         * The adapter instance (serializer/deserializer).
-         */
         final Object adapter;
+        final boolean hierarchy;
 
-        /**
-         * Constructs a new TypeAdapterRegistration.
-         *
-         * @param clazz   The target class.
-         * @param adapter The Gson adapter.
-         */
-        public TypeAdapterRegistration(Class<T> clazz, Object adapter) {
+        public TypeAdapterRegistration(Class<T> clazz, Object adapter, boolean hierarchy) {
             this.clazz = clazz;
             this.adapter = adapter;
+            this.hierarchy = hierarchy;
         }
     }
+
 
     /**
      * Represents a row from the blocks database table.
