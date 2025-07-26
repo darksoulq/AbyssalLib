@@ -184,7 +184,7 @@ public class BlockManager {
                     .where("x", loc.getBlockX())
                     .where("y", loc.getBlockY())
                     .where("z", loc.getBlockZ())
-                    .update();
+                    .execute();
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().warning("Failed to remove block: " + e.getMessage());
         }
