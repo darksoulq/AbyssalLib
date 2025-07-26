@@ -2,6 +2,8 @@ package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
+import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
+import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
 import com.github.darksoulq.abyssallib.util.FileUtils;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
 import org.bukkit.plugin.Plugin;
@@ -30,6 +32,12 @@ public class ResourcePack {
 
     /** Output path: {@code <plugin>/pack/resourcepack.zip} */
     private final Path outputFile;
+
+    /** The icon to use for the pack (can remain null) */
+    private Icon icon = null;
+
+    /** The McMeta file of the pack (can be null) */
+    private PackMcMeta mcMeta = null;
 
     /** Files to write into the zip. */
     private final Map<String, byte[]> files = new TreeMap<>();
@@ -65,6 +73,24 @@ public class ResourcePack {
      */
     public @NotNull Namespace namespace(@NotNull String namespace) {
         return namespaces.computeIfAbsent(namespace, ns -> new Namespace(ns, this));
+    }
+
+    /**
+     * Sets the Icon for the pack.
+     *
+     * @param icon The icon instance
+     */
+    public void icon(Icon icon) {
+        this.icon = icon;
+    }
+
+    /**
+     * Sets the pack.mcmeta of this resourcepack
+     *
+     * @param mcmeta The PackMcMeta instance
+     */
+    public void mcmeta(PackMcMeta mcmeta) {
+        this.mcMeta = mcmeta;
     }
 
     /**
@@ -106,7 +132,12 @@ public class ResourcePack {
                     ns.emit(files);
                 }
 
-                put("pack.mcmeta", generatePackMeta());
+                if (mcMeta != null) {
+                    mcMeta.emit(files);
+                } else {
+                    put("pack.mcmeta", generatePackMeta());
+                }
+                if (icon != null) icon.emit(files);
 
                 try {
                     Files.createDirectories(outputFile.getParent());

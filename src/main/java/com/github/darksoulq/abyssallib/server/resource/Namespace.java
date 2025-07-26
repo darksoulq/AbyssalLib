@@ -66,6 +66,19 @@ public class Namespace {
     }
 
     /**
+     * Creates a mcmeta asset
+     *
+     * @param path Asset path (e.g {@code item/sword}
+     * @param autoLoad If true, attempts to load the file from {@code resourcepack/assets/namespace/textures/path(.png.mcmeta)}
+     * @return
+     */
+    public McMeta mcmeta(String path, boolean autoLoad) {
+        McMeta m = new McMeta(plugin, namespace, path, autoLoad);
+        assets.add(m);
+        return m;
+    }
+
+    /**
      * Creates a font asset.
      *
      * @param name     Font name (e.g. {@code default})
