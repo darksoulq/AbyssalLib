@@ -11,28 +11,28 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A logical asset container for a given namespace inside a resource pack.
- * All files will be emitted under {@code assets/<namespace>/...}.
+ * Represents a logical namespace inside a resource pack.
+ * All emitted files are placed under {@code assets/<namespace>/}.
  */
 public class Namespace {
 
-    /** Owning plugin. Used for autoloading resources from JAR. */
+    /** Owning plugin. Used to autoload embedded resource files from JAR. */
     private final Plugin plugin;
 
-    /** The namespace used in paths like {@code assets/<namespace>/...}. */
+    /** The namespace name, e.g. {@code myplugin}. */
     private final String namespace;
 
-    /** The resource pack this namespace belongs to. */
+    /** The parent resource pack. */
     private final ResourcePack pack;
 
-    /** All registered assets under this namespace. */
+    /** All assets registered under this namespace. */
     private final List<Asset> assets = new ArrayList<>();
 
     /**
-     * Creates a new namespace under a specific pack.
+     * Creates a new namespace under the given resource pack.
      *
-     * @param namespace The namespace
-     * @param pack      The parent resource pack
+     * @param namespace Namespace ID (e.g. {@code myplugin})
+     * @param pack      Parent resource pack
      */
     public Namespace(@NotNull String namespace, @NotNull ResourcePack pack) {
         this.plugin = pack.getPlugin();
@@ -41,21 +41,21 @@ public class Namespace {
     }
 
     /**
-     * Creates a texture asset with autoload from plugin JAR.
+     * Registers a texture from {@code resourcepack/<namespace>/textures/<path>.png}.
      *
-     * @param path Asset path (e.g. {@code item/sword})
-     * @return Texture asset
+     * @param path Texture path (e.g. {@code item/sword})
+     * @return Registered texture asset
      */
     public @NotNull Texture texture(@NotNull String path) {
         return texture(path, null);
     }
 
     /**
-     * Creates a texture asset.
+     * Registers a texture asset.
      *
-     * @param path Asset path (e.g. {@code item/sword})
-     * @param data Optional texture bytes. If {@code null}, tries to load from plugin JAR.
-     * @return Texture asset
+     * @param path Texture path (e.g. {@code item/sword})
+     * @param data Texture bytes; if null, loads from plugin JAR
+     * @return Registered texture asset
      */
     public @NotNull Texture texture(@NotNull String path, byte @Nullable [] data) {
         Texture t = (data == null)
@@ -66,11 +66,11 @@ public class Namespace {
     }
 
     /**
-     * Creates a mcmeta asset
+     * Registers a .mcmeta file asset (e.g. animation metadata).
      *
-     * @param path Asset path (e.g {@code item/sword}
-     * @param autoLoad If true, attempts to load the file from {@code resourcepack/assets/namespace/textures/path(.png.mcmeta)}
-     * @return
+     * @param path     File path (e.g. {@code item/sword})
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/textures/<path>.png.mcmeta}
+     * @return Registered McMeta asset
      */
     public McMeta mcmeta(String path, boolean autoLoad) {
         McMeta m = new McMeta(plugin, namespace, path, autoLoad);
@@ -79,54 +79,87 @@ public class Namespace {
     }
 
     /**
-     * Creates a font asset.
+     * Registers a waypoint style asset.
+     *
+     * @param name     Style name
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/waypoint_style/<name>.json}
+     * @return Registered waypoint style asset
+     */
+    public WaypointStyle waypointStyle(String name, boolean autoLoad) {
+        WaypointStyle w = autoLoad ? new WaypointStyle(plugin, namespace, name) : new WaypointStyle(namespace, name);
+        assets.add(w);
+        return w;
+    }
+
+    /**
+     * Registers a post-processing effect asset.
+     *
+     * @param name     Effect name
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/post_effect/<name>.json}
+     * @return Registered post effect asset
+     */
+    public PostEffect postEffect(String name, boolean autoLoad) {
+        PostEffect p = autoLoad ? new PostEffect(plugin, namespace, name) : new PostEffect(namespace, name);
+        assets.add(p);
+        return p;
+    }
+
+    /**
+     * Registers a font asset.
      *
      * @param name     Font name (e.g. {@code default})
-     * @param autoLoad If true, loads {@code resourcepack/font/<name>} from plugin JAR
-     * @return Font asset
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/font/<name>.json}
+     * @return Registered font asset
      */
     public @NotNull Font font(@NotNull String name, boolean autoLoad) {
-        Font f = autoLoad
-                ? new Font(plugin, namespace, name)
-                : new Font(namespace, name);
+        Font f = autoLoad ? new Font(plugin, namespace, name) : new Font(namespace, name);
         assets.add(f);
         return f;
     }
 
     /**
-     * Creates a model asset.
+     * Registers a model asset.
      *
      * @param name     Model name (without extension)
-     * @param autoLoad If true, loads model from {@code resourcepack/models/<name>} in plugin JAR
-     * @return Model asset
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/models/<name>.json}
+     * @return Registered model asset
      */
     public @NotNull Model model(@NotNull String name, boolean autoLoad) {
-        Model m = autoLoad
-                ? new Model(plugin, namespace, name)
-                : new Model(namespace, name);
+        Model m = autoLoad ? new Model(plugin, namespace, name) : new Model(namespace, name);
         assets.add(m);
         return m;
     }
 
     /**
-     * Creates a language file asset.
+     * Registers a blockstate asset.
      *
-     * @param locale   Locale code (e.g. {@code en_us})
-     * @param autoLoad If true, loads from {@code resourcepack/lang/<locale>} in plugin JAR
-     * @return Lang asset
+     * @param name     Block name (e.g. {@code acacia_fence})
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/blockstates/<name>.json}
+     * @return Registered blockstate asset
+     */
+    public BlockState blockstate(String name, boolean autoLoad) {
+        BlockState b = autoLoad ? new BlockState(plugin, namespace, name) : new BlockState(namespace, name);
+        assets.add(b);
+        return b;
+    }
+
+    /**
+     * Registers a language file asset.
+     *
+     * @param locale   Locale ID (e.g. {@code en_us})
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/lang/<locale>.json}
+     * @return Registered lang asset
      */
     public @NotNull Lang lang(@NotNull String locale, boolean autoLoad) {
-        Lang lang = autoLoad
-                ? new Lang(plugin, namespace, locale)
-                : new Lang(namespace, locale);
+        Lang lang = autoLoad ? new Lang(plugin, namespace, locale) : new Lang(namespace, locale);
         assets.add(lang);
         return lang;
     }
 
     /**
-     * Creates a new sound registry asset. No autoloading!
+     * Registers a new sound registry asset.
      *
-     * @return Sounds asset
+     * @return Registered sounds asset
      */
     public @NotNull Sounds sounds() {
         Sounds s = new Sounds(plugin, namespace);
@@ -135,10 +168,10 @@ public class Namespace {
     }
 
     /**
-     * Creates an item definition asset.
+     * Registers an item definition asset from the plugin JAR.
      *
-     * @param name The item name (e.g. {@code custom_sword})
-     * @return ItemDefinition asset
+     * @param name Item name (e.g. {@code custom_sword})
+     * @return Registered item definition
      */
     public @NotNull ItemDefinition itemDefinition(@NotNull String name) {
         ItemDefinition def = new ItemDefinition(plugin, namespace, name);
@@ -147,12 +180,12 @@ public class Namespace {
     }
 
     /**
-     * Creates an item definition asset.
+     * Registers a programmatic item definition asset.
      *
-     * @param name The item name (e.g. {@code custom_sword})
-     * @param selector The model provider, can be nested.
-     * @param handAnimationOnSwap whether swapping item should trigger hand animation
-     * @return ItemDefinition asset
+     * @param name                 Item name (e.g. {@code custom_sword})
+     * @param selector             Item model selector
+     * @param handAnimationOnSwap  Whether to play hand animation on item swap
+     * @return Registered item definition
      */
     public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap) {
         ItemDefinition def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap);
@@ -161,9 +194,35 @@ public class Namespace {
     }
 
     /**
-     * Emits all asset files under this namespace into the given map.
+     * Registers an equipment asset.
      *
-     * @param files File map to write to
+     * @param path     Asset path (e.g. {@code myarmor})
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/equipment/<path>.json}
+     * @return Registered equipment asset
+     */
+    public Equipment equipment(String path, boolean autoLoad) {
+        Equipment e = autoLoad ? new Equipment(plugin, namespace, path) : new Equipment(namespace, path);
+        assets.add(e);
+        return e;
+    }
+
+    /**
+     * Registers a generic JSON asset.
+     *
+     * @param path     Asset path relative to {@code <namespace>/} (no .json)
+     * @param autoLoad If true, loads from {@code resourcepack/<namespace>/<path>.json}
+     * @return Registered JSON asset
+     */
+    public JsonAsset json(String path, boolean autoLoad) {
+        JsonAsset j = autoLoad ? new JsonAsset(plugin, namespace, path) : new JsonAsset(namespace, path);
+        assets.add(j);
+        return j;
+    }
+
+    /**
+     * Emits all registered assets in this namespace into the output file map.
+     *
+     * @param files Output file map to write to
      */
     public void emit(@NotNull Map<String, byte[]> files) {
         for (Asset asset : assets) {
@@ -172,32 +231,26 @@ public class Namespace {
     }
 
     /**
-     * Builds a namespaced ID for something.
+     * Constructs a fully qualified namespaced ID.
      *
      * @param path Path (e.g. {@code sword})
-     * @return Fully qualified ID (e.g. {@code myplugin:sword})
+     * @return Namespaced ID (e.g. {@code myplugin:sword})
      */
     public @NotNull String id(@NotNull String path) {
         return namespace + ":" + path;
     }
 
-    /**
-     * @return Owning plugin
-     */
+    /** @return The plugin that owns this namespace */
     public @NotNull Plugin getPlugin() {
         return plugin;
     }
 
-    /**
-     * @return Namespace (modid)
-     */
+    /** @return This namespace's ID (mod ID) */
     public @NotNull String getNamespace() {
         return namespace;
     }
 
-    /**
-     * @return Owning resource pack
-     */
+    /** @return The parent resource pack */
     public @NotNull ResourcePack getPack() {
         return pack;
     }

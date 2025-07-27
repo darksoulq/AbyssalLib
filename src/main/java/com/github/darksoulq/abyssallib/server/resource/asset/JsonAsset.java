@@ -2,8 +2,11 @@ package com.github.darksoulq.abyssallib.server.resource.asset;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -17,15 +20,37 @@ public class JsonAsset implements Asset {
     private final @NotNull String path;
     private final Map<String, Object> flat = new LinkedHashMap<>();
 
+    private JsonObject preloadedRoot = null;
+
     /**
      * Creates a new namespaced JSON file.
      *
      * @param namespace The namespace (modid)
-     * @param path      Path relative to assets root (e.g. `equipment/helmet`)
+     * @param path      Path relative to assets root (e.g. {@code equipment/helmet})
      */
     public JsonAsset(@NotNull String namespace, @NotNull String path) {
         this.namespace = namespace;
         this.path = path;
+    }
+
+    /**
+     * Loads a JSON file from {@code resourcepack/<namespace>/<path>.json} inside the plugin JAR.
+     *
+     * @param plugin    The plugin providing the resource
+     * @param namespace Namespace of the file
+     * @param path      Path relative to {@code assets/<namespace>/}
+     */
+    public JsonAsset(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String path) {
+        this.namespace = namespace;
+        this.path = path;
+        try (InputStream in = plugin.getResource("resourcepack/" + namespace + "/" + path + ".json")) {
+            if (in == null) {
+                throw new IllegalArgumentException("Could not find embedded JSON asset: " + namespace + "/" + path);
+            }
+            this.preloadedRoot = JsonParser.parseReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load embedded JSON asset: " + namespace + "/" + path, e);
+        }
     }
 
     /**
@@ -42,7 +67,7 @@ public class JsonAsset implements Asset {
 
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
-        JsonObject root = new JsonObject();
+        JsonObject root = preloadedRoot != null ? preloadedRoot.deepCopy() : new JsonObject();
 
         for (Map.Entry<String, Object> entry : flat.entrySet()) {
             setNested(root, entry.getKey(), GSON.toJsonTree(entry.getValue()));

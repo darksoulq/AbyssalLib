@@ -11,7 +11,7 @@ import java.util.*;
 import static com.github.darksoulq.abyssallib.util.FileUtils.GSON;
 
 /**
- * Represents a blockstate JSON: assets/<namespace>/blockstates/<id>.json
+ * Represents a blockstate JSON: {@code assets/<namespace>/blockstates/<id>.json}
  */
 public class BlockState implements Asset {
     private final @NotNull String namespace;

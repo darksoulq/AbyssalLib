@@ -12,7 +12,7 @@ import java.util.*;
 import static com.github.darksoulq.abyssallib.util.FileUtils.GSON;
 
 /**
- * Represents a resource pack equipment JSON: `assets/<namespace>/equipment/<id>.json`.
+ * Represents a resource pack equipment JSON: {@code assets/<namespace>/equipment/<id>.json}.
  */
 public class Equipment implements Asset {
     private final @NotNull String namespace;
@@ -22,7 +22,7 @@ public class Equipment implements Asset {
     private final Map<String, List<LayerEntry>> layers = new LinkedHashMap<>();
 
     /**
-     * Autoload existing equipment JSON from plugin JAR (resourcepack/<namespace>/equipment/<id>.json).
+     * Autoload existing equipment JSON from plugin JAR {@code resourcepack/<namespace>/equipment/<id>.json}.
      */
     public Equipment(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
