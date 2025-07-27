@@ -123,45 +123,35 @@ public class ResourcePack {
             hashMap.put(modid, FileUtils.sha1(outputFile));
             return;
         }
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                files.clear();
+        files.clear();
 
-                for (Namespace ns : namespaces.values()) {
-                    ns.emit(files);
-                }
+        for (Namespace ns : namespaces.values()) {
+            ns.emit(files);
+        }
 
-                if (mcMeta != null) {
-                    mcMeta.emit(files);
-                } else {
-                    put("pack.mcmeta", generatePackMeta());
-                }
-                if (icon != null) icon.emit(files);
+        if (mcMeta != null) {
+            mcMeta.emit(files);
+        } else {
+            put("pack.mcmeta", generatePackMeta());
+        }
+        if (icon != null) icon.emit(files);
 
-                try {
-                    Files.createDirectories(outputFile.getParent());
-                    try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(outputFile))) {
-                        for (Map.Entry<String, byte[]> entry : files.entrySet()) {
-                            zip.putNextEntry(new ZipEntry(entry.getKey()));
-                            zip.write(entry.getValue());
-                            zip.closeEntry();
-                        }
-                    }
-
-                    hashMap.put(modid, FileUtils.sha1(outputFile));
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            AbyssalLib.EVENT_BUS.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
-                        }
-                    }.runTask(AbyssalLib.getInstance());
-
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to write resource pack: " + outputFile, e);
+        try {
+            Files.createDirectories(outputFile.getParent());
+            try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(outputFile))) {
+                for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+                    zip.putNextEntry(new ZipEntry(entry.getKey()));
+                    zip.write(entry.getValue());
+                    zip.closeEntry();
                 }
             }
-        }.runTaskAsynchronously(plugin);
+
+            hashMap.put(modid, FileUtils.sha1(outputFile));
+            AbyssalLib.EVENT_BUS.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write resource pack: " + outputFile, e);
+        }
     }
 
     /**
@@ -170,24 +160,19 @@ public class ResourcePack {
      */
     public void register(boolean override) {
         compile(override);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (AbyssalLib.PACK_SERVER != null) {
-                    AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
-                } else if (AbyssalLib.isRPManagerInstalled) {
-                    ResourcePackManagerAPI.registerResourcePack(
-                            plugin.getName(),
-                            plugin.getName() + "/pack/resourcepack.zip",
-                            false,
-                            true,
-                            true,
-                            true,
-                            null
-                    );
-                }
-            }
-        }.runTaskLaterAsynchronously(plugin, 20);
+        if (AbyssalLib.PACK_SERVER != null) {
+            AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
+        } else if (AbyssalLib.isRPManagerInstalled) {
+            ResourcePackManagerAPI.registerResourcePack(
+                    plugin.getName(),
+                    plugin.getName() + "/pack/resourcepack.zip",
+                    false,
+                    true,
+                    true,
+                    true,
+                    null
+            );
+        }
     }
 
     /**
