@@ -163,11 +163,10 @@ public class ResourcePack {
         if (AbyssalLib.PACK_SERVER != null) {
             AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
         } else if (AbyssalLib.isRPManagerInstalled) {
-            ResourcePackManagerAPI.registerResourcePack(
+            ResourcePackManagerAPI.registerLocalResourcePack(
                     plugin.getName(),
                     plugin.getName() + "/pack/resourcepack.zip",
                     false,
-                    true,
                     true,
                     true,
                     null
