@@ -97,6 +97,6 @@ public class McMeta implements Asset {
         if (!frames.isEmpty()) anim.add("frames", arr);
 
         root.add("animation", anim);
-        files.put("assets/" + namespace + "/" + path + ".png.mcmeta", GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
+        files.put("assets/" + namespace + "/textures/" + path + ".png.mcmeta", GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
     }
 }
