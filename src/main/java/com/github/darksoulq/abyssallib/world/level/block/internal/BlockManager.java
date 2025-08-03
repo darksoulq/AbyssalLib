@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.database.Database;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.util.TextUtil;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.block.BlockEntity;
 import com.google.gson.*;
@@ -31,19 +32,9 @@ public class BlockManager {
     public static final List<Block> INACTIVE_BLOCKS = new ArrayList<>();
 
     /**
-     * List of registered Gson type adapters for custom serialization/deserialization.
-     */
-    private static final List<TypeAdapterRegistration<?>> ADAPTERS = new ArrayList<>();
-
-    /**
      * Database instance used for persisting blocks.
      */
     private static Database DATABASE;
-
-    /**
-     * Gson instance configured with registered type adapters for JSON (de)serialization.
-     */
-    private static Gson GSON;
 
     /**
      * Loads blocks from the database, initializes the database if necessary, and sets up Gson.
@@ -64,7 +55,7 @@ public class BlockManager {
                     .column("data_json", "TEXT")
                     .execute();
 
-            buildGson();
+            TextUtil.buildGson();
 
             // Load all saved blocks
             List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
@@ -106,23 +97,6 @@ public class BlockManager {
         }
     }
 
-    private static void buildGson() {
-        GsonBuilder builder = new GsonBuilder()
-                .serializeNulls()
-                .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.TRANSIENT)
-                .setPrettyPrinting();
-
-        for (TypeAdapterRegistration<?> reg : ADAPTERS) {
-            if (reg.hierarchy) {
-                builder.registerTypeHierarchyAdapter(reg.clazz, reg.adapter);
-            } else {
-                builder.registerTypeAdapter(reg.clazz, reg.adapter);
-            }
-        }
-
-        GSON = builder.create();
-    }
-
     /**
      * Populates the fields of the given BlockEntity from the provided JSON string.
      *
@@ -140,7 +114,7 @@ public class BlockManager {
             String name = field.getName();
             if (jsonObject.has(name)) {
                 JsonElement elem = jsonObject.get(name);
-                Object value = GSON.fromJson(elem, field.getType());
+                Object value = TextUtil.GSON.fromJson(elem, field.getType());
                 field.set(entity, value);
             }
         }
@@ -212,11 +186,11 @@ public class BlockManager {
 
                     field.setAccessible(true);
                     Object value = field.get(entity);
-                    JsonElement elem = GSON.toJsonTree(value);
+                    JsonElement elem = TextUtil.GSON.toJsonTree(value);
                     jsonObject.add(field.getName(), elem);
                 }
 
-                json = GSON.toJson(jsonObject);
+                json = TextUtil.GSON.toJson(jsonObject);
             } else {
                 json = "{}";
             }
@@ -276,29 +250,6 @@ public class BlockManager {
     private static String locKey(Location loc) {
         return loc.getWorld().getName() + ":" + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
-
-    public static <T> void registerTypeAdapter(Class<T> clazz, Object adapter) {
-        ADAPTERS.add(new TypeAdapterRegistration<>(clazz, adapter, false));
-        buildGson();
-    }
-
-    public static <T> void registerTypeHierarchyAdapter(Class<T> clazz, Object adapter) {
-        ADAPTERS.add(new TypeAdapterRegistration<>(clazz, adapter, true));
-        buildGson();
-    }
-
-    private static class TypeAdapterRegistration<T> {
-        final Class<T> clazz;
-        final Object adapter;
-        final boolean hierarchy;
-
-        public TypeAdapterRegistration(Class<T> clazz, Object adapter, boolean hierarchy) {
-            this.clazz = clazz;
-            this.adapter = adapter;
-            this.hierarchy = hierarchy;
-        }
-    }
-
 
     /**
      * Represents a row from the blocks database table.

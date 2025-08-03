@@ -12,6 +12,7 @@ public class GuiManager {
     public static final Map<InventoryView, GuiView> openViews = new HashMap<>();
 
     public static void open(HumanEntity player, Gui gui) {
+        if (player.isSleeping() || player.getPortalCooldown() > 0) return;
         InventoryView view = gui.getMenuType().create(player, gui.getTitle());
         view.open();
         GuiView guiView = new GuiView(gui, view);

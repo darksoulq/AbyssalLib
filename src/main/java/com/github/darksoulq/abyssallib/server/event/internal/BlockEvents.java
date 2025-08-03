@@ -129,43 +129,15 @@ public class BlockEvents {
     }
 
     @SubscribeEvent
-    public void onInteract(PlayerInteractEvent event) {
-        if (event.getPlayer().getGameMode() == GameMode.CREATIVE && event.getAction().isLeftClick()) return;
-        org.bukkit.block.Block bukkitBlock = event.getClickedBlock();
-        if (bukkitBlock == null) return;
-
-        ItemStack handItem = event.getItem();
-        Item heldItem = Item.from(handItem);
-        if (heldItem == null) return;
-
-        Block clickedBlock = Block.from(bukkitBlock);
-        if (clickedBlock != null) {
-            BlockInteractionEvent blockEvent = AbyssalLib.EVENT_BUS.post(new BlockInteractionEvent(
-                    event.getPlayer(),
-                    clickedBlock,
-                    event.getBlockFace(),
-                    event.getInteractionPoint(),
-                    event.getAction(),
-                    handItem
-            ));
-
-            if (blockEvent.isCancelled()) {
-                event.setCancelled(true);
-            }
-        }
-    }
-
-    @SubscribeEvent
     public void onEntityMove(EntityMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
         Block block = Block.from(event.getTo().clone().add(0, -1, 0).getBlock());
-        if (block != null) {
-            if (event.getEntity().getFallDistance() > 1) {
-                block.onLanded(event.getEntity());
-            } else {
-                block.onSteppedOn(event.getEntity());
-            }
+        if (block == null) return;
+        if (event.getEntity().getFallDistance() > 1) {
+            block.onLanded(event.getEntity());
+        } else {
+            block.onSteppedOn(event.getEntity());
         }
     }
 
@@ -174,12 +146,11 @@ public class BlockEvents {
         if (!event.hasChangedBlock()) return;
 
         Block block = Block.from(event.getTo().clone().add(0, -1, 0).getBlock());
-        if (block != null) {
-            if (event.getPlayer().getFallDistance() > 1) {
-                block.onLanded(event.getPlayer());
-            } else {
-                block.onSteppedOn(event.getPlayer());
-            }
+        if (block == null) return;
+        if (event.getPlayer().getFallDistance() > 1) {
+            block.onLanded(event.getPlayer());
+        } else {
+            block.onSteppedOn(event.getPlayer());
         }
     }
 
@@ -238,16 +209,18 @@ public class BlockEvents {
         if (event.getHitBlock() == null) return;
 
         Block block = Block.from(event.getHitBlock());
-        if (block != null) {
-            block.onProjectileHit(event.getEntity());
-        }
+        if (block == null) return;
+        block.onProjectileHit(event.getEntity());
     }
 
     @SubscribeEvent
     public void onBlockRedstone(BlockRedstoneEvent event) {
         Block block = Block.from(event.getBlock());
         if (block == null) return;
-        event.setNewCurrent(event.getOldCurrent());
+        int oldCurrent = event.getOldCurrent();
+        int newCurrent = event.getNewCurrent();
+        int finalCurrent = block.onRedstone(oldCurrent, newCurrent);
+        event.setNewCurrent(newCurrent);
     }
 
     @SubscribeEvent

@@ -331,6 +331,10 @@ public class Block implements Cloneable {
      */
     public void onSteppedOn(LivingEntity entity) {}
 
+    public int onRedstone(int oldCurrent, int newCurrent) {
+        return oldCurrent;
+    }
+
     /**
      * Called when this block is hit by a projectile.
      *
