@@ -7,12 +7,14 @@ import com.github.darksoulq.abyssallib.world.level.data.tag.ItemTag;
 import com.github.darksoulq.abyssallib.world.level.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.level.entity.Entity;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
+import com.github.darksoulq.abyssallib.world.level.multiblock.Multiblock;
 import org.bukkit.entity.LivingEntity;
 
 public class Registries {
 
     public static final Registry<Item> ITEMS = new Registry<>(null);
     public static final Registry<Block> BLOCKS = new Registry<>(null);
+    public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>(null);
     public static final Registry<Block> BLOCK_ITEMS = new Registry<>(null);
     public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>(null);
 
