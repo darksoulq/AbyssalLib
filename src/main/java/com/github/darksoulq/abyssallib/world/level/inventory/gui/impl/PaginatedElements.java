@@ -51,6 +51,9 @@ public class PaginatedElements implements GuiLayer {
     public int pageCount() {
         return (int) Math.ceil((double) filtered.size() / slots.length);
     }
+    public int getPage() {
+        return page;
+    }
 
     @Override
     public void renderTo(GuiView view) {
