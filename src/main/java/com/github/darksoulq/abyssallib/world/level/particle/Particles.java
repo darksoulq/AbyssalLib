@@ -4,452 +4,260 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
 
-/**
- * A fluent API for creating and managing particle effects with optional shapes,
- * animations, conditional cancellation, dynamic origins, viewers, and scheduled repetition.
- */
-public class Particles {
-    /** Private Random reference */
-    private final Random random = new Random();
+public final class Particles {
 
-    /** The Bukkit particle type to spawn. */
+    private static final Random RANDOM = new Random();
+
     private final Particle type;
+    private final ItemStack displayItem;
+    private final Location origin;
+    private final ParticleEmitter emitter;
+    private final int count;
+    private final double offsetX, offsetY, offsetZ;
+    private final double speed;
+    private final Shape shape;
+    private final float scaleX, scaleY, scaleZ;
+    private final Display.Billboard billboard;
+    private final float xRotDeg, yRotDeg, zRotDeg;
+    private final Object data;
+    private final long interval;
+    private final long duration;
+    private final BooleanSupplier cancelIf;
+    private final List<Player> viewers;
+    private final boolean asyncShape;
 
-    /** The Item to spawn, conflicts with Particle */
-    private final ItemStack display;
+    private final Quaternionf precomputedRotation;
+    private final LocationPool locationPool = new LocationPool();
+    private final List<ItemDisplay> spawnedDisplays = new ArrayList<>();
 
-    /** The static origin location where the particle effect starts, used if emitter is not set. */
-    private Location origin;
+    private BukkitTask task;
 
-    /** A dynamic origin provider that overrides the static location if set. */
-    private ParticleEmitter emitter;
-
-    /** The number of particles to spawn each iteration. */
-    private int count = 1;
-
-    /** The X, Y, and Z offsets applied when spawning particles. */
-    private double offsetX = 0, offsetY = 0, offsetZ = 0;
-
-    /** The speed applied to the particles. */
-    private double speed = 0;
-
-    /** An optional shape that defines spatial placement of the particles. */
-    private Shape shape;
-
-    /** X-axis scale factor for {@link ItemDisplay} particles. */
-    private float scaleX = 1f;
-
-    /** Y-axis scale factor for {@link ItemDisplay} particles. */
-    private float scaleY = 1f;
-
-    /** Z-axis scale factor for {@link ItemDisplay} particles. */
-    private float scaleZ = 1f;
-
-    /** The Billboard mode to apply to {@link ItemDisplay} entities. */
-    private Display.Billboard billboard = Display.Billboard.HORIZONTAL;
-
-    /** Rotation around the X-axis in degrees (tilt forward/backward). */
-    private float xRotation = 0f;
-
-    /** Rotation around the Y-axis in degrees (turn left/right). */
-    private float yRotation = 0f;
-
-    /** Rotation around the Z-axis in degrees (roll clockwise). */
-    private float zRotation = 0f;
-
-    /** Optional additional data for the particle (e.g., color, block type). */
-    private Object data = null;
-
-    /** The number of ticks between each particle spawn cycle. */
-    private long interval = 1;
-
-    /** The total duration in ticks to run this effect (-1 for infinite). */
-    private long duration = -1;
-
-    /** A condition that cancels the particle effect if it returns true. */
-    private Predicate<Void> cancelIf = null;
-
-    /** A list of players to show the particle to. If null or empty, show to all nearby players. */
-    private List<Player> viewers = null;
-
-    /** A list of spawned ItemDisplays, only applicable if Item is used */
-    private final List<ItemDisplay> displays = new ArrayList<>();
-
-    /**
-     * Creates a new {@link Particles} builder using the specified Bukkit particle type.
-     *
-     * @param type the Bukkit particle type
-     * @return a new {@code Particles} instance
-     */
-    public static Particles of(Particle type) {
-        return new Particles(type);
+    private Particles(Builder b) {
+        this.type = b.type;
+        this.displayItem = b.displayItem;
+        this.origin = b.origin;
+        this.emitter = b.emitter;
+        this.count = b.count;
+        this.offsetX = b.offsetX;
+        this.offsetY = b.offsetY;
+        this.offsetZ = b.offsetZ;
+        this.speed = b.speed;
+        this.shape = b.shape;
+        this.scaleX = b.scaleX;
+        this.scaleY = b.scaleY;
+        this.scaleZ = b.scaleZ;
+        this.billboard = b.billboard;
+        this.xRotDeg = b.xRotDeg;
+        this.yRotDeg = b.yRotDeg;
+        this.zRotDeg = b.zRotDeg;
+        this.data = b.data;
+        this.interval = b.interval;
+        this.duration = b.duration;
+        this.cancelIf = b.cancelIf;
+        this.viewers = b.viewers;
+        this.asyncShape = b.asyncShape;
+        this.precomputedRotation = new Quaternionf()
+                .rotateX((float) Math.toRadians(xRotDeg))
+                .rotateY((float) Math.toRadians(yRotDeg))
+                .rotateZ((float) Math.toRadians(zRotDeg));
     }
 
-    /**
-     * Creates a new {@link Particles} builder using the specified Bukkit particle type.
-     *
-     * @param displayItem the Item to spawn
-     * @return a new {@code Particles} instance
-     */
-    public static Particles of(ItemStack displayItem) {
-        return new Particles(displayItem);
-    }
-
-    /**
-     * Private constructor used by {@link #of(Particle)}.
-     *
-     * @param type the Bukkit particle type
-     */
-    private Particles(Particle type) {
-        this.type = type;
-        this.display = null;
-    }
-
-    /**
-     * Private constructor used by {@link #of(Particle)}.
-     *
-     * @param display the ItemDisplay to use as a particle
-     */
-    private Particles(ItemStack display) {
-        this.type = null;
-        this.display = display;
-    }
-
-    /**
-     * Sets a static origin location for the particle effect.
-     * If a {@link ParticleEmitter} is also set, it takes precedence over this.
-     *
-     * @param loc the origin location
-     * @return this builder instance
-     */
-    public Particles spawnAt(Location loc) {
-        this.origin = loc;
-        return this;
-    }
-
-    /**
-     * Sets a dynamic origin provider that will be queried every tick.
-     *
-     * @param emitter the dynamic location provider
-     * @return this builder instance
-     */
-    public Particles spawnFrom(ParticleEmitter emitter) {
-        this.emitter = emitter;
-        return this;
-    }
-
-    /**
-     * Sets the number of particles to spawn per iteration.
-     *
-     * @param count the number of particles
-     * @return this builder instance
-     */
-    public Particles withCount(int count) {
-        this.count = count;
-        return this;
-    }
-
-    /**
-     * Sets the offset values for particle dispersion.
-     *
-     * @param x offset on the X-axis
-     * @param y offset on the Y-axis
-     * @param z offset on the Z-axis
-     * @return this builder instance
-     */
-    public Particles withOffset(double x, double y, double z) {
-        this.offsetX = x;
-        this.offsetY = y;
-        this.offsetZ = z;
-        return this;
-    }
-
-    /**
-     * Sets the speed for the particles.
-     *
-     * @param speed the speed value
-     * @return this builder instance
-     */
-    public Particles withSpeed(double speed) {
-        this.speed = speed;
-        return this;
-    }
-
-    /**
-     * Applies a shape to this particle effect, controlling its spatial layout.
-     *
-     * @param shape the shape to use
-     * @return this builder instance
-     */
-    public Particles usingShape(Shape shape) {
-        this.shape = shape;
-        return this;
-    }
-
-    /**
-     * Sets a uniform scale factor for {@link ItemDisplay} particles on all axes.
-     *
-     * @param scale the uniform scale factor (default is 1.0)
-     * @return this builder instance
-     */
-    public Particles withScale(float scale) {
-        return withScale(scale, scale, scale);
-    }
-
-    /**
-     * Sets the scale factors for {@link ItemDisplay} particles independently on each axis.
-     *
-     * @param x the X-axis scale factor
-     * @param y the Y-axis scale factor
-     * @param z the Z-axis scale factor
-     * @return this builder instance
-     */
-    public Particles withScale(float x, float y, float z) {
-        this.scaleX = x;
-        this.scaleY = y;
-        this.scaleZ = z;
-        return this;
-    }
-
-    /**
-     * Sets the billboard mode for {@link ItemDisplay} particles.
-     *
-     * @param billboard the billboard behavior
-     * @return this builder instance
-     */
-    public Particles withBillboard(Display.Billboard billboard) {
-        this.billboard = billboard;
-        return this;
-    }
-
-    /**
-     * Sets the rotation for {@link ItemDisplay} particles around the X, Y, and Z axes.
-     *
-     * @param xDeg rotation around X-axis in degrees (pitch)
-     * @param yDeg rotation around Y-axis in degrees (yaw)
-     * @param zDeg rotation around Z-axis in degrees (roll)
-     * @return this builder instance
-     */
-    public Particles withRotation(float xDeg, float yDeg, float zDeg) {
-        this.xRotation = xDeg;
-        this.yRotation = yDeg;
-        this.zRotation = zDeg;
-        return this;
-    }
-
-
-    /**
-     * Adds optional custom data to the particles (e.g., {@code DustOptions}, {@code MaterialData}).
-     *
-     * @param data the particle data object
-     * @return this builder instance
-     */
-    public Particles withData(Object data) {
-        this.data = data;
-        return this;
-    }
-
-    /**
-     * Sets the interval (in ticks) between each particle spawn cycle.
-     *
-     * @param ticks interval in ticks
-     * @return this builder instance
-     */
-    public Particles every(long ticks) {
-        this.interval = ticks;
-        return this;
-    }
-
-    /**
-     * Sets the total duration (in ticks) this particle effect should run.
-     * Set to -1 to run indefinitely.
-     *
-     * @param ticks total duration in ticks
-     * @return this builder instance
-     */
-    public Particles duration(long ticks) {
-        this.duration = ticks;
-        return this;
-    }
-
-    /**
-     * Cancels the particle effect if the given condition returns true.
-     * This is checked every cycle.
-     *
-     * @param condition a condition to cancel the effect
-     * @return this builder instance
-     */
-    public Particles cancelIf(Predicate<Void> condition) {
-        this.cancelIf = condition;
-        return this;
-    }
-
-    /**
-     * Sets the particle to only be visible to a specific player.
-     *
-     * @param player the player who will see the particles
-     * @return this builder instance
-     */
-    public Particles withViewer(Player player) {
-        this.viewers = Collections.singletonList(player);
-        return this;
-    }
-
-    /**
-     * Sets the particle to be visible to a list of players.
-     *
-     * @param players list of players who will see the particles
-     * @return this builder instance
-     */
-    public Particles withViewers(List<Player> players) {
-        this.viewers = players;
-        return this;
-    }
-
-    /**
-     * Starts the particle effect using Bukkit's scheduler.
-     * This will repeat at the configured interval until canceled or the duration expires.
-     *
-     * @throws IllegalStateException if no origin or emitter is set
-     */
     public void start() {
         if (origin == null && emitter == null)
-            throw new IllegalStateException("Origin or ParticleEmitter must be set before starting the particle effect.");
-
+            throw new IllegalStateException("Origin or emitter required");
+        stop();
         final long[] elapsed = {0};
-        final AtomicInteger taskId = new AtomicInteger();
-
-        taskId.set(Bukkit.getScheduler().scheduleSyncRepeatingTask(AbyssalLib.getInstance(), () -> {
-            Location loc = (emitter != null) ? emitter.getLocation() : origin;
-
-            if (loc == null || (cancelIf != null && cancelIf.test(null))) {
-                Bukkit.getScheduler().cancelTask(taskId.get());
+        Runnable tickRunnable = () -> {
+            Location base = (emitter != null ? emitter.getLocation() : origin);
+            if (base == null || (cancelIf != null && cancelIf.getAsBoolean())) {
+                stop();
                 return;
             }
-
-            if (display == null) {
-                if (shape != null) {
-                    shape.animate(this, loc, elapsed[0]);
-                    for (Location point : shape.points(loc)) {
-                        spawnParticle(point);
-                    }
-                } else {
-                    spawnParticle(loc);
-                }
+            if (asyncShape && shape != null) {
+                long tickNow = elapsed[0];
+                CompletableFuture
+                        .supplyAsync(() -> shape.points(base, tickNow, this))
+                        .thenAccept(points -> Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> spawnAt(points)));
             } else {
-                if (shape != null) {
-                    shape.animate(this, loc, elapsed[0]);
-                    spawnDisplayParticle(loc, true);
-                } else {
-                    spawnDisplayParticle(loc, false);
-                }
+                List<Location> points = (shape != null)
+                        ? shape.points(base, elapsed[0], this)
+                        : randomPoints(base);
+                spawnAt(points);
             }
-
             elapsed[0] += interval;
-
-            if (duration > 0 && elapsed[0] >= duration) {
-                Bukkit.getScheduler().cancelTask(taskId.get());
-            }
-
-        }, 0, interval));
+            if (duration > 0 && elapsed[0] >= duration) stop();
+        };
+        task = Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), tickRunnable, 0L, interval);
     }
 
-    /**
-     * Internally spawns the particle at the given location using the configured parameters.
-     * If a viewer list is set, particles are sent only to them.
-     *
-     * @param loc the base location to spawn the particle
-     * @param shaped whether the particle uses a defined shape
-     */
-    private void spawnDisplayParticle(Location loc, boolean shaped) {
-        if (!displays.isEmpty()) {
-            displays.forEach(Entity::remove);
-            displays.clear();
+    public void stop() {
+        if (task != null) {
+            task.cancel();
+            task = null;
         }
-
-        List<Location> spawnPoints = new ArrayList<>();
-
-        if (shaped) {
-            spawnPoints.addAll(shape.points(loc));
-        } else {
-            for (int i = 0; i < count; i++) {
-                double x = loc.getX() + (random.nextDouble() - 0.5) * offsetX * 2;
-                double y = loc.getY() + (random.nextDouble() - 0.5) * offsetY * 2;
-                double z = loc.getZ() + (random.nextDouble() - 0.5) * offsetZ * 2;
-                spawnPoints.add(new Location(loc.getWorld(), x, y, z));
+        if (!spawnedDisplays.isEmpty()) {
+            for (ItemDisplay d : spawnedDisplays) {
+                if (d != null && !d.isDead()) d.remove();
             }
+            spawnedDisplays.clear();
         }
-
-        for (Location point : spawnPoints) {
-            ItemDisplay displayEntity = point.getWorld().spawn(point.clone(), ItemDisplay.class);
-            displayEntity.setItemStack(display.clone());
-            displayEntity.setBillboard(billboard);
-
-            Transformation transform = displayEntity.getTransformation();
-            transform.getScale().set(scaleX, scaleY, scaleZ);
-
-            double xRad = Math.toRadians(xRotation);
-            double yRad = Math.toRadians(yRotation);
-            double zRad = Math.toRadians(zRotation);
-
-            Quaternionf q = new Quaternionf()
-                    .rotateX((float) xRad)
-                    .rotateY((float) yRad)
-                    .rotateZ((float) zRad);
-
-            transform.getLeftRotation().set(q);
-            displayEntity.setTransformation(transform);
-            displays.add(displayEntity);
-        }
-
-        if (!viewers.isEmpty()) {
-            for (ItemDisplay displayEntity : displays) {
-                displayEntity.setVisibleByDefault(false);
-                displayEntity.spawnAt(displayEntity.getLocation());
-                viewers.forEach(player -> player.showEntity(AbyssalLib.getInstance(), displayEntity));
-            }
-        } else {
-            displays.forEach(displayEntity -> displayEntity.spawnAt(displayEntity.getLocation()));
-        }
+        locationPool.clear();
     }
 
+    public Location poolLocation(double x, double y, double z) {
+        Location loc = locationPool.acquire(origin.getWorld());
+        loc.set(x, y, z);
+        return loc;
+    }
 
-    /**
-     * Internally spawns the particle at the given location using the configured parameters.
-     * If a viewer list is set, particles are sent only to them.
-     *
-     * @param loc the location to spawn the particle
-     */
-    private void spawnParticle(Location loc) {
+    public List<Location> getLocationBuffer(int size) {
+        List<Location> list = new ArrayList<>(size);
+        World w = origin.getWorld();
+        for (int i = 0; i < size; i++) {
+            list.add(locationPool.acquire(w));
+        }
+        return list;
+    }
+
+    private List<Location> randomPoints(Location base) {
+        List<Location> pts = new ArrayList<>(count);
+        World w = base.getWorld();
+        for (int i = 0; i < count; i++) {
+            Location l = locationPool.acquire(w);
+            l.setX(base.getX() + (RANDOM.nextDouble() - 0.5) * offsetX * 2.0);
+            l.setY(base.getY() + (RANDOM.nextDouble() - 0.5) * offsetY * 2.0);
+            l.setZ(base.getZ() + (RANDOM.nextDouble() - 0.5) * offsetZ * 2.0);
+            pts.add(l);
+        }
+        return pts;
+    }
+
+    public void spawnAt(List<Location> points) {
+        if (points == null || points.isEmpty()) return;
+        if (displayItem == null) {
+            spawnBukkitParticles(points);
+        } else {
+            spawnItemDisplays(points);
+        }
+        for (Location l : points) locationPool.release(l);
+    }
+
+    private void spawnBukkitParticles(List<Location> points) {
         if (viewers != null && !viewers.isEmpty()) {
-            for (Player viewer : viewers) {
-                if (data != null) {
-                    viewer.spawnParticle(type, loc, count, offsetX, offsetY, offsetZ, speed, data);
-                } else {
-                    viewer.spawnParticle(type, loc, count, offsetX, offsetY, offsetZ, speed);
+            for (Player p : viewers) {
+                for (Location pt : points) {
+                    if (data != null) p.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed, data);
+                    else p.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed);
                 }
             }
         } else {
-            if (data != null) {
-                loc.getWorld().spawnParticle(type, loc, count, offsetX, offsetY, offsetZ, speed, data);
-            } else {
-                loc.getWorld().spawnParticle(type, loc, count, offsetX, offsetY, offsetZ, speed);
+            for (Location pt : points) {
+                World w = pt.getWorld();
+                if (w == null) continue;
+                if (data != null) w.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed, data);
+                else w.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed);
             }
         }
+    }
+
+    private void spawnItemDisplays(List<Location> points) {
+        for (ItemDisplay d : spawnedDisplays) if (d != null && !d.isDead()) d.remove();
+        spawnedDisplays.clear();
+        for (Location pt : points) {
+            World w = pt.getWorld();
+            if (w == null) continue;
+            ItemDisplay d = w.spawn(pt.clone(), ItemDisplay.class);
+            d.setItemStack(displayItem.clone());
+            d.setBillboard(billboard);
+            Transformation transform = d.getTransformation();
+            transform.getScale().set(scaleX, scaleY, scaleZ);
+            transform.getLeftRotation().set(precomputedRotation);
+            d.setTransformation(transform);
+            spawnedDisplays.add(d);
+        }
+        if (viewers != null && !viewers.isEmpty()) {
+            for (ItemDisplay d : spawnedDisplays) {
+                d.setVisibleByDefault(false);
+                for (Player p : viewers) p.showEntity(AbyssalLib.getInstance(), d);
+            }
+        }
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private Particle type;
+        private ItemStack displayItem;
+        private Location origin;
+        private ParticleEmitter emitter;
+        private int count = 1;
+        private double offsetX, offsetY, offsetZ;
+        private double speed;
+        private Shape shape;
+        private float scaleX = 1f, scaleY = 1f, scaleZ = 1f;
+        private Display.Billboard billboard = Display.Billboard.HORIZONTAL;
+        private float xRotDeg, yRotDeg, zRotDeg;
+        private Object data;
+        private long interval = 1;
+        private long duration = -1;
+        private BooleanSupplier cancelIf;
+        private List<Player> viewers;
+        private boolean asyncShape = false;
+
+        public Builder particle(Particle p) { this.type = p; return this; }
+        public Builder display(ItemStack item) { this.displayItem = item; return this; }
+        public Builder spawnAt(Location loc) { this.origin = loc; return this; }
+        public Builder spawnAt(ParticleEmitter e) { this.emitter = e; return this; }
+        public Builder count(int c) { this.count = c; return this; }
+        public Builder offset(double x, double y, double z) { this.offsetX = x; this.offsetY = y; this.offsetZ = z; return this; }
+        public Builder speed(double s) { this.speed = s; return this; }
+        public Builder shape(Shape s) { this.shape = s; return this; }
+        public Builder scale(float s) { return scale(s, s, s); }
+        public Builder scale(float x, float y, float z) { this.scaleX = x; this.scaleY = y; this.scaleZ = z; return this; }
+        public Builder billboard(Display.Billboard b) { this.billboard = b; return this; }
+        public Builder rotation(float xDeg, float yDeg, float zDeg) { this.xRotDeg = xDeg; this.yRotDeg = yDeg; this.zRotDeg = zDeg; return this; }
+        public Builder data(Object d) { this.data = d; return this; }
+        public Builder interval(long ticks) { this.interval = ticks; return this; }
+        public Builder duration(long ticks) { this.duration = ticks; return this; }
+        public Builder cancelIf(BooleanSupplier s) { this.cancelIf = s; return this; }
+        public Builder viewers(List<Player> vs) { this.viewers = vs; return this; }
+        public Builder viewers(Player single) { this.viewers = Collections.singletonList(single); return this; }
+        public Builder asyncShape(boolean v) { this.asyncShape = v; return this; }
+
+        public Particles build() {
+            if (type == null && displayItem == null)
+                throw new IllegalStateException("Need either particle type or display item");
+            return new Particles(this);
+        }
+    }
+
+    private static final class LocationPool {
+        private final Deque<Location> pool = new ArrayDeque<>(64);
+        Location acquire(World w) {
+            Location l = pool.pollFirst();
+            if (l == null) return new Location(w, 0, 0, 0);
+            l.setWorld(w);
+            return l;
+        }
+        void release(Location l) {
+            if (l != null) {
+                l.setWorld(null);
+                pool.offerFirst(l);
+            }
+        }
+        void clear() { pool.clear(); }
     }
 }

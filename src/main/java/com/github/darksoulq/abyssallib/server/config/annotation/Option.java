@@ -3,8 +3,7 @@ package com.github.darksoulq.abyssallib.server.config.annotation;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.TYPE})
-public @interface Comment {
+@Target(ElementType.FIELD)
+public @interface Option {
     String[] value();
-    boolean inline() default false;
 }

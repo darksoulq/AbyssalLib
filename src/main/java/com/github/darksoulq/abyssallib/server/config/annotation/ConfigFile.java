@@ -1,13 +1,11 @@
 package com.github.darksoulq.abyssallib.server.config.annotation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ConfigFile {
-    String pluginId();
-    String folder() default "";
+    String name() default "";
+    String id();
+    String subfolder() default "";
 }

@@ -95,7 +95,7 @@ public class EventBus {
      * @param <T>   The type of event being posted.
      * @return The same event instance after it has been processed by all listeners.
      */
-    public <T extends Event> T post(T event) {
+    public static <T extends Event> T post(T event) {
         Bukkit.getPluginManager().callEvent(event);
         return event;
     }
