@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.server.command.AbyssalCommand;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
-import com.github.darksoulq.abyssallib.server.config.legacy.Config;
+import com.github.darksoulq.abyssallib.server.config.Config;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
@@ -52,12 +52,6 @@ public class InternalCommand {
                 .then(Commands.literal("reload")
                         .requires(sender -> sender
                                 .getSender().hasPermission("abyssallib.admin.give"))
-                        .then(Commands.literal("config")
-                                .executes((ctz) -> {
-                                    Config.reloadAll();
-                                    return Command.SINGLE_SUCCESS;
-                                })
-                        )
                         .then(Commands.literal("commmands")
                                 .executes(ctx -> {
                                     CommandBus.reloadAll();

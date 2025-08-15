@@ -1,9 +1,7 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
-import com.github.darksoulq.abyssallib.server.config.ConfigManager;
-import com.github.darksoulq.abyssallib.server.config.ConfigType;
-import com.github.darksoulq.abyssallib.server.config.internal.Config;
+import com.github.darksoulq.abyssallib.server.config.Config;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
@@ -26,8 +24,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.Optional;
-
 public final class AbyssalLib extends JavaPlugin {
 
     public static final String MODID = "abyssallib";
@@ -41,6 +37,7 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        InternalConfig.setup();
         INSTANCE = this;
         isRPManagerInstalled = checkRPManager();
 
@@ -65,19 +62,17 @@ public final class AbyssalLib extends JavaPlugin {
 
         BuiltinTags.TAGS.apply();
 
-        ConfigManager.register(Config.class, ConfigType.YAML);
-
-        if (Config.ResourcePack.autoHost) {
+        if (InternalConfig.RESOURCEPACK_ENABLED.get()) {
             EVENT_BUS.register(new PackEvent());
             PACK_SERVER = new PackServer();
-            PACK_SERVER.start(Config.ResourcePack.ip, Config.ResourcePack.port);
+            PACK_SERVER.start(InternalConfig.RESOURCEPACK_HOST.get(), InternalConfig.RESOURCEPACK_PORT.get());
         }
 
-        if (Config.Metrics.enabled) {
+        if (InternalConfig.METRICS_ENABLED.get()) {
             new Metrics(this, 25772);
         }
 
-        if (Config.Features.customBlockBreaking) {
+        if (InternalConfig.FEATURES_CUSTOM_BLOCK_BREAKING.get()) {
             EVENT_BUS.register(new CustomBlockBreak());
         }
 
@@ -114,5 +109,25 @@ public final class AbyssalLib extends JavaPlugin {
 
     public static AbyssalLib getInstance() {
         return INSTANCE;
+    }
+
+    public static class InternalConfig {
+        public static Config.Value<Boolean> RESOURCEPACK_ENABLED;
+        public static Config.Value<String> RESOURCEPACK_HOST;
+        public static Config.Value<Integer> RESOURCEPACK_PORT;
+        public static Config.Value<Boolean> METRICS_ENABLED;
+        public static Config.Value<Boolean> FEATURES_CUSTOM_BLOCK_BREAKING;
+
+        public static void setup() {
+            Config config = new Config("config.yml", "abyssallib", "");
+
+            METRICS_ENABLED = new Config.Value<>(config, "metrics.enabled", true);
+            RESOURCEPACK_ENABLED = new Config.Value<>(config, "resource_pack.enabled", false);
+            RESOURCEPACK_HOST = new Config.Value<>(config, "resource_pack.host", "127.0.0.1");
+            RESOURCEPACK_PORT = new Config.Value<>(config, "resource_pack.port", 8080);
+            FEATURES_CUSTOM_BLOCK_BREAKING = new Config.Value<>(config, "features.custom_block_breaking", false);
+
+            config.save();
+        }
     }
 }

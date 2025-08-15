@@ -1,8 +1,6 @@
 package com.github.darksoulq.abyssallib.world.level.multiblock.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.server.config.serializer.Serializer;
-import com.github.darksoulq.abyssallib.server.config.serializer.SerializerRegistry;
 import com.github.darksoulq.abyssallib.server.database.Database;
 import com.github.darksoulq.abyssallib.server.database.impl.sqlite.SqliteDatabase;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -10,21 +8,24 @@ import com.github.darksoulq.abyssallib.util.TextUtil;
 import com.github.darksoulq.abyssallib.world.level.multiblock.Multiblock;
 import com.github.darksoulq.abyssallib.world.level.multiblock.MultiblockInstance;
 import com.github.darksoulq.abyssallib.world.level.multiblock.RelativeBlockPos;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
+import java.util.*;
+
 public class MultiblockManager {
+
     private static final Map<Location, MultiblockInstance> INSTANCE_ORIGINS = new HashMap<>();
     private static final Map<Location, MultiblockInstance> INSTANCE_BLOCKS = new HashMap<>();
     private static Database DB;
 
     public static void load() throws Exception {
+        if (TextUtil.GSON == null) {
+            TextUtil.buildGson();
+        }
         DB = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "multiblocks.db"));
         DB.connect();
         DB.executor().table("multiblocks").create().ifNotExists()
@@ -36,7 +37,7 @@ public class MultiblockManager {
                 .column("data", "TEXT")
                 .execute();
 
-        List<Row> rows = DB.executor().table("multiblocks").select(rs ->
+        var rows = DB.executor().table("multiblocks").select(rs ->
                 new Row(rs.getString("world"),
                         rs.getInt("x"),
                         rs.getInt("y"),
@@ -44,7 +45,6 @@ public class MultiblockManager {
                         rs.getString("id"),
                         rs.getString("data")
                 ));
-
         for (Row r : rows) {
             World w = Bukkit.getWorld(r.world);
             if (w == null) continue;
@@ -52,55 +52,51 @@ public class MultiblockManager {
             Multiblock mb = Registries.MULTIBLOCKS.get(r.id);
             if (mb == null) continue;
             MultiblockInstance inst = new MultiblockInstance(origin, mb);
-            if (r.data != null && !r.data.isEmpty()) populateFieldsFromData(inst.getData(), r.data);
+            if (r.data != null && !r.data.isEmpty()) {
+                inst.setData(inst.getType().deserializeData(r.data));
+            }
             register(inst);
         }
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                for (MultiblockInstance ins : MultiblockManager.getAll()) ins.tickIfApplicable();
+                for (MultiblockInstance ins : MultiblockManager.getAll()) {
+                    ins.tickIfApplicable();
+                }
             }
         }.runTaskTimer(AbyssalLib.getInstance(), 0, 1);
-
         new BukkitRunnable() {
             @Override
             public void run() {
-                for (MultiblockInstance ins : MultiblockManager.getAll()) ins.tickIfApplicable();
+                for (MultiblockInstance ins : MultiblockManager.getAll()) {
+                    ins.tickIfApplicable();
+                }
             }
         }.runTaskTimer(AbyssalLib.getInstance(), 0, 20 * 60 * 5);
-    }
-
-    private static void populateFieldsFromData(Object data, String json) throws Exception {
-        if (json == null || json.isEmpty() || json.equals("{}")) return;
-        Map<String, Object> map = TextUtil.GSON.fromJson(json, Map.class);
-        for (Field field : data.getClass().getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
-            field.setAccessible(true);
-            if (map.containsKey(field.getName()) && SerializerRegistry.has(field.getType())) {
-                Object value = SerializerRegistry.get(field.getType()).deserialize(map.get(field.getName()));
-                field.set(data, value);
-            }
-        }
     }
 
     public static void register(MultiblockInstance inst) {
         Location origin = normalize(inst.getOrigin());
         INSTANCE_ORIGINS.put(origin, inst);
+
         for (RelativeBlockPos rel : inst.getType().getPattern().keySet()) {
             Location abs = origin.clone().add(rel.x(), rel.y(), rel.z());
             INSTANCE_BLOCKS.put(normalize(abs), inst);
         }
+
         save(inst);
     }
 
     public static void remove(MultiblockInstance inst) {
         Location origin = normalize(inst.getOrigin());
         INSTANCE_ORIGINS.remove(origin);
+
         for (RelativeBlockPos rel : inst.getType().getPattern().keySet()) {
             Location abs = origin.clone().add(rel.x(), rel.y(), rel.z());
             INSTANCE_BLOCKS.remove(normalize(abs));
         }
+
         try {
             DB.executor().table("multiblocks").delete()
                     .where("world", origin.getWorld().getName())
@@ -121,34 +117,16 @@ public class MultiblockManager {
         return INSTANCE_BLOCKS.get(normalize(loc));
     }
 
-    @SuppressWarnings("unchecked")
     public static void save(MultiblockInstance inst) {
         Location o = normalize(inst.getOrigin());
         try {
-            Object data = inst.getData();
-            Map<String, Object> dataMap = new LinkedHashMap<>();
-            if (data != null) {
-                for (Field field : data.getClass().getDeclaredFields()) {
-                    if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
-                    field.setAccessible(true);
-                    Object value = field.get(data);
-                    if (value != null) {
-                        dataMap.put(field.getName(), SerializerRegistry.has(field.getType()) ?
-                                ((Serializer<Object>) SerializerRegistry.get(field.getType())).serialize(value) :
-                                value);
-                    }
-                }
-            }
-
-            String json = TextUtil.GSON.toJson(dataMap);
-
             DB.executor().table("multiblocks").insert()
                     .value("world", o.getWorld().getName())
                     .value("x", o.getBlockX())
                     .value("y", o.getBlockY())
                     .value("z", o.getBlockZ())
                     .value("id", inst.getType().getId().toString())
-                    .value("data", json)
+                    .value("data", TextUtil.GSON.toJson(inst.getData()))
                     .execute();
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().severe("Failed saving multiblock");

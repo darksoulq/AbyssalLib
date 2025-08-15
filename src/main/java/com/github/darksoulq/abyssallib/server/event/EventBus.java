@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A lightweight event bus for registering Bukkit event handlers using the {@link SubscribeEvent} annotation.
+ * A lightweight event bus for registering Bukkit event handlers using the {@link SubscribeEvent} format.
  * <p>
  * This class scans listener objects for annotated methods and registers them with Bukkit's event system.
  * It uses {@link MethodHandle} for fast invocation and supports event priority and cancel-ignoring behavior.
