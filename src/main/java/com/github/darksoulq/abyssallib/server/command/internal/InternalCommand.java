@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.server.command.AbyssalCommand;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
-import com.github.darksoulq.abyssallib.server.config.Config;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
