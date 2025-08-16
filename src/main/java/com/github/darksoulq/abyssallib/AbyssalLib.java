@@ -1,7 +1,8 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
-import com.github.darksoulq.abyssallib.server.config.Config;
+import com.github.darksoulq.abyssallib.server.config.ConfigManager;
+import com.github.darksoulq.abyssallib.server.config.internal.Config;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
@@ -24,12 +25,15 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.nio.file.Path;
+
 public final class AbyssalLib extends JavaPlugin {
 
     public static final String MODID = "abyssallib";
     private static AbyssalLib INSTANCE;
 
-    public static boolean isRPManagerInstalled = false;
+    public static boolean RSPM_AVAILABLE = false;
+    public static ConfigManager<Config> CONFIG;
     public static PackServer PACK_SERVER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
@@ -37,9 +41,8 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        InternalConfig.setup();
         INSTANCE = this;
-        isRPManagerInstalled = checkRPManager();
+        RSPM_AVAILABLE = checkRPManager();
 
         new BukkitRunnable() {
             @Override
@@ -48,6 +51,11 @@ public final class AbyssalLib extends JavaPlugin {
                 getLogger().info("Saved " + saved + " blocks");
             }
         }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
+
+        CONFIG = new ConfigManager<>(
+                ConfigManager.resolvePath("config", "abyssallib"),
+                Config.class, true);
+        CONFIG.load();
 
         EVENT_BUS = new EventBus(this);
 
@@ -62,17 +70,17 @@ public final class AbyssalLib extends JavaPlugin {
 
         BuiltinTags.TAGS.apply();
 
-        if (InternalConfig.RESOURCEPACK_ENABLED.get()) {
+        if (config().resourcePack.enabled) {
             EVENT_BUS.register(new PackEvent());
             PACK_SERVER = new PackServer();
-            PACK_SERVER.start(InternalConfig.RESOURCEPACK_HOST.get(), InternalConfig.RESOURCEPACK_PORT.get());
+            PACK_SERVER.start(config().resourcePack.ip, config().resourcePack.port);
         }
 
-        if (InternalConfig.METRICS_ENABLED.get()) {
+        if (config().metrics) {
             new Metrics(this, 25772);
         }
 
-        if (InternalConfig.FEATURES_CUSTOM_BLOCK_BREAKING.get()) {
+        if (config().features.customBlockBreaking) {
             EVENT_BUS.register(new CustomBlockBreak());
         }
 
@@ -107,27 +115,10 @@ public final class AbyssalLib extends JavaPlugin {
         return plugin != null && plugin.isEnabled();
     }
 
+    public static Config config() {
+        return CONFIG.get();
+    }
     public static AbyssalLib getInstance() {
         return INSTANCE;
-    }
-
-    public static class InternalConfig {
-        public static Config.Value<Boolean> RESOURCEPACK_ENABLED;
-        public static Config.Value<String> RESOURCEPACK_HOST;
-        public static Config.Value<Integer> RESOURCEPACK_PORT;
-        public static Config.Value<Boolean> METRICS_ENABLED;
-        public static Config.Value<Boolean> FEATURES_CUSTOM_BLOCK_BREAKING;
-
-        public static void setup() {
-            Config config = new Config("config.yml", "abyssallib", "");
-
-            METRICS_ENABLED = new Config.Value<>(config, "metrics.enabled", true);
-            RESOURCEPACK_ENABLED = new Config.Value<>(config, "resource_pack.enabled", false);
-            RESOURCEPACK_HOST = new Config.Value<>(config, "resource_pack.host", "127.0.0.1");
-            RESOURCEPACK_PORT = new Config.Value<>(config, "resource_pack.port", 8080);
-            FEATURES_CUSTOM_BLOCK_BREAKING = new Config.Value<>(config, "features.custom_block_breaking", false);
-
-            config.save();
-        }
     }
 }

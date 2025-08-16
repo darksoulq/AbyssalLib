@@ -7,7 +7,6 @@ import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
 import com.github.darksoulq.abyssallib.util.FileUtils;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -162,7 +161,7 @@ public class ResourcePack {
         compile(override);
         if (AbyssalLib.PACK_SERVER != null) {
             AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
-        } else if (AbyssalLib.isRPManagerInstalled) {
+        } else if (AbyssalLib.RSPM_AVAILABLE) {
             ResourcePackManagerAPI.registerLocalResourcePack(
                     plugin.getName(),
                     plugin.getName() + "/pack/resourcepack.zip",
