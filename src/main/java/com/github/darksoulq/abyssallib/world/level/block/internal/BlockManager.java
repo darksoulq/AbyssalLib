@@ -7,7 +7,9 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.util.TextUtil;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.block.BlockEntity;
-import com.google.gson.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -15,9 +17,10 @@ import org.bukkit.Location;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Manages custom blocks including their registration, persistence, and loading from a database.

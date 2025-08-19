@@ -1,7 +1,5 @@
 package com.github.darksoulq.abyssallib.world.level.block;
 
-import java.util.Set;
-
 /**
  * Defines the physical and interaction behavior of a custom block.
  * This includes how hard the block is to break, whether it supports enchantments like Silk Touch or Fortune,

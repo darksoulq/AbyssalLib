@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
-import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.bukkit.plugin.Plugin;

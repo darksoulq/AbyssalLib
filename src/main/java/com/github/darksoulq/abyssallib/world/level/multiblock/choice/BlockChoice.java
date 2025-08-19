@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.world.level.multiblock.choice;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
 import com.github.darksoulq.abyssallib.world.level.multiblock.MultiblockChoice;
 
-import java.util.Collection;
 import java.util.List;
 
 public class BlockChoice extends MultiblockChoice {

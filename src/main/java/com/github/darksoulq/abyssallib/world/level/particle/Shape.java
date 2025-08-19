@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.level.particle;
 
 import org.bukkit.Location;
+
 import java.util.List;
 
 public interface Shape {

@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiElement;

@@ -3,8 +3,6 @@ package com.github.darksoulq.abyssallib.world.level.multiblock;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 
-import java.util.UUID;
-
 public class MultiblockInstance {
     private final Location origin;
     private final Multiblock type;

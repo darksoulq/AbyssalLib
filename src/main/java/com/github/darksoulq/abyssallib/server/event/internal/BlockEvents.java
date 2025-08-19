@@ -1,12 +1,10 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockPlacedEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.level.block.Block;
@@ -17,22 +15,22 @@ import com.github.darksoulq.abyssallib.world.level.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.level.item.Item;
 import io.papermc.paper.event.entity.EntityMoveEvent;
-import org.bukkit.*;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BlockEvents {
