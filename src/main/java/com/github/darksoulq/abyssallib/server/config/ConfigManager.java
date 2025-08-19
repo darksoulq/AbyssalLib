@@ -1,70 +1,59 @@
 package com.github.darksoulq.abyssallib.server.config;
 
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.loader.ConfigurationLoader;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurationOptions;
+import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Comment;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
-public class ConfigManager<T> {
+public final class ConfigManager<T> {
 
-    private final Class<T> configClass;
     private final Path path;
-    private final ConfigurationLoader<?> loader;
-    private T config;
-    private final boolean repopulate;
+    private final Class<T> configClass;
+    private final YamlConfigurationLoader loader;
+    private T instance;
 
-    public ConfigManager(Path path, Class<T> configClass, boolean repopulate) {
+    public ConfigManager(Path path, Class<T> configClass) {
         this.path = path;
         this.configClass = configClass;
-        this.repopulate = repopulate;
         this.loader = YamlConfigurationLoader.builder()
                 .path(path)
+                .nodeStyle(NodeStyle.FLOW)
+                .defaultOptions(ConfigurationOptions.defaults().shouldCopyDefaults(true))
                 .build();
     }
 
-    public void load() {
-        try {
-            Files.createDirectories(path.getParent());
+    public void load(boolean repopulateMissing) throws IOException {
+        CommentedConfigurationNode root = loader.load();
 
-            if (Files.notExists(path)) {
-                ConfigurationNode root = loader.createNode();
-                root.set(configClass, configClass.getDeclaredConstructor().newInstance());
-                loader.save(root);
+        root.options().shouldCopyDefaults(repopulateMissing);
+
+        this.instance = root.get(configClass);
+        if (this.instance == null) {
+            try {
+                this.instance = configClass.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new IllegalStateException("Could not instantiate config class", e);
             }
-
-            ConfigurationNode root = loader.load();
-            config = root.get(configClass);
-
-            if (repopulate) {
-                root.set(configClass, config);
-                loader.save(root);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load config: " + path, e);
         }
+
+        save();
     }
 
-    public void reload() {
-        load();
-    }
-
-    public void save() {
-        try {
-            ConfigurationNode root = loader.createNode();
-            root.set(configClass, config);
-            loader.save(root);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to save config: " + path, e);
-        }
+    public void save() throws IOException {
+        CommentedConfigurationNode root = loader.createNode();
+        root.set(configClass, instance);
+        loader.save(root);
     }
 
     public T get() {
-        return config;
+        return instance;
     }
 
     public static Path resolvePath(String name, String id, String subFolder) {
@@ -73,4 +62,5 @@ public class ConfigManager<T> {
     public static Path resolvePath(String name, String id) {
         return Path.of("config", id, name + ".yml");
     }
+
 }

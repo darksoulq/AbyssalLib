@@ -7,6 +7,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
      * @param player The player breaking the block.
      * @param block  The custom block being broken.
      */
-    public BlockBrokenEvent(@NotNull Player player, @NotNull Block block, int fortuneLevel) {
+    public BlockBrokenEvent(@Nullable Player player, @NotNull Block block, int fortuneLevel) {
         this.player = player;
         this.block = block;
         this.fortuneLevel = fortuneLevel;
@@ -79,7 +80,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
      *
      * @return The player involved in this event.
      */
-    public @NotNull Player getPlayer() {
+    public @Nullable Player getPlayer() {
         return player;
     }
 

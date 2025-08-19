@@ -14,10 +14,6 @@ public class Config {
     @Comment("Settings related to ResourcePafk hosting")
     public ResourcePack resourcePack = new ResourcePack();
 
-    @Setting("features")
-    @Comment("Settings related to features added by library")
-    public Features features = new Features();
-
     @ConfigSerializable
     public static class ResourcePack {
         @Setting("enabled")
@@ -27,11 +23,5 @@ public class Config {
         public String ip = "127.0.0.1";
         @Setting("port")
         public int port = 8080;
-    }
-    @ConfigSerializable
-    public static class Features {
-        @Setting("custom_block_breaking")
-        @Comment("EXTREMELY BUGGY!")
-        public boolean customBlockBreaking = false;
     }
 }

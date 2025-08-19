@@ -25,6 +25,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public final class AbyssalLib extends JavaPlugin {
@@ -54,8 +55,12 @@ public final class AbyssalLib extends JavaPlugin {
 
         CONFIG = new ConfigManager<>(
                 ConfigManager.resolvePath("config", "abyssallib"),
-                Config.class, true);
-        CONFIG.load();
+                Config.class);
+        try {
+            CONFIG.load(true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         EVENT_BUS = new EventBus(this);
 
@@ -78,10 +83,6 @@ public final class AbyssalLib extends JavaPlugin {
 
         if (config().metrics) {
             new Metrics(this, 25772);
-        }
-
-        if (config().features.customBlockBreaking) {
-            EVENT_BUS.register(new CustomBlockBreak());
         }
 
         Items.ITEMS.apply();

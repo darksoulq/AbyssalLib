@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
+import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
@@ -74,7 +75,7 @@ public class BlockEvents {
             Block block = base.clone();
             block.place(event.getBlock(), false);
             if (data.has("BlockItem") && data.getString("BlockItem").get().equals(block.getId().toString())) {
-                BlockPlacedEvent placeEvent = AbyssalLib.EVENT_BUS.post(new BlockPlacedEvent(
+                BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(
                         event.getPlayer(),
                         block,
                         handItem
@@ -106,8 +107,7 @@ public class BlockEvents {
         boolean allowFortune = props.allowFortune;
         int fortuneLevel = allowFortune ? stack.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
 
-        BlockBrokenEvent breakEvent = AbyssalLib.EVENT_BUS
-                .post(new BlockBrokenEvent(player, block, fortuneLevel));
+        BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(player, block, fortuneLevel));
         if (breakEvent.isCancelled()) {
             event.setCancelled(true);
             return;
@@ -166,8 +166,7 @@ public class BlockEvents {
             if (result == ActionResult.CANCEL) {
                 it.remove();
             } else {
-                BlockBrokenEvent breakEvent = AbyssalLib.EVENT_BUS
-                        .post(new BlockBrokenEvent(null, block, 0));
+                BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, block, 0));
                 if (breakEvent.isCancelled()) {
                     it.remove();
                     return;
@@ -191,8 +190,7 @@ public class BlockEvents {
             if (result == ActionResult.CANCEL) {
                 it.remove();
             } else {
-                BlockBrokenEvent breakEvent = AbyssalLib.EVENT_BUS
-                        .post(new BlockBrokenEvent(null, block, 0));
+                BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, block, 0));
                 if (breakEvent.isCancelled()) {
                     it.remove();
                     return;
@@ -312,8 +310,6 @@ public class BlockEvents {
 
     public static void dropBlockLoot(Location loc, Block block, ItemStack tool, BlockBrokenEvent breakEvent, boolean silkTouch, int fortuneLevel) {
         BlockProperties props = block.properties;
-
-        if (!props.isCorrectTool(tool)) return;
 
         World world = loc.getWorld();
         if (world == null) return;
