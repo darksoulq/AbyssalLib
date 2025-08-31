@@ -1,26 +1,56 @@
 package com.github.darksoulq.abyssallib.server.registry;
 
-import com.github.darksoulq.abyssallib.world.level.block.Block;
-import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
-import com.github.darksoulq.abyssallib.world.level.data.tag.BlockTag;
-import com.github.darksoulq.abyssallib.world.level.data.tag.ItemTag;
-import com.github.darksoulq.abyssallib.world.level.entity.DamageType;
-import com.github.darksoulq.abyssallib.world.level.entity.Entity;
-import com.github.darksoulq.abyssallib.world.level.item.Item;
-import com.github.darksoulq.abyssallib.world.level.multiblock.Multiblock;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
+import com.github.darksoulq.abyssallib.world.data.tag.BlockTag;
+import com.github.darksoulq.abyssallib.world.data.tag.ItemTag;
+import com.github.darksoulq.abyssallib.world.entity.DamageType;
+import com.github.darksoulq.abyssallib.world.entity.Entity;
+import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.multiblock.Multiblock;
+import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
+import io.papermc.paper.potion.PotionMix;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.*;
 
 public class Registries {
+    public static final Registry<Class<? extends DataComponent<?>>> DATA_COMPONENTS = new Registry<>();
 
-    public static final Registry<Item> ITEMS = new Registry<>(null);
-    public static final Registry<Block> BLOCKS = new Registry<>(null);
-    public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>(null);
-    public static final Registry<Block> BLOCK_ITEMS = new Registry<>(null);
-    public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>(null);
+    public static final Registry<Item> ITEMS = new Registry<>();
+    public static final Registry<CustomBlock> BLOCKS = new Registry<>();
+    public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>();
+    public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>();
 
-    public static final Registry<LootTable> LOOT_TABLES = new Registry<>(null);
-    public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>(null);
+    public static final Registry<RecipeChoice> RECIPE_CHOICES = new Registry<>();
+    public static final Registry<Class<? extends CustomRecipe>> RECIPE_TYPES = new Registry<>();
 
-    public static final Registry<ItemTag> ITEM_TAGS = new Registry<>(null);
-    public static final Registry<BlockTag> BLOCK_TAGS = new Registry<>(null);
+    public static final Registry<LootTable> LOOT_TABLES = new Registry<>();
+    public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>();
+
+    public static final Registry<ItemTag> ITEM_TAGS = new Registry<>();
+    public static final Registry<BlockTag> BLOCK_TAGS = new Registry<>();
+
+    public static final Registry<ShapedRecipe> SHAPED_RECIPES = new Registry<>();
+    public static final Registry<ShapelessRecipe> SHAPELESS_RECIPES = new Registry<>();
+    public static final Registry<TransmuteRecipe> TRANSMUTE_RECIPES = new Registry<>();
+    public static final Registry<FurnaceRecipe> FURNACE_RECIPES = new Registry<>();
+    public static final Registry<BlastingRecipe> BLASTING_RECIPES = new Registry<>();
+    public static final Registry<SmokingRecipe> SMOKING_RECIPES = new Registry<>();
+    public static final Registry<CampfireRecipe> CAMPFIRE_RECIPES = new Registry<>();
+    public static final Registry<StonecuttingRecipe> STONECUTTING_RECIPES = new Registry<>();
+    public static final Registry<SmithingTransformRecipe> SMITHING_TRANSFORM_RECIPES = new Registry<>();
+    public static final Registry<PotionMix> POTION_MIXES = new Registry<>();
+
+
+
+
+
+
+
+
+
+
+
+
 }

@@ -1,11 +1,18 @@
 package com.github.darksoulq.abyssallib;
 
+import com.github.darksoulq.abyssallib.common.config.ConfigManager;
+import com.github.darksoulq.abyssallib.common.config.internal.Config;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
+import com.github.darksoulq.abyssallib.common.util.FileUtils;
+import com.github.darksoulq.abyssallib.common.util.Metrics;
+import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
-import com.github.darksoulq.abyssallib.server.config.ConfigManager;
-import com.github.darksoulq.abyssallib.server.config.internal.Config;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
@@ -14,18 +21,23 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
-import com.github.darksoulq.abyssallib.util.Metrics;
-import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
-import com.github.darksoulq.abyssallib.world.level.data.tag.BuiltinTags;
-import com.github.darksoulq.abyssallib.world.level.entity.DamageType;
-import com.github.darksoulq.abyssallib.world.level.inventory.gui.GuiManager;
-import com.github.darksoulq.abyssallib.world.level.item.Items;
+import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.data.tag.BuiltinTags;
+import com.github.darksoulq.abyssallib.world.entity.DamageType;
+import com.github.darksoulq.abyssallib.world.gui.GuiManager;
+import com.github.darksoulq.abyssallib.world.item.Items;
+import com.github.darksoulq.abyssallib.world.item.component.Components;
+import com.github.darksoulq.abyssallib.world.recipe.VanillaRecipeLoader;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.FurnaceRecipe;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.IOException;
+import java.io.File;
 
 public final class AbyssalLib extends JavaPlugin {
 
@@ -44,6 +56,8 @@ public final class AbyssalLib extends JavaPlugin {
         INSTANCE = this;
         RSPM_AVAILABLE = checkRPManager();
 
+        ItemBridge.setup();
+
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -52,10 +66,11 @@ public final class AbyssalLib extends JavaPlugin {
             }
         }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
 
-        CONFIG = new ConfigManager<>(
-                ConfigManager.resolvePath("config", "abyssallib"),
-                Config.class);
+        CONFIG = new ConfigManager<>(ConfigManager.resolvePath("config", "abyssallib"), Config.class);
         CONFIG.load();
+
+        FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
+        VanillaRecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));
 
         EVENT_BUS = new EventBus(this);
 
@@ -80,6 +95,8 @@ public final class AbyssalLib extends JavaPlugin {
             new Metrics(this, 25772);
         }
 
+        Components.DATA_COMPONENTS_VANILLA.apply();
+        Components.DATA_COMPONENTS.apply();
         Items.ITEMS.apply();
 
         ResourcePack rp = new ResourcePack(this, MODID);

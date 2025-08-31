@@ -5,8 +5,8 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityDeathEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityLoadEvent;
-import com.github.darksoulq.abyssallib.world.level.entity.Entity;
-import com.github.darksoulq.abyssallib.world.level.entity.internal.EntityManager;
+import com.github.darksoulq.abyssallib.world.entity.Entity;
+import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import org.bukkit.entity.LivingEntity;
 
 public class EntityEvents {

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.util.FileUtils.GSON;
+import static com.github.darksoulq.abyssallib.common.util.FileUtils.GSON;
 
 public class WaypointStyle implements Asset {
     private final String namespace;

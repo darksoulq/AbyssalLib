@@ -1,138 +1,71 @@
 package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyEvent;
-import com.github.darksoulq.abyssallib.server.registry.object.DeferredObject;
-import com.github.darksoulq.abyssallib.world.level.block.Block;
-import com.github.darksoulq.abyssallib.world.level.data.Identifier;
-import com.github.darksoulq.abyssallib.world.level.entity.DamageType;
-import com.github.darksoulq.abyssallib.world.level.item.Item;
+import com.github.darksoulq.abyssallib.server.registry.object.Holder;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.entity.DamageType;
+import com.github.darksoulq.abyssallib.world.item.Item;
 import org.bukkit.Bukkit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * A registry that defers registration of objects until explicitly applied.
- *
- * @param <T> The type of objects being registered.
- */
 public final class DeferredRegistry<T> {
+    private final Registry<T> registry;
+    private final String pluginId;
+    private final Map<String, Holder<T>> entries = new HashMap<>();
 
-    /**
-     * The target registry to apply registered entries to.
-     */
-    private final Registry<T> targetRegistry;
-
-    /**
-     * The mod ID used for namespacing.
-     */
-    private final String modId;
-
-    /**
-     * The map of name to deferred registration objects.
-     */
-    private final Map<String, DeferredObject<T>> deferredObjects = new LinkedHashMap<>();
-
-    /**
-     * Constructs a new deferred registry.
-     *
-     * @param targetRegistry The registry to apply registrations to.
-     * @param modId          The mod ID used for namespacing.
-     */
-    private DeferredRegistry(Registry<T> targetRegistry, String modId) {
-        this.targetRegistry = Objects.requireNonNull(targetRegistry, "targetRegistry");
-        this.modId = Objects.requireNonNull(modId, "modId");
+    private DeferredRegistry(@NotNull Registry<T> registry, @NotNull String pluginId) {
+        this.registry = registry;
+        this.pluginId = pluginId;
     }
 
-    /**
-     * Creates a new deferred registry for a specific target and mod ID.
-     *
-     * @param targetRegistry The registry to apply registrations to.
-     * @param modId          The mod ID used for namespacing.
-     * @param <T>            The type of objects being registered.
-     * @return A new DeferredRegistry instance.
-     */
-    public static <T> DeferredRegistry<T> create(Registry<T> targetRegistry, String modId) {
-        return new DeferredRegistry<>(targetRegistry, modId);
+    public static <T> DeferredRegistry<T> create(Registry<T> registry, String pluginId) {
+        return new DeferredRegistry<>(registry, pluginId);
     }
 
-    /**
-     * Registers a new object by name using the provided supplier.
-     *
-     * @param name     The name of the object (unqualified).
-     * @param supplier A function that takes an {@link Identifier} and returns an object to register.
-     * @return The deferred object wrapper.
-     * @throws IllegalStateException If the name is already registered.
-     */
-    public DeferredObject<T> register(String name, Function<Identifier, T> supplier) {
-        if (deferredObjects.containsKey(name)) {
-            throw new IllegalStateException("Duplicate deferred registration: " + modId + ":" + name);
+    public Holder<T> register(String name, Function<Identifier, T> supplier) {
+        if (entries.containsKey(name)) {
+            throw new IllegalStateException("Duplicate deferred registration: " + pluginId + ":" + name);
         }
-        Identifier id = Identifier.of(modId, name);
-        DeferredObject<T> deferredObject = new DeferredObject<>(id.toString(), () -> supplier.apply(id));
-        deferredObjects.put(name, deferredObject);
-        return deferredObject;
+        Identifier id = Identifier.of(pluginId, name);
+        Holder<T> holder = new Holder<>(() -> supplier.apply(id));
+        entries.put(name, holder);
+        return holder;
     }
 
-    /**
-     * Applies all deferred registrations to the target registry.
-     * <p>
-     * Triggers a {@link RegistryApplyEvent}, which may be cancelled to prevent registration.
-     */
     public void apply() {
-        RegistryApplyEvent<T> event = new RegistryApplyEvent<>(targetRegistry, this);
+        RegistryApplyEvent<T> event = new RegistryApplyEvent<>(registry, this);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
-            AbyssalLib.getInstance().getLogger().info("Registry apply cancelled for mod: " + modId);
+            AbyssalLib.getInstance().getLogger().info("Registry apply cancelled for mod: " + pluginId);
             return;
         }
-
-        List<DeferredObject<T>> objects = deferredObjects.values().stream().toList();
         List<DamageType> damageTypes = new ArrayList<>();
 
-        for (DeferredObject<T> obj : objects) {
-            T value = obj.get();
-            targetRegistry.register(obj.getId(), value);
+        for (Map.Entry<String, Holder<T>> entries : entries.entrySet()) {
+            T value = entries.getValue().get();
+            registry.register(pluginId + ":" + entries.getKey(), value);
 
-            if (value instanceof DamageType) {
-                damageTypes.add((DamageType) value);
-            }
-
-            if (value instanceof Block block && block.generateItem()) {
+            if (value instanceof DamageType) damageTypes.add((DamageType) value);
+            if (value instanceof CustomBlock block && block.generateItem()) {
                 Item blockItem = block.getItem().get();
-                Registries.ITEMS.register(obj.getId(), blockItem);
-                Registries.BLOCK_ITEMS.register(obj.getId(), block);
-            }
-
-            if (value instanceof Item item && item.getData().has("BlockItem")) {
-                Registries.BLOCK_ITEMS.register(item.getId().toString(),
-                        Registries.BLOCKS.get(item.getData().getString("BlockItem").get()));
+                Registries.ITEMS.register(pluginId + ":" + entries.getKey(), blockItem);
             }
         }
+        if (!damageTypes.isEmpty()) AbyssalLib.DAMAGE_TYPE_REGISTRAR.register(damageTypes);
 
-        if (!damageTypes.isEmpty()) {
-            AbyssalLib.DAMAGE_TYPE_REGISTRAR.register(damageTypes);
-        }
-
-        deferredObjects.clear();
+        entries.clear();
     }
 
-    /**
-     * Returns an unmodifiable collection of all deferred objects.
-     *
-     * @return A collection of {@link DeferredObject}.
-     */
-    public Collection<DeferredObject<T>> getDeferredObjects() {
-        return Collections.unmodifiableCollection(deferredObjects.values());
+    public Collection<Holder<T>> getEntries() {
+        return Collections.unmodifiableCollection(entries.values());
     }
 
-    /**
-     * Returns the mod ID associated with this registry.
-     *
-     * @return The mod ID string.
-     */
-    public String getModId() {
-        return modId;
+    public String getPluginId() {
+        return pluginId;
     }
 }

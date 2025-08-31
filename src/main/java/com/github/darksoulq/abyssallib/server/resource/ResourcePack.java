@@ -1,10 +1,10 @@
 package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
 import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
-import com.github.darksoulq.abyssallib.util.FileUtils;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;

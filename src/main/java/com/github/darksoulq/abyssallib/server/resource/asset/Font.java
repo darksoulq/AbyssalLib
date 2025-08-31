@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
-import com.github.darksoulq.abyssallib.world.level.data.Identifier;
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.google.gson.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;

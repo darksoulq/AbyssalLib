@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.custom.block;
 
-import com.github.darksoulq.abyssallib.world.level.block.Block;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -27,7 +27,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * The block that is being broken.
      */
-    private final Block block;
+    private final CustomBlock block;
 
     /**
      * The player who is breaking the block.
@@ -60,7 +60,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
      * @param player The player breaking the block.
      * @param block  The custom block being broken.
      */
-    public BlockBrokenEvent(@Nullable Player player, @NotNull Block block, int fortuneLevel) {
+    public BlockBrokenEvent(@Nullable Player player, @NotNull CustomBlock block, int fortuneLevel) {
         this.player = player;
         this.block = block;
         this.fortuneLevel = fortuneLevel;
@@ -71,7 +71,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
      *
      * @return The custom block involved in this event.
      */
-    public @NotNull Block getBlock() {
+    public @NotNull CustomBlock getBlock() {
         return block;
     }
 

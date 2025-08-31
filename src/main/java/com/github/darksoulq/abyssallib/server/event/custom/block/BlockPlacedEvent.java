@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.custom.block;
 
-import com.github.darksoulq.abyssallib.world.level.block.Block;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -24,7 +24,7 @@ public class BlockPlacedEvent extends Event implements Cancellable {
     /**
      * The block being placed by the player.
      */
-    private final Block block;
+    private final CustomBlock block;
 
     /**
      * The player who is placing the block.
@@ -48,7 +48,7 @@ public class BlockPlacedEvent extends Event implements Cancellable {
      * @param block  The block being placed.
      * @param item   The item used to place the block.
      */
-    public BlockPlacedEvent(@NotNull Player player, @NotNull Block block, @NotNull ItemStack item) {
+    public BlockPlacedEvent(@NotNull Player player, @NotNull CustomBlock block, @NotNull ItemStack item) {
         this.player = player;
         this.block = block;
         this.item = item;
@@ -59,7 +59,7 @@ public class BlockPlacedEvent extends Event implements Cancellable {
      *
      * @return The block being placed.
      */
-    public @NotNull Block getBlock() {
+    public @NotNull CustomBlock getBlock() {
         return block;
     }
 

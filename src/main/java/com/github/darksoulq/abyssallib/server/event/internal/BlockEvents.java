@@ -1,19 +1,20 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockPlacedEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.level.block.Block;
-import com.github.darksoulq.abyssallib.world.level.block.BlockProperties;
-import com.github.darksoulq.abyssallib.world.level.block.internal.BlockManager;
-import com.github.darksoulq.abyssallib.world.level.data.CTag;
-import com.github.darksoulq.abyssallib.world.level.data.loot.LootContext;
-import com.github.darksoulq.abyssallib.world.level.data.loot.LootTable;
-import com.github.darksoulq.abyssallib.world.level.item.Item;
+import com.github.darksoulq.abyssallib.world.block.BlockProperties;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
+import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
+import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -37,9 +38,9 @@ public class BlockEvents {
     @SubscribeEvent
     public void onChunkLoad(ChunkLoadEvent event) {
         if (event.isNewChunk()) return;
-        List<Block> blocks = BlockManager.getBlocksInChunk(event.getChunk());
+        List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
-        for (Block block : blocks) {
+        for (CustomBlock block : blocks) {
             BlockManager.INACTIVE_BLOCKS.remove(block);
             if (!BlockManager.ACTIVE_BLOCKS.contains(block)) {
                 BlockManager.ACTIVE_BLOCKS.add(block);
@@ -50,9 +51,9 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onChunkUnload(ChunkUnloadEvent event) {
-        List<Block> blocks = BlockManager.getBlocksInChunk(event.getChunk());
+        List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
-        for (Block block : blocks) {
+        for (CustomBlock block : blocks) {
             BlockManager.ACTIVE_BLOCKS.remove(block);
             if (!BlockManager.INACTIVE_BLOCKS.contains(block)) {
                 BlockManager.INACTIVE_BLOCKS.add(block);
@@ -64,36 +65,32 @@ public class BlockEvents {
     @SubscribeEvent
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack handItem = event.getItemInHand();
-        Item heldItem = Item.from(handItem);
+        Item heldItem = Item.resolve(handItem);
         Location loc = event.getBlock().getLocation();
         if (heldItem == null) return;
-        CTag data = heldItem.getData();
-
-        for (Block base : Registries.BLOCKS.getAll().values()) {
-            Block block = base.clone();
-            block.place(event.getBlock(), false);
-            if (data.has("BlockItem") && data.getString("BlockItem").get().equals(block.getId().toString())) {
-                BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(
-                        event.getPlayer(),
-                        block,
-                        handItem
-                ));
-                ActionResult result = block.onPlaced(event.getPlayer(), loc,
-                        handItem);
-                if (result == ActionResult.CANCEL || placeEvent.isCancelled()) {
-                    BlockManager.remove(loc);
-                    loc.getBlock().setType(Material.AIR);
-                    return;
-                }
-                return;
-            }
+        if (!heldItem.hasData(BlockItem.class)) {
+            event.setCancelled(true);
+            return;
         }
-        event.setCancelled(true);
+        Identifier blockId = (Identifier) heldItem.getData(BlockItem.class).value;
+        CustomBlock block = Registries.BLOCKS.get(blockId.toString());
+        if (block == null) return;
+        block.place(event.getBlock(), false);
+        BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(
+                event.getPlayer(),
+                block,
+                handItem
+        ));
+        ActionResult result = block.onPlaced(event.getPlayer(), loc,
+                handItem);
+        if (!result.equals(ActionResult.CANCEL) && !placeEvent.isCancelled()) return;
+        BlockManager.remove(loc);
+        loc.getBlock().setType(Material.AIR);
     }
 
     @SubscribeEvent
     public void onBlockBreak(BlockBreakEvent event) {
-        Block block = Block.from(event.getBlock());
+        CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
 
         Player player = event.getPlayer();
@@ -130,7 +127,7 @@ public class BlockEvents {
     public void onEntityMove(EntityMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
-        Block block = Block.from(event.getTo().clone().add(0, -1, 0).getBlock());
+        CustomBlock block = CustomBlock.from(event.getTo().clone().add(0, -1, 0).getBlock());
         if (block == null) return;
         if (event.getEntity().getFallDistance() > 1) {
             block.onLanded(event.getEntity());
@@ -143,7 +140,7 @@ public class BlockEvents {
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
-        Block block = Block.from(event.getTo().clone().add(0, -1, 0).getBlock());
+        CustomBlock block = CustomBlock.from(event.getTo().clone().add(0, -1, 0).getBlock());
         if (block == null) return;
         if (event.getPlayer().getFallDistance() > 1) {
             block.onLanded(event.getPlayer());
@@ -157,7 +154,7 @@ public class BlockEvents {
         Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
         while (it.hasNext()) {
             org.bukkit.block.Block bukkitBlock = it.next();
-            Block block = Block.from(bukkitBlock);
+            CustomBlock block = CustomBlock.from(bukkitBlock);
             if (block == null) continue;
 
             ActionResult result = block.onDestroyedByExplosion(null, event.getBlock());
@@ -181,7 +178,7 @@ public class BlockEvents {
         Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
         while (it.hasNext()) {
             org.bukkit.block.Block bukkitBlock = it.next();
-            Block block = Block.from(bukkitBlock);
+            CustomBlock block = CustomBlock.from(bukkitBlock);
             if (block == null) continue;
 
             ActionResult result = block.onDestroyedByExplosion(event.getEntity(), null);
@@ -204,14 +201,14 @@ public class BlockEvents {
     public void onProjectileHit(ProjectileHitEvent event) {
         if (event.getHitBlock() == null) return;
 
-        Block block = Block.from(event.getHitBlock());
+        CustomBlock block = CustomBlock.from(event.getHitBlock());
         if (block == null) return;
         block.onProjectileHit(event.getEntity());
     }
 
     @SubscribeEvent
     public void onBlockRedstone(BlockRedstoneEvent event) {
-        Block block = Block.from(event.getBlock());
+        CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
         int oldCurrent = event.getOldCurrent();
         int newCurrent = event.getNewCurrent();
@@ -221,7 +218,7 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onBlockPhysics(BlockPhysicsEvent event) {
-        Block block = Block.from(event.getBlock());
+        CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
         if (block.allowPhysics) return;
         event.setCancelled(true);
@@ -230,7 +227,7 @@ public class BlockEvents {
     @SubscribeEvent
     public void onPistonExtend(BlockPistonExtendEvent event) {
         for (org.bukkit.block.Block bukkitBlock : event.getBlocks()) {
-            Block block = Block.from(bukkitBlock);
+            CustomBlock block = CustomBlock.from(bukkitBlock);
             if (block != null) {
                 event.setCancelled(true);
                 return;
@@ -241,7 +238,7 @@ public class BlockEvents {
     @SubscribeEvent
     public void onPistonRetract(BlockPistonRetractEvent event) {
         for (org.bukkit.block.Block bukkitBlock : event.getBlocks()) {
-            Block block = Block.from(bukkitBlock);
+            CustomBlock block = CustomBlock.from(bukkitBlock);
             if (block != null) {
                 event.setCancelled(true);
                 return;
@@ -251,52 +248,52 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onBlockBurn(BlockBurnEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onBlockFade(BlockFadeEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onBlockForm(BlockFormEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onBlockGrow(BlockGrowEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onBlockIgnite(BlockIgniteEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onBlockSpread(BlockSpreadEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onLeavesDecay(LeavesDecayEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onSpongeAbsorb(SpongeAbsorbEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onSignChange(SignChangeEvent event) {
-        if (Block.from(event.getBlock()) != null) event.setCancelled(true);
+        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
     @SubscribeEvent
     public void onServerTick(ServerTickEndEvent event) {
-        for (Block block : BlockManager.ACTIVE_BLOCKS) {
+        for (CustomBlock block : BlockManager.ACTIVE_BLOCKS) {
             if (block.getEntity() != null) {
                 block.getEntity().serverTick();
                 if (ThreadLocalRandom.current().nextFloat() < 0.001f) {
@@ -306,7 +303,7 @@ public class BlockEvents {
         }
     }
 
-    public static void dropBlockLoot(Location loc, Block block, ItemStack tool, BlockBrokenEvent breakEvent, boolean silkTouch, int fortuneLevel) {
+    public static void dropBlockLoot(Location loc, CustomBlock block, ItemStack tool, BlockBrokenEvent breakEvent, boolean silkTouch, int fortuneLevel) {
         BlockProperties props = block.properties;
 
         World world = loc.getWorld();
@@ -331,7 +328,7 @@ public class BlockEvents {
             }
 
             if (props.requireSilkTouch && silkTouch) {
-                Item blockItem = Block.asItem(block);
+                Item blockItem = CustomBlock.asItem(block);
                 if (blockItem != null) {
                     world.dropItemNaturally(loc, blockItem.clone().getStack().clone());
                 }
@@ -339,7 +336,7 @@ public class BlockEvents {
             }
 
             if (!props.requireSilkTouch) {
-                Item blockItem = Block.asItem(block);
+                Item blockItem = CustomBlock.asItem(block);
                 if (blockItem != null) {
                     world.dropItemNaturally(loc, blockItem.clone().getStack().clone());
                 }

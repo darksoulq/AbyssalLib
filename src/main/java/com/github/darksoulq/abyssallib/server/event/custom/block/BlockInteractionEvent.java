@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.custom.block;
 
-import com.github.darksoulq.abyssallib.world.level.block.Block;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -27,7 +27,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
     /**
      * The block being interacted with.
      */
-    private final Block block;
+    private final CustomBlock block;
 
     /**
      * The face of the block that was interacted with.
@@ -71,7 +71,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
      */
     public BlockInteractionEvent(
             @NotNull Player player,
-            @NotNull Block block,
+            @NotNull CustomBlock block,
             @NotNull BlockFace face,
             @NotNull Location interaction,
             @NotNull Action action,
@@ -90,7 +90,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
      *
      * @return The block being interacted with.
      */
-    public @NotNull Block getBlock() {
+    public @NotNull CustomBlock getBlock() {
         return block;
     }
 

@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.world;
 
-import com.github.darksoulq.abyssallib.world.level.data.Identifier;
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import org.bukkit.World;
 import org.bukkit.persistence.PersistentDataType;
 

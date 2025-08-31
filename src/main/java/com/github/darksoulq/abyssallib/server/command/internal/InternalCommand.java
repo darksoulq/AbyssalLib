@@ -3,8 +3,8 @@ package com.github.darksoulq.abyssallib.server.command.internal;
 import com.github.darksoulq.abyssallib.server.command.AbyssalCommand;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;
-import com.github.darksoulq.abyssallib.world.level.item.Item;
+import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
+import com.github.darksoulq.abyssallib.world.item.Item;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -89,7 +89,7 @@ public class InternalCommand {
     public static int attributeGetExecutor(CommandContext<CommandSourceStack> ctx) {
         NamespacedKey key = ctx.getArgument("type", NamespacedKey.class);
         EntitySelectorArgumentResolver selector = ctx.getArgument("selector", EntitySelectorArgumentResolver.class);
-        List<Entity> entities = null;
+        List<Entity> entities;
         try {
             entities = selector.resolve(ctx.getSource());
             if (!entities.isEmpty()) {

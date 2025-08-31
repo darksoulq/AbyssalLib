@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.custom.entity;
 
-import com.github.darksoulq.abyssallib.world.level.entity.Entity;
+import com.github.darksoulq.abyssallib.world.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;

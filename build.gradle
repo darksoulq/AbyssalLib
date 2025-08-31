@@ -15,7 +15,7 @@ java {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
     withSourcesJar()
-    withJavadocJar()
+//    withJavadocJar()
 }
 
 repositories {
@@ -90,5 +90,5 @@ tasks.runServer {
 
 artifacts {
     archives sourcesJar
-    archives javadocJar
+//    archives javadocJar
 }

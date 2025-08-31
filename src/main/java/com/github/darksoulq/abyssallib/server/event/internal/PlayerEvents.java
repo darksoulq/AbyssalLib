@@ -2,8 +2,9 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
-import com.github.darksoulq.abyssallib.world.level.entity.data.EntityAttributes;
-import com.github.darksoulq.abyssallib.world.level.item.Item;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
+import com.github.darksoulq.abyssallib.world.item.Item;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -31,9 +32,9 @@ public class PlayerEvents {
 
     @SubscribeEvent
     public void onPick(PlayerPickBlockEvent event) {
-        if (com.github.darksoulq.abyssallib.world.level.block.Block.from(event.getBlock()) != null) {
+        if (CustomBlock.from(event.getBlock()) != null) {
             event.setCancelled(true);
-            Item item = com.github.darksoulq.abyssallib.world.level.block.Block.asItem(com.github.darksoulq.abyssallib.world.level.block.Block.from(event.getBlock()));
+            Item item = CustomBlock.asItem(CustomBlock.from(event.getBlock()));
             if (item == null) return;
             ItemStack stack = item.getStack().clone();
             HashMap<Integer, ItemStack> remaining = event.getPlayer().getInventory().addItem(stack);

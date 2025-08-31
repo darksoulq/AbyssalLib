@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.util.FileUtils.GSON;
+import static com.github.darksoulq.abyssallib.common.util.FileUtils.GSON;
 
 /**
  * Represents a resource pack equipment JSON: {@code assets/<namespace>/equipment/<id>.json}.

@@ -2,10 +2,12 @@ package com.github.darksoulq.abyssallib.server.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.tree.CommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -95,11 +97,11 @@ public class CommandBus {
      * Unregisters all commands that have been previously registered.
      */
     private static void unregisterAll() {
-        var dispatcher = getDispatcher();
-        var commandMap = dispatcher.getRoot().getChildren();
+        CommandDispatcher<CommandSourceStack> dispatcher = getDispatcher();
+        Collection<CommandNode<CommandSourceStack>> commandMap = dispatcher.getRoot().getChildren();
         List<String> toRemove = new ArrayList<>();
 
-        for (var child : commandMap) {
+        for (CommandNode<CommandSourceStack> child : commandMap) {
             String name = child.getName();
             boolean ours = registered.stream().anyMatch(r -> r.method.getAnnotation(AbyssalCommand.class).name().equals(name));
             if (ours) toRemove.add(name);
