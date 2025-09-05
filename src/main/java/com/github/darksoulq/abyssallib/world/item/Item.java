@@ -59,7 +59,8 @@ public class Item implements Cloneable {
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
                 .hideTooltip(tooltip.hide)
                 .hiddenComponents(tooltip.hiddenComponents).build()));
-        setData(new TooltipStyle(tooltip.style.toNamespace()));
+        if (tooltip.style != null) setData(new TooltipStyle(tooltip.style.toNamespace()));
+        else unsetData(TooltipStyle.class);
     }
 
     public void setData(DataComponent<?> component) {
@@ -79,6 +80,12 @@ public class Item implements Cloneable {
     }
     public boolean hasData(DataComponentType type) {
         return componentMap.hasData(type);
+    }
+    public void unsetData(Identifier id) {
+        componentMap.removeData(id);
+    }
+    public void unsetData(Class<? extends DataComponent> clazz) {
+        componentMap.removeData(clazz);
     }
     public <T extends DataComponent<?>> boolean hasData(Class<T> clazz) {
         return componentMap.hasData(clazz);

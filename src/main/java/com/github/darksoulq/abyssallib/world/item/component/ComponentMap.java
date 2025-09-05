@@ -99,6 +99,15 @@ public class ComponentMap {
             removeComponent(components.get(id));
         }
     }
+    @SuppressWarnings("unchecked")
+    public void removeData(Class<? extends DataComponent> clazz) {
+        for (DataComponent<?> cmp : components.values()) {
+            if (clazz.isInstance(cmp)) components.remove(cmp);
+        }
+        for (Vanilla v : vanillaComponents.values()) {
+            if (clazz.isInstance(v)) vanillaComponents.remove(v);
+        }
+    }
     public DataComponent<?> getData(Identifier id) {
         if (vanillaComponents.containsKey(id)) return (DataComponent<?>) vanillaComponents.get(id);
         else return components.getOrDefault(id, null);
