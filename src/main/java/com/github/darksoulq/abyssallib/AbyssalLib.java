@@ -1,10 +1,6 @@
 package com.github.darksoulq.abyssallib;
 
-import com.github.darksoulq.abyssallib.common.config.ConfigManager;
-import com.github.darksoulq.abyssallib.common.config.internal.Config;
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
+import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Metrics;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
@@ -12,7 +8,6 @@ import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
-import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
@@ -29,10 +24,6 @@ import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
 import com.github.darksoulq.abyssallib.world.recipe.VanillaRecipeLoader;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.FurnaceRecipe;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -45,7 +36,7 @@ public final class AbyssalLib extends JavaPlugin {
     private static AbyssalLib INSTANCE;
 
     public static boolean RSPM_AVAILABLE = false;
-    public static ConfigManager<Config> CONFIG;
+    public static PluginConfig CONFIG;
     public static PackServer PACK_SERVER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
@@ -66,8 +57,7 @@ public final class AbyssalLib extends JavaPlugin {
             }
         }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
 
-        CONFIG = new ConfigManager<>(ConfigManager.resolvePath("config", "abyssallib"), Config.class);
-        CONFIG.load();
+        CONFIG = new PluginConfig();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
         VanillaRecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));
@@ -85,13 +75,13 @@ public final class AbyssalLib extends JavaPlugin {
 
         BuiltinTags.TAGS.apply();
 
-        if (config().resourcePack.enabled) {
+        if (CONFIG.rp.enabled.get()) {
             EVENT_BUS.register(new PackEvent());
             PACK_SERVER = new PackServer();
-            PACK_SERVER.start(config().resourcePack.ip, config().resourcePack.port);
+            PACK_SERVER.start(CONFIG.rp.ip.get(), CONFIG.rp.port.get());
         }
 
-        if (config().metrics) {
+        if (CONFIG.metrics.get()) {
             new Metrics(this, 25772);
         }
 
@@ -126,10 +116,6 @@ public final class AbyssalLib extends JavaPlugin {
     private boolean checkRPManager() {
         Plugin plugin = Bukkit.getPluginManager().getPlugin("ResourcePackManager");
         return plugin != null && plugin.isEnabled();
-    }
-
-    public static Config config() {
-        return CONFIG.get();
     }
     public static AbyssalLib getInstance() {
         return INSTANCE;
