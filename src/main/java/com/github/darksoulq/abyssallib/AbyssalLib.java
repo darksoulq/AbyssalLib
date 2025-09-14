@@ -58,6 +58,7 @@ public final class AbyssalLib extends JavaPlugin {
         }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
 
         CONFIG = new PluginConfig();
+        CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
         VanillaRecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));

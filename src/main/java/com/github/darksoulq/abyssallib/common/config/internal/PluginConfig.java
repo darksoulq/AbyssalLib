@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.common.config.internal;
 import com.github.darksoulq.abyssallib.common.config.Config;
 
 public class PluginConfig {
-    private Config cfg = new Config("abyssallib", "config");
+    public Config cfg = new Config("abyssallib", "config");
     public Config.Value<Boolean> metrics;
     public ResourcePack rp;
 
@@ -22,7 +22,7 @@ public class PluginConfig {
             enabled = cfg.value("resource-pack.enabled", false)
                     .withComment("Whether autohosting is enabled; in case set to false and ResourcePackManager is installed, RSPM will be used.");
             ip = cfg.value("resource-pack.ip", "127.0.0.1");
-            port = cfg.value("resourcepack.port", 8080);
+            port = cfg.value("resource-pack.port", 8080);
         }
     }
 }

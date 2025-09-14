@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 public class PaginatedElements implements GuiLayer {
     private final int[] slots;
     private final GuiView.Segment segment;
-    private List<GuiElement> source;
+    private final List<GuiElement> source;
     private List<GuiElement> filtered;
     private Predicate<GuiElement> filter = el -> true;
     private int page = 0;
@@ -35,16 +35,13 @@ public class PaginatedElements implements GuiLayer {
         int newPage = (page + 1) % pageCount();
         if (newPage != page) {
             page = newPage;
-            renderTo(view);
         }
     }
-
-    public void prev(GuiView view) {
+    public void prev() {
         if (pageCount() <= 0) return;
         int newPage = (page - 1 + pageCount()) % pageCount();
         if (newPage != page) {
             page = newPage;
-            renderTo(view);
         }
     }
 
@@ -82,5 +79,12 @@ public class PaginatedElements implements GuiLayer {
         }
 
         lastRenderedPage = page;
+    }
+
+    @Override
+    public void cleanup(GuiView view) {
+        for (int slot : slots) {
+            view.getGui().getElements().remove(new SlotPosition(segment, slot));
+        }
     }
 }

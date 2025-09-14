@@ -47,7 +47,6 @@ public class BlockManager {
             DATABASE = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
             DATABASE.connect();
 
-            // Create blocks table if it doesn't exist
             DATABASE.executor().table("blocks").create()
                     .ifNotExists()
                     .column("world", "TEXT")
@@ -60,7 +59,6 @@ public class BlockManager {
 
             TextUtil.buildGson();
 
-            // Load all saved blocks
             List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
                 String world = rs.getString("world");
                 int x = rs.getInt("x");

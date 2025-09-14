@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.common.config;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -34,18 +36,20 @@ public class Config {
         comments.put(path, Arrays.asList(commentLines));
     }
 
-    public void save() throws IOException {
-        yaml.save(file);
-        writeComments();
+    public void save() {
+        try {
+            yaml.save(file);
+            writeComments();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void reload() {
         yaml.options().copyDefaults(true);
         try {
             yaml.load(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidConfigurationException e) {
+        } catch (IOException | InvalidConfigurationException e) {
             throw new RuntimeException(e);
         }
     }
@@ -99,7 +103,7 @@ public class Config {
 
         @SuppressWarnings("unchecked")
         public T get() {
-            return (T) yaml.get(path, defaultValue);
+            return (T) readRaw(yaml.get(path, defaultValue));
         }
 
         public void set(T value) {
@@ -109,6 +113,24 @@ public class Config {
         public Value<T> withComment(String... comments) {
             addComment(path, comments);
             return this;
+        }
+
+        private Object readRaw(Object obj) {
+            if (obj instanceof ConfigurationSection section) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                for (String key : section.getKeys(false)) {
+                    map.put(key, readRaw(section.get(key)));
+                }
+                return map;
+            } else if (obj instanceof List<?> list) {
+                List<Object> newList = new ArrayList<>();
+                for (Object item : list) {
+                    newList.add(readRaw(item));
+                }
+                return newList;
+            } else {
+                return obj;
+            }
         }
     }
 }
