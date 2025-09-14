@@ -30,7 +30,7 @@ public class PaginatedElements implements GuiLayer {
         this.lastRenderedPage = -1;
     }
 
-    public void next(GuiView view) {
+    public void next() {
         if (pageCount() <= 0) return;
         int newPage = (page + 1) % pageCount();
         if (newPage != page) {
