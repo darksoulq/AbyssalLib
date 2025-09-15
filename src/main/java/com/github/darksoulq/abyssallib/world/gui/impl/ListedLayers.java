@@ -8,30 +8,34 @@ import java.util.List;
 
 public class ListedLayers implements GuiLayer {
     private final List<GuiLayer> layers = new ArrayList<>();
-    private GuiLayer active = null;
     private int index = 0;
+    private int lastRenderedPage = -1;
 
     public ListedLayers(List<GuiLayer> layers) {
         this.layers.addAll(layers);
     }
 
-    public void next() {
+    public void next(GuiView view) {
         if (layers.isEmpty()) return;
+        GuiLayer layer = layers.get(index);
         index = (index + 1) % layers.size();
+        layer.cleanup(view);
     }
 
-    public void prev() {
+    public void prev(GuiView view) {
         if (layers.isEmpty()) return;
+        GuiLayer layer = layers.get(index);
         index = (index - 1 + layers.size()) % layers.size();
+        layer.cleanup(view);
     }
 
     @Override
     public void renderTo(GuiView view) {
+        if (index == lastRenderedPage) return;
         GuiLayer layer = layers.get(index);
-        if (active != null && index != layers.indexOf(active)) cleanup(view);
         if (layer == null) return;
-        if (layer != active) active = layer;
         layer.renderTo(view);
+        lastRenderedPage = index;
     }
 
     @Override

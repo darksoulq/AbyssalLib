@@ -30,18 +30,20 @@ public class PaginatedElements implements GuiLayer {
         this.lastRenderedPage = -1;
     }
 
-    public void next() {
+    public void next(GuiView view) {
         if (pageCount() <= 0) return;
         int newPage = (page + 1) % pageCount();
         if (newPage != page) {
             page = newPage;
+            cleanup(view);
         }
     }
-    public void prev() {
+    public void prev(GuiView view) {
         if (pageCount() <= 0) return;
         int newPage = (page - 1 + pageCount()) % pageCount();
         if (newPage != page) {
             page = newPage;
+            cleanup(view);
         }
     }
 
@@ -55,17 +57,10 @@ public class PaginatedElements implements GuiLayer {
     @Override
     public void renderTo(GuiView view) {
         if (page == lastRenderedPage) return;
+        cleanup(view);
 
         Gui gui = view.getGui();
-        Inventory inv = (segment == GuiView.Segment.TOP ? view.getTop() : view.getBottom());
-
         int start = page * slots.length;
-
-        for (int slot : slots) {
-            SlotPosition pos = new SlotPosition(segment, slot);
-            gui.getElements().remove(pos);
-            inv.setItem(slot, null);
-        }
 
         for (int i = 0; i < slots.length; i++) {
             int global = start + i;
@@ -77,14 +72,15 @@ public class PaginatedElements implements GuiLayer {
 
             gui.getElements().put(pos, el);
         }
-
         lastRenderedPage = page;
     }
 
     @Override
     public void cleanup(GuiView view) {
+        Inventory inv = segment == GuiView.Segment.TOP ? view.getTop() : view.getBottom();
         for (int slot : slots) {
             view.getGui().getElements().remove(new SlotPosition(segment, slot));
+            inv.setItem(slot, null);
         }
     }
 }
