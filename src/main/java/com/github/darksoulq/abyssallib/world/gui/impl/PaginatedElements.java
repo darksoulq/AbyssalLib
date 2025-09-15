@@ -57,14 +57,10 @@ public class PaginatedElements implements GuiLayer {
     @Override
     public void renderTo(GuiView view) {
         if (page == lastRenderedPage) return;
-        Inventory inv = segment == GuiView.Segment.TOP ? view.getTop() : view.getBottom();
+        cleanup(view);
 
         Gui gui = view.getGui();
         int start = page * slots.length;
-
-        for (int slot : slots) {
-            inv.setItem(slot, null);
-        }
 
         for (int i = 0; i < slots.length; i++) {
             int global = start + i;
