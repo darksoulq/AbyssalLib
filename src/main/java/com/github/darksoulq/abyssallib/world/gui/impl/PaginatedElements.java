@@ -57,7 +57,6 @@ public class PaginatedElements implements GuiLayer {
     @Override
     public void renderTo(GuiView view) {
         if (page == lastRenderedPage) return;
-        cleanup(view);
 
         Gui gui = view.getGui();
         int start = page * slots.length;
