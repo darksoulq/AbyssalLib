@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.bridge;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.item.AbyssalLibProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.MinecraftProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.NexoProvider;
@@ -17,7 +18,7 @@ public class ItemBridge {
     public static void setup() {
         register(new MinecraftProvider());
         register(new AbyssalLibProvider());
-        register(new NexoProvider());
+        if (HookConstants.isEnabled(HookConstants.Plugin.NEXO)) register(new NexoProvider());
     }
 
     public static boolean hasProvider(String id) {
