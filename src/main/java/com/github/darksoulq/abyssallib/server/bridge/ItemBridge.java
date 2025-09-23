@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.item.AbyssalLibProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.MinecraftProvider;
+import com.github.darksoulq.abyssallib.server.bridge.item.NexoProvider;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Base64;
@@ -16,6 +17,7 @@ public class ItemBridge {
     public static void setup() {
         register(new MinecraftProvider());
         register(new AbyssalLibProvider());
+        register(new NexoProvider());
     }
 
     public static boolean hasProvider(String id) {
@@ -35,21 +37,30 @@ public class ItemBridge {
     public static ItemStack get(String id) {
         if (Identifier.isValid3Part(id) || Identifier.isValid2Part(id)) {
             String[] parts = id.split(":", 3);
-            if (!PROVIDERS.containsKey(parts[0])) return null;
-            Provider<ItemStack> prov = PROVIDERS.get(parts[0]);
             if (parts.length == 2) {
-                return prov.get(Identifier.of(parts[0], parts[1]));
+                return get(Identifier.of(parts[0], parts[1]));
             } else {
-                return prov.get(Identifier.of(parts[0], parts[1], parts[2]));
+                return get(Identifier.of(parts[0], parts[1], parts[2]));
             }
 
         }
         return ItemStack.deserializeBytes(Base64.getDecoder().decode(id));
     }
     public static ItemStack get(Identifier id) {
-        if (!PROVIDERS.containsKey(id.namespace())) return null;
-        Provider<ItemStack> prov = PROVIDERS.get(id.namespace());
+        if (!PROVIDERS.containsKey(id.key()) && !PROVIDERS.containsKey(id.namespace())) return null;
+        Provider<ItemStack> prov = PROVIDERS.get(id.key() == null ? id.namespace() : id.key());
         return prov.get(id);
+    }
+    public static Identifier getId(ItemStack stack) {
+        for (Map.Entry<String, Provider<ItemStack>> entry : PROVIDERS.entrySet()) {
+            Provider<ItemStack> prov = entry.getValue();
+            if (!prov.belongs(stack)) continue;
+            Identifier base = prov.getId(stack);
+            if (base == null) return null;
+            if (prov instanceof MinecraftProvider) return base;
+            return Identifier.of(entry.getKey() + ":" + base.namespace(), base.path());
+        }
+        return null;
     }
 
     public static String asString(ItemStack item) {

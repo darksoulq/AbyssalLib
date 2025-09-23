@@ -26,7 +26,8 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AbyssalCommand {
+public @interface Command {
+    int SUCCESS = 1;
 
     /**
      * The name of the command. This becomes the literal root node in the Brigadier tree.

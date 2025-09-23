@@ -35,6 +35,9 @@ repositories {
         name = 'magmaguy-repo'
         url = uri('https://repo.magmaguy.com/releases')
     }
+    maven {
+        url = uri("https://repo.nexomc.com/releases")
+    }
 }
 
 dependencies {
@@ -45,6 +48,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.17.0'
 
     compileOnly('com.magmaguy:ResourcePackManager:1.5.0')
+    compileOnly("com.nexomc:nexo:1.12.0-dev")
 }
 
 tasks.withType(JavaCompile).configureEach {

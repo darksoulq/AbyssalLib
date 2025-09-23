@@ -12,3 +12,6 @@ dependencies:
     ResourcePackManager:
       required: false
       load: BEFORE
+    Nexo:
+      required: false
+      load: BEFORE

@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib;
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Metrics;
+import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
@@ -35,7 +36,6 @@ public final class AbyssalLib extends JavaPlugin {
     public static final String MODID = "abyssallib";
     private static AbyssalLib INSTANCE;
 
-    public static boolean RSPM_AVAILABLE = false;
     public static PluginConfig CONFIG;
     public static PackServer PACK_SERVER;
     public static EventBus EVENT_BUS;
@@ -45,7 +45,7 @@ public final class AbyssalLib extends JavaPlugin {
     @Override
     public void onEnable() {
         INSTANCE = this;
-        RSPM_AVAILABLE = checkRPManager();
+        HookConstants.load();
 
         ItemBridge.setup();
 
@@ -112,11 +112,6 @@ public final class AbyssalLib extends JavaPlugin {
         if (PACK_SERVER != null) {
             PACK_SERVER.stop();
         }
-    }
-
-    private boolean checkRPManager() {
-        Plugin plugin = Bukkit.getPluginManager().getPlugin("ResourcePackManager");
-        return plugin != null && plugin.isEnabled();
     }
     public static AbyssalLib getInstance() {
         return INSTANCE;

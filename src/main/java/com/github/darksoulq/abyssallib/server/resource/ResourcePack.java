@@ -2,6 +2,8 @@ package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
+import com.github.darksoulq.abyssallib.server.HookConstants;
+import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
 import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
@@ -146,7 +148,7 @@ public class ResourcePack {
             }
 
             hashMap.put(modid, FileUtils.sha1(outputFile));
-            AbyssalLib.EVENT_BUS.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
+            EventBus.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to write resource pack: " + outputFile, e);
@@ -161,7 +163,7 @@ public class ResourcePack {
         compile(override);
         if (AbyssalLib.PACK_SERVER != null) {
             AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
-        } else if (AbyssalLib.RSPM_AVAILABLE) {
+        } else if (HookConstants.isEnabled(HookConstants.Plugin.RSPM)) {
             ResourcePackManagerAPI.registerLocalResourcePack(
                     plugin.getName(),
                     plugin.getName() + "/pack/resourcepack.zip",

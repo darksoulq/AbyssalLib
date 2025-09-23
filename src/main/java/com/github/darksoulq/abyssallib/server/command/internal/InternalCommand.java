@@ -1,11 +1,10 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
-import com.github.darksoulq.abyssallib.server.command.AbyssalCommand;
+import com.github.darksoulq.abyssallib.server.command.Command;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.item.Item;
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -26,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class InternalCommand {
 
-    @AbyssalCommand(name="abyssallib")
+    @Command(name="abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
                         .requires(sender -> sender
@@ -54,7 +53,7 @@ public class InternalCommand {
                         .then(Commands.literal("commmands")
                                 .executes(ctx -> {
                                     CommandBus.reloadAll();
-                                    return Command.SINGLE_SUCCESS;
+                                    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
                                 })
                         )
                 );
@@ -67,16 +66,16 @@ public class InternalCommand {
 
         if (!(executor instanceof Player player)) {
             sender.sendPlainMessage("Only a player can run this command!");
-            return Command.SINGLE_SUCCESS;
+            return com.mojang.brigadier.Command.SINGLE_SUCCESS;
         }
         if (!Registries.ITEMS.contains(namespaceId.asString())) {
             sender.sendPlainMessage("Not an item");
-            return Command.SINGLE_SUCCESS;
+            return com.mojang.brigadier.Command.SINGLE_SUCCESS;
         }
 
         player.getInventory().addItem(Registries.ITEMS.get(namespaceId.asString()).getStack().clone());
 
-        return Command.SINGLE_SUCCESS;
+        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
     public static CompletableFuture<Suggestions> giveSuggests(final CommandContext<CommandSourceStack> ctx,
                                                               final SuggestionsBuilder builder) {
@@ -103,7 +102,7 @@ public class InternalCommand {
         } catch (CommandSyntaxException e) {
             throw new RuntimeException(e);
         }
-        return Command.SINGLE_SUCCESS;
+        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
     public static CompletableFuture<Suggestions> attributeTypeSuggests(final CommandContext<CommandSourceStack> ctx,
                                                                        final SuggestionsBuilder builder) {

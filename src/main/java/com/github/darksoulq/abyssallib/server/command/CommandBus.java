@@ -40,7 +40,7 @@ public class CommandBus {
     }
 
     /**
-     * Registers all methods in the given handler class that are annotated with {@link AbyssalCommand}.
+     * Registers all methods in the given handler class that are annotated with {@link Command}.
      * Each method must accept a single parameter of type {@link LiteralArgumentBuilder}.
      *
      * @param modid   The mod ID this command belongs to.
@@ -48,8 +48,8 @@ public class CommandBus {
      */
     public static void register(String modid, Object handler) {
         for (Method method : handler.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(AbyssalCommand.class)) {
-                AbyssalCommand command = method.getAnnotation(AbyssalCommand.class);
+            if (method.isAnnotationPresent(Command.class)) {
+                Command command = method.getAnnotation(Command.class);
                 String commandName = command.name();
 
                 registered.add(new RegisteredCommand(modid, method, handler));
@@ -77,7 +77,7 @@ public class CommandBus {
         unregisterAll();
 
         for (RegisteredCommand cmd : registered) {
-            LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(cmd.method.getAnnotation(AbyssalCommand.class).name());
+            LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(cmd.method.getAnnotation(Command.class).name());
 
             if (cmd.method.getParameterCount() == 1 && cmd.method.getParameterTypes()[0] == LiteralArgumentBuilder.class) {
                 try {
@@ -103,7 +103,7 @@ public class CommandBus {
 
         for (CommandNode<CommandSourceStack> child : commandMap) {
             String name = child.getName();
-            boolean ours = registered.stream().anyMatch(r -> r.method.getAnnotation(AbyssalCommand.class).name().equals(name));
+            boolean ours = registered.stream().anyMatch(r -> r.method.getAnnotation(Command.class).name().equals(name));
             if (ours) toRemove.add(name);
         }
 

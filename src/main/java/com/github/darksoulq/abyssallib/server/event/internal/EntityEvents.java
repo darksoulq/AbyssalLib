@@ -1,7 +1,9 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityDeathEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityLoadEvent;
@@ -18,7 +20,7 @@ public class EntityEvents {
             if (entity != null) {
                 entity.applyGoals(lEntity);
                 entity.applyAttributes(lEntity);
-                AbyssalLib.EVENT_BUS.post(new EntityLoadEvent(entity));
+                EventBus.post(new EntityLoadEvent(entity));
             }
         }
     }
@@ -29,7 +31,7 @@ public class EntityEvents {
         if (entity == null) return;
 
         EntityDeathEvent e = new EntityDeathEvent(entity, event.getEntity().getKiller());
-        AbyssalLib.EVENT_BUS.post(e);
+        EventBus.post(e);
         if (e.isCancelled()) {
             event.setCancelled(true);
             return;
