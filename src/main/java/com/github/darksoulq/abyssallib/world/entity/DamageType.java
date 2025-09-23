@@ -1,12 +1,18 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.data.DamageTypeRegistryEntry;
 import io.papermc.paper.registry.event.RegistryComposeEvent;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.damage.DamageEffect;
 import org.bukkit.damage.DamageScaling;
+import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DeathMessageType;
+import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,31 +52,79 @@ public class DamageType {
         this.id = id;
     }
 
-    /**
-     * Sets the visual/audio effect shown when this damage is applied.
-     *
-     * @param effect The {@link DamageEffect} to use.
-     */
-    public void damageEffect(DamageEffect effect) {
-        this.effect = effect;
+    public DamageSource withCause(Entity cause) {
+        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
+                .getOrThrow(id.toNamespace());
+        return DamageSource.builder(dmg).withCausingEntity(cause).build();
+    }
+    public DamageSource withDirect(Entity direct) {
+        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
+                .getOrThrow(id.toNamespace());
+        return DamageSource.builder(dmg).withDirectEntity(direct).build();
+    }
+    public DamageSource withLocation(Location loc) {
+        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
+                .getOrThrow(id.toNamespace());
+        return DamageSource.builder(dmg).withDamageLocation(loc).build();
     }
 
-    /**
-     * Sets the damage scaling behavior for this damage type.
-     *
-     * @param scaling The {@link DamageScaling} strategy to apply.
-     */
-    public void damageScaling(DamageScaling scaling) {
-        this.scaling = scaling;
+    public static Builder builder(Identifier id) {
+        return new Builder(id);
     }
 
-    /**
-     * Sets the hunger exhaustion value applied when this damage is dealt.
-     *
-     * @param exhaustion The exhaustion amount (e.g., for sprinting penalty).
-     */
-    public void exhaustion(float exhaustion) {
-        this.exhaustion = exhaustion;
+    protected static class Builder {
+        private Identifier id;
+        private DamageEffect effect = DamageEffect.HURT;
+        private DamageScaling scaling = DamageScaling.NEVER;
+        private DeathMessageType messageType = DeathMessageType.DEFAULT;
+        private float exhaustion = 0;
+
+        /**
+         * Creates a new custom {@code DamageType} with the given identifier.
+         *
+         * @param id Unique namespaced ID for this damage type.
+         */
+        public Builder(Identifier id) {
+            this.id = id;
+        }
+
+        /**
+         * Sets the visual/audio effect shown when this damage is applied.
+         *
+         * @param effect The {@link DamageEffect} to use.
+         */
+        public Builder damageEffect(DamageEffect effect) {
+            this.effect = effect;
+            return this;
+        }
+
+        /**
+         * Sets the damage scaling behavior for this damage type.
+         *
+         * @param scaling The {@link DamageScaling} strategy to apply.
+         */
+        public Builder damageScaling(DamageScaling scaling) {
+            this.scaling = scaling;
+            return this;
+        }
+
+        /**
+         * Sets the hunger exhaustion value applied when this damage is dealt.
+         *
+         * @param exhaustion The exhaustion amount (e.g., for sprinting penalty).
+         */
+        public Builder exhaustion(float exhaustion) {
+            this.exhaustion = exhaustion;
+            return this;
+        }
+
+        public DamageType build() {
+            DamageType dmg = new DamageType(id);
+            dmg.scaling = scaling;
+            dmg.effect = effect;
+            dmg.exhaustion = exhaustion;
+            return dmg;
+        }
     }
 
     /**
