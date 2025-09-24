@@ -20,7 +20,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Build Push Embed JSON
+      - name: Build Push Embed
         id: build_push
         env:
           REPO: ${{ github.repository }}
@@ -30,39 +30,20 @@ jobs:
           COMMITS_JSON: ${{ toJson(github.event.commits) }}
         run: |
           MAX_COMMITS=5
-          COMMITS_FIELDS="[]"
-          COUNT=0
-          TOTAL=$(jq 'length' <<< "$COMMITS_JSON")
-
-          echo "$COMMITS_JSON" | jq -c '.[]' | while read commit; do
-            COUNT=$((COUNT+1))
-            HASH=$(echo "$commit" | jq -r '.id[:7]')
-            FULL_HASH=$(echo "$commit" | jq -r '.id')
-            COMMIT_URL="https://github.com/$REPO/commit/$FULL_HASH"
-            TITLE=$(echo "$commit" | jq -r '.message' | head -n1)
-            BODY=$(echo "$commit" | jq -r '.message' | tail -n +2)
-            if [ -n "$BODY" ]; then
-              BODY=$(echo "$BODY" | tr '\n' ' ' | cut -c1-200)
-              BODY="$BODY…"
-            fi
-            AUTHOR=$(echo "$commit" | jq -r '.author.username // .author.name')
-            AUTHOR_URL="https://github.com/$AUTHOR"
-
-            VALUE="[`${HASH}`]($COMMIT_URL) $TITLE — [${AUTHOR}]($AUTHOR_URL)"
-            if [ -n "$BODY" ]; then
-              VALUE="$VALUE\n$BODY"
-            fi
-
-            COMMITS_FIELDS=$(jq --arg name "Commit #$COUNT" --arg value "$VALUE" '. + [{name: $name, value: $value, inline: false}]' <<< "$COMMITS_FIELDS")
-
-            if [ $COUNT -ge $MAX_COMMITS ]; then
-              break
-            fi
-          done
-
-          if [ $TOTAL -gt $MAX_COMMITS ]; then
-            COMMITS_FIELDS=$(jq --arg url "$COMPARE" '. + [{name: "More", value: ("…and more commits, see [compare](" + $url + ")"), inline: false}]' <<< "$COMMITS_FIELDS")
-          fi
+          COMMITS_FIELDS=$(jq -nc --argjson commits "$COMMITS_JSON" --arg compare "$COMPARE" --arg repo "$REPO" '
+            def truncate(s; n): if s|length > n then (s[:n] + "…") else s end;
+            [
+              ($commits | to_entries | .[:$MAX_COMMITS] | map({
+                name: ("Commit #" + (.key + 1|tostring)),
+                value: (
+                  "[`" + (.value.id[0:7]) + "`](https://github.com/\($repo)/commit/" + .value.id + ") " +
+                  (.value.message | split("\n")[0]) + " — [" + (.value.author.username // .value.author.name) + "](https://github.com/" + (.value.author.username // .value.author.name) + ")" +
+                  ( (.value.message | split("\n")[1:] | join(" ") | truncate(200)) | if .=="" then "" else "\n" + . end )
+                ),
+                inline: false
+              }))
+            ] + if ($commits|length) > $MAX_COMMITS then [{"name":"More","value":"…and more commits, see [compare](" + $compare + ")","inline":false}] else [] end
+          ')
 
           BRANCH_URL="https://github.com/$REPO/tree/$REF"
           PUSHER_URL="https://github.com/$ACTOR"
@@ -86,8 +67,9 @@ jobs:
       - name: Send Push Embed
         run: |
           curl -X POST -H "Content-Type: application/json" \
-          -d '${{ steps.build_push.outputs.payload }}' \
-          https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+            -d '${{ steps.build_push.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+
   pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -99,8 +81,7 @@ jobs:
         run: |
           REPO=$(jq -r '.repository.full_name' <<< "$EVENT_JSON")
           TITLE=$(jq -r '.pull_request.title' <<< "$EVENT_JSON")
-          BODY=$(jq -r '.pull_request.body // "No description"' <<< "$EVENT_JSON")
-          BODY=$(echo "$BODY" | cut -c1-500)
+          BODY=$(jq -r '.pull_request.body // "No description"' <<< "$EVENT_JSON" | cut -c1-500)
           NUMBER=$(jq -r '.pull_request.number' <<< "$EVENT_JSON")
           ACTION=$(jq -r '.action' <<< "$EVENT_JSON")
           AUTHOR=$(jq -r '.pull_request.user.login' <<< "$EVENT_JSON")
@@ -138,8 +119,7 @@ jobs:
           EVENT_JSON: ${{ toJson(github.event) }}
         run: |
           TITLE=$(jq -r '.issue.title' <<< "$EVENT_JSON")
-          BODY=$(jq -r '.issue.body // "No description"' <<< "$EVENT_JSON")
-          BODY=$(echo "$BODY" | cut -c1-500)
+          BODY=$(jq -r '.issue.body // "No description"' <<< "$EVENT_JSON" | cut -c1-500)
           NUMBER=$(jq -r '.issue.number' <<< "$EVENT_JSON")
           ACTION=$(jq -r '.action' <<< "$EVENT_JSON")
           AUTHOR=$(jq -r '.issue.user.login' <<< "$EVENT_JSON")
@@ -181,8 +161,7 @@ jobs:
           AUTHOR=$(jq -r '.comment.user.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON")
-          BODY=$(echo "$BODY" | cut -c1-500)
+          BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON" | cut -c1-500)
           HTML=$(jq -r '.comment.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg title "$TITLE" --arg number "$NUMBER" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg body "$BODY" --arg html "$HTML" '[
@@ -219,8 +198,7 @@ jobs:
           AUTHOR=$(jq -r '.comment.user.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON")
-          BODY=$(echo "$BODY" | cut -c1-500)
+          BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON" | cut -c1-500)
           HTML=$(jq -r '.comment.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg title "$TITLE" --arg number "$NUMBER" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg body "$BODY" --arg html "$HTML" '[
