@@ -24,8 +24,9 @@ jobs:
         id: commits
         run: |
           echo "COMMITS<<EOF" >> $GITHUB_ENV
-          jq -r '.commits[] | "- " + .id[0:7] + " " + (.message | gsub("`"; "\\`")) + " (" + .author.name + ")"' <<< '${{ toJson(github.event.commits) }}' >> $GITHUB_ENV
+          jq -r '.[] | "- " + .id[0:7] + " " + (.message | gsub("`"; "\\`")) + " (" + .author.name + ")"' <<< '${{ toJson(github.event.commits) }}' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+
 
       - name: Send push notification
         uses: Ilshidur/action-discord@master
