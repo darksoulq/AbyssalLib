@@ -39,105 +39,165 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Send Push Embed
-        uses: discord-actions/discord-webhook@v1
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "Push to ${{ github.repository }}",
+                "description": "**Branch:** `${{ github.ref_name }}`\n**Pusher:** `${{ github.actor }}`",
+                "color": 3066993,
+                "fields": [
+                  {
+                    "name": "Commits",
+                    "value": "${{ env.COMMITS }}",
+                    "inline": false
+                  },
+                  {
+                    "name": "Compare",
+                    "value": "${{ github.event.compare }}",
+                    "inline": false
+                  }
+                ],
+                "url": "https://github.com/${{ github.repository }}"
+              }
+            ]
         with:
-          webhook_id: ${{ secrets.DISCORD_MAIN_ID }}
-          webhook_token: ${{ secrets.DISCORD_MAIN_TOKEN }}
-          payload: |
-            {
-              "embeds": [
-                {
-                  "title": "Push to ${{ github.repository }}",
-                  "description": "**Branch:** `${{ github.ref_name }}`\n**Pusher:** `${{ github.actor }}`",
-                  "color": 3066993,
-                  "fields": [
-                    {
-                      "name": "Commits",
-                      "value": "${{ env.COMMITS }}",
-                      "inline": false
-                    },
-                    {
-                      "name": "Compare",
-                      "value": "${{ github.event.compare }}",
-                      "inline": false
-                    }
-                  ],
-                  "url": "https://github.com/${{ github.repository }}"
-                }
-              ]
-            }
+          args: ""
 
   pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Send PR Embed
-        uses: discord-actions/discord-webhook@v1
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "Pull Request ${{ github.event.action }}: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}",
+                "description": "${{ github.event.pull_request.body || 'No description' }}",
+                "color": 3447003,
+                "fields": [
+                  {"name": "Author", "value": "${{ github.event.pull_request.user.login }}", "inline": true},
+                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                ],
+                "url": "${{ github.event.pull_request.html_url }}"
+              }
+            ]
         with:
-          webhook_id: ${{ secrets.DISCORD_PR_ID }}
-          webhook_token: ${{ secrets.DISCORD_PR_TOKEN }}
-          payload: |
-            {
-              "embeds": [
-                {
-                  "title": "Pull Request ${{ github.event.action }}: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}",
-                  "description": "${{ github.event.pull_request.body || 'No description' }}",
-                  "color": 3447003,
-                  "fields": [
-                    {"name": "Author", "value": "${{ github.event.pull_request.user.login }}", "inline": true},
-                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                  ],
-                  "url": "${{ github.event.pull_request.html_url }}"
-                }
-              ]
-            }
+          args: ""
 
   issue:
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
       - name: Send Issue Embed
-        uses: discord-actions/discord-webhook@v1
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "Issue ${{ github.event.action }}: #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
+                "description": "${{ github.event.issue.body || 'No description' }}",
+                "color": 15158332,
+                "fields": [
+                  {"name": "Author", "value": "${{ github.event.issue.user.login }}", "inline": true},
+                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                ],
+                "url": "${{ github.event.issue.html_url }}"
+              }
+            ]
         with:
-          webhook_id: ${{ secrets.DISCORD_ISSUES_ID }}
-          webhook_token: ${{ secrets.DISCORD_ISSUES_TOKEN }}
-          payload: |
-            {
-              "embeds": [
-                {
-                  "title": "Issue ${{ github.event.action }}: #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
-                  "description": "${{ github.event.issue.body || 'No description' }}",
-                  "color": 15158332,
-                  "fields": [
-                    {"name": "Author", "value": "${{ github.event.issue.user.login }}", "inline": true},
-                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                  ],
-                  "url": "${{ github.event.issue.html_url }}"
-                }
-              ]
-            }
+          args: ""
 
   issue_comment:
     if: github.event_name == 'issue_comment'
     runs-on: ubuntu-latest
     steps:
-      - name: Send Comment Embed
-        uses: discord-actions/discord-webhook@v1
+      - name: Send Issue/PR Comment Embed
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "New Comment on #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
+                "description": "${{ github.event.comment.body }}",
+                "color": 15844367,
+                "fields": [
+                  {"name": "Author", "value": "${{ github.event.comment.user.login }}", "inline": true},
+                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                ],
+                "url": "${{ github.event.comment.html_url }}"
+              }
+            ]
         with:
-          webhook_id: ${{ secrets.DISCORD_ISSUES_ID }}
-          webhook_token: ${{ secrets.DISCORD_ISSUES_TOKEN }}
-          payload: |
-            {
-              "embeds": [
-                {
-                  "title": "New Comment on #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
-                  "description": "${{ github.event.comment.body }}",
-                  "color": 15844367,
-                  "fields": [
-                    {"name": "Author", "value": "${{ github.event.comment.user.login }}", "inline": true},
-                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                  ],
-                  "url": "${{ github.event.comment.html_url }}"
-                }
-              ]
-            }
+          args: ""
+
+  pr_review_comment:
+    if: github.event_name == 'pull_request_review_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR Review Comment Embed
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "New Review Comment on #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}",
+                "description": "${{ github.event.comment.body }}",
+                "color": 10181046,
+                "fields": [
+                  {"name": "Author", "value": "${{ github.event.comment.user.login }}", "inline": true},
+                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                ],
+                "url": "${{ github.event.comment.html_url }}"
+              }
+            ]
+        with:
+          args: ""
+
+  star:
+    if: github.event_name == 'watch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Star Embed
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "New Star",
+                "description": "**User:** `${{ github.actor }}` starred `${{ github.repository }}`",
+                "color": 16776960,
+                "url": "https://github.com/${{ github.repository }}"
+              }
+            ]
+        with:
+          args: ""
+
+  fork:
+    if: github.event_name == 'fork'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Fork Embed
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "New Fork",
+                "description": "**User:** `${{ github.actor }}` forked `${{ github.repository }}`",
+                "color": 3066993,
+                "url": "https://github.com/${{ github.actor }}/$(basename ${{ github.repository }})"
+              }
+            ]
+        with:
+          args: ""
