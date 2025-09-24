@@ -21,13 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build Push Embed JSON
+        id: build_push
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          COMPARE: ${{ github.event.compare }}
+          COMMITS_JSON: ${{ toJson(github.event.commits) }}
         run: |
-          REPO="${GITHUB_REPOSITORY}"
-          REF="${GITHUB_REF_NAME}"
-          ACTOR="${GITHUB_ACTOR}"
-          COMPARE="${GITHUB_EVENT_COMPARE}"
-          COMMITS_JSON="${GITHUB_EVENT_COMMITS}"
-
           MAX_COMMITS=5
           COMMITS_FIELDS="[]"
           COUNT=0
@@ -39,13 +40,15 @@ jobs:
             TITLE=$(echo "$MSG" | head -n1)
             BODY=$(echo "$MSG" | tail -n +2)
             if [ -n "$BODY" ]; then
-              BODY=$(echo "$BODY" | tr '\n' ' ' | cut -c1-200)
+              BODY=$(echo "$BODY" | tr '\n' ' ')
+              BODY=$(echo "$BODY" | cut -c1-200)
               BODY="$BODY…"
             fi
 
             HASH=${row:0:7}
             COMMIT_URL="https://github.com/$REPO/commit/$row"
             AUTHOR=$(jq -r ".[] | select(.id | startswith(\"$row\")) | .author.username // .author.name" <<< "$COMMITS_JSON")
+            AVATAR="https://github.com/$AUTHOR.png"
             AUTHOR_URL="https://github.com/$AUTHOR"
 
             VALUE="[`${HASH}`]($COMMIT_URL) $TITLE — [${AUTHOR}]($AUTHOR_URL)"
@@ -79,28 +82,35 @@ jobs:
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > push_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send Push Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @push_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_push.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
 
   pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Build PR Embed
+        id: build_pr
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
-          EVENT_JSON="${GITHUB_EVENT_PATH}"
-          REPO=$(jq -r '.repository.full_name' $EVENT_JSON)
-          TITLE=$(jq -r '.pull_request.title' $EVENT_JSON)
-          BODY=$(jq -r '.pull_request.body // "No description"' $EVENT_JSON | cut -c1-500)
-          NUMBER=$(jq -r '.pull_request.number' $EVENT_JSON)
-          ACTION=$(jq -r '.action' $EVENT_JSON)
-          AUTHOR=$(jq -r '.pull_request.user.login' $EVENT_JSON)
+          REPO=$(jq -r '.repository.full_name' <<< "$EVENT_JSON")
+          TITLE=$(jq -r '.pull_request.title' <<< "$EVENT_JSON")
+          BODY=$(jq -r '.pull_request.body // "No description"' <<< "$EVENT_JSON")
+          BODY=$(echo "$BODY" | cut -c1-500)
+          NUMBER=$(jq -r '.pull_request.number' <<< "$EVENT_JSON")
+          ACTION=$(jq -r '.action' <<< "$EVENT_JSON")
+          AUTHOR=$(jq -r '.pull_request.user.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          HTML=$(jq -r '.pull_request.html_url' $EVENT_JSON)
+          HTML=$(jq -r '.pull_request.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg repo "$REPO" --arg title "$TITLE" --arg body "$BODY" --arg number "$NUMBER" --arg action "$ACTION" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg html "$HTML" '[
             {
@@ -112,27 +122,34 @@ jobs:
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > pr_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send PR Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @pr_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_pr.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
 
   issue:
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
       - name: Build Issue Embed
+        id: build_issue
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
-          EVENT_JSON="${GITHUB_EVENT_PATH}"
-          TITLE=$(jq -r '.issue.title' $EVENT_JSON)
-          BODY=$(jq -r '.issue.body // "No description"' $EVENT_JSON | cut -c1-500)
-          NUMBER=$(jq -r '.issue.number' $EVENT_JSON)
-          ACTION=$(jq -r '.action' $EVENT_JSON)
-          AUTHOR=$(jq -r '.issue.user.login' $EVENT_JSON)
+          TITLE=$(jq -r '.issue.title' <<< "$EVENT_JSON")
+          BODY=$(jq -r '.issue.body // "No description"' <<< "$EVENT_JSON")
+          BODY=$(echo "$BODY" | cut -c1-500)
+          NUMBER=$(jq -r '.issue.number' <<< "$EVENT_JSON")
+          ACTION=$(jq -r '.action' <<< "$EVENT_JSON")
+          AUTHOR=$(jq -r '.issue.user.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          HTML=$(jq -r '.issue.html_url' $EVENT_JSON)
+          HTML=$(jq -r '.issue.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg title "$TITLE" --arg body "$BODY" --arg number "$NUMBER" --arg action "$ACTION" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg html "$HTML" '[
             {
@@ -144,26 +161,33 @@ jobs:
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > issue_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send Issue Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @issue_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_issue.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
 
   issue_comment:
     if: github.event_name == 'issue_comment'
     runs-on: ubuntu-latest
     steps:
       - name: Build Issue Comment Embed
+        id: build_comment
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
-          EVENT_JSON="${GITHUB_EVENT_PATH}"
-          TITLE=$(jq -r '.issue.title' $EVENT_JSON)
-          NUMBER=$(jq -r '.issue.number' $EVENT_JSON)
-          AUTHOR=$(jq -r '.comment.user.login' $EVENT_JSON)
+          TITLE=$(jq -r '.issue.title' <<< "$EVENT_JSON")
+          NUMBER=$(jq -r '.issue.number' <<< "$EVENT_JSON")
+          AUTHOR=$(jq -r '.comment.user.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          BODY=$(jq -r '.comment.body' $EVENT_JSON | cut -c1-500)
-          HTML=$(jq -r '.comment.html_url' $EVENT_JSON)
+          BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON")
+          BODY=$(echo "$BODY" | cut -c1-500)
+          HTML=$(jq -r '.comment.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg title "$TITLE" --arg number "$NUMBER" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg body "$BODY" --arg html "$HTML" '[
             {
@@ -175,26 +199,33 @@ jobs:
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > comment_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Send Issue Comment Embed
+      - name: Send Comment Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @comment_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_comment.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
 
   pr_review_comment:
     if: github.event_name == 'pull_request_review_comment'
     runs-on: ubuntu-latest
     steps:
       - name: Build PR Review Comment Embed
+        id: build_pr_comment
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
-          EVENT_JSON="${GITHUB_EVENT_PATH}"
-          TITLE=$(jq -r '.pull_request.title' $EVENT_JSON)
-          NUMBER=$(jq -r '.pull_request.number' $EVENT_JSON)
-          AUTHOR=$(jq -r '.comment.user.login' $EVENT_JSON)
+          TITLE=$(jq -r '.pull_request.title' <<< "$EVENT_JSON")
+          NUMBER=$(jq -r '.pull_request.number' <<< "$EVENT_JSON")
+          AUTHOR=$(jq -r '.comment.user.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          BODY=$(jq -r '.comment.body' $EVENT_JSON | cut -c1-500)
-          HTML=$(jq -r '.comment.html_url' $EVENT_JSON)
+          BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON")
+          BODY=$(echo "$BODY" | cut -c1-500)
+          HTML=$(jq -r '.comment.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg title "$TITLE" --arg number "$NUMBER" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg body "$BODY" --arg html "$HTML" '[
             {
@@ -206,53 +237,65 @@ jobs:
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > pr_comment_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send PR Review Comment Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @pr_comment_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_pr_comment.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
 
   star:
     if: github.event_name == 'watch'
     runs-on: ubuntu-latest
     steps:
       - name: Build Star Embed
+        id: build_star
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
-          EVENT_JSON="${GITHUB_EVENT_PATH}"
-          REPO=$(jq -r '.repository.full_name' $EVENT_JSON)
-          AUTHOR=$(jq -r '.sender.login' $EVENT_JSON)
+          REPO=$(jq -r '.repository.full_name' <<< "$EVENT_JSON")
+          AUTHOR=$(jq -r '.sender.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          URL=$(jq -r '.repository.html_url' $EVENT_JSON)
+          URL=$(jq -r '.repository.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg repo "$REPO" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg url "$URL" '[
             {
               author: { name: $author, url: $author_url, icon_url: $avatar },
               title: "Starred Repository",
-              url: $URL,
-              description: ("[" + $author + "](" + $author_url + ") starred [" + $repo + "](" + $URL + ")"),
+              url: $url,
+              description: ("[" + $author + "](" + $author_url + ") starred [" + $repo + "](" + $url + ")"),
               color: 1752220
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > star_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send Star Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @star_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_star.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
 
   fork:
     if: github.event_name == 'fork'
     runs-on: ubuntu-latest
     steps:
       - name: Build Fork Embed
+        id: build_fork
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
-          EVENT_JSON="${GITHUB_EVENT_PATH}"
-          REPO=$(jq -r '.repository.full_name' $EVENT_JSON)
-          AUTHOR=$(jq -r '.sender.login' $EVENT_JSON)
+          REPO=$(jq -r '.repository.full_name' <<< "$EVENT_JSON")
+          AUTHOR=$(jq -r '.sender.login' <<< "$EVENT_JSON")
           AVATAR="https://github.com/$AUTHOR.png"
           AUTHOR_URL="https://github.com/$AUTHOR"
-          FORK_URL=$(jq -r '.forkee.html_url' $EVENT_JSON)
+          FORK_URL=$(jq -r '.forkee.html_url' <<< "$EVENT_JSON")
 
           EMBEDS=$(jq -nc --arg repo "$REPO" --arg author "$AUTHOR" --arg author_url "$AUTHOR_URL" --arg avatar "$AVATAR" --arg fork "$FORK_URL" '[
             {
@@ -264,8 +307,12 @@ jobs:
             }
           ]')
 
-          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' > fork_payload.json
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          jq -nc --argjson embeds "$EMBEDS" '{username:"GitHub", avatar_url:"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", embeds:$embeds}' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send Fork Embed
         run: |
-          curl -X POST -H "Content-Type: application/json" -d @fork_payload.json https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.build_fork.outputs.payload }}' \
+            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
