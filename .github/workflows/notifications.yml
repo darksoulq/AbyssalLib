@@ -20,49 +20,48 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Format commits with extended messages
-        id: commits
+      - name: Build push embed JSON
+        id: build_push
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          COMPARE: ${{ github.event.compare }}
+          COMMITS_JSON: ${{ toJson(github.event.commits) }}
         run: |
           COMMITS=""
-          for c in $(jq -r '.[].id' <<< '${{ toJson(github.event.commits) }}'); do
-            MSG=$(jq -r ".[] | select(.id | startswith(\"$c\")) | .message" <<< '${{ toJson(github.event.commits) }}')
-            TITLE=$(echo "$MSG" | head -n1)
-            BODY=$(echo "$MSG" | tail -n +2)
-            COMMIT_TEXT="**${c:0:7}**: $TITLE"
+          for id in $(jq -r '.[].id' <<< "$COMMITS_JSON"); do
+            MSG=$(jq -r ".[] | select(.id | startswith(\"$id\")) | .message" <<< "$COMMITS_JSON")
+            TITLE=$(echo "$MSG" | sed -n '1p')
+            BODY=$(echo "$MSG" | sed -n '2,$p')
             if [ -n "$BODY" ]; then
-              COMMIT_TEXT="$COMMIT_TEXT\n$BODY"
+              COMMIT_TEXT="**${id:0:7}**: $TITLE\n$BODY"
+            else
+              COMMIT_TEXT="**${id:0:7}**: $TITLE"
             fi
-            COMMITS="$COMMITS$COMMIT_TEXT\n\n"
+            COMMITS="${COMMITS}${COMMIT_TEXT}\n\n"
           done
-          echo "COMMITS<<EOF" >> $GITHUB_ENV
-          echo -e "$COMMITS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          EMBEDS=$(jq -nc --arg repo "$REPO" --arg ref "$REF" --arg pusher "$ACTOR" --arg commits "$COMMITS" --arg compare "$COMPARE" '[
+            {
+              title: ("Push to " + $repo),
+              description: ("**Branch:** `" + $ref + "`\n**Pusher:** `" + $pusher + "`"),
+              color: 3066993,
+              fields: [
+                { name: "Commits", value: $commits, inline: false },
+                { name: "Compare", value: $compare, inline: false }
+              ],
+              url: ("https://github.com/" + $repo)
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send Push Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "Push to ${{ github.repository }}",
-                "description": "**Branch:** `${{ github.ref_name }}`\n**Pusher:** `${{ github.actor }}`",
-                "color": 3066993,
-                "fields": [
-                  {
-                    "name": "Commits",
-                    "value": "${{ env.COMMITS }}",
-                    "inline": false
-                  },
-                  {
-                    "name": "Compare",
-                    "value": "${{ github.event.compare }}",
-                    "inline": false
-                  }
-                ],
-                "url": "https://github.com/${{ github.repository }}"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_push.outputs.embeds }}
         with:
           args: ""
 
@@ -70,23 +69,39 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - name: Build PR embed JSON
+        id: build_pr
+        env:
+          REPO: ${{ github.repository }}
+          PR_JSON: ${{ toJson(github.event.pull_request) }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          TITLE=$(jq -r '.title' <<< "$PR_JSON")
+          BODY=$(jq -r '.body // ""' <<< "$PR_JSON")
+          AUTHOR=$(jq -r '.user.login' <<< "$PR_JSON")
+          HTML=$(jq -r '.html_url' <<< "$PR_JSON")
+          NUMBER=$(jq -r '.number' <<< "$PR_JSON")
+          EMBEDS=$(jq -nc --arg title "$TITLE" --arg body "$BODY" --arg author "$AUTHOR" --arg repo "$REPO" --arg html "$HTML" --arg number "$NUMBER" --arg action "$ACTION" '[
+            {
+              title: ("Pull Request " + $action + ": #" + $number + " " + $title),
+              description: $body,
+              color: 3447003,
+              fields: [
+                { name: "Author", value: $author, inline: true },
+                { name: "Repository", value: $repo, inline: true }
+              ],
+              url: $html
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send PR Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "Pull Request ${{ github.event.action }}: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}",
-                "description": "${{ github.event.pull_request.body || 'No description' }}",
-                "color": 3447003,
-                "fields": [
-                  {"name": "Author", "value": "${{ github.event.pull_request.user.login }}", "inline": true},
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                ],
-                "url": "${{ github.event.pull_request.html_url }}"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_pr.outputs.embeds }}
         with:
           args: ""
 
@@ -94,23 +109,39 @@ jobs:
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
+      - name: Build Issue embed JSON
+        id: build_issue
+        env:
+          REPO: ${{ github.repository }}
+          ISSUE_JSON: ${{ toJson(github.event.issue) }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          TITLE=$(jq -r '.title' <<< "$ISSUE_JSON")
+          BODY=$(jq -r '.body // ""' <<< "$ISSUE_JSON")
+          AUTHOR=$(jq -r '.user.login' <<< "$ISSUE_JSON")
+          HTML=$(jq -r '.html_url' <<< "$ISSUE_JSON")
+          NUMBER=$(jq -r '.number' <<< "$ISSUE_JSON")
+          EMBEDS=$(jq -nc --arg title "$TITLE" --arg body "$BODY" --arg author "$AUTHOR" --arg repo "$REPO" --arg html "$HTML" --arg number "$NUMBER" --arg action "$ACTION" '[
+            {
+              title: ("Issue " + $action + ": #" + $number + " " + $title),
+              description: $body,
+              color: 15158332,
+              fields: [
+                { name: "Author", value: $author, inline: true },
+                { name: "Repository", value: $repo, inline: true }
+              ],
+              url: $html
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send Issue Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "Issue ${{ github.event.action }}: #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
-                "description": "${{ github.event.issue.body || 'No description' }}",
-                "color": 15158332,
-                "fields": [
-                  {"name": "Author", "value": "${{ github.event.issue.user.login }}", "inline": true},
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                ],
-                "url": "${{ github.event.issue.html_url }}"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_issue.outputs.embeds }}
         with:
           args: ""
 
@@ -118,23 +149,38 @@ jobs:
     if: github.event_name == 'issue_comment'
     runs-on: ubuntu-latest
     steps:
-      - name: Send Issue/PR Comment Embed
+      - name: Build Issue comment embed JSON
+        id: build_ic
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
+        run: |
+          ISSUE_TITLE=$(jq -r '.issue.title' <<< "$EVENT_JSON")
+          ISSUE_NUMBER=$(jq -r '.issue.number' <<< "$EVENT_JSON")
+          COMMENT_BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON")
+          COMMENT_AUTHOR=$(jq -r '.comment.user.login' <<< "$EVENT_JSON")
+          COMMENT_URL=$(jq -r '.comment.html_url' <<< "$EVENT_JSON")
+          REPO=$(jq -r '.repository.full_name' <<< "$EVENT_JSON")
+          EMBEDS=$(jq -nc --arg title "$ISSUE_TITLE" --arg body "$COMMENT_BODY" --arg author "$COMMENT_AUTHOR" --arg repo "$REPO" --arg url "$COMMENT_URL" --arg number "$ISSUE_NUMBER" '[
+            {
+              title: ("New Comment on #" + $number + " " + $title),
+              description: $body,
+              color: 15844367,
+              fields: [
+                { name: "Author", value: $author, inline: true },
+                { name: "Repository", value: $repo, inline: true }
+              ],
+              url: $url
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send Issue Comment Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "New Comment on #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
-                "description": "${{ github.event.comment.body }}",
-                "color": 15844367,
-                "fields": [
-                  {"name": "Author", "value": "${{ github.event.comment.user.login }}", "inline": true},
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                ],
-                "url": "${{ github.event.comment.html_url }}"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_ic.outputs.embeds }}
         with:
           args: ""
 
@@ -142,23 +188,38 @@ jobs:
     if: github.event_name == 'pull_request_review_comment'
     runs-on: ubuntu-latest
     steps:
+      - name: Build PR review comment embed JSON
+        id: build_prc
+        env:
+          EVENT_JSON: ${{ toJson(github.event) }}
+        run: |
+          PR_TITLE=$(jq -r '.pull_request.title' <<< "$EVENT_JSON")
+          PR_NUMBER=$(jq -r '.pull_request.number' <<< "$EVENT_JSON")
+          COMMENT_BODY=$(jq -r '.comment.body' <<< "$EVENT_JSON")
+          COMMENT_AUTHOR=$(jq -r '.comment.user.login' <<< "$EVENT_JSON")
+          COMMENT_URL=$(jq -r '.comment.html_url' <<< "$EVENT_JSON")
+          REPO=$(jq -r '.repository.full_name' <<< "$EVENT_JSON")
+          EMBEDS=$(jq -nc --arg title "$PR_TITLE" --arg body "$COMMENT_BODY" --arg author "$COMMENT_AUTHOR" --arg repo "$REPO" --arg url "$COMMENT_URL" --arg number "$PR_NUMBER" '[
+            {
+              title: ("New Review Comment on PR #" + $number + " " + $title),
+              description: $body,
+              color: 10181046,
+              fields: [
+                { name: "Author", value: $author, inline: true },
+                { name: "Repository", value: $repo, inline: true }
+              ],
+              url: $url
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send PR Review Comment Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "New Review Comment on #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}",
-                "description": "${{ github.event.comment.body }}",
-                "color": 10181046,
-                "fields": [
-                  {"name": "Author", "value": "${{ github.event.comment.user.login }}", "inline": true},
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                ],
-                "url": "${{ github.event.comment.html_url }}"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_prc.outputs.embeds }}
         with:
           args: ""
 
@@ -166,19 +227,29 @@ jobs:
     if: github.event_name == 'watch'
     runs-on: ubuntu-latest
     steps:
+      - name: Build star embed JSON
+        id: build_star
+        env:
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          EMBEDS=$(jq -nc --arg repo "$REPO" --arg actor "$ACTOR" '[
+            {
+              title: "New Star",
+              description: ("**User:** `" + $actor + "` starred `" + $repo + "`"),
+              color: 16776960,
+              url: ("https://github.com/" + $repo)
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send Star Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "New Star",
-                "description": "**User:** `${{ github.actor }}` starred `${{ github.repository }}`",
-                "color": 16776960,
-                "url": "https://github.com/${{ github.repository }}"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_star.outputs.embeds }}
         with:
           args: ""
 
@@ -186,18 +257,28 @@ jobs:
     if: github.event_name == 'fork'
     runs-on: ubuntu-latest
     steps:
+      - name: Build fork embed JSON
+        id: build_fork
+        env:
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          EMBEDS=$(jq -nc --arg repo "$REPO" --arg actor "$ACTOR" '[
+            {
+              title: "New Fork",
+              description: ("**User:** `" + $actor + "` forked `" + $repo + "`"),
+              color: 3066993,
+              url: ("https://github.com/" + $actor + "/" + ($repo | capture("([^/]+)$") | .[0]))
+            }
+          ]')
+          echo "embeds<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "$EMBEDS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send Fork Embed
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
-          DISCORD_EMBEDS: |
-            [
-              {
-                "title": "New Fork",
-                "description": "**User:** `${{ github.actor }}` forked `${{ github.repository }}`",
-                "color": 3066993,
-                "url": "https://github.com/${{ github.actor }}/$(basename ${{ github.repository }})"
-              }
-            ]
+          DISCORD_EMBEDS: ${{ steps.build_fork.outputs.embeds }}
         with:
           args: ""
