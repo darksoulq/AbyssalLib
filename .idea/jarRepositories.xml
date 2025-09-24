@@ -66,5 +66,10 @@
       <option name="name" value="maven" />
       <option name="url" value="https://repo.nexomc.com/releases" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven2" />
+      <option name="name" value="maven2" />
+      <option name="url" value="https://maven.devs.beer/" />
+    </remote-repository>
   </component>
 </project>

@@ -10,5 +10,4 @@ public class Items {
 
     public static final Holder<Item> INVISIBLE_ITEM = ITEMS.register("invisible",
             (id) -> new Item(id, Material.STICK));
-    public static final Holder<Item> TEST = ITEMS.register("test", TestItem::new);
 }
