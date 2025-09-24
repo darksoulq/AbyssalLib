@@ -29,8 +29,9 @@ jobs:
 
       - name: Send push notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
           message: |
             **Push to `${{ github.repository }}`**
             Branch: `${{ github.ref_name }}`
@@ -48,8 +49,9 @@ jobs:
     steps:
       - name: Send PR notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
           message: |
             **Pull Request ${{ github.event.action }}**
             Repository: `${{ github.repository }}`
@@ -66,8 +68,9 @@ jobs:
     steps:
       - name: Send Issue notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
           message: |
             **Issue ${{ github.event.action }}**
             Repository: `${{ github.repository }}`
@@ -84,8 +87,9 @@ jobs:
     steps:
       - name: Send Issue/PR comment notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
           message: |
             **New Comment**
             Repository: `${{ github.repository }}`
@@ -102,8 +106,9 @@ jobs:
     steps:
       - name: Send PR review comment notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
           message: |
             **New Review Comment**
             Repository: `${{ github.repository }}`
@@ -120,8 +125,9 @@ jobs:
     steps:
       - name: Send Star notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
           message: |
             **New Star**
             Repository: `${{ github.repository }}`
@@ -134,8 +140,9 @@ jobs:
     steps:
       - name: Send Fork notification
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
         with:
-          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
           message: |
             **New Fork**
             Repository: `${{ github.repository }}`
