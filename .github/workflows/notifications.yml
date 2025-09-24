@@ -1,0 +1,179 @@
+name: Repository Notifications
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    types: [opened, closed, reopened, merged]
+  issues:
+    types: [opened, closed, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  watch:
+    types: [started]
+  fork:
+
+jobs:
+  push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Format commits with extended messages
+        id: commits
+        run: |
+          COMMITS=""
+          for c in $(jq -r '.[].id' <<< '${{ toJson(github.event.commits) }}'); do
+            MSG=$(jq -r ".[] | select(.id | startswith(\"$c\")) | .message" <<< '${{ toJson(github.event.commits) }}')
+            TITLE=$(echo "$MSG" | head -n1)
+            BODY=$(echo "$MSG" | tail -n +2)
+            COMMIT_TEXT="**${c:0:7}**: $TITLE"
+            if [ -n "$BODY" ]; then
+              COMMIT_TEXT="$COMMIT_TEXT\n$BODY"
+            fi
+            COMMITS="$COMMITS$COMMIT_TEXT\n\n"
+          done
+          echo "COMMITS<<EOF" >> $GITHUB_ENV
+          echo -e "$COMMITS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Send Push Embed
+        uses: rtCamp/action-discord-webhook@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_MAIN }}
+          payload: |
+            {
+              "embeds": [
+                {
+                  "title": "Push to ${{ github.repository }}",
+                  "description": "**Branch:** `${{ github.ref_name }}`\n**Pusher:** `${{ github.actor }}`",
+                  "color": 3066993,
+                  "fields": [
+                    {
+                      "name": "Commits",
+                      "value": "${{ env.COMMITS }}",
+                      "inline": false
+                    },
+                    {
+                      "name": "Compare",
+                      "value": "${{ github.event.compare }}",
+                      "inline": false
+                    }
+                  ],
+                  "url": "https://github.com/${{ github.repository }}"
+                }
+              ]
+            }
+
+  pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR Embed
+        uses: rtCamp/action-discord-webhook@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_PR }}
+          payload: |
+            {
+              "embeds": [
+                {
+                  "title": "Pull Request ${{ github.event.action }}: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}",
+                  "description": "${{ github.event.pull_request.body || 'No description' }}",
+                  "color": 3447003,
+                  "fields": [
+                    {"name": "Author", "value": "${{ github.event.pull_request.user.login }}", "inline": true},
+                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                  ],
+                  "url": "${{ github.event.pull_request.html_url }}"
+                }
+              ]
+            }
+
+  issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Issue Embed
+        uses: rtCamp/action-discord-webhook@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_ISSUES }}
+          payload: |
+            {
+              "embeds": [
+                {
+                  "title": "Issue ${{ github.event.action }}: #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
+                  "description": "${{ github.event.issue.body || 'No description' }}",
+                  "color": 15158332,
+                  "fields": [
+                    {"name": "Author", "value": "${{ github.event.issue.user.login }}", "inline": true},
+                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                  ],
+                  "url": "${{ github.event.issue.html_url }}"
+                }
+              ]
+            }
+
+  issue_comment:
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Comment Embed
+        uses: rtCamp/action-discord-webhook@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_ISSUES }}
+          payload: |
+            {
+              "embeds": [
+                {
+                  "title": "New Comment on #${{ github.event.issue.number }} ${{ github.event.issue.title }}",
+                  "description": "${{ github.event.comment.body }}",
+                  "color": 15844367,
+                  "fields": [
+                    {"name": "Author", "value": "${{ github.event.comment.user.login }}", "inline": true},
+                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                  ],
+                  "url": "${{ github.event.comment.html_url }}"
+                }
+              ]
+            }
+
+  star:
+    if: github.event_name == 'watch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Star Embed
+        uses: rtCamp/action-discord-webhook@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_MAIN }}
+          payload: |
+            {
+              "embeds": [
+                {
+                  "title": "New Star",
+                  "description": "**Repository:** `${{ github.repository }}`\n**User:** `${{ github.actor }}`",
+                  "color": 16776960,
+                  "url": "https://github.com/${{ github.repository }}"
+                }
+              ]
+            }
+
+  fork:
+    if: github.event_name == 'fork'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Fork Embed
+        uses: rtCamp/action-discord-webhook@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_MAIN }}
+          payload: |
+            {
+              "embeds": [
+                {
+                  "title": "New Fork",
+                  "description": "**Repository:** `${{ github.repository }}`\n**User:** `${{ github.actor }}`",
+                  "color": 65280,
+                  "url": "https://github.com/${{ github.actor }}/$(basename ${{ github.repository }})"
+                }
+              ]
+            }
