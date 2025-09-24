@@ -8,7 +8,7 @@ import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.internal.UseContext;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
-import com.github.darksoulq.abyssallib.world.data.tag.ItemTag;
+import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.*;
@@ -91,12 +91,11 @@ public class Item implements Cloneable {
         return componentMap.hasData(clazz);
     }
     public boolean hasTag(Identifier id) {
-        ItemTag tag = Registries.ITEM_TAGS.get(id.toString());
-        if (tag == null) {
-            AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id.toString());
+        if (!(Registries.TAGS.get(id.toString()) instanceof ItemTag tag)) {
+            AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
             return false;
         }
-        return tag.contains(this);
+        return tag.contains(stack);
     }
 
     public ActionResult postMine(LivingEntity source, Block target) {

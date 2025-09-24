@@ -38,6 +38,9 @@ repositories {
     maven {
         url = uri("https://repo.nexomc.com/releases")
     }
+    maven {
+        url = uri("https://maven.devs.beer/")
+    }
 }
 
 dependencies {
@@ -49,6 +52,7 @@ dependencies {
 
     compileOnly('com.magmaguy:ResourcePackManager:1.5.0')
     compileOnly("com.nexomc:nexo:1.12.0-dev")
+//    compileOnly("dev.lone:api-itemsadder:4.0.10")
 }
 
 tasks.withType(JavaCompile).configureEach {

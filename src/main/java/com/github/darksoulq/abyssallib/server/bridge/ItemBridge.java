@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.item.AbyssalLibProvider;
@@ -43,7 +42,6 @@ public class ItemBridge {
             } else {
                 return get(Identifier.of(parts[0], parts[1], parts[2]));
             }
-
         }
         return ItemStack.deserializeBytes(Base64.getDecoder().decode(id));
     }
@@ -62,6 +60,11 @@ public class ItemBridge {
             return Identifier.of(entry.getKey() + ":" + base.namespace(), base.path());
         }
         return null;
+    }
+    public static String getIdAsString(ItemStack stack) {
+        Identifier id = getId(stack);
+        if (id == null) return asString(stack);
+        return id.toString();
     }
 
     public static String asString(ItemStack item) {

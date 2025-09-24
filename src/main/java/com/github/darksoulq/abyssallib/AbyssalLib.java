@@ -18,7 +18,6 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
-import com.github.darksoulq.abyssallib.world.data.tag.BuiltinTags;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.item.Items;
@@ -30,11 +29,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
+import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
 
     public static final String MODID = "abyssallib";
     private static AbyssalLib INSTANCE;
+    public static Logger LOGGER;
 
     public static PluginConfig CONFIG;
     public static PackServer PACK_SERVER;
@@ -45,6 +46,7 @@ public final class AbyssalLib extends JavaPlugin {
     @Override
     public void onEnable() {
         INSTANCE = this;
+        LOGGER = getLogger();
         HookConstants.load();
 
         ItemBridge.setup();
@@ -73,8 +75,6 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new GuiEvents());
 
         GuiManager.init(this);
-
-        BuiltinTags.TAGS.apply();
 
         if (CONFIG.rp.enabled.get()) {
             EVENT_BUS.register(new PackEvent());

@@ -2,11 +2,13 @@ package com.github.darksoulq.abyssallib.world.block;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.server.bridge.block.BridgeBlock;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
-import com.github.darksoulq.abyssallib.world.data.tag.BlockTag;
+import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
+import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import org.bukkit.Location;
@@ -216,8 +218,11 @@ public class CustomBlock implements Cloneable {
      * @return {@code true} if this block has the tag, otherwise {@code false}
      */
     public boolean hasTag(Identifier id) {
-        BlockTag tag = Registries.BLOCK_TAGS.get(id.toString());
-        return tag != null && tag.contains(this);
+        if (!(Registries.TAGS.get(id.toString()) instanceof BlockTag tag)) {
+            AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
+            return false;
+        }
+        return tag.contains(new BridgeBlock<>(id, "abyssallib", this));
     }
 
     /**

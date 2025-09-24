@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
+import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.recipe.VanillaRecipeLoader;
@@ -25,9 +26,11 @@ public class ServerEvents {
                     EntityManager.load();
                     EntityAttributes.init();
                     VanillaRecipeLoader.reload();
+                    TagLoader.loadTags();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
-        } else {
+        }
+        if (e.getType() == ServerLoadEvent.LoadType.RELOAD){
             new BukkitRunnable() {
                 @Override
                 public void run() {

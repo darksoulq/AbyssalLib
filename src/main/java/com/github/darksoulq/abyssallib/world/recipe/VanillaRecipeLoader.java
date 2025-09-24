@@ -23,9 +23,14 @@ public class VanillaRecipeLoader {
 
     public static void loadFolder(File folder) {
         if (!folder.exists() || !folder.isDirectory()) return;
-        File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml") || name.endsWith(".yaml"));
+        File[] files = folder.listFiles();
         if (files == null) return;
-        for (File file : files) loadFile(file);
+        for (File file : files) {
+            if (file.isDirectory()) loadFolder(file);
+            else if (file.getName().endsWith(".yml") || file.getName().endsWith(".yaml")) {
+                loadFile(file);
+            }
+        }
     }
     public static void loadFolder(Plugin plugin, String resourcePath) {
         List<String> files = FileUtils.getFilePathList(plugin, resourcePath);

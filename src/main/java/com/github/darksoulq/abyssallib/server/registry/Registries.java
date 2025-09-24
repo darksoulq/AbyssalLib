@@ -2,8 +2,9 @@ package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
-import com.github.darksoulq.abyssallib.world.data.tag.BlockTag;
-import com.github.darksoulq.abyssallib.world.data.tag.ItemTag;
+import com.github.darksoulq.abyssallib.world.data.tag.Tag;
+import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
+import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.item.Item;
@@ -27,9 +28,7 @@ public class Registries {
 
     public static final Registry<LootTable> LOOT_TABLES = new Registry<>();
     public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>();
-
-    public static final Registry<ItemTag> ITEM_TAGS = new Registry<>();
-    public static final Registry<BlockTag> BLOCK_TAGS = new Registry<>();
+    public static final Registry<Tag<?>> TAGS = new Registry<>();
 
     public static final Registry<ShapedRecipe> SHAPED_RECIPES = new Registry<>();
     public static final Registry<ShapelessRecipe> SHAPELESS_RECIPES = new Registry<>();
