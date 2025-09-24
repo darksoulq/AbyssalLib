@@ -39,9 +39,10 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Send Push Embed
-        uses: rtCamp/action-discord-webhook@v2
+        uses: discord-actions/discord-webhook@v1
         with:
-          webhook-url: ${{ secrets.DISCORD_MAIN }}
+          webhook_id: ${{ secrets.DISCORD_MAIN_ID }}
+          webhook_token: ${{ secrets.DISCORD_MAIN_TOKEN }}
           payload: |
             {
               "embeds": [
@@ -71,9 +72,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send PR Embed
-        uses: rtCamp/action-discord-webhook@v2
+        uses: discord-actions/discord-webhook@v1
         with:
-          webhook-url: ${{ secrets.DISCORD_PR }}
+          webhook_id: ${{ secrets.DISCORD_PR_ID }}
+          webhook_token: ${{ secrets.DISCORD_PR_TOKEN }}
           payload: |
             {
               "embeds": [
@@ -95,9 +97,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Issue Embed
-        uses: rtCamp/action-discord-webhook@v2
+        uses: discord-actions/discord-webhook@v1
         with:
-          webhook-url: ${{ secrets.DISCORD_ISSUES }}
+          webhook_id: ${{ secrets.DISCORD_ISSUES_ID }}
+          webhook_token: ${{ secrets.DISCORD_ISSUES_TOKEN }}
           payload: |
             {
               "embeds": [
@@ -119,9 +122,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Comment Embed
-        uses: rtCamp/action-discord-webhook@v2
+        uses: discord-actions/discord-webhook@v1
         with:
-          webhook-url: ${{ secrets.DISCORD_ISSUES }}
+          webhook_id: ${{ secrets.DISCORD_ISSUES_ID }}
+          webhook_token: ${{ secrets.DISCORD_ISSUES_TOKEN }}
           payload: |
             {
               "embeds": [
@@ -134,46 +138,6 @@ jobs:
                     {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
                   ],
                   "url": "${{ github.event.comment.html_url }}"
-                }
-              ]
-            }
-
-  star:
-    if: github.event_name == 'watch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Star Embed
-        uses: rtCamp/action-discord-webhook@v2
-        with:
-          webhook-url: ${{ secrets.DISCORD_MAIN }}
-          payload: |
-            {
-              "embeds": [
-                {
-                  "title": "New Star",
-                  "description": "**Repository:** `${{ github.repository }}`\n**User:** `${{ github.actor }}`",
-                  "color": 16776960,
-                  "url": "https://github.com/${{ github.repository }}"
-                }
-              ]
-            }
-
-  fork:
-    if: github.event_name == 'fork'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Fork Embed
-        uses: rtCamp/action-discord-webhook@v2
-        with:
-          webhook-url: ${{ secrets.DISCORD_MAIN }}
-          payload: |
-            {
-              "embeds": [
-                {
-                  "title": "New Fork",
-                  "description": "**Repository:** `${{ github.repository }}`\n**User:** `${{ github.actor }}`",
-                  "color": 65280,
-                  "url": "https://github.com/${{ github.actor }}/$(basename ${{ github.repository }})"
                 }
               ]
             }
