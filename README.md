@@ -1,3 +1,4 @@
+[OLD]
 **THIS IS A PAPER ONLY LIBRARY!**
 
 [![Static Badge](https://img.shields.io/badge/%20-javadoc-%20?style=flat-square&logo=readthedocs&color=0f0f0f&link=https%3A%2F%2Fjitpack.io%2Fcom%2Fgithub%2Fdarksoulq%2FAbyssalLib%2Flatest%2Fjavadoc%2F)](https://jitpack.io/com/github/darksoulq/AbyssalLib/latest/javadoc/)
