@@ -23,8 +23,20 @@ jobs:
       - name: Format commit list
         id: commits
         run: |
+          #!/bin/bash
+          COMMITS_FILE=$(mktemp)
+
+          jq -r '
+            .commits[] |
+            "- " + (.id[0:7]) + " " + .message +
+            (if .body != null and .body != "" then "\n  " + .body else "" end) +
+            "\n  Author: " + .author.name + " <" + .author.email + ">"' \
+            <<< "${{ toJson(github.event.commits) }}" > "$COMMITS_FILE"
+
+          cat "$COMMITS_FILE"
+
           echo "COMMITS<<EOF" >> $GITHUB_ENV
-          echo "$(jq -r '.commits[] | "- " + .id[0:7] + " " + .message + " (" + .author.name + ")"' <<< '${{ toJson(github.event.commits) }}')" >> $GITHUB_ENV
+          cat "$COMMITS_FILE" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Send push notification
@@ -47,6 +59,15 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - name: Format PR info
+        id: prinfo
+        run: |
+          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "PR_BODY=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
+          echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "PR_URL=${{ github.event.pull_request.html_url }}" >> $GITHUB_ENV
+
       - name: Send PR notification
         uses: Ilshidur/action-discord@master
         env:
@@ -55,9 +76,12 @@ jobs:
           message: |
             **Pull Request ${{ github.event.action }}**
             Repository: `${{ github.repository }}`
-            PR: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}
-            Author: `${{ github.event.pull_request.user.login }}`
-            URL: ${{ github.event.pull_request.html_url }}
+            PR: #${{ env.PR_NUMBER }} ${{ env.PR_TITLE }}
+            Author: `${{ env.PR_AUTHOR }}`
+            URL: ${{ env.PR_URL }}
+
+            Body:
+            ${{ env.PR_BODY }}
 
   issue:
     if: github.event_name == 'issues'
@@ -74,6 +98,9 @@ jobs:
             Issue: #${{ github.event.issue.number }} ${{ github.event.issue.title }}
             Author: `${{ github.event.issue.user.login }}`
             URL: ${{ github.event.issue.html_url }}
+
+            Body:
+            ${{ github.event.issue.body }}
 
   issue_comment:
     if: github.event_name == 'issue_comment'
