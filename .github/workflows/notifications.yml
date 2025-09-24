@@ -30,19 +30,24 @@ jobs:
           COMMITS_JSON: ${{ toJson(github.event.commits) }}
         run: |
           MAX_COMMITS=5
-          COMMITS_FIELDS=$(jq -nc --argjson commits "$COMMITS_JSON" --arg compare "$COMPARE" --arg repo "$REPO" '
-            def truncate(s; n): if s|length > n then (s[:n] + "…") else s end;
+          COMMITS_FIELDS=$(jq -nc \
+            --argjson commits "$COMMITS_JSON" \
+            --argjson max "$MAX_COMMITS" \
+            --arg compare "$COMPARE" \
+            --arg repo "$REPO" '
+            def truncate(s; n): if s|length > n then (s[:n]+"…") else s end;
             [
-              ($commits | to_entries | .[:$MAX_COMMITS] | map({
+              ($commits | to_entries | .[:$max] | map({
                 name: ("Commit #" + (.key + 1|tostring)),
                 value: (
                   "[`" + (.value.id[0:7]) + "`](https://github.com/\($repo)/commit/" + .value.id + ") " +
                   (.value.message | split("\n")[0]) + " — [" + (.value.author.username // .value.author.name) + "](https://github.com/" + (.value.author.username // .value.author.name) + ")" +
-                  ( (.value.message | split("\n")[1:] | join(" ") | truncate(200)) | if .=="" then "" else "\n" + . end )
+                  ((.value.message | split("\n")[1:] | join(" ") | truncate(200)) | if .=="" then "" else "\n"+. end)
                 ),
                 inline: false
               }))
-            ] + if ($commits|length) > $MAX_COMMITS then [{"name":"More","value":"…and more commits, see [compare](" + $compare + ")","inline":false}] else [] end
+            ] 
+            + if ($commits|length) > $max then [{"name":"More","value":"…and more commits, see [compare](" + $compare + ")","inline":false}] else [] end
           ')
 
           BRANCH_URL="https://github.com/$REPO/tree/$REF"
