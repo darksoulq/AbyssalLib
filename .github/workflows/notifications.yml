@@ -34,21 +34,18 @@ jobs:
           COUNT=0
           TOTAL=$(jq 'length' <<< "$COMMITS_JSON")
 
-          for row in $(echo "$COMMITS_JSON" | jq -r '.[].id'); do
+          echo "$COMMITS_JSON" | jq -c '.[]' | while read commit; do
             COUNT=$((COUNT+1))
-            MSG=$(jq -r ".[] | select(.id | startswith(\"$row\")) | .message" <<< "$COMMITS_JSON")
-            TITLE=$(echo "$MSG" | head -n1)
-            BODY=$(echo "$MSG" | tail -n +2)
+            HASH=$(echo "$commit" | jq -r '.id[:7]')
+            FULL_HASH=$(echo "$commit" | jq -r '.id')
+            COMMIT_URL="https://github.com/$REPO/commit/$FULL_HASH"
+            TITLE=$(echo "$commit" | jq -r '.message' | head -n1)
+            BODY=$(echo "$commit" | jq -r '.message' | tail -n +2)
             if [ -n "$BODY" ]; then
-              BODY=$(echo "$BODY" | tr '\n' ' ')
-              BODY=$(echo "$BODY" | cut -c1-200)
+              BODY=$(echo "$BODY" | tr '\n' ' ' | cut -c1-200)
               BODY="$BODY…"
             fi
-
-            HASH=${row:0:7}
-            COMMIT_URL="https://github.com/$REPO/commit/$row"
-            AUTHOR=$(jq -r ".[] | select(.id | startswith(\"$row\")) | .author.username // .author.name" <<< "$COMMITS_JSON")
-            AVATAR="https://github.com/$AUTHOR.png"
+            AUTHOR=$(echo "$commit" | jq -r '.author.username // .author.name')
             AUTHOR_URL="https://github.com/$AUTHOR"
 
             VALUE="[`${HASH}`]($COMMIT_URL) $TITLE — [${AUTHOR}]($AUTHOR_URL)"
@@ -89,9 +86,8 @@ jobs:
       - name: Send Push Embed
         run: |
           curl -X POST -H "Content-Type: application/json" \
-            -d '${{ steps.build_push.outputs.payload }}' \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
-
+          -d '${{ steps.build_push.outputs.payload }}' \
+          https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
   pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
