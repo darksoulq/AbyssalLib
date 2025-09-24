@@ -28,67 +28,116 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Send push notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**Push to \`${{ github.repository }}\`**\nBranch: \`${{ github.ref_name }}\`\nPusher: \`${{ github.actor }}\`\n\nCommits:\n${{ env.COMMITS }}\n\nRepository: https://github.com/${{ github.repository }}\nCompare: ${{ github.event.compare }}\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          message: |
+            **Push to `${{ github.repository }}`**
+            Branch: `${{ github.ref_name }}`
+            Pusher: `${{ github.actor }}`
+
+            Commits:
+            ${{ env.COMMITS }}
+
+            Repository: https://github.com/${{ github.repository }}
+            Compare: ${{ github.event.compare }}
 
   pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Send PR notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**Pull Request ${{ github.event.action }}**\nRepository: \`${{ github.repository }}\`\nPR: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}\nAuthor: \`${{ github.event.pull_request.user.login }}\`\nURL: ${{ github.event.pull_request.html_url }}\n\nDescription:\n> ${{ github.event.pull_request.body || 'No description' }}\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+          message: |
+            **Pull Request ${{ github.event.action }}**
+            Repository: `${{ github.repository }}`
+            PR: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}
+            Author: `${{ github.event.pull_request.user.login }}`
+            URL: ${{ github.event.pull_request.html_url }}
+
+            Description:
+            > ${{ github.event.pull_request.body || 'No description' }}
 
   issue:
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
       - name: Send Issue notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**Issue ${{ github.event.action }}**\nRepository: \`${{ github.repository }}\`\nIssue: #${{ github.event.issue.number }} ${{ github.event.issue.title }}\nAuthor: \`${{ github.event.issue.user.login }}\`\nURL: ${{ github.event.issue.html_url }}\n\nDescription:\n> ${{ github.event.issue.body || 'No description' }}\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+          message: |
+            **Issue ${{ github.event.action }}**
+            Repository: `${{ github.repository }}`
+            Issue: #${{ github.event.issue.number }} ${{ github.event.issue.title }}
+            Author: `${{ github.event.issue.user.login }}`
+            URL: ${{ github.event.issue.html_url }}
+
+            Description:
+            > ${{ github.event.issue.body || 'No description' }}
 
   issue_comment:
     if: github.event_name == 'issue_comment'
     runs-on: ubuntu-latest
     steps:
       - name: Send Issue/PR comment notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**New Comment**\nRepository: \`${{ github.repository }}\`\nOn: #${{ github.event.issue.number }} ${{ github.event.issue.title }}\nAuthor: \`${{ github.event.comment.user.login }}\`\nURL: ${{ github.event.comment.html_url }}\n\nComment:\n> ${{ github.event.comment.body }}\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_ISSUES_ID }}/${{ secrets.DISCORD_ISSUES_TOKEN }}
+          message: |
+            **New Comment**
+            Repository: `${{ github.repository }}`
+            On: #${{ github.event.issue.number }} ${{ github.event.issue.title }}
+            Author: `${{ github.event.comment.user.login }}`
+            URL: ${{ github.event.comment.html_url }}
+
+            Comment:
+            > ${{ github.event.comment.body }}
 
   pr_review_comment:
     if: github.event_name == 'pull_request_review_comment'
     runs-on: ubuntu-latest
     steps:
       - name: Send PR review comment notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**New Review Comment**\nRepository: \`${{ github.repository }}\`\nPR: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}\nAuthor: \`${{ github.event.comment.user.login }}\`\nURL: ${{ github.event.comment.html_url }}\n\nComment:\n> ${{ github.event.comment.body }}\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_PR_ID }}/${{ secrets.DISCORD_PR_TOKEN }}
+          message: |
+            **New Review Comment**
+            Repository: `${{ github.repository }}`
+            PR: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}
+            Author: `${{ github.event.comment.user.login }}`
+            URL: ${{ github.event.comment.html_url }}
+
+            Comment:
+            > ${{ github.event.comment.body }}
 
   star:
     if: github.event_name == 'watch'
     runs-on: ubuntu-latest
     steps:
       - name: Send Star notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**New Star**\nRepository: \`${{ github.repository }}\`\nUser: \`${{ github.actor }}\`\nRepository URL: https://github.com/${{ github.repository }}\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          message: |
+            **New Star**
+            Repository: `${{ github.repository }}`
+            User: `${{ github.actor }}`
+            Repository URL: https://github.com/${{ github.repository }}
 
   fork:
     if: github.event_name == 'fork'
     runs-on: ubuntu-latest
     steps:
       - name: Send Fork notification
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"**New Fork**\nRepository: \`${{ github.repository }}\`\nUser: \`${{ github.actor }}\`\nForked To: https://github.com/${{ github.actor }}/$(basename ${{ github.repository }})\"}" \
-            https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: https://discord.com/api/webhooks/${{ secrets.DISCORD_MAIN_ID }}/${{ secrets.DISCORD_MAIN_TOKEN }}
+          message: |
+            **New Fork**
+            Repository: `${{ github.repository }}`
+            User: `${{ github.actor }}`
+            Forked To: https://github.com/${{ github.actor }}/$(basename ${{ github.repository }})
