@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.common.util.FileUtils.GSON;
+import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
 
 /**
  * Arbitrary JSON file asset with support for dot-path key structure.

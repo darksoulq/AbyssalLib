@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.common.util.FileUtils.GSON;
+import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
 
 /**
  * Represents a blockstate JSON: {@code assets/<namespace>/blockstates/<id>.json}

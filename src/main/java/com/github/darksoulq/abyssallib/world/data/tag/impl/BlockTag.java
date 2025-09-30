@@ -15,14 +15,14 @@ public class BlockTag extends Tag<BridgeBlock<?>> {
 
     @Override
     public void add(BridgeBlock<?> value) {
-        values.add(value.getId().toString());
+        values.add(value.id().toString());
     }
 
     @Override
     public boolean contains(BridgeBlock<?> value) {
-        if (values.contains(value.getId().toString())) return true;
+        if (values.contains(value.id().toString())) return true;
         for (Tag<BridgeBlock<?>> tag : included) {
-            if (!tag.getValues().contains(value.getId().toString())) continue;
+            if (!tag.getValues().contains(value.id().toString())) continue;
             return true;
         }
         return false;

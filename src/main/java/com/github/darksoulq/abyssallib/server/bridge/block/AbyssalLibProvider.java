@@ -12,12 +12,12 @@ public class AbyssalLibProvider extends Provider<BridgeBlock<?>> {
 
     @Override
     public boolean belongs(BridgeBlock<?> value) {
-        return value.value instanceof CustomBlock;
+        return value.value() instanceof CustomBlock;
     }
 
     @Override
     public Identifier getId(BridgeBlock<?> value) {
-        return Identifier.of(value.getId().namespace(), value.getId().path());
+        return Identifier.of(value.id().getNamespace(), value.id().getPath());
     }
 
     @Override

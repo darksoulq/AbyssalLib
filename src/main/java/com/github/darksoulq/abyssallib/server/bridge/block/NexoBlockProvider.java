@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.server.bridge.block;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import com.nexomc.nexo.api.NexoBlocks;
-import com.nexomc.nexo.mechanics.custom_block.noteblock.NoteBlockMechanic;
 
 public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
     public NexoBlockProvider() {
@@ -13,12 +12,12 @@ public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
     @Override
     public boolean belongs(BridgeBlock<?> value) {
         return NexoBlocks.isCustomBlock(Identifier
-                .of(value.getId().namespace(), value.getId().path()).toString());
+                .of(value.id().getNamespace(), value.id().getPath()).toString());
     }
 
     @Override
     public Identifier getId(BridgeBlock<?> value) {
-        return Identifier.of(value.getId().namespace(), value.getId().path());
+        return Identifier.of(value.id().getNamespace(), value.id().getPath());
     }
 
     @Override

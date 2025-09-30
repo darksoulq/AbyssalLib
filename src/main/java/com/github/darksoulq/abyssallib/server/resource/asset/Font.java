@@ -410,7 +410,7 @@ public class Font implements Asset {
      */
     public record TextureGlyph(Identifier fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
         public TextComponent toComponent() {
-            return Component.text(character).font(fontId.toNamespace());
+            return Component.text(character).font(fontId.asNamespacedKey());
         }
         public String toMiniMessageString() {
             return "<font:" + fontId.toString() + ">" + character + "</font>";
@@ -422,7 +422,7 @@ public class Font implements Asset {
      */
     public record OffsetGlyph(Identifier fontId, char character, int advance) implements Glyph {
         public TextComponent toComponent() {
-            return Component.text(character).font(fontId.toNamespace());
+            return Component.text(character).font(fontId.asNamespacedKey());
         }
         public String toMiniMessageString() {
             return "<font:" + fontId.toString() + ">" + character + "</font>";

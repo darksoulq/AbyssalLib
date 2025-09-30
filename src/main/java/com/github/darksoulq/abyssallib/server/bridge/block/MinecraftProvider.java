@@ -13,17 +13,17 @@ public class MinecraftProvider extends Provider<BridgeBlock<?>> {
 
     @Override
     public boolean belongs(BridgeBlock<?> value) {
-        return value.value instanceof Material;
+        return value.value() instanceof Material;
     }
 
     @Override
     public Identifier getId(BridgeBlock<?> value) {
-        if (!(value.value instanceof Material mat)) return null;
+        if (!(value.value() instanceof Material mat)) return null;
         return Identifier.of(getPrefix(), mat.name().toLowerCase(Locale.ROOT));
     }
 
     @Override
     public BridgeBlock<?> get(Identifier id) {
-        return new BridgeBlock<>(id, getPrefix(), Material.valueOf(id.path().toUpperCase(Locale.ROOT)));
+        return new BridgeBlock<>(id, getPrefix(), Material.valueOf(id.getPath().toUpperCase(Locale.ROOT)));
     }
 }

@@ -1,97 +1,156 @@
 package com.github.darksoulq.abyssallib.common.energy.impl;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.energy.Action;
 import com.github.darksoulq.abyssallib.common.energy.EnergyContainer;
 import com.github.darksoulq.abyssallib.common.energy.Resizable;
-import com.github.darksoulq.abyssallib.common.energy.event.EnergyChangeEvent;
+import com.github.darksoulq.abyssallib.server.event.context.EnergyChangeEvent;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordCodecBuilder;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 
+/**
+ * A simple implementation of {@link EnergyContainer} with mutable energy and capacity.
+ * Supports event firing when energy changes and can be serialized using {@link #CODEC}.
+ */
 public final class SimpleEnergyContainer implements EnergyContainer, Resizable {
+
+    /**
+     * Codec for serializing and deserializing {@link SimpleEnergyContainer}.
+     */
     public static final Codec<SimpleEnergyContainer> CODEC = RecordCodecBuilder.create(
-            Codecs.DOUBLE.fieldOf("energy", SimpleEnergyContainer::getEnergy),
             Codecs.DOUBLE.fieldOf("capacity", SimpleEnergyContainer::getCapacity),
+            Codecs.DOUBLE.fieldOf("energy", SimpleEnergyContainer::getEnergy),
             SimpleEnergyContainer::new
     );
-    private final AtomicDouble energy;
-    private final AtomicDouble capacity;
 
+    private double energy;
+    private double capacity;
+
+    /**
+     * Creates a new energy container with a given capacity and zero initial energy.
+     *
+     * @param capacity the maximum energy capacity
+     */
     public SimpleEnergyContainer(double capacity) {
         this(capacity, 0.0);
     }
 
+    /**
+     * Creates a new energy container with a given capacity and initial energy.
+     *
+     * @param capacity the maximum energy capacity
+     * @param initial  the initial energy stored
+     */
     public SimpleEnergyContainer(double capacity, double initial) {
-        this.capacity = new AtomicDouble(Math.max(0.0, capacity));
-        double init = Math.max(0.0, Math.min(initial, this.capacity.get()));
-        this.energy = new AtomicDouble(init);
+        this.capacity = Math.max(0.0, capacity);
+        AbyssalLib.LOGGER.info("Capacity=" + this.capacity);
+        this.energy = clamp(initial, 0.0, this.capacity);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Returns the current stored energy.
+     */
     @Override
     public double getEnergy() {
-        return energy.get();
+        return energy;
     }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Returns the maximum energy capacity.
+     */
     @Override
     public double getCapacity() {
-        return capacity.get();
+        return capacity;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Inserts energy into the container up to its capacity. Fires an
+     * {@link EnergyChangeEvent} if {@code action.execute()} returns true.
+     *
+     * @param amount the amount of energy to insert
+     * @param action the action type (simulate or execute)
+     * @return the amount of energy actually inserted
+     */
     @Override
     public double insert(double amount, Action action) {
-        if (amount <= 0.0) return 0.0;
-        double cap = capacity.get();
-        if (cap <= 0.0) return 0.0;
-        boolean simulate = action.simulate();
-        if (simulate) {
-            double space = cap - energy.get();
-            return Math.max(0.0, Math.min(space, amount));
+        if (amount <= 0.0 || capacity <= 0.0) return 0.0;
+
+        double space = capacity - energy;
+        if (space <= 0.0) return 0.0;
+
+        double toInsert = Math.min(space, amount);
+
+        if (action.execute()) {
+            double prev = energy;
+            energy += toInsert;
+            EventBus.post(new EnergyChangeEvent(this, prev, energy));
         }
-        while (true) {
-            double cur = energy.get();
-            double space = cap - cur;
-            if (space <= 0.0) return 0.0;
-            double toInsert = Math.min(space, amount);
-            double next = cur + toInsert;
-            if (energy.compareAndSet(cur, next)) {
-                EventBus.post(new EnergyChangeEvent(this, cur, next));
-                return toInsert;
-            }
-        }
+
+        return toInsert;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Extracts energy from the container up to the current stored amount. Fires an
+     * {@link EnergyChangeEvent} if {@code action.execute()} returns true.
+     *
+     * @param amount the amount of energy to extract
+     * @param action the action type (simulate or execute)
+     * @return the amount of energy actually extracted
+     */
     @Override
     public double extract(double amount, Action action) {
-        if (amount <= 0.0) return 0.0;
-        boolean simulate = action.simulate();
-        if (simulate) {
-            double cur = energy.get();
-            return Math.min(cur, amount);
+        if (amount <= 0.0 || energy <= 0.0) return 0.0;
+
+        double toExtract = Math.min(energy, amount);
+
+        if (action.execute()) {
+            double prev = energy;
+            energy -= toExtract;
+            EventBus.post(new EnergyChangeEvent(this, prev, energy));
         }
-        while (true) {
-            double cur = energy.get();
-            if (cur <= 0.0) return 0.0;
-            double toTake = Math.min(cur, amount);
-            double next = cur - toTake;
-            if (energy.compareAndSet(cur, next)) {
-                EventBus.post(new EnergyChangeEvent(this, cur, next));
-                return toTake;
-            }
-        }
+
+        return toExtract;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Sets a new capacity for the container. If the current energy exceeds the new capacity,
+     * it is clamped and an {@link EnergyChangeEvent} is fired.
+     *
+     * @param cap the new capacity (must be non-negative)
+     */
     @Override
     public void setCapacity(double cap) {
         double newCap = Math.max(0.0, cap);
-        capacity.set(newCap);
-        while (true) {
-            double prev = energy.get();
-            if (prev <= newCap) break;
-            double nxt = Math.min(prev, newCap);
-            if (energy.compareAndSet(prev, nxt)) {
-                EventBus.post(new EnergyChangeEvent(this, prev, nxt));
-                break;
-            }
+        capacity = newCap;
+
+        if (energy > newCap) {
+            double prev = energy;
+            energy = newCap;
+            EventBus.post(new EnergyChangeEvent(this, prev, energy));
         }
+    }
+
+    /**
+     * Clamps a value to a given range.
+     *
+     * @param value the value to clamp
+     * @param min   the minimum allowed
+     * @param max   the maximum allowed
+     * @return the clamped value
+     */
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

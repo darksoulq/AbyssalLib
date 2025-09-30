@@ -42,7 +42,7 @@ public class BookLoader {
      * @throws RuntimeException      if parsing or loading fails
      */
     public static ItemStack load(Plugin plugin, Identifier id) {
-        String path = "books/" + id.path() + ".json";
+        String path = "books/" + id.getPath() + ".json";
         InputStream in = plugin.getResource(path);
         if (in == null) throw new IllegalStateException("Book resource not found: " + path);
 

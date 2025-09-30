@@ -46,8 +46,8 @@ public class ItemBridge {
         return ItemStack.deserializeBytes(Base64.getDecoder().decode(id));
     }
     public static ItemStack get(Identifier id) {
-        if (!PROVIDERS.containsKey(id.key()) && !PROVIDERS.containsKey(id.namespace())) return null;
-        Provider<ItemStack> prov = PROVIDERS.get(id.key() == null ? id.namespace() : id.key());
+        if (!PROVIDERS.containsKey(id.getKey()) && !PROVIDERS.containsKey(id.getNamespace())) return null;
+        Provider<ItemStack> prov = PROVIDERS.get(id.getKey() == null ? id.getNamespace() : id.getKey());
         return prov.get(id);
     }
     public static Identifier getId(ItemStack stack) {
@@ -57,7 +57,7 @@ public class ItemBridge {
             Identifier base = prov.getId(stack);
             if (base == null) return null;
             if (prov instanceof MinecraftProvider) return base;
-            return Identifier.of(entry.getKey() + ":" + base.namespace(), base.path());
+            return Identifier.of(entry.getKey() + ":" + base.getNamespace(), base.getPath());
         }
         return null;
     }

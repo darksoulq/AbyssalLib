@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.common.energy.event;
+package com.github.darksoulq.abyssallib.server.event.context;
 
 import com.github.darksoulq.abyssallib.common.energy.EnergyContainer;
 import org.bukkit.Bukkit;

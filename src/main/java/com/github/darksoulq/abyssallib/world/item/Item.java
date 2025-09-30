@@ -48,8 +48,8 @@ public class Item implements Cloneable {
         for (Identifier cId : componentMap.getVanillaIds()) {
             componentMap.removeData(cId);
         }
-        setData(new ItemName(Component.translatable("item." + id.namespace() + "." + id.path())));
-        setData(new ItemModel(id.toNamespace()));
+        setData(new ItemName(Component.translatable("item." + id.getNamespace() + "." + id.getPath())));
+        setData(new ItemModel(id.asNamespacedKey()));
         setData(new CustomMarker(id));
     }
 
@@ -59,7 +59,7 @@ public class Item implements Cloneable {
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
                 .hideTooltip(tooltip.hide)
                 .hiddenComponents(tooltip.hiddenComponents).build()));
-        if (tooltip.style != null) setData(new TooltipStyle(tooltip.style.toNamespace()));
+        if (tooltip.style != null) setData(new TooltipStyle(tooltip.style.asNamespacedKey()));
         else unsetData(TooltipStyle.class);
     }
 

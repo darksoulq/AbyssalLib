@@ -54,17 +54,17 @@ public class DamageType {
 
     public DamageSource withCause(Entity cause) {
         org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
-                .getOrThrow(id.toNamespace());
+                .getOrThrow(id.asNamespacedKey());
         return DamageSource.builder(dmg).withCausingEntity(cause).build();
     }
     public DamageSource withDirect(Entity direct) {
         org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
-                .getOrThrow(id.toNamespace());
+                .getOrThrow(id.asNamespacedKey());
         return DamageSource.builder(dmg).withDirectEntity(direct).build();
     }
     public DamageSource withLocation(Location loc) {
         org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
-                .getOrThrow(id.toNamespace());
+                .getOrThrow(id.asNamespacedKey());
         return DamageSource.builder(dmg).withDamageLocation(loc).build();
     }
 
@@ -118,6 +118,16 @@ public class DamageType {
             return this;
         }
 
+        /**
+         * Sets the Death Message Type of this DamageType
+         *
+         * @param messageType the Death Message Type.
+         */
+        public Builder deathMessageType(DeathMessageType messageType) {
+            this.messageType = messageType;
+            return this;
+        }
+
         public DamageType build() {
             DamageType dmg = new DamageType(id);
             dmg.scaling = scaling;
@@ -159,7 +169,7 @@ public class DamageType {
         public void register(List<DamageType> types) {
             types.forEach(type -> {
                 event.registry().register(
-                        DamageTypeKeys.create(type.id.toKey()),
+                        DamageTypeKeys.create(type.id.asNamespacedKey()),
                         (builder) -> {
                             builder.damageEffect(type.effect);
                             builder.damageScaling(type.scaling);

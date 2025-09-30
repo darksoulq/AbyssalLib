@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.common.util.FileUtils.GSON;
+import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
 
 /**
  * Represents the {@code pack.mcmeta} metadata file.

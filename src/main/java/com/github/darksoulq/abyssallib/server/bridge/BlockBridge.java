@@ -36,7 +36,7 @@ public class BlockBridge {
     }
 
     public static BridgeBlock<?> get(String id) {
-        if (Identifier.isValid3Part(id) || Identifier.isValid2Part(id)) {
+        if (Identifier.isValid(id)) {
             String[] parts = id.split(":", 3);
             if (parts.length == 2) {
                 return get(Identifier.of(parts[0], parts[1]));
@@ -47,8 +47,8 @@ public class BlockBridge {
         return null;
     }
     public static BridgeBlock<?> get(Identifier id) {
-        if (!PROVIDERS.containsKey(id.key()) && !PROVIDERS.containsKey(id.namespace())) return null;
-        Provider<BridgeBlock<?>> prov = PROVIDERS.get(id.key() == null ? id.namespace() : id.key());
+        if (!PROVIDERS.containsKey(id.getKey()) && !PROVIDERS.containsKey(id.getNamespace())) return null;
+        Provider<BridgeBlock<?>> prov = PROVIDERS.get(id.getKey() == null ? id.getNamespace() : id.getKey());
         return prov.get(id);
     }
 

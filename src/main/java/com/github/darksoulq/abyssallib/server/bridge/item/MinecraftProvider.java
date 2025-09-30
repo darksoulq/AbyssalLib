@@ -25,6 +25,6 @@ public class MinecraftProvider extends Provider<ItemStack> {
 
     @Override
     public ItemStack get(Identifier id) {
-        return ItemStack.of(Material.valueOf(id.path().toUpperCase(Locale.ROOT)));
+        return ItemStack.of(Material.valueOf(id.getPath().toUpperCase(Locale.ROOT)));
     }
 }

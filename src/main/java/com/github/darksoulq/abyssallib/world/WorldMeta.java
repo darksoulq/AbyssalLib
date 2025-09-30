@@ -23,38 +23,38 @@ public class WorldMeta {
     }
 
     public void setString(Identifier key, String value) {
-        world.getPersistentDataContainer().set(key.toNamespace(), PersistentDataType.STRING, value);
+        world.getPersistentDataContainer().set(key.asNamespacedKey(), PersistentDataType.STRING, value);
     }
 
     public String getString(Identifier key) {
-        return world.getPersistentDataContainer().get(key.toNamespace(), PersistentDataType.STRING);
+        return world.getPersistentDataContainer().get(key.asNamespacedKey(), PersistentDataType.STRING);
     }
 
     public void setInt(Identifier key, int value) {
-        world.getPersistentDataContainer().set(key.toNamespace(), PersistentDataType.INTEGER, value);
+        world.getPersistentDataContainer().set(key.asNamespacedKey(), PersistentDataType.INTEGER, value);
     }
 
     public Integer getInt(Identifier key) {
-        return world.getPersistentDataContainer().get(key.toNamespace(), PersistentDataType.INTEGER);
+        return world.getPersistentDataContainer().get(key.asNamespacedKey(), PersistentDataType.INTEGER);
     }
 
     public void setBoolean(Identifier key, boolean value) {
-        world.getPersistentDataContainer().set(key.toNamespace(), PersistentDataType.BYTE, (byte) (value ? 1 : 0));
+        world.getPersistentDataContainer().set(key.asNamespacedKey(), PersistentDataType.BYTE, (byte) (value ? 1 : 0));
     }
 
     public Boolean getBoolean(Identifier key) {
-        Byte b = world.getPersistentDataContainer().get(key.toNamespace(), PersistentDataType.BYTE);
+        Byte b = world.getPersistentDataContainer().get(key.asNamespacedKey(), PersistentDataType.BYTE);
         return b != null && b != 0;
     }
 
     public void remove(Identifier key) {
-        world.getPersistentDataContainer().remove(key.toNamespace());
+        world.getPersistentDataContainer().remove(key.asNamespacedKey());
     }
 
     public boolean has(Identifier key) {
-        return world.getPersistentDataContainer().has(key.toNamespace(), PersistentDataType.STRING)
-                || world.getPersistentDataContainer().has(key.toNamespace(), PersistentDataType.INTEGER)
-                || world.getPersistentDataContainer().has(key.toNamespace(), PersistentDataType.BYTE);
+        return world.getPersistentDataContainer().has(key.asNamespacedKey(), PersistentDataType.STRING)
+                || world.getPersistentDataContainer().has(key.asNamespacedKey(), PersistentDataType.INTEGER)
+                || world.getPersistentDataContainer().has(key.asNamespacedKey(), PersistentDataType.BYTE);
     }
 
     public World getWorld() {

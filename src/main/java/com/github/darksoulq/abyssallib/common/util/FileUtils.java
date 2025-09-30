@@ -22,37 +22,31 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Utility class for file operations such as saving, deleting, zipping, and hashing files or directories.
+ * Utility methods for common file operations such as saving,
+ * deleting, zipping, and hashing files or directories.
  */
 public class FileUtils {
     /**
-     * Shared instance of Gson for general-purpose JSON operations.
-     */
-    public static Gson GSON = new Gson();
-
-    /**
-     * Saves the contents of an {@link InputStream} to the specified {@link File}.
+     * Saves the contents of the specified {@link InputStream} to the given {@link File}.
      *
-     * @param inputStream the input stream to read from
-     * @param file        the file to write to
+     * @param inputStream the input stream to read data from
+     * @param file        the target file to write data to
+     * @throws IOException if an I/O error occurs while reading or writing
      */
-    public static void saveFile(InputStream inputStream, File file) {
-        try (OutputStream outputStream = new FileOutputStream(file)) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static void saveFile(InputStream inputStream, File file) throws IOException {
+        OutputStream outputStream = new FileOutputStream(file);
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = inputStream.read(buffer)) > 0) {
+            outputStream.write(buffer, 0, length);
         }
     }
 
     /**
-     * Recursively deletes a folder and its contents.
+     * Recursively deletes a directory and all its contents.
      *
-     * @param folder the path to the folder to delete
-     * @throws IOException if deletion fails
+     * @param folder the path to the directory
+     * @throws IOException if a file or directory could not be deleted
      */
     public static void deleteFolder(Path folder) throws IOException {
         if (!Files.exists(folder)) return;
@@ -73,7 +67,8 @@ public class FileUtils {
     }
 
     /**
-     * Creates the directory and any parent directories if they do not exist.
+     * Creates a directory and any nonexistent parent directories.
+     * Logs an error to {@code System.err} if creation fails.
      *
      * @param dir the directory to create
      */
@@ -87,14 +82,17 @@ public class FileUtils {
      * Recursively adds a file or directory to a {@link ZipOutputStream}.
      *
      * @param file     the file or directory to add
-     * @param basePath the base path for relative paths inside the zip
+     * @param basePath the base path to calculate relative paths inside the zip
      * @param zos      the {@link ZipOutputStream} to write to
-     * @throws IOException if zipping fails
+     * @throws IOException if an I/O error occurs during zipping
      */
     public static void addFileToZip(File file, String basePath, ZipOutputStream zos) throws IOException {
         if (file.isDirectory()) {
-            for (File subFile : file.listFiles()) {
-                addFileToZip(subFile, basePath, zos);
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File subFile : children) {
+                    addFileToZip(subFile, basePath, zos);
+                }
             }
         } else {
             try (FileInputStream fis = new FileInputStream(file)) {
@@ -112,11 +110,11 @@ public class FileUtils {
     }
 
     /**
-     * Retrieves a list of file paths within a plugin's JAR resource folder.
+     * Retrieves a list of resource file paths from a plugin's JAR.
      *
      * @param plugin   the plugin to read from
-     * @param basePath the base path inside the JAR to search (e.g., "assets/")
-     * @return a list of file paths relative to the base path
+     * @param basePath the base path inside the JAR to search (e.g. {@code "assets/"})
+     * @return a list of relative file paths within the JAR
      */
     public static List<String> getFilePathList(Plugin plugin, String basePath) {
         List<String> files = new ArrayList<>();
@@ -146,7 +144,7 @@ public class FileUtils {
     }
 
     /**
-     * Zips an entire folder (recursively) into a single zip file.
+     * Zips an entire directory into a single zip file.
      *
      * @param folder  the folder to zip
      * @param zipFile the resulting zip file
@@ -161,11 +159,11 @@ public class FileUtils {
     }
 
     /**
-     * Computes the SHA-1 hash of the contents of a file.
+     * Computes the SHA-1 hash of a file.
      *
      * @param path the file path
-     * @return the SHA-1 hash as a hex string
-     * @throws RuntimeException if hashing fails
+     * @return the SHA-1 hash as a lowercase hex string
+     * @throws RuntimeException if the file cannot be read or the algorithm is unavailable
      */
     public static String sha1(Path path) {
         try (FileInputStream fis = new FileInputStream(path.toFile())) {

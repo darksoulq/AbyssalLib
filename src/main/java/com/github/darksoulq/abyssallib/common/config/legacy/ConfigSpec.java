@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.config.legacy;
 
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
+import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -81,7 +82,7 @@ public class ConfigSpec {
      */
     private void loadDefaults(InputStream inputStream) {
         try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-            JsonElement json = FileUtils.GSON.fromJson(reader, JsonElement.class);
+            JsonElement json = TextUtil.GSON.fromJson(reader, JsonElement.class);
             if (json != null && json.isJsonObject()) {
                 parseDefaults(json.getAsJsonObject(), "");
             }
