@@ -103,8 +103,10 @@ public class Config {
         List<String> newLines = new ArrayList<>();
         Deque<String> pathStack = new ArrayDeque<>();
 
-        for (String line : lines) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
             String trimmed = line.trim();
+
             if (trimmed.startsWith("#") || !trimmed.contains(":")) {
                 newLines.add(line);
                 continue;
@@ -113,13 +115,26 @@ public class Config {
             int indent = countLeadingSpaces(line) / 2;
             while (pathStack.size() > indent) pathStack.removeLast();
 
-            String key = trimmed.split(":")[0];
+            String key = trimmed.split(":", 2)[0];
             pathStack.addLast(key);
             String fullPath = String.join(".", pathStack);
 
             if (comments.containsKey(fullPath)) {
-                for (String commentLine : comments.get(fullPath)) {
-                    newLines.add("  ".repeat(indent) + "# " + commentLine);
+                List<String> commentLines = comments.get(fullPath);
+                boolean alreadyPresent = true;
+
+                for (int j = 0; j < commentLines.size(); j++) {
+                    int checkLineIndex = newLines.size() - commentLines.size() + j;
+                    if (checkLineIndex < 0 || !newLines.get(checkLineIndex).trim().equals("# " + commentLines.get(j))) {
+                        alreadyPresent = false;
+                        break;
+                    }
+                }
+
+                if (!alreadyPresent) {
+                    for (String commentLine : commentLines) {
+                        newLines.add("  ".repeat(indent) + "# " + commentLine);
+                    }
                 }
             }
 
