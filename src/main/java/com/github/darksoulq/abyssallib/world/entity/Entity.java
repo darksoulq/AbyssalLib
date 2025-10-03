@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.PDCTag;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
@@ -8,6 +7,7 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntitySpawnEvent;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.entity.internal.NMSGoalHandler;
+import net.minecraft.world.entity.ai.goal.Goal;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;

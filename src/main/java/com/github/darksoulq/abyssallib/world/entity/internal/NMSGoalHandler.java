@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.world.entity.internal;
 
-import com.github.darksoulq.abyssallib.world.entity.Goal;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.entity.LivingEntity;
 
