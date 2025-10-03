@@ -4,7 +4,7 @@
 
 <instance-profile id="a"
                  name="abyssallib-docs"
->
+                  start-page="Getting-Started.md">
 
     <toc-element toc-title="Developers">
         <toc-element topic="Getting-Started.md"/>
