@@ -64,7 +64,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         }
 
         onSpawn();
-        applyGoals(entity);
+        applyGoals();
         applyAttributes(entity);
     }
     public void spawn(T entity) {
@@ -78,19 +78,21 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         if (event.isCancelled()) return;
 
         onSpawn();
-        applyGoals(entity);
+        applyGoals();
         applyAttributes(entity);
     }
 
-    public void applyGoals(T entity) {
-        NMSGoalHandler.clearGoals(entity);
+    public void applyGoals() {
+        Optional<T> entity = getBaseEntity();
+        if (entity.isEmpty()) return;
+        NMSGoalHandler.clearGoals(entity.get());
 
         pathfinderGoals.forEach((priority, goal) ->
-                NMSGoalHandler.addGoal(entity, goal.apply(entity), priority)
+                NMSGoalHandler.addGoal(entity.get(), goal.apply(entity.get()), priority)
         );
 
         targetGoals.forEach((priority, goal) ->
-                NMSGoalHandler.addTargetGoal(entity, goal.apply(entity), priority)
+                NMSGoalHandler.addTargetGoal(entity.get(), goal.apply(entity.get()), priority)
         );
     }
     public void applyAttributes(LivingEntity entity) {

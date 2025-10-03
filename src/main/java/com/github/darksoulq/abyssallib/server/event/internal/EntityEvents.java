@@ -20,7 +20,7 @@ public class EntityEvents {
         if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
         Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
         if (entity == null) return;
-        entity.applyGoals(lEntity);
+        entity.applyGoals();
         entity.applyAttributes(lEntity);
         EventBus.post(new EntityLoadEvent(entity));
         entity.onLoad();
