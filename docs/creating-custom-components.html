@@ -1,0 +1,36 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#3F56CE"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2025-10-03T12:32:17.8043968"><title>Creating Custom Components | abyssallib-docs</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-data-components","level":0,"title":"Creating Data Components","anchor":"#creating-data-components"},{"id":"registering-data-components","level":0,"title":"Registering Data Components","anchor":"#registering-data-components"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating Custom Components | abyssallib-docs"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="abyssallib-docs Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/creating-custom-components.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating Custom Components | abyssallib-docs"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/creating-custom-components.html#webpage",
+    "url": "writerside-documentation/creating-custom-components.html",
+    "name": "Creating Custom Components | abyssallib-docs",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "abyssallib-docs Help"
+}</script><!-- End Schema.org --></head><body data-id="Creating-Custom-Components" data-main-title="Creating Custom Components" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Developers///Items"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>abyssallib-docs  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="Creating-Custom-Components" id="Creating-Custom-Components.md">Creating Custom Components</h1><aside class="prompt" data-type="tip" data-title="" id="-b9wr99_3"><p id="-b9wr99_6">Creating custom data components allows you to store data on items and get them at any time.</p></aside><section class="chapter"><h2 id="creating-data-components" data-toc="creating-data-components">Creating Data Components</h2><div class="code-block" data-lang="java">
+public class MyComponent extends DataComponent&lt;Float&gt; {
+    private static final Codec&lt;DataComponent&lt;Float&gt;&gt; CODEC = Codecs.FLOAT.xmap(
+            MyComponent::new, (inst) -&gt; inst.value
+    );
+
+    public CustomMarker(float value) {
+        super(Identifier.of(&quot;plugin_id&quot;, &quot;my_component&quot;), value, CODEC);
+    }
+}
+</div><p id="-b9wr99_8">This creates a custom component with the id <code class="code" id="-b9wr99_9">plugin_id:my_component</code> and its value will be float. However the component cannot be used on items yet, while you CAN apply it onto item using #setData it will afterwards fail to load during #getData so you must register the component first.</p></section><section class="chapter"><h2 id="registering-data-components" data-toc="registering-data-components">Registering Data Components</h2><div class="code-block" data-lang="java">
+public class MyComponents {
+    public static final DeferredRegistry&lt;DataComponent&lt;?&gt;&gt; DATA_COMPONENTS = DeferredRegistry.create(Registries.DATA_COMPONENTS, &quot;plugin_id&quot;);
+    
+    public static Holder&lt;DataComponent&lt;?&gt;&gt; MY_COMPONENT = DATA_COMPONENTS.register(&quot;my_component&quot;, MyComponent.class);
+}
+</div><p id="-b9wr99_11">Lastly in your main class call DATA_COMPONENTS.apply() in onEnable:</p><div class="code-block" data-lang="java">
+public void onEnable{} {
+    MyComponents.DATA_COMPONENTS.apply();
+}
+</div><p id="-b9wr99_13">Now you can set and get it on items using .setData and .getData.</p></section><div class="last-modified">03 October 2025</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="extending-the-item-class.html" class="navigation-links__prev">Extending the item class</a><a href="creating-a-tag.html" class="navigation-links__next">Creating a Tag</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.js"></script></body></html>

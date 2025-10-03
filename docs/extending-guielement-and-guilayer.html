@@ -1,0 +1,91 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#3F56CE"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2025-10-03T12:32:18.0622436"><title>Extending GuiElement and GuiLayer | abyssallib-docs</title><script type="application/json" id="virtual-toc-data">[{"id":"extending-guielement-example","level":0,"title":"Extending GuiElement (Example)","anchor":"#extending-guielement-example"},{"id":"extending-guilayer-example","level":0,"title":"Extending GuiLayer (Example)","anchor":"#extending-guilayer-example"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Extending GuiElement and GuiLayer | abyssallib-docs"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="abyssallib-docs Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/extending-guielement-and-guilayer.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Extending GuiElement and GuiLayer | abyssallib-docs"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/extending-guielement-and-guilayer.html#webpage",
+    "url": "writerside-documentation/extending-guielement-and-guilayer.html",
+    "name": "Extending GuiElement and GuiLayer | abyssallib-docs",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "abyssallib-docs Help"
+}</script><!-- End Schema.org --></head><body data-id="Extending-GuiElement-and-GuiLayer" data-main-title="Extending GuiElement and GuiLayer" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Developers///GUIs"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>abyssallib-docs  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="Extending-GuiElement-and-GuiLayer" id="Extending-GuiElement-and-GuiLayer.md">Extending GuiElement and GuiLayer</h1><aside class="prompt" data-type="tip" data-title="" id="o4lnzq_3"><p id="o4lnzq_6">Extending GuiElement allows for creating slot elements with unique behaviour, for example an input slot which only accepts certain items. Whereas extending GuiLayer is useful for populating (and managing) multiple GuiElements, or Layers or anything else.</p></aside><section class="chapter"><h2 id="extending-guielement-example" data-toc="extending-guielement-example">Extending GuiElement (Example)</h2><div class="code-block" data-lang="java">
+public class MyInputSlot implements GuiElement {
+    private final Predicate&lt;ItemStack&gt; isAllowed;
+    
+    public MyInputSlot(Predicate&lt;ItemStack&gt; isAllowed) {
+        this.isAllowed = isAllowed;
+    }
+
+    @Override
+    public ItemStack render(GuiView view, int slot) {
+    }
+
+    @Override
+    public ActionResult onClick(GuiView view, int slot, ClickType click, @Nullable ItemStack cursor, @Nullable ItemStack current) {
+        if (!isAllowed.apply(cursor) &amp;&amp; !cursor.isEmpty()) return ActionResult.CANCEL;
+        return ActionResult.PASS;
+    }
+
+    @Override
+    public ActionResult onDrag(GuiView view, Map&lt;Integer, ItemStack&gt; addedItems) {
+        if (!isAllowed.apply(cursor) &amp;&amp; !cursor.isEmpty()) return ActionResult.CANCEL;
+        return ActionResult.PASS;
+    }
+
+    public static MyInputSlot of(Predicate&lt;ItemStack&gt; isAllowed) {
+        return new MyInputSlot(renderer);
+    }
+}
+</div><p id="o4lnzq_8">This creates a simple GuiElement which allows the player to put in item and take out item IF the predicate allows it.</p></section><section class="chapter"><h2 id="extending-guilayer-example" data-toc="extending-guilayer-example">Extending GuiLayer (Example)</h2><div class="code-block" data-lang="java">
+public class ListedLayers implements GuiLayer {
+    private final List&lt;GuiLayer&gt; layers = new ArrayList&lt;&gt;();
+    private int index = 0;
+    private int lastRenderedPage = -1;
+
+    public ListedLayers(List&lt;GuiLayer&gt; layers) {
+        this.layers.addAll(layers);
+    }
+
+    public void next(GuiView view) {
+        if (layers.isEmpty()) return;
+        GuiLayer layer = layers.get(index);
+        index = (index + 1) % layers.size();
+        layer.cleanup(view);
+    }
+
+    public void prev(GuiView view) {
+        if (layers.isEmpty()) return;
+        GuiLayer layer = layers.get(index);
+        index = (index - 1 + layers.size()) % layers.size();
+        layer.cleanup(view);
+    }
+
+    @Override
+    public void renderTo(GuiView view) {
+        if (index == lastRenderedPage) return;
+        GuiLayer layer = layers.get(index);
+        if (layer == null) return;
+        layer.renderTo(view);
+        lastRenderedPage = index;
+    }
+
+    @Override
+    public void cleanup(GuiView view) {
+        if (!layers.isEmpty()) {
+            layers.get(index).cleanup(view);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+    public int getSize() {
+        return layers.size();
+    }
+}
+</div><p id="o4lnzq_10">this is a layer that holds other layers and allows cycling through them.</p><aside class="prompt" data-type="tip" data-title="" id="o4lnzq_11"><p id="o4lnzq_12">As you may have noticed, there is a <code class="code" id="o4lnzq_13">cleanup()</code> method, this is necessary so layers remove their GuiElements properly (if they have any), otherwise there would be leftover objects which could cause bugs</p></aside></section><div class="last-modified">03 October 2025</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="creating-a-simple-gui.html" class="navigation-links__prev">Creating a simple GUI</a><a href="dev-configs.html" class="navigation-links__next">Configs</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.js"></script></body></html>

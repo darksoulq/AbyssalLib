@@ -1,0 +1,55 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#3F56CE"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2025-10-03T12:32:18.019193"><title>Creating Shapes | abyssallib-docs</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-your-own-shapes","level":0,"title":"Creating your own shapes","anchor":"#creating-your-own-shapes"},{"id":"example-animated-rotating-circle","level":0,"title":"Example Animated Rotating Circle:","anchor":"#example-animated-rotating-circle"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating Shapes | abyssallib-docs"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="abyssallib-docs Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/creating-shapes.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating Shapes | abyssallib-docs"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/creating-shapes.html#webpage",
+    "url": "writerside-documentation/creating-shapes.html",
+    "name": "Creating Shapes | abyssallib-docs",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "abyssallib-docs Help"
+}</script><!-- End Schema.org --></head><body data-id="Creating-Shapes" data-main-title="Creating Shapes" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Developers///Particles"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>abyssallib-docs  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="Creating-Shapes" id="Creating-Shapes.md">Creating Shapes</h1><aside class="prompt" data-type="warning" data-title="" id="-2sx24d_3"><p>In the case you choose to use shapes methods like <code class="code" id="-2sx24d_6">count</code> will be disregarded.</p></aside><section class="chapter"><h2 id="creating-your-own-shapes" data-toc="creating-your-own-shapes">Creating your own shapes</h2><div class="code-block" data-lang="java">
+public static Shape circle(double radius, int points) {
+        return (origin, tick, particles) -&gt; {
+            List&lt;Location&gt; list = particles.getLocationBuffer(points);
+            for (int i = 0; i &lt; points; i++) {
+                double angle = 2 * Math.PI * i / points;
+                double x = Math.cos(angle) * radius;
+                double z = Math.sin(angle) * radius;
+                list.set(i, particles.poolLocation(origin.getX() + x, origin.getY(), origin.getZ() + z));
+            }
+            return list;
+        };
+    }
+</div><p id="-2sx24d_8">The above code creates a basic circle shape which takes in radius and points, as you may have noticed it is created by a lamba, however you can do just the same by implementing the Shape interface.</p><aside class="prompt" data-type="tip" data-title="" id="-2sx24d_9"><p id="-2sx24d_13">For locations, as shown in the code above it is recommended to use the <code class="code" id="-2sx24d_15">getLocationBuffer</code> and <code class="code" id="-2sx24d_16">poolLocation</code> methods of <code class="code" id="-2sx24d_17">Particles</code> as it allows for more performant operations.</p><ul class="list _bullet" id="-2sx24d_14"><li class="list__item" id="-2sx24d_18"><p id="-2sx24d_20"><code class="code" id="-2sx24d_21">poolLocation</code> gets a Location of a specific world from the Location Buffer and sets it x, y, z to the provided values.</p></li><li class="list__item" id="-2sx24d_19"><p id="-2sx24d_22"><code class="code" id="-2sx24d_23">getLocationBuffer</code> returns a List of usable Location objects by the amount provided from the origin world of the <code class="code" id="-2sx24d_24">Particles</code>.</p></li></ul></aside><p id="-2sx24d_10">Once you create it using it is as simple as:</p><div class="code-block" data-lang="java">
+public class MyClass {
+    public static Particles createParticle() {
+        Particles particle = Particles.builder()
+                .particle(Particle.NOTE)
+                .spawnAt(Location)
+                .shape(circle(5.5, 10))
+                .build();
+        particle.start();
+        return particle;
+    }
+}
+</div><p id="-2sx24d_12">In case you build it with thread safety in mind (using the location buffer should suffice in most cases) you can also apply <code class="code" id="-2sx24d_25">asyncShape(true)</code> to the particle</p></section><section class="chapter"><h2 id="example-animated-rotating-circle" data-toc="example-animated-rotating-circle">Example Animated Rotating Circle:</h2><div class="code-block" data-lang="java">
+public static Shape rotatingCircle(double radius, int points, double rotationSpeed) {
+    return (origin, tick, builder) -&gt; {
+        List&lt;Location&gt; buffer = builder.getLocationBuffer(points);
+        double angleOffset = (tick * rotationSpeed) % (2 * Math.PI);
+        for (int i = 0; i &lt; points; i++) {
+            double angle = 2 * Math.PI * i / points + angleOffset;
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            buffer.set(i, builder.poolLocation(origin.getX() + x, origin.getY(), origin.getZ() + z));
+        }
+        return buffer;
+    };
+}
+</div></section><div class="last-modified">03 October 2025</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="creating-a-particle.html" class="navigation-links__prev">Creating a Particle</a><a href="creating-a-simple-gui.html" class="navigation-links__next">Creating a simple GUI</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.js"></script></body></html>

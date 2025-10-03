@@ -1,0 +1,34 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#3F56CE"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2025-10-03T12:32:17.8114033"><title>Creating a Tag | abyssallib-docs</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-an-itemtag","level":0,"title":"Creating an ItemTag","anchor":"#creating-an-itemtag"},{"id":"creating-a-blocktag","level":0,"title":"Creating a BlockTag","anchor":"#creating-a-blocktag"},{"id":"using-tags","level":0,"title":"Using Tags","anchor":"#using-tags"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating a Tag | abyssallib-docs"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="abyssallib-docs Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/creating-a-tag.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating a Tag | abyssallib-docs"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/creating-a-tag.html#webpage",
+    "url": "writerside-documentation/creating-a-tag.html",
+    "name": "Creating a Tag | abyssallib-docs",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "abyssallib-docs Help"
+}</script><!-- End Schema.org --></head><body data-id="Creating-a-Tag" data-main-title="Creating a Tag" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Developers///Tags"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>abyssallib-docs  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="Creating-a-Tag" id="Creating-a-Tag.md">Creating a Tag</h1><aside class="prompt" data-type="tip" data-title="" id="c8m44n_3"><p id="c8m44n_7">Tags allow grouping items and blocks typically for use in conditions. AbyssalLib comes with 2 default tag types which you can base yours upon, <code class="code" id="c8m44n_8">ItemTag</code> and <code class="code" id="c8m44n_9">BlockTag</code>.</p></aside><section class="chapter"><h2 id="creating-an-itemtag" data-toc="creating-an-itemtag">Creating an ItemTag</h2><div class="code-block" data-lang="java">
+public class MyTags {
+    public static final DeferredRegistry&lt;Tag&lt;?&gt;&gt; TAGS = DeferredRegistry.create(Registries.TAGS, &quot;plugin_id&quot;);
+    
+    public static final Holder&lt;Tag&lt;?&gt;&gt; MY_TAG = TAGS.register(&quot;my_tag&quot;, ItemTag::new);
+}
+</div><p id="c8m44n_11">Then apply the registry inside your <code class="code" id="c8m44n_12">onEnable()</code>.</p></section><section class="chapter"><h2 id="creating-a-blocktag" data-toc="creating-a-blocktag">Creating a BlockTag</h2><div class="code-block" data-lang="java">
+public class MyTags {
+    public static final DeferredRegistry&lt;Tag&lt;?&gt;&gt; TAGS = DeferredRegistry.create(Registries.TAGS, &quot;plugin_id&quot;);
+
+    public static final Holder&lt;Tag&lt;?&gt;&gt; MY_BLOCK_TAG = TAGS.register(&quot;my_tag&quot;, BlockTag::new);
+}
+</div></section><section class="chapter"><h2 id="using-tags" data-toc="using-tags">Using Tags</h2><p id="c8m44n_14">Adding an item/block to the tag:</p><div class="code-block" data-lang="java">
+(ItemTag MyTags.MY_TAG).add(ItemStack);
+(BlockTag MyTags.MY_BLOCK_TAG).add(BridgeBlock&lt;?&gt;);
+</div><p id="c8m44n_16">Checking if an item/block has a given Tag:</p><div class="code-block" data-lang="java">
+(ItemTag MyTags.MY_TAG).contains(ItemStack);
+(BlockTag MyTags.MY_BLOCK_TAG).contains(BridgeBlock&lt;?&gt;);
+</div><p id="c8m44n_18">You can also make your own Tags by extending <code class="code" id="c8m44n_19">Tag&lt;&gt;</code> class and implementing all the methods and then using that instead of ItemTag and BlockTag.</p></section><div class="last-modified">03 October 2025</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="creating-custom-components.html" class="navigation-links__prev">Creating Custom Components</a><a href="extending-tags.html" class="navigation-links__next">Extending Tags</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.22.0-b776/app.js"></script></body></html>
