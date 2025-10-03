@@ -2,8 +2,6 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
-import com.destroystokyo.paper.event.server.ServerTickStartEvent;
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
@@ -21,14 +19,14 @@ public class EntityEvents {
         Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
         if (entity == null) return;
         entity.applyGoals();
-        entity.applyAttributes(lEntity);
+        entity.applyAttributes();
         EventBus.post(new EntityLoadEvent(entity));
         entity.onLoad();
     }
 
     @SubscribeEvent
     public void onEntityDeath(org.bukkit.event.entity.EntityDeathEvent event) {
-        Entity<? extends LivingEntity> entity = Entity.from(event.getEntity());
+        Entity<? extends LivingEntity> entity = Entity.resolve(event.getEntity());
         if (entity == null) return;
 
         EntityDeathEvent e = new EntityDeathEvent(entity, event.getEntity().getKiller());

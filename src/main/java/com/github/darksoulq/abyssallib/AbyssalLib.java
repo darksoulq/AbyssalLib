@@ -19,6 +19,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
+import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
@@ -63,10 +64,13 @@ public final class AbyssalLib extends JavaPlugin {
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
         RecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));
 
+        EntityManager.start();
+
         EVENT_BUS = new EventBus(this);
 
         EVENT_BUS.register(new ChatInputHandler());
         EVENT_BUS.register(new PlayerEvents());
+        EVENT_BUS.register(new EntityEvents());
         EVENT_BUS.register(new BlockEvents());
         EVENT_BUS.register(new ItemEvents());
         EVENT_BUS.register(new ServerEvents());

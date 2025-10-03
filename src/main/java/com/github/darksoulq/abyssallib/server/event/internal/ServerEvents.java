@@ -24,6 +24,7 @@ public class ServerEvents {
                     CommandBus.register(AbyssalLib.MODID, new InternalCommand());
                     BlockManager.load();
                     EntityManager.load();
+                    EntityManager.restoreEntities();
                     EntityAttributes.init();
                     RecipeLoader.reload();
                     TagLoader.loadTags();

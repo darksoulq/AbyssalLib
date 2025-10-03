@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AbyssalLib.main.iml" filepath="$PROJECT_DIR$/.idea/modules/AbyssalLib.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AbyssalLib.test.iml" filepath="$PROJECT_DIR$/.idea/modules/AbyssalLib.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.github.darksoulq.AbyssalLib.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.github.darksoulq.AbyssalLib.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/darksoulq.AbyssalLib.main.iml" filepath="$PROJECT_DIR$/.idea/modules/darksoulq.AbyssalLib.main.iml" />
     </modules>
   </component>
 </project>
