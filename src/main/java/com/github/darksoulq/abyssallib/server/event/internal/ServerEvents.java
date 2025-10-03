@@ -9,7 +9,7 @@ import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
-import com.github.darksoulq.abyssallib.world.recipe.VanillaRecipeLoader;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -25,7 +25,7 @@ public class ServerEvents {
                     BlockManager.load();
                     EntityManager.load();
                     EntityAttributes.init();
-                    VanillaRecipeLoader.reload();
+                    RecipeLoader.reload();
                     TagLoader.loadTags();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
@@ -34,7 +34,7 @@ public class ServerEvents {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    VanillaRecipeLoader.reload();
+                    RecipeLoader.reload();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         }

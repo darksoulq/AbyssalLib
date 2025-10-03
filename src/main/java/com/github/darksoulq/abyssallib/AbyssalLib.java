@@ -22,9 +22,7 @@ import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
-import com.github.darksoulq.abyssallib.world.recipe.VanillaRecipeLoader;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -63,7 +61,7 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
-        VanillaRecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));
+        RecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));
 
         EVENT_BUS = new EventBus(this);
 
