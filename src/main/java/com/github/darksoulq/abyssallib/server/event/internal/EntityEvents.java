@@ -1,8 +1,10 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityDeathEvent;
@@ -15,14 +17,13 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onEntityLoad(EntityAddToWorldEvent event) {
-        if (event.getEntity() instanceof LivingEntity lEntity) {
-            Entity<? extends LivingEntity> entity = EntityManager.get(event.getEntity().getUniqueId());
-            if (entity != null) {
-                entity.applyGoals(lEntity);
-                entity.applyAttributes(lEntity);
-                EventBus.post(new EntityLoadEvent(entity));
-            }
-        }
+        if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
+        Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
+        if (entity == null) return;
+        entity.applyGoals(lEntity);
+        entity.applyAttributes(lEntity);
+        EventBus.post(new EntityLoadEvent(entity));
+        entity.onLoad();
     }
 
     @SubscribeEvent
@@ -36,7 +37,16 @@ public class EntityEvents {
             event.setCancelled(true);
             return;
         }
+        if (entity.onDeath(event).equals(ActionResult.CANCEL)) return;
 
         EntityManager.remove(entity.uuid);
+    }
+
+    @SubscribeEvent
+    public void onEntityUnload(EntityRemoveFromWorldEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
+        Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
+        if (entity == null) return;
+        entity.onUnload();
     }
 }
