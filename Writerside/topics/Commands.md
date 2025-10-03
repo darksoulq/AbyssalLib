@@ -1,32 +1,50 @@
 # Commands
 
-For the most part, commands are basically written as would be in brigadier format, however registration is made much easier with a simpler setup process.
+AbyssalLib comes with a few useful commands for admins:
 
----
-
-## Step 1: annotate a function with @Command(name)
-
-To start with registering your command, you will need to annotate a method with @Command, like this:
-
-```Java
-@Command(name="mycommand")
-public void mycommand(LiteralArgumentBuilder<CommandSourceStack> root) {
-    // make the command as you would in brigadier, do not call .build on root.
-}
-```
-
-- The function MUST only take in `LiteralArgumentBuilder<CommandSourceStack>`
-- "root" is your top-level argument `/root`, root will have the name you declared in the annotation, so in-game it would be `/name`.
-- From here, you can structure the command as you would in Brigadier
-
-## Step 2: Registering the command
-
-To register the command, simply call the CommandBus instances .register method, so in your `onEnable()` (or any other method):
-
-```Java
-CommandBus.INSTANCE.register(MODID, new MyCommandClass());
-```
-
-(assuming MyCommandClass is where the mycommand function is)
-
-That's it! you have successfully created your first command. (For help with Brigadier, read the Paper docs!)
+<table>
+<tr>
+<td>
+Command
+</td>
+<td>
+Permission
+</td>
+<td>
+Description
+</td>
+</tr>
+<tr>
+<td>
+/abyssallib give $item:id
+</td>
+<td>
+abyssallib.admin.give
+</td>
+<td>
+Gives the item by the provided id
+</td>
+</tr>
+<tr>
+<td>
+/abyssallib attribute get $entity_select $attribute:id
+</td>
+<td>
+abyssallib.admin.attribute
+</td>
+<td>
+Gets the attribute value of the given attribute for a given entity
+</td>
+</tr>
+<tr>
+<td>
+/abyssallib reload commands
+</td>
+<td>
+abyssallib.admin.reload
+</td>
+<td>
+Reloads all Commands
+</td>
+</tr>
+</table>

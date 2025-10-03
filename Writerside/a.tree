@@ -4,35 +4,49 @@
 
 <instance-profile id="a"
                  name="abyssallib-docs"
-                  start-page="Getting-Started.md">
+>
 
-    <toc-element topic="Getting-Started.md">
-        <toc-element toc-title="Resource Packs">
-            <toc-element topic="Resources.md"/>
-        </toc-element>
-        <toc-element toc-title="Blocks">
-            <toc-element topic="Creating-a-block.md"/>
-            <toc-element topic="Advanced-Blocks-Custom-Behavior.md"/>
+    <toc-element toc-title="Developers">
+        <toc-element topic="Getting-Started.md"/>
+        <toc-element toc-title="Resource Pack">
+            <toc-element topic="Creating-a-Resource-Pack.md"/>
+            <toc-element topic="Loading your glyphs.md"/>
+            <toc-element topic="Loading-lang-files.md"/>
+            <toc-element topic="Loading-Item-Definitions.md"/>
         </toc-element>
         <toc-element toc-title="Items">
-            <toc-element topic="Items.md"/>
-            <toc-element topic="Advanced-Items.md"/>
-            <toc-element topic="Advanced-Items-Item-Settings.md"/>
+            <toc-element topic="Creating-an-Item.md"/>
+            <toc-element topic="Extending-the-item-class.md"/>
+            <toc-element topic="Creating-Custom-Components.md"/>
         </toc-element>
-        <toc-element toc-title="Guis">
-            <toc-element topic="Overview.md"/>
-            <toc-element topic="ChestGui.md"/>
-            <toc-element topic="Slots.md"/>
+        <toc-element toc-title="Tags">
+            <toc-element topic="Creating-a-Tag.md"/>
+            <toc-element topic="Extending-Tags.md"/>
         </toc-element>
-        <toc-element toc-title="Others">
-            <toc-element topic="CraftinRecipes.md"/>
-            <toc-element topic="Particles.md"/>
-            <toc-element topic="Loot-Tables.md"/>
-            <toc-element topic="Tags-Defining-and-Using-Item-Tags.md"/>
-            <toc-element topic="Commands.md"/>
-            <toc-element topic="Events.md"/>
-            <toc-element topic="Config.md"/>
-            <toc-element topic="Database.md"/>
+        <toc-element toc-title="Particles">
+            <toc-element topic="Creating-a-Particle.md"/>
+            <toc-element topic="Creating-Shapes.md"/>
         </toc-element>
+        <toc-element toc-title="GUIs">
+            <toc-element topic="Creating-a-simple-GUI.md"/>
+            <toc-element topic="Extending-GuiElement-and-GuiLayer.md"/>
+        </toc-element>
+        <toc-element toc-title="Blocks"/>
+        <toc-element toc-title="Multiblocks"/>
+        <toc-element toc-title="Entities"/>
+        <toc-element topic="dev.Configs.md"/>
+        <toc-element topic="Recipes.md"/>
+        <toc-element topic="Events.md"/>
+        <toc-element topic="DamageType.md"/>
+        <toc-element topic="Creating-a-simple-Codec.md"/>
+        <toc-element topic="ItemBridge.md"/>
+        <toc-element topic="Custom-Events.md"/>
+    </toc-element>
+    <toc-element toc-title="Server Owners">
+        <toc-element topic="ResourcePack.md"/>
+        <toc-element topic="Configs.md"/>
+        <toc-element topic="Adding-Recipes.md"/>
+        <toc-element topic="Adding-Items-to-tags.md"/>
+        <toc-element topic="Commands.md"/>
     </toc-element>
 </instance-profile>

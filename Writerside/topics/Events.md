@@ -1,40 +1,31 @@
 # Events
 
-AbyssalLib provides an easy to use interface for registering events, this might be made to auto-discover so devs dont have to register the event classes.
+> AbyssalLib introduce its own `EventBus` and `@SubscribeEvent` annotation which acts as a layer to the Bukkit event system so you dont have to implement Listener
 
-## Create an EventBus
+### Registering Events
+Registering events is mostly same as it is in Bukkit however you do not have to implement `Listener`.
 
-to start registering events, you need an `EventBus`, this can easily be made by creating an instance of `EventBus` in your `onEnable`.
-
-```java
-EventBus eventBus = new EventBus(plugin);
-```
-
-## Make some events.
-
-Now you can create events similarly to Bukkit, instead of @EventListener you must use @Subscribe, the class that holds these methods doesnt need to implement Listener.
-
-```java
+```Java
+public class MyListeners {
     @SubscribeEvent
-    public void onChat(AsyncChatEvent e) {
-        Component result = e.message();
-        for (String placeholder : GlyphManager.getChatMap().keySet()) {
-            result = e.message().replaceText(TextReplacementConfig.builder()
-                    .matchLiteral(placeholder)
-                    .replacement(GlyphManager.getChatMap().get(placeholder).toString())
-                    .build());
-        }
+    public void onMove(PlayerMoveEvent e) {}
+}
+```
 
-        e.message(result);
+Afterwards in your `onEnable()`.
+```Java
+public class MyPlugin implements JavaPlugin {
+    @Override
+    public void onEnable() {
+        EventBus bus = new EventBus(this);
+        bus.register(new MyListeners());
     }
+}
 ```
 
-## Register the class holding the listeners
+Thats it! You have registered an event successfully.
 
-Now you just need to register an instance of the class that contains these methods, do this somewhere in you `onEnable` method.
+> `@SubscribeEvent` also has parameter for `priority` and `ignoreCancelled`, which are LOW and true by default.
 
-```java
-eventBus.register(new Events());
-```
-
-That's it, you have successfully registered your events!
+#### Firing events:
+For firing events you need not create an instance of EventBus simply call `EventBus.post(Evemt)`.

@@ -30,4 +30,84 @@
         <description>Created after removal of "Glyphs" from abyssallib-docs</description>
         <accepts>Glyphs.html</accepts>
     </rule>
+    <rule id="2a17da1e">
+        <description>Created after removal of "Resource Pack Generation" from abyssallib-docs</description>
+        <accepts>Resources.html</accepts>
+    </rule>
+    <rule id="56f1302c">
+        <description>Created after removal of "Creating a Block" from abyssallib-docs</description>
+        <accepts>Creating-a-block.html</accepts>
+    </rule>
+    <rule id="fe6a612">
+        <description>Created after removal of "Advanced Blocks: Custom Behavior" from abyssallib-docs</description>
+        <accepts>Advanced-Blocks-Custom-Behavior.html</accepts>
+    </rule>
+    <rule id="387b08fc">
+        <description>Created after removal of "Creating Items" from abyssallib-docs</description>
+        <accepts>Items.html</accepts>
+    </rule>
+    <rule id="42698d3d">
+        <description>Created after removal of "Advanced Items: Custom Behavior" from abyssallib-docs</description>
+        <accepts>Advanced-Items.html</accepts>
+    </rule>
+    <rule id="7f75825a">
+        <description>Created after removal of "Advanced Items: Item Settings" from abyssallib-docs</description>
+        <accepts>Advanced-Items-Item-Settings.html</accepts>
+    </rule>
+    <rule id="5f96e3b2">
+        <description>Created after removal of "Overview" from abyssallib-docs</description>
+        <accepts>Overview.html</accepts>
+    </rule>
+    <rule id="3fb6b768">
+        <description>Created after removal of "ChestGui" from abyssallib-docs</description>
+        <accepts>ChestGui.html</accepts>
+    </rule>
+    <rule id="4dd704fb">
+        <description>Created after removal of "Slots" from abyssallib-docs</description>
+        <accepts>Slots.html</accepts>
+    </rule>
+    <rule id="47aa81cf">
+        <description>Created after removal of "Recipes" from abyssallib-docs</description>
+        <accepts>CraftinRecipes.html</accepts>
+    </rule>
+    <rule id="473b1de2">
+        <description>Created after removal of "Particles" from abyssallib-docs</description>
+        <accepts>Particles.html</accepts>
+    </rule>
+    <rule id="4e924fe9">
+        <description>Created after removal of "LootTables" from abyssallib-docs</description>
+        <accepts>Loot-Tables.html</accepts>
+    </rule>
+    <rule id="727b82f7">
+        <description>Created after removal of "Tags" from abyssallib-docs</description>
+        <accepts>Tags-Defining-and-Using-Item-Tags.html</accepts>
+    </rule>
+    <rule id="599813db">
+        <description>Created after removal of "Commands" from abyssallib-docs</description>
+        <accepts>Commands.html</accepts>
+    </rule>
+    <rule id="1ab924db">
+        <description>Created after removal of "Events" from abyssallib-docs</description>
+        <accepts>Events.html</accepts>
+    </rule>
+    <rule id="422b4708">
+        <description>Created after removal of "Config" from abyssallib-docs</description>
+        <accepts>Config.html</accepts>
+    </rule>
+    <rule id="21891e74">
+        <description>Created after removal of "Database" from abyssallib-docs</description>
+        <accepts>Database.html</accepts>
+    </rule>
+    <rule id="12a3bed6">
+        <description>Created after removal of "Getting Started" from abyssallib-docs</description>
+        <accepts>Getting-Started.html</accepts>
+    </rule>
+    <rule id="264d93cd">
+        <description>Created after removal of "Datapacks" from abyssallib-docs</description>
+        <accepts>Datapacks.html</accepts>
+    </rule>
+    <rule id="23aaad9b">
+        <description>Created after removal of "Registry and Holder" from abyssallib-docs</description>
+        <accepts>Registry-and-Holder.html</accepts>
+    </rule>
 </rules>
