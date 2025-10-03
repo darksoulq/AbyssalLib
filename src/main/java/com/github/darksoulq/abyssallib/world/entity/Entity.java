@@ -18,14 +18,15 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import java.util.*;
+import java.util.function.Function;
 
 public class Entity<T extends LivingEntity> implements Cloneable {
     public UUID uuid;
     private Identifier id;
     private Class<T> baseClass;
 
-    private final Map<Integer, Goal> pathfinderGoals = new LinkedHashMap<>();
-    private final Map<Integer, Goal> targetGoals = new LinkedHashMap<>();
+    private final Map<Integer, Function<T, Goal>> pathfinderGoals = new LinkedHashMap<>();
+    private final Map<Integer, Function<T, Goal>> targetGoals = new LinkedHashMap<>();
     private final Map<Attribute, Double> attributes = new LinkedHashMap<>();
     private final Map<Attribute, List<AttributeModifier>> modifiers = new LinkedHashMap<>();
 
@@ -34,10 +35,10 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         this.baseClass = baseClass;
     }
 
-    public void addGoal(int priority, Goal goal) {
+    public void addGoal(int priority, Function<T, Goal> goal) {
         pathfinderGoals.put(priority, goal);
     }
-    public void addTargetGoal(int priority, Goal goal) {
+    public void addTargetGoal(int priority, Function<T, Goal> goal) {
         targetGoals.put(priority, goal);
     }
 
@@ -81,15 +82,15 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         applyAttributes(entity);
     }
 
-    public void applyGoals(LivingEntity entity) {
+    public void applyGoals(T entity) {
         NMSGoalHandler.clearGoals(entity);
 
         pathfinderGoals.forEach((priority, goal) ->
-                NMSGoalHandler.addGoal(entity, goal, priority)
+                NMSGoalHandler.addGoal(entity, goal.apply(entity), priority)
         );
 
         targetGoals.forEach((priority, goal) ->
-                NMSGoalHandler.addTargetGoal(entity, goal, priority)
+                NMSGoalHandler.addTargetGoal(entity, goal.apply(entity), priority)
         );
     }
     public void applyAttributes(LivingEntity entity) {
