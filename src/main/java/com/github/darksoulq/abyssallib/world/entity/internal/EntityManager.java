@@ -167,6 +167,8 @@ public class EntityManager {
     private static void spawnCustomEntity(World world, Location loc, SpawnCategory category) throws CloneNotSupportedException {
         Entity.EntityEntry entry = Entity.getWeighedSpawnEntry(loc.getBlock().getBiome(), category);
         if (entry == null) return;
+        float chance = entry.entry().weight();
+        if (EntityManager.rand.nextFloat() > chance) return;
         for (BiPredicate<World, Location> condition : entry.entity().getSpawnConditions()) {
             if (!condition.test(world, loc)) return;
         }

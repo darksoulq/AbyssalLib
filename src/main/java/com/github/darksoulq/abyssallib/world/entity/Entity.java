@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.PDCTag;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
@@ -81,6 +82,8 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         onSpawn();
         applyGoals();
         applyAttributes();
+
+        AbyssalLib.LOGGER.info("Entity spawned at " + loc);
     }
     public void spawn(T entity) {
         spawn(entity, EntitySpawnEvent.SpawnReason.PLUGIN);
@@ -172,9 +175,9 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         });
         if (entities.isEmpty()) return null;
 
-        int totalWeight = entities.keySet().stream().mapToInt(e -> e.weight).sum();
-        int r = EntityManager.rand.nextInt(totalWeight);
-        int running = 0;
+        double totalWeight = entities.keySet().stream().mapToDouble(e -> e.weight).sum();
+        double r = EntityManager.rand.nextDouble(totalWeight);
+        double running = 0;
 
         for (SpawnEntry entry : entities.keySet()) {
             running += entry.weight;
@@ -194,6 +197,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         this.pathfinderGoals.forEach(copy::addGoal);
         this.targetGoals.forEach(copy::addTargetGoal);
         this.attributes.forEach(copy::setAttribute);
+        copy.spawnConditions.addAll(this.spawnConditions);
 
         this.modifiers.forEach((attr, list) ->
                 list.forEach(mod -> copy.addAttributeModifier(attr, mod))
@@ -202,6 +206,6 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         return copy;
     }
 
-    public record SpawnEntry(Identifier id, int weight, int minGroup, int maxGroup) {}
+    public record SpawnEntry(Identifier id, float weight, int minGroup, int maxGroup) {}
     public record EntityEntry(SpawnEntry entry, Entity<? extends LivingEntity> entity) {}
 }
