@@ -54,7 +54,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     public void addSpawnCondition(BiPredicate<World, Location> cond) {
         spawnConditions.add(cond);
     }
-    public void addSpawnWeight(Biome biome, int weight, int minGroup, int maxGroup) {
+    public void addSpawnWeight(Biome biome, float weight, int minGroup, int maxGroup) {
         spawnTable.computeIfAbsent(biome, k -> new ArrayList<>()).add(new SpawnEntry(id, weight, minGroup, maxGroup));
     }
 
