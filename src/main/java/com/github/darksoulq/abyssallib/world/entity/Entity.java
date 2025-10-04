@@ -101,30 +101,28 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     }
 
     public void applyGoals() {
-        Optional<T> entity = getBaseEntity();
-        if (entity.isEmpty()) return;
-        NMSGoalHandler.clearGoals(entity.get());
+        T entity = getBaseEntity().orElseThrow(() -> new IllegalStateException("Base entity is null"));
+        NMSGoalHandler.clearGoals(entity);
 
         pathfinderGoals.forEach((priority, goal) ->
-                NMSGoalHandler.addGoal(entity.get(), goal.apply(entity.get()), priority)
+                NMSGoalHandler.addGoal(entity, goal.apply(entity), priority)
         );
 
         targetGoals.forEach((priority, goal) ->
-                NMSGoalHandler.addTargetGoal(entity.get(), goal.apply(entity.get()), priority)
+                NMSGoalHandler.addTargetGoal(entity, goal.apply(entity), priority)
         );
     }
     public void applyAttributes() {
-        Optional<T> entity = getBaseEntity();
-        if (entity.isEmpty()) return;
+        T entity = getBaseEntity().orElseThrow(() -> new IllegalStateException("Base entity is null"));
         for (Map.Entry<Attribute, Double> entry : attributes.entrySet()) {
-            AttributeInstance instance = entity.get().getAttribute(entry.getKey());
+            AttributeInstance instance = entity.getAttribute(entry.getKey());
             if (instance != null) {
                 instance.setBaseValue(entry.getValue());
             }
         }
 
         for (Map.Entry<Attribute, List<AttributeModifier>> entry : modifiers.entrySet()) {
-            AttributeInstance instance = entity.get().getAttribute(entry.getKey());
+            AttributeInstance instance = entity.getAttribute(entry.getKey());
             if (instance != null) {
                 for (AttributeModifier modifier : entry.getValue()) {
                     instance.addModifier(modifier);
