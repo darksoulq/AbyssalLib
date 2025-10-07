@@ -42,11 +42,16 @@ public class EntityManager {
                Identifier id = Identifier.of(rs.getString("entity_id"));
                Entity<? extends LivingEntity> entity = Registries.ENTITIES.get(id.toString());
                if (entity == null) return null;
+               entity = entity.clone();
                entity.uuid = uuid;
                return entity;
             });
 
             loaded.forEach(e -> {
+                if (Bukkit.getEntity(e.uuid) == null) {
+                    remove(e.uuid);
+                    return;
+                }
                 ENTITIES.put(e.uuid, e);
             });
         } catch (Exception e) {
@@ -138,7 +143,7 @@ public class EntityManager {
             Chunk randomChunk = eligibleChunks.stream().skip(rand.nextInt(eligibleChunks.size())).findFirst().orElse(null);
             if (randomChunk == null) continue;
 
-            Location spawnLoc = getRandomLocationInChunk(randomChunk, world);
+            Location spawnLoc = getRandomLocationInChunk(randomChunk, world, category);
             if (spawnLoc == null) continue;
 
             spawnCustomEntity(world, spawnLoc, category);
@@ -149,28 +154,68 @@ public class EntityManager {
         List<Entity<? extends LivingEntity>> entities = new ArrayList<>();
         world.getEntities().forEach(e -> entities.add(Entity.resolve(e)));
         for (Entity<? extends LivingEntity> e : entities) {
+            if (e == null) continue;
             if (e.getCategory() == category) {
                 count++;
             }
         }
         return count;
     }
-    private static Location getRandomLocationInChunk(Chunk chunk, World world) {
+    private static Location getRandomLocationInChunk(Chunk chunk, World world, SpawnCategory category) {
         int x = (chunk.getX() << 4) + rand.nextInt(16);
         int z = (chunk.getZ() << 4) + rand.nextInt(16);
-        int y = rand.nextInt(world.getMaxHeight());
 
-        Location loc = new Location(world, x, y, z);
-        if (!world.getWorldBorder().isInside(loc)) return null;
-        return loc;
+        if (!world.getWorldBorder().isInside(new Location(world, x, world.getSeaLevel(), z))) return null;
+
+        switch (category) {
+            case WATER_CREATURE:
+            case WATER_MONSTER:
+            case WATER_AMBIENT: {
+                int highestY = world.getHighestBlockYAt(x, z);
+                for (int y = highestY; y > 5; y--) {
+                    Location loc = new Location(world, x + 0.5, y, z + 0.5);
+                    if (loc.getBlock().isLiquid()) {
+                        if (loc.clone().add(0, 1, 0).getBlock().isLiquid() &&
+                                loc.clone().add(0, -1, 0).getBlock().isLiquid()) {
+                            if (!loc.clone().add(0, 3, 0).getBlock().isLiquid()) continue;
+
+                            return loc;
+                        }
+                    }
+                }
+                return null;
+            }
+            case MONSTER:
+            case CREATURE:
+            case AMBIENT: {
+                int highestY = world.getHighestBlockYAt(x, z);
+                for (int y = highestY; y > 0; y--) {
+                    Location ground = new Location(world, x + 0.5, y, z + 0.5);
+                    if (ground.getBlock().getType().isSolid()) {
+                        Location spawn = ground.clone().add(0, 1, 0);
+                        if (spawn.getBlock().isEmpty() && spawn.clone().add(0, 1, 0).getBlock().isEmpty()) {
+                            return spawn;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            default:
+                return null;
+        }
     }
     private static void spawnCustomEntity(World world, Location loc, SpawnCategory category) throws CloneNotSupportedException {
         Entity.EntityEntry entry = Entity.getWeighedSpawnEntry(loc.getBlock().getBiome(), category);
-        if (entry == null) return;
+        if (entry == null) {
+            return;
+        }
         float chance = entry.entry().weight();
         if (EntityManager.rand.nextFloat() > chance) return;
         for (BiPredicate<World, Location> condition : entry.entity().getSpawnConditions()) {
-            if (!condition.test(world, loc)) return;
+            if (!condition.test(world, loc)) {
+                return;
+            }
         }
         int groupSize = entry.entry().maxGroup() + rand.nextInt(entry.entry().maxGroup() - entry.entry().minGroup() + 1);
         for (int i = 0; i < groupSize; i++) {

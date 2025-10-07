@@ -84,6 +84,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         applyAttributes();
 
         AbyssalLib.LOGGER.info("Entity spawned at " + loc);
+        EntityManager.add(this);
     }
     public void spawn(T entity) {
         spawn(entity, EntitySpawnEvent.SpawnReason.PLUGIN);
@@ -98,6 +99,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         onSpawn();
         applyGoals();
         applyAttributes();
+        EntityManager.add(this);
     }
 
     public void applyGoals() {
@@ -165,7 +167,9 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     }
     public static EntityEntry getWeighedSpawnEntry(Biome biome, SpawnCategory category) {
         Map<SpawnEntry, Entity<? extends LivingEntity>> entities = new HashMap<>();
-        spawnTable.get(biome).forEach(se -> {
+        List<SpawnEntry> entries = spawnTable.get(biome);
+        if (entries == null) return null;
+        entries.forEach(se -> {
             Entity<? extends LivingEntity> entity = Registries.ENTITIES.get(se.id.toString());
             if (entity == null) return;
             if (!entity.category.equals(category)) return;

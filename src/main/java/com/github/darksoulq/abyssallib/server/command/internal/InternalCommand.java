@@ -15,6 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.FinePositionResolver;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver;
 import io.papermc.paper.math.FinePosition;
 import org.bukkit.Location;
@@ -142,9 +143,9 @@ public class InternalCommand {
         return builder.buildFuture();
     }
 
-    public static int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException {
-        FinePosition position = ctx.getArgument("locationn", FinePosition.class);
-        Location loc = position.toLocation(ctx.getSource().getExecutor().getWorld());
+    public static int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
+        FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
+        Location loc = position.resolve(ctx.getSource()).toLocation(ctx.getSource().getExecutor().getWorld());
         NamespacedKey id = ctx.getArgument("namespace_id", NamespacedKey.class);
 
         if (!Registries.ENTITIES.contains(id.asString())) {

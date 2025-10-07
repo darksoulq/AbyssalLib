@@ -20,5 +20,5 @@ public interface ResultMapper<T> {
      * @return the mapped object of type {@code T}
      * @throws SQLException if a database access error occurs or if reading from the result set fails
      */
-    T map(ResultSet rs) throws SQLException, ClassNotFoundException;
+    T map(ResultSet rs) throws SQLException, ClassNotFoundException, CloneNotSupportedException;
 }
