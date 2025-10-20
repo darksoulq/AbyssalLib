@@ -20,6 +20,7 @@ public class EntityEvents {
         if (entity == null) return;
         entity.applyGoals();
         entity.applyAttributes();
+        entity.applyComponents();
         EventBus.post(new EntityLoadEvent(entity));
         entity.onLoad();
     }
@@ -35,7 +36,10 @@ public class EntityEvents {
             event.setCancelled(true);
             return;
         }
-        if (entity.onDeath(event).equals(ActionResult.CANCEL)) return;
+        if (entity.onDeath(event).equals(ActionResult.CANCEL)) {
+            event.setCancelled(true);
+            return;
+        }
 
         EntityManager.remove(entity.uuid);
     }

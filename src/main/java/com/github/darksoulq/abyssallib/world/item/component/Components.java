@@ -105,7 +105,7 @@ public class Components {
     public static Holder<Class<? extends DataComponent<?>>> POTION_DURATION_SCALE =
             register("potion_duration_scale", PotionDurationScale.class);
     public static Holder<Class<? extends DataComponent<?>>> PROFILE =
-            register("profile", Profile.class);
+            register("profile", ResolvingProfile.class);
     public static Holder<Class<? extends DataComponent<?>>> RECIPES =
             register("recipes", Recipes.class);
     public static Holder<Class<? extends DataComponent<?>>> USE_REMAINDER =

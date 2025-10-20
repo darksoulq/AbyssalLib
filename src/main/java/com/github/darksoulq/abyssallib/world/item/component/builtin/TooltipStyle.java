@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class TooltipStyle extends DataComponent<Key> implements Vanilla {
-    private static final Codec<DataComponent<Key>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<Key>> CODEC = Codecs.KEY.xmap(
+            TooltipStyle::new,
+            t -> t.value
+    );
 
     public TooltipStyle(Key id) {
         super(Identifier.of(DataComponentTypes.TOOLTIP_STYLE.key().asString()), id, CODEC);

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -8,8 +9,12 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.FireworkEffect;
 import org.bukkit.inventory.ItemStack;
 
+@SuppressWarnings("UnstableApiUsage")
 public class FireworkExplosion extends DataComponent<FireworkEffect> implements Vanilla {
-    private static final Codec<DataComponent<FireworkEffect>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<FireworkEffect>> CODEC = ExtraCodecs.FIREWORK_EFFECT.xmap(
+            FireworkExplosion::new,
+            f -> f.value
+    );
 
     public FireworkExplosion(FireworkEffect effect) {
         super(Identifier.of(DataComponentTypes.FIREWORK_EXPLOSION.key().asString()), effect, CODEC);

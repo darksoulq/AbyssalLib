@@ -55,7 +55,7 @@ public class Item implements Cloneable {
 
     public void createTooltip(Tooltip tooltip) {}
     public void updateTooltip() {
-        setData(new Lore(ItemLore.lore(tooltip.lines)));
+        setData(new Lore(tooltip.lines));
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
                 .hideTooltip(tooltip.hide)
                 .hiddenComponents(tooltip.hiddenComponents).build()));

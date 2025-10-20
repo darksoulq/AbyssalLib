@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import org.bukkit.DyeColor;
 import org.bukkit.inventory.ItemStack;
 
 public class BaseColor extends DataComponent<DyeColor> implements Vanilla {
-    private static final Codec<DataComponent<DyeColor>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<DyeColor>> CODEC = Codec.enumCodec(DyeColor.class).xmap(
+            BaseColor::new,
+            b -> b.value
+    );
 
     public BaseColor(DyeColor color) {
         super(Identifier.of(DataComponentTypes.BASE_COLOR.key().asString()), color, CODEC);

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import io.papermc.paper.datacomponent.item.PotDecorations;
 import org.bukkit.inventory.ItemStack;
 
 public class PotDecorates extends DataComponent<PotDecorations> implements Vanilla {
-    private static final Codec<DataComponent<PotDecorations>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<PotDecorations>> CODEC = ExtraCodecs.POT_DECORATIONS.xmap(
+            PotDecorates::new,
+            p -> p.value
+    );
 
     public PotDecorates(PotDecorations decor) {
         super(Identifier.of(DataComponentTypes.POT_DECORATIONS.key().asString()), decor, CODEC);

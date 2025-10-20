@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import io.papermc.paper.datacomponent.item.Equippable;
 import org.bukkit.inventory.ItemStack;
 
 public class EquippableComponent extends DataComponent<Equippable> implements Vanilla {
-    private static final Codec<DataComponent<Equippable>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<Equippable>> CODEC = ExtraCodecs.EQUIPPABLE.xmap(
+            EquippableComponent::new,
+            e -> e.value
+    );
 
     public EquippableComponent(Equippable equip) {
         super(Identifier.of(DataComponentTypes.EQUIPPABLE.key().asString()), equip, CODEC);

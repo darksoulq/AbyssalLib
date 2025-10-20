@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import io.papermc.paper.datacomponent.item.UseCooldown;
 import org.bukkit.inventory.ItemStack;
 
 public class CooldownUse extends DataComponent<UseCooldown> implements Vanilla {
-    private static final Codec<DataComponent<UseCooldown>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<UseCooldown>> CODEC = ExtraCodecs.USE_COOLDOWN.xmap(
+            CooldownUse::new,
+            c -> c.value
+    );
 
     public CooldownUse(UseCooldown cd) {
         super(Identifier.of(DataComponentTypes.USE_COOLDOWN.key().asString()), cd, CODEC);

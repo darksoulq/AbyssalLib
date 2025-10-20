@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -8,8 +9,12 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Fireworks;
 import org.bukkit.inventory.ItemStack;
 
+@SuppressWarnings("UnstableApiUsage")
 public class Firework extends DataComponent<Fireworks> implements Vanilla {
-    private static final Codec<DataComponent<Fireworks>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<Fireworks>> CODEC = ExtraCodecs.FIREWORKS.xmap(
+            Firework::new,
+            f -> f.value
+    );
 
     public Firework(Fireworks fireworks) {
         super(Identifier.of(DataComponentTypes.FIREWORKS.key().asString()), fireworks, CODEC);

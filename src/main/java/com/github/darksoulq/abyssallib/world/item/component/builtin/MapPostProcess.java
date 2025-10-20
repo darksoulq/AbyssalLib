@@ -9,7 +9,10 @@ import io.papermc.paper.item.MapPostProcessing;
 import org.bukkit.inventory.ItemStack;
 
 public class MapPostProcess extends DataComponent<MapPostProcessing> implements Vanilla {
-    private static final Codec<DataComponent<MapPostProcessing>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<MapPostProcessing>> CODEC = Codec.enumCodec(MapPostProcessing.class).xmap(
+            MapPostProcess::new,
+            m -> m.value
+    );
 
     public MapPostProcess(MapPostProcessing postProcess) {
         super(Identifier.of(DataComponentTypes.MAP_POST_PROCESSING.key().asString()), postProcess, CODEC);

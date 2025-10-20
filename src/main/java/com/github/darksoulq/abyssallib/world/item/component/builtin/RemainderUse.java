@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,10 +10,13 @@ import io.papermc.paper.datacomponent.item.UseRemainder;
 import org.bukkit.inventory.ItemStack;
 
 public class RemainderUse extends DataComponent<UseRemainder> implements Vanilla {
-    private static final Codec<DataComponent<UseRemainder>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<UseRemainder>> CODEC = Codecs.ITEM_STACK.xmap(
+            RemainderUse::new,
+            r -> r.value.transformInto()
+    );
 
-    public RemainderUse(UseRemainder blocks) {
-        super(Identifier.of(DataComponentTypes.USE_REMAINDER.key().asString()), blocks, CODEC);
+    public RemainderUse(ItemStack remainder) {
+        super(Identifier.of(DataComponentTypes.USE_REMAINDER.key().asString()), UseRemainder.useRemainder(remainder), CODEC);
     }
 
     @Override

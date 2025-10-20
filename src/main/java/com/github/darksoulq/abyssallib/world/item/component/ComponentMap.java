@@ -7,9 +7,11 @@ import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
 import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import io.papermc.paper.datacomponent.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
+import org.bukkit.entity.LivingEntity;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.Constructor;
@@ -22,13 +24,25 @@ public class ComponentMap {
     private final Map<Identifier, DataComponent<?>> components = new HashMap<>();
     private final Map<Identifier, Vanilla> vanillaComponents = new HashMap<>();
     private final Item item;
+    private final Entity<? extends LivingEntity> entity;
 
     public ComponentMap(Item item) {
         this.item = item;
+        this.entity = null;
+        load();
+    }
+
+    public ComponentMap(Entity<? extends LivingEntity> entity) {
+        this.item = null;
+        this.entity = null;
         load();
     }
 
     public void load() {
+        if (this.item != null) loadItem();
+        if (this.entity != null) loadEntity();
+    }
+    public void loadItem() {
         if (item == null || item.getStack() == null) return;
 
         for (DataComponentType type : item.getStack().getDataTypes()) {
@@ -85,6 +99,36 @@ public class ComponentMap {
             }
         }
     }
+    public void loadEntity() {
+        CTag root = entity.getCTag();
+        CompoundTag tag = root.toVanilla().getCompoundOrEmpty("CustomComponents");
+        if (tag.isEmpty()) return;
+
+        for (String cId : tag.keySet()) {
+            Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(cId);
+            if (cls == null) continue;
+
+            try {
+                Optional<String> encoded = tag.getString(cId);
+                if (encoded.isEmpty()) continue;
+
+                Field codecField = cls.getDeclaredField("CODEC");
+                if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
+                codecField.setAccessible(true);
+                Codec<?> codec = (Codec<?>) codecField.get(null);
+
+                DataComponent<?> decoded = (DataComponent<?>) codec.decode(StringOps.INSTANCE, encoded.get());
+                if (decoded != null) components.put(decoded.getId(), decoded);
+
+            } catch (NoSuchFieldException e) {
+                AbyssalLib.getInstance().getLogger().severe("Failed to find static CODEC field for custom component " + cls.getSimpleName() + ": " + e.getMessage());
+            } catch (Codec.CodecException e) {
+                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + cId + ": " + e.getMessage());
+            } catch (Exception e) {
+                AbyssalLib.getInstance().getLogger().severe("Failed to load custom component " + cId + ": " + e.getMessage());
+            }
+        }
+    }
 
     public void setData(DataComponent<?> component) {
         if (component instanceof Vanilla v) vanillaComponents.put(component.getId(), v);
@@ -99,7 +143,6 @@ public class ComponentMap {
             removeComponent(components.get(id));
         }
     }
-    @SuppressWarnings("unchecked")
     public void removeData(Class<? extends DataComponent> clazz) {
         for (DataComponent<?> cmp : components.values()) {
             if (clazz.isInstance(cmp)) components.remove(cmp);
@@ -127,7 +170,7 @@ public class ComponentMap {
         return (DataComponent<?>) vanillaComponents.get(id);
     }
     public void applyData() {
-        CTag root = item.getCTag();
+        CTag root = item != null ? item.getCTag() : entity.getCTag();
         CompoundTag rootTag = root.toVanilla();
         CompoundTag tag = rootTag.getCompoundOrEmpty("CustomComponents");
         CTag data = new CTag(tag);
@@ -140,7 +183,8 @@ public class ComponentMap {
             v.apply(item.getStack());
         }
         rootTag.put("CustomComponents", data.toVanilla());
-        item.setCTag(root);
+        if (item != null) item.setCTag(root);
+        if (entity != null) entity.setCTag(root);
     }
     public boolean hasData(Identifier id) {
         return components.containsKey(id) || vanillaComponents.containsKey(id);
@@ -178,12 +222,13 @@ public class ComponentMap {
     }
 
     private void removeComponent(DataComponent<?> component) {
-        CTag root = item.getCTag();
+        CTag root = item != null ? item.getCTag() : entity.getCTag();
         CompoundTag rootTag = root.toVanilla();
         CompoundTag tag = rootTag.getCompoundOrEmpty("CustomComponents");
         if (tag.contains(component.getId().toString())) tag.remove(component.getId().toString());
         rootTag.put("CustomComponents", tag);
-        item.setCTag(root);
+        if (item != null) item.setCTag(root);
+        if (entity != null) entity.setCTag(root);
     }
     public static Identifier getId(DataComponentType type) {
         return Identifier.of(type.key().asString());

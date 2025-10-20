@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import io.papermc.paper.datacomponent.item.CustomModelData;
 import org.bukkit.inventory.ItemStack;
 
 public class ModelData extends DataComponent<CustomModelData> implements Vanilla {
-    private static final Codec<DataComponent<CustomModelData>> CODEC = Codec.of(null, null);
+    private static final Codec<DataComponent<CustomModelData>> CODEC = ExtraCodecs.CUSTOM_MODEL_DATA.xmap(
+            ModelData::new,
+            m -> m.value
+    );
 
     public ModelData(CustomModelData data) {
         super(Identifier.of(DataComponentTypes.CUSTOM_MODEL_DATA.key().asString()), data, CODEC);

@@ -2,12 +2,22 @@ package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
+import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.potion.PotionMix;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.recipe.CookingBookCategory;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
 
+import java.lang.ref.Reference;
 import java.util.Map;
 import java.util.Optional;
 
@@ -81,7 +91,26 @@ public class Codecs {
     };
 
     // Extra
+    public static final Codec<Component> TEXT_COMPONENT = Codecs.STRING.xmap(
+            JSONComponentSerializer.json()::deserialize,
+            JSONComponentSerializer.json()::serialize
+    );
+    public static final Codec<Key> KEY = STRING.xmap(Key::key, Key::asString);
     public static final Codec<NamespacedKey> NAMESPACED_KEY = STRING.xmap(NamespacedKey::fromString, NamespacedKey::toString);
+    public static final Codec<World> WORLD = KEY.xmap(Bukkit::getWorld, World::getKey);
+    public static final Codec<Location> LOCATION = RecordCodecBuilder.create(
+            WORLD.fieldOf("world", Location::getWorld),
+            DOUBLE.fieldOf("x", Location::getX),
+            DOUBLE.fieldOf("y", Location::getY),
+            DOUBLE.fieldOf("z", Location::getZ),
+            FLOAT.fieldOf("yaw", Location::getYaw),
+            FLOAT.fieldOf("pitch", Location::getPitch),
+            Location::new
+    );
+    public static final Codec<DataComponentType> DATA_COMPONENT_TYPE = KEY.xmap(
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getOrThrow,
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getKeyOrThrow
+    );
     public static final Codec<ItemStack> ITEM_STACK = Codec.either(
             STRING.xmap(
                     (s) -> {
@@ -116,7 +145,7 @@ public class Codecs {
                         item.setAmount(amount);
                         return item;
                     },
-                    (i) -> ItemBridge.asAmountMap(i)
+                    ItemBridge::asAmountMap
             )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()
@@ -125,14 +154,14 @@ public class Codecs {
                         (list) -> new RecipeChoice.MaterialChoice(list.stream().map(ItemStack::getType).toList()),
                         (mats) -> mats.getChoices().stream().map(ItemStack::of).toList());
     public static final Codec<RecipeChoice> RECIPE_CHOICE = Codec.either(EXACT_CHOICE, MATERIAL_CHOICE)
-                .xmap((o) -> (RecipeChoice) o, (r) -> r);
+                .xmap((o) -> o, (r) -> r);
 
     public static final Codec<ShapedRecipe> SHAPED_RECIPE = RecordCodecBuilder.create(
             NAMESPACED_KEY.fieldOf("id", ShapedRecipe::getKey),
             STRING.list().fieldOf("shape", o -> TextUtil.convertToList(o.getShape())),
             Codec.map(CHARACTER, RECIPE_CHOICE).fieldOf("ingredients", ShapedRecipe::getChoiceMap),
             ITEM_STACK.fieldOf("result", ShapedRecipe::getResult),
-            STRING.optional().fieldOf("group", (s) -> Optional.ofNullable(s.getGroup())),
+            STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
             Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
                     Optional.of(s.getCategory())),
             (id, shape, ing, result,
@@ -149,7 +178,7 @@ public class Codecs {
             NAMESPACED_KEY.fieldOf("id", ShapelessRecipe::getKey),
             RECIPE_CHOICE.list().fieldOf("ingredients", ShapelessRecipe::getChoiceList),
             ITEM_STACK.fieldOf("result", ShapelessRecipe::getResult),
-            STRING.optional().fieldOf("group", (s) -> Optional.ofNullable(s.getGroup())),
+            STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
             Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
                     Optional.of(s.getCategory())),
             (id, choices, result, group, cat) -> {
@@ -259,11 +288,8 @@ public class Codecs {
             BOOLEAN.optional().fieldOf("copy_components", r ->
                     Optional.of(r.willCopyDataComponents())),
             (id, base, template, addition,
-             result, copy) -> {
-                return copy.isPresent() ?
-                        new SmithingTransformRecipe(id, result, template, base, addition, copy.get()) :
-                        new SmithingTransformRecipe(id, result, template, base, addition);
-            }
+             result, copy) -> copy.map(aBoolean ->
+                    new SmithingTransformRecipe(id, result, template, base, addition, aBoolean)).orElseGet(() -> new SmithingTransformRecipe(id, result, template, base, addition))
     );
     public static final Codec<PotionMix> POTION_MIX = RecordCodecBuilder.create(
             NAMESPACED_KEY.fieldOf("id", PotionMix::getKey),
