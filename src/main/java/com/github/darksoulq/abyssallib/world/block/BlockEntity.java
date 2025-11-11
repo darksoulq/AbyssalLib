@@ -1,5 +1,13 @@
 package com.github.darksoulq.abyssallib.world.block;
 
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.world.block.property.Property;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * Represents the entity data associated with a custom {@link CustomBlock}.
  * <p>
@@ -61,4 +69,39 @@ public abstract class BlockEntity {
      * </p>
      */
     public void onSave() {}
+
+    /**
+     * Serializes all {@link Property} fields of this BlockEntity.
+     */
+    public <D> D serialize(DynamicOps<D> ops) throws Exception {
+        Map<D, D> map = new LinkedHashMap<>();
+
+        for (Field field : getClass().getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) continue;
+            field.setAccessible(true);
+            Object obj = field.get(this);
+            if (obj instanceof Property<?> prop) {
+                D encoded = prop.encode(ops);
+                map.put(ops.createString(field.getName()), encoded);
+            }
+        }
+
+        return ops.createMap(map);
+    }
+
+    /**
+     * Deserializes all {@link Property} fields of this BlockEntity.
+     */
+    public <D> void deserialize(DynamicOps<D> ops, D input) throws Exception {
+        Map<D, D> map = ops.getMap(input).orElse(Map.of());
+        for (Field field : getClass().getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) continue;
+            field.setAccessible(true);
+            Object obj = field.get(this);
+            if (!(obj instanceof Property<?> prop)) continue;
+
+            D encoded = map.get(ops.createString(field.getName()));
+            if (encoded != null) prop.decode(ops, encoded);
+        }
+    }
 }

@@ -1,8 +1,11 @@
 package com.github.darksoulq.abyssallib.world.block.internal;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.Database;
 import com.github.darksoulq.abyssallib.common.database.impl.sqlite.SqliteDatabase;
+import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.BlockEntity;
@@ -80,7 +83,7 @@ public class BlockManager {
 
                 BlockEntity entity = block.createBlockEntity(loc);
                 if (entity != null) {
-                    populateFieldsFromJson(entity, row.dataJson);
+                    entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
                     entity.onLoad();
                     block.setEntity(entity);
                 }
@@ -95,29 +98,6 @@ public class BlockManager {
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + e.getMessage());
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * Populates the fields of the given BlockEntity from the provided JSON string.
-     *
-     * @param entity The block entity to populate.
-     * @param json   The JSON string containing serialized field data.
-     * @throws Exception If an error occurs during field reflection or JSON parsing.
-     */
-    private static void populateFieldsFromJson(BlockEntity entity, String json) throws Exception {
-        if (json == null || json.isEmpty() || json.equals("{}")) return;
-
-        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-        for (Field field : entity.getClass().getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
-            field.setAccessible(true);
-            String name = field.getName();
-            if (jsonObject.has(name)) {
-                JsonElement elem = jsonObject.get(name);
-                Object value = TextUtil.GSON.fromJson(elem, field.getType());
-                field.set(entity, value);
-            }
         }
     }
 
@@ -181,17 +161,8 @@ public class BlockManager {
             if (entity != null) {
                 entity.onSave();
 
-                JsonObject jsonObject = new JsonObject();
-                for (Field field : entity.getClass().getDeclaredFields()) {
-                    if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
-
-                    field.setAccessible(true);
-                    Object value = field.get(entity);
-                    JsonElement elem = TextUtil.GSON.toJsonTree(value);
-                    jsonObject.add(field.getName(), elem);
-                }
-
-                json = TextUtil.GSON.toJson(jsonObject);
+                JsonNode node = entity.serialize(JsonOps.INSTANCE);
+                json = node.toString();
             } else {
                 json = "{}";
             }
