@@ -8,13 +8,19 @@ public abstract class DataComponent<T> {
     public final Codec<DataComponent<T>> codec;
     public final T value;
 
-    public DataComponent(Identifier id, T defaultValue, Codec<DataComponent<T>> codec) {
+    public DataComponent(Identifier id, T defaultValue, Codec<? extends DataComponent<T>> codec) {
         this.id = id;
-        this.codec = codec;
+        @SuppressWarnings("unchecked")
+        Codec<DataComponent<T>> safeCodec = (Codec<DataComponent<T>>) codec;
+        this.codec = safeCodec;
         this.value = defaultValue;
     }
 
     public Identifier getId() {
         return id;
+    }
+
+    public T getValue() {
+        return value;
     }
 }

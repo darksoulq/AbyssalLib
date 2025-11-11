@@ -10,19 +10,21 @@ import io.papermc.paper.datacomponent.item.ChargedProjectiles;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import org.bukkit.inventory.ItemStack;
 
-public class ChargedProjectile extends DataComponent<ChargedProjectiles> implements Vanilla {
-    private static final Codec<DataComponent<ChargedProjectiles>> CODEC = Codecs.ITEM_STACK.list().xmap(
-            l -> new ChargedProjectile(ChargedProjectiles.chargedProjectiles(l)),
-            c -> c.value.projectiles()
+import java.util.List;
+
+public class ChargedProjectile extends DataComponent<List<ItemStack>> implements Vanilla {
+    private static final Codec<ChargedProjectile> CODEC = Codecs.ITEM_STACK.list().xmap(
+            ChargedProjectile::new,
+            ChargedProjectile::getValue
     );
 
-    public ChargedProjectile(ChargedProjectiles projectiles) {
+    public ChargedProjectile(List<ItemStack> projectiles) {
         super(Identifier.of(DataComponentTypes.CHARGED_PROJECTILES.key().asString()), projectiles, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.CHARGED_PROJECTILES, value);
+        stack.setData(DataComponentTypes.CHARGED_PROJECTILES, ChargedProjectiles.chargedProjectiles(value));
     }
 
     @Override

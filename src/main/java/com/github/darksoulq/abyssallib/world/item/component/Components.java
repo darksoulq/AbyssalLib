@@ -17,7 +17,7 @@ public class Components {
 
     // Vanilla
     public static Holder<Class<? extends DataComponent<?>>> ATTRIBUTE_MODIFIERS =
-            register("attribute_modifiers", AttributeModifier.class);
+            register("attribute_modifiers", ItemAttributeModifier.class);
     public static Holder<Class<? extends DataComponent<?>>> BANNER_PATTERNS =
             register("banner_patterns", BannerPatterns.class);
     public static Holder<Class<? extends DataComponent<?>>> BASE_COLOR =

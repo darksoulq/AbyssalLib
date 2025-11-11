@@ -12,9 +12,9 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class CustomName extends DataComponent<Component> implements Vanilla {
-    private static final Codec<DataComponent<Component>> CODEC = Codecs.TEXT_COMPONENT.xmap(
+    private static final Codec<CustomName> CODEC = Codecs.TEXT_COMPONENT.xmap(
             CustomName::new,
-            c -> c.value
+            CustomName::getValue
     );
 
     public CustomName(Component name) {

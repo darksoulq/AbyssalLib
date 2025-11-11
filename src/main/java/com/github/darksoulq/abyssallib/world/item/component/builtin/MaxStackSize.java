@@ -9,9 +9,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class MaxStackSize extends DataComponent<Integer> implements Vanilla {
-    private static final Codec<DataComponent<Integer>> CODEC = Codecs.INT.xmap(
+    private static final Codec<MaxStackSize> CODEC = Codecs.INT.xmap(
             MaxStackSize::new,
-            m -> m.value
+            MaxStackSize::getValue
     );
 
     public MaxStackSize(int value) {

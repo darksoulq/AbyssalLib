@@ -9,9 +9,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class Unbreakable extends DataComponent<Boolean> implements Vanilla {
-    private static final Codec<DataComponent<Boolean>> CODEC = Codecs.BOOLEAN.xmap(
+    private static final Codec<Unbreakable> CODEC = Codecs.BOOLEAN.xmap(
             b -> new Unbreakable(),
-            u -> u.value
+            Unbreakable::getValue
     );
 
     public Unbreakable() {

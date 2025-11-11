@@ -7,21 +7,22 @@ import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.MapItemColor;
+import org.bukkit.Color;
 import org.bukkit.inventory.ItemStack;
 
-public class MapColor extends DataComponent<MapItemColor> implements Vanilla {
-    private static final Codec<DataComponent<MapItemColor>> CODEC = ExtraCodecs.COLOR.xmap(
-            c -> new MapColor(MapItemColor.mapItemColor().color(c).build()),
-            m -> m.value.color()
+public class MapColor extends DataComponent<Color> implements Vanilla {
+    private static final Codec<MapColor> CODEC = ExtraCodecs.COLOR.xmap(
+            MapColor::new,
+            MapColor::getValue
     );
 
-    public MapColor(MapItemColor color) {
+    public MapColor(Color color) {
         super(Identifier.of(DataComponentTypes.MAP_COLOR.key().asString()), color, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.MAP_COLOR, value);
+        stack.setData(DataComponentTypes.MAP_COLOR, MapItemColor.mapItemColor().color(value).build());
     }
 
     @Override

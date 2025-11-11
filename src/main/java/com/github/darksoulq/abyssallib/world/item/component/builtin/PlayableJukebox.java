@@ -17,7 +17,7 @@ import org.bukkit.Registry;
 import org.bukkit.inventory.ItemStack;
 
 public class PlayableJukebox extends DataComponent<JukeboxPlayable> implements Vanilla {
-    private static final Codec<DataComponent<JukeboxPlayable>> CODEC = Codecs.KEY.xmap(
+    private static final Codec<PlayableJukebox> CODEC = Codecs.KEY.xmap(
             PlayableJukebox::new,
             p -> p.value.jukeboxSong().getKey()
     );

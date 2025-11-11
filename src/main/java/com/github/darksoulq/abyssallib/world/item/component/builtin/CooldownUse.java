@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.UseCooldown;
 import org.bukkit.inventory.ItemStack;
 
 public class CooldownUse extends DataComponent<UseCooldown> implements Vanilla {
-    private static final Codec<DataComponent<UseCooldown>> CODEC = ExtraCodecs.USE_COOLDOWN.xmap(
+    private static final Codec<CooldownUse> CODEC = ExtraCodecs.USE_COOLDOWN.xmap(
             CooldownUse::new,
-            c -> c.value
+            CooldownUse::getValue
     );
 
     public CooldownUse(UseCooldown cd) {

@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.ItemAdventurePredicate;
 import org.bukkit.inventory.ItemStack;
 
 public class CanBreak extends DataComponent<ItemAdventurePredicate> implements Vanilla {
-    private static final Codec<DataComponent<ItemAdventurePredicate>> CODEC = ExtraCodecs.ITEM_ADV_PREDICATE.xmap(
+    private static final Codec<CanBreak> CODEC = ExtraCodecs.ITEM_ADV_PREDICATE.xmap(
             CanBreak::new,
-            c -> c.value
+            CanBreak::getValue
     );
 
     public CanBreak(ItemAdventurePredicate blocks) {

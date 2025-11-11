@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.UseRemainder;
 import org.bukkit.inventory.ItemStack;
 
 public class RemainderUse extends DataComponent<UseRemainder> implements Vanilla {
-    private static final Codec<DataComponent<UseRemainder>> CODEC = Codecs.ITEM_STACK.xmap(
+    private static final Codec<RemainderUse> CODEC = Codecs.ITEM_STACK.xmap(
             RemainderUse::new,
             r -> r.value.transformInto()
     );

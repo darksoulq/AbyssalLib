@@ -9,9 +9,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class Glider extends DataComponent<Boolean> implements Vanilla {
-    private static final Codec<DataComponent<Boolean>> CODEC = Codecs.BOOLEAN.xmap(
+    private static final Codec<Glider> CODEC = Codecs.BOOLEAN.xmap(
             b -> new Glider(),
-            g -> g.value
+            Glider::getValue
     );
 
     public Glider() {

@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.SeededContainerLoot;
 import org.bukkit.inventory.ItemStack;
 
 public class ContainerLoot extends DataComponent<SeededContainerLoot> implements Vanilla {
-    private static final Codec<DataComponent<SeededContainerLoot>> CODEC = ExtraCodecs.SEEDED_CONTAINER_LOOT.xmap(
+    private static final Codec<ContainerLoot> CODEC = ExtraCodecs.SEEDED_CONTAINER_LOOT.xmap(
             ContainerLoot::new,
-            c -> c.value
+            ContainerLoot::getValue
     );
 
     public ContainerLoot(SeededContainerLoot loot) {

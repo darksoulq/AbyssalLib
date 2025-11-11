@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -9,7 +10,10 @@ import io.papermc.paper.datacomponent.item.Consumable;
 import org.bukkit.inventory.ItemStack;
 
 public class Consume extends DataComponent<Consumable> implements Vanilla {
-    private static final Codec<DataComponent<Consumable>> CODEC = Codec.of(null, null);
+    private static final Codec<Consume> CODEC = ExtraCodecs.CONSUMABLE.xmap(
+            Consume::new,
+            Consume::getValue
+    );
 
     public Consume(Consumable props) {
         super(Identifier.of(DataComponentTypes.CONSUMABLE.key().asString()), props, CODEC);

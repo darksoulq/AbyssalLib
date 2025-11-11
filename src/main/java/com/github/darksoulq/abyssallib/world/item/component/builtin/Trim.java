@@ -12,9 +12,9 @@ import org.bukkit.inventory.meta.trim.ArmorTrim;
 
 @SuppressWarnings("UnstableApiUsage")
 public class Trim extends DataComponent<ArmorTrim> implements Vanilla {
-    private static final Codec<DataComponent<ArmorTrim>> CODEC = ExtraCodecs.ARMOR_TRIM.xmap(
+    private static final Codec<Trim> CODEC = ExtraCodecs.ARMOR_TRIM.xmap(
             Trim::new,
-            t -> t.value
+            Trim::getValue
     );
 
     public Trim(ArmorTrim trim) {

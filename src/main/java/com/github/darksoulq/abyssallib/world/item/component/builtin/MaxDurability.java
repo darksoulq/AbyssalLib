@@ -9,9 +9,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class MaxDurability extends DataComponent<Integer> implements Vanilla {
-    private static final Codec<DataComponent<Integer>> CODEC = Codecs.INT.xmap(
+    private static final Codec<MaxDurability> CODEC = Codecs.INT.xmap(
             MaxDurability::new,
-            m -> m.value
+            MaxDurability::getValue
     );
 
     public MaxDurability(int value) {

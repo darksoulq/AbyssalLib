@@ -9,9 +9,9 @@ import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 
 public class Rarity extends DataComponent<ItemRarity> implements Vanilla {
-    private static final Codec<DataComponent<ItemRarity>> CODEC = Codec.enumCodec(ItemRarity.class).xmap(
+    private static final Codec<Rarity> CODEC = Codec.enumCodec(ItemRarity.class).xmap(
             Rarity::new,
-            r -> r.value
+            Rarity::getValue
     );
 
     public Rarity(ItemRarity rarity) {

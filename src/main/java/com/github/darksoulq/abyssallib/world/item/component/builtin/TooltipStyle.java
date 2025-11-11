@@ -10,9 +10,9 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class TooltipStyle extends DataComponent<Key> implements Vanilla {
-    private static final Codec<DataComponent<Key>> CODEC = Codecs.KEY.xmap(
+    private static final Codec<TooltipStyle> CODEC = Codecs.KEY.xmap(
             TooltipStyle::new,
-            t -> t.value
+            TooltipStyle::getValue
     );
 
     public TooltipStyle(Key id) {

@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.Weapon;
 import org.bukkit.inventory.ItemStack;
 
 public class WeaponComponent extends DataComponent<Weapon> implements Vanilla {
-    private static final Codec<DataComponent<Weapon>> CODEC = ExtraCodecs.WEAPON.xmap(
+    private static final Codec<WeaponComponent> CODEC = ExtraCodecs.WEAPON.xmap(
             WeaponComponent::new,
-            w -> w.value
+            WeaponComponent::getValue
     );
 
     public WeaponComponent(Weapon weapon) {

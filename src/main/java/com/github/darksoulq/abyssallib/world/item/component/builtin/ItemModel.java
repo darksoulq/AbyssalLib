@@ -10,9 +10,9 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class ItemModel extends DataComponent<Key> implements Vanilla {
-    private static final Codec<DataComponent<Key>> CODEC = Codecs.KEY.xmap(
+    private static final Codec<ItemModel> CODEC = Codecs.KEY.xmap(
             ItemModel::new,
-            i -> i.value
+            ItemModel::getValue
     );
 
     public ItemModel(Key id) {

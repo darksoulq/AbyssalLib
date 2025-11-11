@@ -5,8 +5,9 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 
 public class CustomMarker extends DataComponent<Identifier> {
-    private static final Codec<DataComponent<Identifier>> CODEC = Identifier.CODEC.xmap(
-            CustomMarker::new, (inst) -> inst.value
+    private static final Codec<CustomMarker> CODEC = Identifier.CODEC.xmap(
+            CustomMarker::new,
+            CustomMarker::getValue
     );
 
     public CustomMarker(Identifier id) {

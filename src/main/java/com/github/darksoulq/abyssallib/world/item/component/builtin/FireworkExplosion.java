@@ -11,9 +11,9 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class FireworkExplosion extends DataComponent<FireworkEffect> implements Vanilla {
-    private static final Codec<DataComponent<FireworkEffect>> CODEC = ExtraCodecs.FIREWORK_EFFECT.xmap(
+    private static final Codec<FireworkExplosion> CODEC = ExtraCodecs.FIREWORK_EFFECT.xmap(
             FireworkExplosion::new,
-            f -> f.value
+            FireworkExplosion::getValue
     );
 
     public FireworkExplosion(FireworkEffect effect) {

@@ -10,9 +10,9 @@ import org.bukkit.DyeColor;
 import org.bukkit.inventory.ItemStack;
 
 public class ShulkerColor extends DataComponent<DyeColor> implements Vanilla {
-    private static final Codec<DataComponent<DyeColor>> CODEC = Codec.enumCodec(DyeColor.class).xmap(
+    private static final Codec<ShulkerColor> CODEC = Codec.enumCodec(DyeColor.class).xmap(
             ShulkerColor::new,
-            s -> s.value
+            ShulkerColor::getValue
     );
 
     public ShulkerColor(DyeColor color) {

@@ -10,19 +10,21 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.MapDecorations;
 import org.bukkit.inventory.ItemStack;
 
-public class MapDecorates extends DataComponent<MapDecorations> implements Vanilla {
-    private static final Codec<DataComponent<MapDecorations>> CODEC = Codec.map(Codecs.STRING, ExtraCodecs.MAP_DECO_ENTRY).xmap(
-            m -> new MapDecorates(MapDecorations.mapDecorations(m)),
-            d -> d.value.decorations()
+import java.util.Map;
+
+public class MapDecorates extends DataComponent<Map<String, MapDecorations.DecorationEntry>> implements Vanilla {
+    private static final Codec<MapDecorates> CODEC = Codec.map(Codecs.STRING, ExtraCodecs.MAP_DECO_ENTRY).xmap(
+            MapDecorates::new,
+            MapDecorates::getValue
     );
 
-    public MapDecorates(MapDecorations decor) {
+    public MapDecorates(Map<String, MapDecorations.DecorationEntry> decor) {
         super(Identifier.of(DataComponentTypes.MAP_DECORATIONS.key().asString()), decor, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.MAP_DECORATIONS, value);
+        stack.setData(DataComponentTypes.MAP_DECORATIONS, MapDecorations.mapDecorations(value));
     }
 
     @Override

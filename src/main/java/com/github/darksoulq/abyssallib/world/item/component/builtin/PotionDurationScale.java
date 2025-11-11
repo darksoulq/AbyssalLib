@@ -9,9 +9,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class PotionDurationScale extends DataComponent<Float> implements Vanilla {
-    private static final Codec<DataComponent<Float>> CODEC = Codecs.FLOAT.xmap(
+    private static final Codec<PotionDurationScale> CODEC = Codecs.FLOAT.xmap(
             PotionDurationScale::new,
-            p -> p.value
+            PotionDurationScale::getValue
     );
 
     public PotionDurationScale(float value) {

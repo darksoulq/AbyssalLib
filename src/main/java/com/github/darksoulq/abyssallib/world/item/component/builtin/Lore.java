@@ -15,9 +15,9 @@ import java.util.List;
 
 @SuppressWarnings("UnstableApiUsage")
 public class Lore extends DataComponent<List<Component>> implements Vanilla {
-    private static final Codec<DataComponent<List<Component>>> CODEC = Codecs.TEXT_COMPONENT.list().xmap(
+    private static final Codec<Lore> CODEC = Codecs.TEXT_COMPONENT.list().xmap(
             Lore::new,
-            l -> l.value
+            Lore::getValue
     );
 
     public Lore(List<Component> lore) {

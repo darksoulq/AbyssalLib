@@ -1,35 +1,61 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import io.papermc.paper.block.BlockPredicate;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.item.*;
+import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
+import io.papermc.paper.datacomponent.item.blocksattacks.ItemDamageFunction;
+import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect;
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
+import io.papermc.paper.potion.SuspiciousEffectEntry;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
+import io.papermc.paper.registry.tag.TagKey;
 import io.papermc.paper.text.Filtered;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
+import net.kyori.adventure.util.TriState;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.BlockType;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemType;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.map.MapCursor;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("UnstableApiUsage")
 public class ExtraCodecs {
+    public static final Codec<DamageType> DAMAGE_TYPE = Codecs.KEY.xmap(
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)::getOrThrow,
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)::getKeyOrThrow
+    );
+    public static final Codec<RegistryKeySet<@NotNull DamageType>> DAMAGE_TYPE_KEYS = DAMAGE_TYPE.list().xmap(
+            l -> RegistrySet.keySetFromValues(RegistryKey.DAMAGE_TYPE, l),
+            k -> k.resolve(RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)).stream().toList()
+    );
     public static final Codec<BlockType> BLOCK_TYPE = Codecs.KEY.xmap(Registry.BLOCK::getOrThrow, BlockType::getKey);
     public static final Codec<RegistryKeySet<@NotNull BlockType>> BLOCK_TYPE_KEYS = BLOCK_TYPE.list().xmap(
             l -> RegistrySet.keySetFromValues(RegistryKey.BLOCK, l),
@@ -235,6 +261,188 @@ public class ExtraCodecs {
                 WrittenBookContent.Builder builder = WrittenBookContent.writtenBookContent(title, author).resolved(resolved);
                 pages.forEach(p -> builder.addPage(p.raw()));
                 return builder.build();
+            }
+    );
+
+    public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codecs.FLOAT.xmap(
+            ConsumeEffect::teleportRandomlyEffect,
+            ConsumeEffect.TeleportRandomly::diameter
+    );
+    public static Codec<ConsumeEffect.PlaySound> CONSUME_PLAY_SOUND = Codecs.KEY.xmap(
+            ConsumeEffect::playSoundConsumeEffect,
+            ConsumeEffect.PlaySound::sound
+    );
+    public static Codec<PotionEffectType> POTION_EFFECT_TYPE = Codecs.KEY.xmap(
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)::getOrThrow,
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)::getKeyOrThrow
+    );
+    public static Codec<RegistryKeySet<@NotNull PotionEffectType>> POTION_EFFECT_TYPES = POTION_EFFECT_TYPE.list().xmap(
+            k -> RegistrySet.keySetFromValues(RegistryKey.MOB_EFFECT, k),
+            s -> s.resolve(Registry.POTION_EFFECT_TYPE).stream().toList()
+    );
+    public static Codec<ConsumeEffect.RemoveStatusEffects> CONSUME_REMOVE_STATUS_EFFECTS = POTION_EFFECT_TYPES.xmap(
+            ConsumeEffect::removeEffects,
+            ConsumeEffect.RemoveStatusEffects::removeEffects
+    );
+    public static Codec<PotionEffect> POTION_EFFECT = RecordCodecBuilder.create(
+            Codecs.INT.fieldOf("amplifier", PotionEffect::getAmplifier),
+            Codecs.INT.fieldOf("duration", PotionEffect::getDuration),
+            POTION_EFFECT_TYPE.fieldOf("type", PotionEffect::getType),
+            Codecs.BOOLEAN.fieldOf("ambient", PotionEffect::isAmbient),
+            Codecs.BOOLEAN.fieldOf("particles", PotionEffect::hasParticles),
+            Codecs.BOOLEAN.fieldOf("icon", PotionEffect::hasIcon),
+            (amplifier, duration, type, ambient, particles, icon) ->
+                    new PotionEffect(type, duration, amplifier, ambient, particles, icon)
+    );
+    public static Codec<ConsumeEffect.ApplyStatusEffects> CONSUME_APPLY_STATUS_EFFECTS = RecordCodecBuilder.create(
+            POTION_EFFECT.list().fieldOf("effects", ConsumeEffect.ApplyStatusEffects::effects),
+            Codecs.FLOAT.fieldOf("probability", ConsumeEffect.ApplyStatusEffects::probability),
+            ConsumeEffect::applyStatusEffects
+    );
+    public static Codec<ConsumeEffect.ClearAllStatusEffects> CONSUME_CLEAR_ALL_EFFECTS = Codec.of(o -> ConsumeEffect.clearAllStatusEffects(), null);
+    public static Codec<ConsumeEffect> CONSUME_EFFECT = Codec.either(
+            CONSUME_APPLY_STATUS_EFFECTS,
+            Codec.either(CONSUME_PLAY_SOUND, Codec.either(CONSUME_TELEPORT_RANDOMLY,
+                    Codec.either(CONSUME_REMOVE_STATUS_EFFECTS, CONSUME_CLEAR_ALL_EFFECTS)))
+    );
+
+    public static Codec<SuspiciousEffectEntry> SUSPICIOUS_EFFECT_ENTRY = RecordCodecBuilder.create(
+            POTION_EFFECT_TYPE.fieldOf("effect_type", SuspiciousEffectEntry::effect),
+            Codecs.INT.fieldOf("duration", SuspiciousEffectEntry::duration),
+            SuspiciousEffectEntry::create
+    );
+
+    public static Codec<ProfileProperty> PROFILE_PROPERTY = RecordCodecBuilder.create(
+            Codecs.STRING.fieldOf("name", ProfileProperty::getName),
+            Codecs.STRING.fieldOf("value", ProfileProperty::getValue),
+            Codecs.STRING.nullable().fieldOf("signature", ProfileProperty::getSignature),
+            ProfileProperty::new
+    );
+    public static Codec<ResolvableProfile> RESOLVABLE_PROFILE = RecordCodecBuilder.create(
+            Codecs.STRING.nullable().fieldOf("name", ResolvableProfile::name),
+            Codecs.UUID.nullable().fieldOf("uuid", ResolvableProfile::uuid),
+            PROFILE_PROPERTY.list().fieldOf("properties", p -> p.properties().stream().toList()),
+            (name, uuid, properties) -> ResolvableProfile.resolvableProfile()
+                    .name(name)
+                    .uuid(uuid)
+                    .addProperties(properties)
+                    .build()
+    );
+
+    public static Codec<Tool.Rule> TOOL_RULE = RecordCodecBuilder.create(
+            BLOCK_TYPE_KEYS.fieldOf("blocks", Tool.Rule::blocks),
+            Codecs.FLOAT.fieldOf("speed", Tool.Rule::speed),
+            Codec.enumCodec(TriState.class).fieldOf("correct_for_drops", Tool.Rule::correctForDrops),
+            Tool::rule
+    );
+    public static Codec<Tool> TOOL = RecordCodecBuilder.create(
+            Codecs.FLOAT.fieldOf("default_mining_speed", Tool::defaultMiningSpeed),
+            Codecs.INT.fieldOf("damage_per_block", Tool::damagePerBlock),
+            TOOL_RULE.list().fieldOf("rules", Tool::rules),
+            Codecs.BOOLEAN.fieldOf("can_destroy_blocks_in_creative", Tool::canDestroyBlocksInCreative),
+            (defaultMiningSpeed, damagePerBlock, rules, canDestroyBlocksInCreative) -> Tool.tool()
+                    .defaultMiningSpeed(defaultMiningSpeed)
+                    .damagePerBlock(damagePerBlock)
+                    .addRules(rules)
+                    .canDestroyBlocksInCreative(canDestroyBlocksInCreative)
+                    .build()
+    );
+
+    public static Codec<Consumable> CONSUMABLE = RecordCodecBuilder.create(
+            Codecs.FLOAT.fieldOf("consume_seconds", Consumable::consumeSeconds),
+            Codec.enumCodec(ItemUseAnimation.class).fieldOf("animation", Consumable::animation),
+            Codecs.KEY.fieldOf("sound", Consumable::sound),
+            Codecs.BOOLEAN.fieldOf("has_consume_particles", Consumable::hasConsumeParticles),
+            CONSUME_EFFECT.list().fieldOf("consume_effects", Consumable::consumeEffects),
+            (consumeSeconds, animation, sound, hasConsumeParticles, consumeEffects) -> Consumable.consumable()
+                    .consumeSeconds(consumeSeconds)
+                    .animation(animation)
+                    .sound(sound)
+                    .hasConsumeParticles(hasConsumeParticles)
+                    .addEffects(consumeEffects)
+                    .build()
+    );
+
+    public static Codec<ItemDamageFunction> ITEM_DAMAGE_FUNCTION = RecordCodecBuilder.create(
+            Codecs.FLOAT.fieldOf("threshold", ItemDamageFunction::threshold),
+            Codecs.FLOAT.fieldOf("base", ItemDamageFunction::base),
+            Codecs.FLOAT.fieldOf("factor", ItemDamageFunction::factor),
+            (threshold, base, factor) -> ItemDamageFunction.itemDamageFunction()
+                    .threshold(threshold)
+                    .base(base)
+                    .factor(factor)
+                    .build()
+    );
+    public static Codec<DamageReduction> DAMAGE_REDUCTION = RecordCodecBuilder.create(
+            DAMAGE_TYPE_KEYS.fieldOf("type", DamageReduction::type),
+            Codecs.FLOAT.fieldOf("horizontal_blocking_angle", DamageReduction::horizontalBlockingAngle),
+            Codecs.FLOAT.fieldOf("base", DamageReduction::base),
+            Codecs.FLOAT.fieldOf("factor", DamageReduction::factor),
+            (type, horizontalBlockingAngle, base, factor) -> DamageReduction.damageReduction()
+                    .type(type)
+                    .horizontalBlockingAngle(horizontalBlockingAngle)
+                    .base(base)
+                    .factor(factor)
+                    .build()
+    );
+    public static Codec<BlocksAttacks> BLOCKS_ATTACKS = RecordCodecBuilder.create(
+            Codecs.FLOAT.fieldOf("block_delay_seconds", BlocksAttacks::blockDelaySeconds),
+            Codecs.FLOAT.fieldOf("disable_cooldown_scale", BlocksAttacks::disableCooldownScale),
+            DAMAGE_REDUCTION.list().fieldOf("damage_reductions", BlocksAttacks::damageReductions),
+            ITEM_DAMAGE_FUNCTION.fieldOf("item_damage", BlocksAttacks::itemDamage),
+            DAMAGE_TYPE.nullable().fieldOf("bypassed_by", b -> {
+                TagKey<DamageType> bypassedBy = b.bypassedBy();
+                if (bypassedBy == null) return null;
+                else return RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(bypassedBy.key());
+            }),
+            Codecs.KEY.nullable().fieldOf("block_sound", BlocksAttacks::blockSound),
+            Codecs.KEY.nullable().fieldOf("disable_sound", BlocksAttacks::disableSound),
+            (blockDelaySeconds, disableCooldownScale, damageReductions, itemDamage, bypassedBy,
+             blockSound, disableSound) -> {
+                BlocksAttacks.Builder builder = BlocksAttacks.blocksAttacks()
+                        .blockDelaySeconds(blockDelaySeconds)
+                        .disableCooldownScale(disableCooldownScale)
+                        .damageReductions(damageReductions)
+                        .itemDamage(itemDamage)
+                        .blockSound(blockSound)
+                        .disableSound(disableSound);
+                if (bypassedBy != null) builder.bypassedBy(TagKey.create(RegistryKey.DAMAGE_TYPE, bypassedBy.key()));
+                return builder.build();
+            }
+    );
+
+    public static Codec<EquipmentSlotGroup> EQUIPMENT_SLOT_GROUP = Codecs.STRING.xmap(
+            EquipmentSlotGroup::getByName,
+            EquipmentSlotGroup::toString
+    );
+    public static Codec<Attribute> ATTRIBUTE = Codecs.KEY.xmap(
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getOrThrow,
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getKeyOrThrow
+    );
+    public static Codec<AttributeModifier> ATTRIBUTE_MODIFIER = RecordCodecBuilder.create(
+            Codecs.NAMESPACED_KEY.fieldOf("key", AttributeModifier::getKey),
+            Codecs.DOUBLE.fieldOf("amount", AttributeModifier::getAmount),
+            Codec.enumCodec(AttributeModifier.Operation.class).fieldOf("operation", AttributeModifier::getOperation),
+            EQUIPMENT_SLOT_GROUP.fieldOf("slot", AttributeModifier::getSlotGroup),
+            AttributeModifier::new
+    );
+    public static final Codec<ItemAttributeModifiers> ITEM_ATTRIBUTE_MODIFIERS = Codec.map(ATTRIBUTE, Codec.map(ATTRIBUTE_MODIFIER, EQUIPMENT_SLOT_GROUP)).xmap(
+            map -> {
+                ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.itemAttributes();
+                map.forEach((attribute, inner) ->
+                        inner.forEach((modifier, group) ->
+                                builder.addModifier(attribute, modifier, group)
+                        )
+                );
+                return builder.build();
+            },
+            modifiers -> {
+                Map<Attribute, Map<AttributeModifier, EquipmentSlotGroup>> map = new LinkedHashMap<>();
+                for (ItemAttributeModifiers.Entry e : modifiers.modifiers()) {
+                    map.computeIfAbsent(e.attribute(), k -> new LinkedHashMap<>())
+                            .put(e.modifier(), e.getGroup());
+                }
+                return map;
             }
     );
 }

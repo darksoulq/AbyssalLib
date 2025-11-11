@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.CustomModelData;
 import org.bukkit.inventory.ItemStack;
 
 public class ModelData extends DataComponent<CustomModelData> implements Vanilla {
-    private static final Codec<DataComponent<CustomModelData>> CODEC = ExtraCodecs.CUSTOM_MODEL_DATA.xmap(
+    private static final Codec<ModelData> CODEC = ExtraCodecs.CUSTOM_MODEL_DATA.xmap(
             ModelData::new,
-            m -> m.value
+            ModelData::getValue
     );
 
     public ModelData(CustomModelData data) {

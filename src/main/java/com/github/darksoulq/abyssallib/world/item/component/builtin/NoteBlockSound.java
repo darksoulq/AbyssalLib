@@ -10,9 +10,9 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class NoteBlockSound extends DataComponent<Key> implements Vanilla {
-    private static final Codec<DataComponent<Key>> CODEC = Codecs.KEY.xmap(
+    private static final Codec<NoteBlockSound> CODEC = Codecs.KEY.xmap(
             NoteBlockSound::new,
-            n -> n.value
+            NoteBlockSound::getValue
     );
 
     public NoteBlockSound(Key key) {

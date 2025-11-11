@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.ItemAdventurePredicate;
 import org.bukkit.inventory.ItemStack;
 
 public class CanPlaceOn extends DataComponent<ItemAdventurePredicate> implements Vanilla {
-    private static final Codec<DataComponent<ItemAdventurePredicate>> CODEC = ExtraCodecs.ITEM_ADV_PREDICATE.xmap(
+    private static final Codec<CanPlaceOn> CODEC = ExtraCodecs.ITEM_ADV_PREDICATE.xmap(
             CanPlaceOn::new,
-            c -> c.value
+            CanPlaceOn::getValue
     );
 
     public CanPlaceOn(ItemAdventurePredicate blocks) {

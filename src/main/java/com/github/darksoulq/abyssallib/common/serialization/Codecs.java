@@ -20,6 +20,7 @@ import org.bukkit.inventory.recipe.CraftingBookCategory;
 import java.lang.ref.Reference;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public class Codecs {
     public static final Codec<String> STRING = new Codec<>() {
@@ -91,6 +92,10 @@ public class Codecs {
     };
 
     // Extra
+    public static final Codec<UUID> UUID = Codecs.STRING.xmap(
+            java.util.UUID::fromString,
+            java.util.UUID::toString
+    );
     public static final Codec<Component> TEXT_COMPONENT = Codecs.STRING.xmap(
             JSONComponentSerializer.json()::deserialize,
             JSONComponentSerializer.json()::serialize

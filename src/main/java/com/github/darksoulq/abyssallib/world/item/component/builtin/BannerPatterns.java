@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.BannerPatternLayers;
 import org.bukkit.inventory.ItemStack;
 
 public class BannerPatterns extends DataComponent<BannerPatternLayers> implements Vanilla {
-    private static final Codec<DataComponent<BannerPatternLayers>> CODEC = ExtraCodecs.BANNER_PATTERN_LAYERS.xmap(
+    private static final Codec<BannerPatterns> CODEC = ExtraCodecs.BANNER_PATTERN_LAYERS.xmap(
             BannerPatterns::new,
-            b -> b.value
+            BannerPatterns::getValue
     );
 
     public BannerPatterns(BannerPatternLayers layers) {

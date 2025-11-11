@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.common.value.qual.IntRange;
 
 public class OminousAmplifier extends DataComponent<OminousBottleAmplifier> implements Vanilla {
-    private static final Codec<DataComponent<OminousBottleAmplifier>> CODEC = Codecs.INT.xmap(
+    private static final Codec<OminousAmplifier> CODEC = Codecs.INT.xmap(
             OminousAmplifier::new,
             o -> o.value.amplifier()
     );

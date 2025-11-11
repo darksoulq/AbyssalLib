@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.Equippable;
 import org.bukkit.inventory.ItemStack;
 
 public class EquippableComponent extends DataComponent<Equippable> implements Vanilla {
-    private static final Codec<DataComponent<Equippable>> CODEC = ExtraCodecs.EQUIPPABLE.xmap(
+    private static final Codec<EquippableComponent> CODEC = ExtraCodecs.EQUIPPABLE.xmap(
             EquippableComponent::new,
-            e -> e.value
+            EquippableComponent::getValue
     );
 
     public EquippableComponent(Equippable equip) {

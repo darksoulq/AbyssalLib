@@ -9,19 +9,21 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import org.bukkit.inventory.ItemStack;
 
-public class Container extends DataComponent<ItemContainerContents> implements Vanilla {
-    private static final Codec<DataComponent<ItemContainerContents>> CODEC = Codecs.ITEM_STACK.list().xmap(
-            l -> new Container(ItemContainerContents.containerContents(l)),
-            c -> c.value.contents()
+import java.util.List;
+
+public class Container extends DataComponent<List<ItemStack>> implements Vanilla {
+    private static final Codec<Container> CODEC = Codecs.ITEM_STACK.list().xmap(
+            Container::new,
+            Container::getValue
     );
 
-    public Container(ItemContainerContents contents) {
+    public Container(List<ItemStack> contents) {
         super(Identifier.of(DataComponentTypes.CONTAINER.key().asString()), contents, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.CONTAINER, value);
+        stack.setData(DataComponentTypes.CONTAINER, ItemContainerContents.containerContents().addAll(value).build());
     }
 
     @Override

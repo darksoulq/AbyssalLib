@@ -9,7 +9,7 @@ import io.papermc.paper.datacomponent.item.BlockItemDataProperties;
 import org.bukkit.inventory.ItemStack;
 
 public class BlockData extends DataComponent<BlockItemDataProperties> implements Vanilla {
-    private static final Codec<DataComponent<BlockItemDataProperties>> CODEC = Codec.of(null, null);
+    private static final Codec<BlockData> CODEC = Codec.of(null, null);
 
     public BlockData(BlockItemDataProperties props) {
         super(Identifier.of(DataComponentTypes.BLOCK_DATA.key().asString()), props, CODEC);

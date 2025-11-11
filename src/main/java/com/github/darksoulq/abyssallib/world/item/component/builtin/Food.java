@@ -11,9 +11,9 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class Food extends DataComponent<FoodProperties> implements Vanilla {
-    private static final Codec<DataComponent<FoodProperties>> CODEC = ExtraCodecs.FOOD_PROPERTIES.xmap(
+    private static final Codec<Food> CODEC = ExtraCodecs.FOOD_PROPERTIES.xmap(
             Food::new,
-            f -> f.value
+            Food::getValue
     );
 
     public Food(FoodProperties props) {

@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.common.serialization;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Represents a bidirectional serialization/deserialization mechanism for a type {@code T}.
@@ -68,11 +69,19 @@ public interface Codec<T> {
      * @param <R>      the new type
      * @return a new codec for type {@code R}
      */
-    default <R> Codec<R> xmap(CheckedFunction<T, R> forward, CheckedFunction<R, T> backward) {
+    default <R> Codec<R> xmap(CheckedFunction<? super T, ? extends R> forward,
+                              CheckedFunction<? super R, ? extends T> backward) {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> R decode(DynamicOps<D> ops, D input) throws CodecException { return forward.apply(self.decode(ops, input)); }
-            @Override public <D> D encode(DynamicOps<D> ops, R value) throws CodecException { return self.encode(ops, backward.apply(value)); }
+            @Override
+            public <D> R decode(DynamicOps<D> ops, D input) throws CodecException {
+                return forward.apply(self.decode(ops, input));
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, R value) throws CodecException {
+                return self.encode(ops, backward.apply(value));
+            }
         };
     }
     /**
@@ -127,6 +136,48 @@ public interface Codec<T> {
         };
     }
     /**
+     * Returns a codec for a generic {@link Collection} of this type.
+     * Uses an {@link ArrayList} as the concrete implementation.
+     *
+     * @return a collection codec using {@link ArrayList}
+     */
+    default Codec<Collection<T>> collection() {
+        return collection(ArrayList::new);
+    }
+
+    /**
+     * Returns a codec for a {@link Collection} of this type, using the provided factory.
+     *
+     * @param factory a supplier providing new collection instances
+     * @param <C>     the concrete collection type
+     * @return a collection codec
+     */
+    default <C extends Collection<T>> Codec<C> collection(Supplier<C> factory) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> C decode(DynamicOps<D> ops, D input) throws CodecException {
+                List<D> rawList = ops.getList(input)
+                        .orElseThrow(() -> new CodecException("Expected list for collection"));
+                C result = factory.get();
+                for (D elem : rawList) {
+                    result.add(self.decode(ops, elem));
+                }
+                return result;
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, C value) throws CodecException {
+                List<D> result = new ArrayList<>(value.size());
+                for (T elem : value) {
+                    result.add(self.encode(ops, elem));
+                }
+                return ops.createList(result);
+            }
+        };
+    }
+
+    /**
      * Returns a codec for {@link Optional} values of this type.
      *
      * @return an optional codec
@@ -158,15 +209,15 @@ public interface Codec<T> {
      * @param <U> the type
      * @return a nullable codec
      */
-    default <U> Codec<U> nullable() {
+    default Codec<T> nullable() {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> U decode(DynamicOps<D> ops, D input) throws CodecException {
+            @Override public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
                 if (input == null || ops.empty().equals(input)) return null;
-                return ((Codec<U>) self).decode(ops, input);
+                return self.decode(ops, input);
             }
-            @Override public <D> D encode(DynamicOps<D> ops, U value) throws CodecException {
-                return value == null ? ops.empty() : ((Codec<U>) self).encode(ops, value);
+            @Override public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
+                return value == null ? ops.empty() : self.encode(ops, value);
             }
         };
     }

@@ -10,19 +10,19 @@ import io.papermc.paper.datacomponent.item.Enchantable;
 import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
-public class EnchantableComponent extends DataComponent<Enchantable> implements Vanilla {
-    private static final Codec<DataComponent<Enchantable>> CODEC = Codecs.INT.xmap(
+public class EnchantableComponent extends DataComponent<Integer> implements Vanilla {
+    private static final Codec<EnchantableComponent> CODEC = Codecs.INT.xmap(
             EnchantableComponent::new,
-            e -> e.value.value()
+            EnchantableComponent::getValue
     );
 
     public EnchantableComponent(int level) {
-        super(Identifier.of(DataComponentTypes.ENCHANTABLE.key().asString()), Enchantable.enchantable(level), CODEC);
+        super(Identifier.of(DataComponentTypes.ENCHANTABLE.key().asString()), level, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.ENCHANTABLE, value);
+        stack.setData(DataComponentTypes.ENCHANTABLE, Enchantable.enchantable(value));
     }
 
     @Override

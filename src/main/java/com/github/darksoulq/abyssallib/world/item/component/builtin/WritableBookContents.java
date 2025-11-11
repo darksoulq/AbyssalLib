@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class WritableBookContents extends DataComponent<WritableBookContent> implements Vanilla {
-    private static final Codec<DataComponent<WritableBookContent>> CODEC = ExtraCodecs.FILTERED_STRING.list().xmap(
+    private static final Codec<WritableBookContents> CODEC = ExtraCodecs.FILTERED_STRING.list().xmap(
             p -> new WritableBookContents(WritableBookContent.writeableBookContent().addFilteredPages(p).build()),
             w -> w.value.pages()
     );

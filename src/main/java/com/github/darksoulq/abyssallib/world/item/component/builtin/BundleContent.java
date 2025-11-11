@@ -10,19 +10,21 @@ import io.papermc.paper.datacomponent.item.BundleContents;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import org.bukkit.inventory.ItemStack;
 
-public class BundleContent extends DataComponent<BundleContents> implements Vanilla {
-    private static final Codec<DataComponent<BundleContents>> CODEC = Codecs.ITEM_STACK.list().xmap(
-            l -> new BundleContent(BundleContents.bundleContents(l)),
-            c -> c.value.contents()
+import java.util.List;
+
+public class BundleContent extends DataComponent<List<ItemStack>> implements Vanilla {
+    private static final Codec<BundleContent> CODEC = Codecs.ITEM_STACK.list().xmap(
+            BundleContent::new,
+            BundleContent::getValue
     );
 
-    public BundleContent(BundleContents contents) {
+    public BundleContent(List<ItemStack> contents) {
         super(Identifier.of(DataComponentTypes.BUNDLE_CONTENTS.key().asString()), contents, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.BUNDLE_CONTENTS, value);
+        stack.setData(DataComponentTypes.BUNDLE_CONTENTS, BundleContents.bundleContents(value));
     }
 
     @Override

@@ -10,9 +10,9 @@ import io.papermc.paper.datacomponent.item.Repairable;
 import org.bukkit.inventory.ItemStack;
 
 public class RepairableComponent extends DataComponent<Repairable> implements Vanilla {
-    private static final Codec<DataComponent<Repairable>> CODEC = ExtraCodecs.REPAIRABLE_COMPONENT.xmap(
+    private static final Codec<RepairableComponent> CODEC = ExtraCodecs.REPAIRABLE_COMPONENT.xmap(
             RepairableComponent::new,
-            r -> r.value
+            RepairableComponent::getValue
     );
 
     public RepairableComponent(Repairable rep) {

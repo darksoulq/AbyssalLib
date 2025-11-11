@@ -9,19 +9,19 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.MapId;
 import org.bukkit.inventory.ItemStack;
 
-public class MapID extends DataComponent<MapId> implements Vanilla {
-    private static final Codec<DataComponent<MapId>> CODEC = Codecs.INT.xmap(
+public class MapID extends DataComponent<Integer> implements Vanilla {
+    private static final Codec<MapID> CODEC = Codecs.INT.xmap(
             MapID::new,
-            m -> m.value.id()
+            MapID::getValue
     );
 
     public MapID(int id) {
-        super(Identifier.of(DataComponentTypes.MAP_ID.key().asString()), MapId.mapId(id), CODEC);
+        super(Identifier.of(DataComponentTypes.MAP_ID.key().asString()), id, CODEC);
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.MAP_ID, value);
+        stack.setData(DataComponentTypes.MAP_ID, MapId.mapId(value));
     }
 
     @Override

@@ -9,9 +9,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class IntangibleProjectile extends DataComponent<Boolean> implements Vanilla {
-    private static final Codec<DataComponent<Boolean>> CODEC = Codecs.BOOLEAN.xmap(
+    private static final Codec<IntangibleProjectile> CODEC = Codecs.BOOLEAN.xmap(
             b -> new IntangibleProjectile(),
-            i -> i.value
+            IntangibleProjectile::getValue
     );
 
     public IntangibleProjectile() {

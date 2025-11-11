@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -10,7 +11,10 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class ResolvingProfile extends DataComponent<ResolvableProfile> implements Vanilla {
-    private static final Codec<DataComponent<ResolvableProfile>> CODEC = Codec.of(null, null);
+    private static final Codec<ResolvingProfile> CODEC = ExtraCodecs.RESOLVABLE_PROFILE.xmap(
+            ResolvingProfile::new,
+            ResolvingProfile::getValue
+    );
 
     public ResolvingProfile(ResolvableProfile profile) {
         super(Identifier.of(DataComponentTypes.PROFILE.key().asString()), profile, CODEC);
