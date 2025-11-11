@@ -45,7 +45,6 @@ public final class SimpleEnergyContainer implements EnergyContainer, Resizable {
      */
     public SimpleEnergyContainer(double capacity, double initial) {
         this.capacity = Math.max(0.0, capacity);
-        AbyssalLib.LOGGER.info("Capacity=" + this.capacity);
         this.energy = clamp(initial, 0.0, this.capacity);
     }
 
