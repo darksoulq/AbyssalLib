@@ -19,6 +19,9 @@ public class ResistantDamage extends DataComponent<Key> implements Vanilla {
             ResistantDamage::getValue
     );
 
+    public ResistantDamage(DamageResistant resists) {
+        super(Identifier.of(DataComponentTypes.DAMAGE_RESISTANT.key().asString()), resists.types().key(), CODEC);
+    }
     public ResistantDamage(Key resists) {
         super(Identifier.of(DataComponentTypes.DAMAGE_RESISTANT.key().asString()), resists, CODEC);
     }

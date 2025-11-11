@@ -17,6 +17,9 @@ public class Container extends DataComponent<List<ItemStack>> implements Vanilla
             Container::getValue
     );
 
+    public Container(ItemContainerContents contents) {
+        super(Identifier.of(DataComponentTypes.CONTAINER.key().asString()), contents.contents(), CODEC);
+    }
     public Container(List<ItemStack> contents) {
         super(Identifier.of(DataComponentTypes.CONTAINER.key().asString()), contents, CODEC);
     }

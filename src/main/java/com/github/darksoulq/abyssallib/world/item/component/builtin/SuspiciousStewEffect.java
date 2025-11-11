@@ -18,6 +18,9 @@ public class SuspiciousStewEffect extends DataComponent<List<SuspiciousEffectEnt
             SuspiciousStewEffect::getValue
     );
 
+    public SuspiciousStewEffect(SuspiciousStewEffects effects) {
+        super(Identifier.of(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS.key().asString()), effects.effects(), CODEC);
+    }
     public SuspiciousStewEffect(List<SuspiciousEffectEntry> effects) {
         super(Identifier.of(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS.key().asString()), effects, CODEC);
     }

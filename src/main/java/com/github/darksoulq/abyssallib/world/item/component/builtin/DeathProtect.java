@@ -18,6 +18,9 @@ public class DeathProtect extends DataComponent<List<ConsumeEffect>> implements 
             DeathProtect::getValue
     );
 
+    public DeathProtect(DeathProtection protection) {
+        super(Identifier.of(DataComponentTypes.DEATH_PROTECTION.key().asString()), protection.deathEffects(), CODEC);
+    }
     public DeathProtect(List<ConsumeEffect> effects) {
         super(Identifier.of(DataComponentTypes.DEATH_PROTECTION.key().asString()), effects, CODEC);
     }

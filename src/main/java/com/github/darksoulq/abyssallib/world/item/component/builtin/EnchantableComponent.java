@@ -16,6 +16,9 @@ public class EnchantableComponent extends DataComponent<Integer> implements Vani
             EnchantableComponent::getValue
     );
 
+    public EnchantableComponent(Enchantable level) {
+        super(Identifier.of(DataComponentTypes.ENCHANTABLE.key().asString()), level.value(), CODEC);
+    }
     public EnchantableComponent(int level) {
         super(Identifier.of(DataComponentTypes.ENCHANTABLE.key().asString()), level, CODEC);
     }

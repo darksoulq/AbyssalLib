@@ -17,6 +17,9 @@ public class DyedColor extends DataComponent<Color> implements Vanilla {
             DyedColor::getValue
     );
 
+    public DyedColor(DyedItemColor color) {
+        super(Identifier.of(DataComponentTypes.DYED_COLOR.key().asString()), color.color(), CODEC);
+    }
     public DyedColor(Color color) {
         super(Identifier.of(DataComponentTypes.DYED_COLOR.key().asString()), color, CODEC);
     }

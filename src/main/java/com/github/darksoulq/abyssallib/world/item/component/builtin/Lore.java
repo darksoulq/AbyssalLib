@@ -20,6 +20,9 @@ public class Lore extends DataComponent<List<Component>> implements Vanilla {
             Lore::getValue
     );
 
+    public Lore(ItemLore lore) {
+        super(Identifier.of(DataComponentTypes.LORE.key().asString()), lore.lines(), CODEC);
+    }
     public Lore(List<Component> lore) {
         super(Identifier.of(DataComponentTypes.LORE.key().asString()), lore, CODEC);
     }

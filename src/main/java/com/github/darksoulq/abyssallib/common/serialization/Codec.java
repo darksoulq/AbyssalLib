@@ -135,6 +135,10 @@ public interface Codec<T> {
             }
         };
     }
+    @SuppressWarnings("unchecked")
+    default <U> Codec<U> unchecked() {
+        return (Codec<U>) this;
+    }
     /**
      * Returns a codec for a generic {@link Collection} of this type.
      * Uses an {@link ArrayList} as the concrete implementation.

@@ -22,6 +22,9 @@ public class PlayableJukebox extends DataComponent<JukeboxPlayable> implements V
             p -> p.value.jukeboxSong().getKey()
     );
 
+    public PlayableJukebox(JukeboxPlayable song) {
+        super(Identifier.of(DataComponentTypes.JUKEBOX_PLAYABLE.key().asString()), song, CODEC);
+    }
     public PlayableJukebox(JukeboxSong song) {
         super(Identifier.of(DataComponentTypes.JUKEBOX_PLAYABLE.key().asString()), JukeboxPlayable.jukeboxPlayable(song).build(), CODEC);
     }

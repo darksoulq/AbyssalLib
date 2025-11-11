@@ -44,7 +44,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle('1.21.7-R0.1-SNAPSHOT')
+    paperweight.paperDevBundle('1.21.9-R0.1-SNAPSHOT')
     implementation('org.xerial:sqlite-jdbc:3.44.1.0')
     implementation('org.apache.pdfbox:fontbox:3.0.5')
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'

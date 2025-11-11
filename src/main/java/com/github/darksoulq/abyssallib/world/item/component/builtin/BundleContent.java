@@ -18,6 +18,9 @@ public class BundleContent extends DataComponent<List<ItemStack>> implements Van
             BundleContent::getValue
     );
 
+    public BundleContent(BundleContents contents) {
+        super(Identifier.of(DataComponentTypes.BUNDLE_CONTENTS.key().asString()), contents.contents(), CODEC);
+    }
     public BundleContent(List<ItemStack> contents) {
         super(Identifier.of(DataComponentTypes.BUNDLE_CONTENTS.key().asString()), contents, CODEC);
     }

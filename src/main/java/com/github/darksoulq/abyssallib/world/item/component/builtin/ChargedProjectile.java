@@ -18,6 +18,9 @@ public class ChargedProjectile extends DataComponent<List<ItemStack>> implements
             ChargedProjectile::getValue
     );
 
+    public ChargedProjectile(ChargedProjectiles projectiles) {
+        super(Identifier.of(DataComponentTypes.CHARGED_PROJECTILES.key().asString()), projectiles.projectiles(), CODEC);
+    }
     public ChargedProjectile(List<ItemStack> projectiles) {
         super(Identifier.of(DataComponentTypes.CHARGED_PROJECTILES.key().asString()), projectiles, CODEC);
     }

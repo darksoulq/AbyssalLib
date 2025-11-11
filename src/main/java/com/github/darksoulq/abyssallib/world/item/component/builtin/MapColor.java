@@ -16,6 +16,9 @@ public class MapColor extends DataComponent<Color> implements Vanilla {
             MapColor::getValue
     );
 
+    public MapColor(MapItemColor color) {
+        super(Identifier.of(DataComponentTypes.MAP_COLOR.key().asString()), color.color(), CODEC);
+    }
     public MapColor(Color color) {
         super(Identifier.of(DataComponentTypes.MAP_COLOR.key().asString()), color, CODEC);
     }

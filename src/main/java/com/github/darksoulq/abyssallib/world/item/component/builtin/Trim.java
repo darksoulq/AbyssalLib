@@ -17,6 +17,9 @@ public class Trim extends DataComponent<ArmorTrim> implements Vanilla {
             Trim::getValue
     );
 
+    public Trim(ItemArmorTrim trim) {
+        super(Identifier.of(DataComponentTypes.TRIM.key().asString()), trim.armorTrim(), CODEC);
+    }
     public Trim(ArmorTrim trim) {
         super(Identifier.of(DataComponentTypes.TRIM.key().asString()), trim, CODEC);
     }

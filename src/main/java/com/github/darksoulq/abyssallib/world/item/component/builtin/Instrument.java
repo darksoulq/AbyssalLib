@@ -14,10 +14,14 @@ import org.bukkit.inventory.ItemStack;
 
 public class Instrument extends DataComponent<Key> implements Vanilla {
     private static final Codec<Instrument> CODEC = Codecs.KEY.xmap(
-            Instrument::new,
+            v -> new Instrument(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(v)),
             Instrument::getValue
     );
 
+    public Instrument(MusicInstrument instrument) {
+        super(Identifier.of(DataComponentTypes.INSTRUMENT.key().asString()),
+                RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getKeyOrThrow(instrument), CODEC);
+    }
     public Instrument(Key instrument) {
         super(Identifier.of(DataComponentTypes.INSTRUMENT.key().asString()), instrument, CODEC);
     }

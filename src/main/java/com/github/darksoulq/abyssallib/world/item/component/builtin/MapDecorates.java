@@ -18,6 +18,9 @@ public class MapDecorates extends DataComponent<Map<String, MapDecorations.Decor
             MapDecorates::getValue
     );
 
+    public MapDecorates(MapDecorations decor) {
+        super(Identifier.of(DataComponentTypes.MAP_DECORATIONS.key().asString()), decor.decorations(), CODEC);
+    }
     public MapDecorates(Map<String, MapDecorations.DecorationEntry> decor) {
         super(Identifier.of(DataComponentTypes.MAP_DECORATIONS.key().asString()), decor, CODEC);
     }

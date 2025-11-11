@@ -15,6 +15,9 @@ public class MapID extends DataComponent<Integer> implements Vanilla {
             MapID::getValue
     );
 
+    public MapID(MapId id) {
+        super(Identifier.of(DataComponentTypes.MAP_ID.key().asString()), id.id(), CODEC);
+    }
     public MapID(int id) {
         super(Identifier.of(DataComponentTypes.MAP_ID.key().asString()), id, CODEC);
     }
