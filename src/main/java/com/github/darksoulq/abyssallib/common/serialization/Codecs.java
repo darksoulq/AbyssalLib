@@ -147,6 +147,7 @@ public class Codecs {
                             }
 
                         ItemStack item = ItemBridge.get(key);
+                        if (item == null) throw new Codec.CodecException("ItemBridge failed to get ItemStack for key: " + key);
                         item.setAmount(amount);
                         return item;
                     },

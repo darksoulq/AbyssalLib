@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.item.AbyssalLibProvider;
@@ -21,11 +22,11 @@ public class ItemBridge {
     }
 
     public static boolean hasProvider(String id) {
-        String[] parts = id.split(":", 3);
         if (!Identifier.isValid2Part(id) && !Identifier.isValid3Part(id)) {
             return false;
         }
-        return PROVIDERS.containsKey(parts[0]);
+        Identifier idd = Identifier.of(id);
+        return PROVIDERS.containsKey(idd.getKey() == null ? idd.getNamespace() : idd.getKey());
     }
     public static boolean hasProvider(ItemStack item) {
         for (Provider<ItemStack> prov : PROVIDERS.values()) {
@@ -36,18 +37,18 @@ public class ItemBridge {
 
     public static ItemStack get(String id) {
         if (Identifier.isValid3Part(id) || Identifier.isValid2Part(id)) {
-            String[] parts = id.split(":", 3);
-            if (parts.length == 2) {
-                return get(Identifier.of(parts[0], parts[1]));
-            } else {
-                return get(Identifier.of(parts[0], parts[1], parts[2]));
-            }
+            return get(Identifier.of(id));
         }
         return ItemStack.deserializeBytes(Base64.getDecoder().decode(id));
     }
     public static ItemStack get(Identifier id) {
-        if (!PROVIDERS.containsKey(id.getKey()) && !PROVIDERS.containsKey(id.getNamespace())) return null;
+        if (!PROVIDERS.containsKey(id.getKey()) && !PROVIDERS.containsKey(id.getNamespace())) {
+            AbyssalLib.LOGGER.warning("No Provider Found for " + id);
+            return null;
+        }
         Provider<ItemStack> prov = PROVIDERS.get(id.getKey() == null ? id.getNamespace() : id.getKey());
+        AbyssalLib.LOGGER.info(prov.toString());
+        if (id.getKey() != null) return prov.get(Identifier.of(id.getNamespace(), id.getPath()));
         return prov.get(id);
     }
     public static Identifier getId(ItemStack stack) {
@@ -57,7 +58,7 @@ public class ItemBridge {
             Identifier base = prov.getId(stack);
             if (base == null) return null;
             if (prov instanceof MinecraftProvider) return base;
-            return Identifier.of(entry.getKey() + ":" + base.getNamespace(), base.getPath());
+            return Identifier.of(entry.getKey(), base.getNamespace(), base.getPath());
         }
         return null;
     }
@@ -71,13 +72,9 @@ public class ItemBridge {
         return Base64.getEncoder().encodeToString(item.serializeAsBytes());
     }
     public static Map<String, Integer> asAmountMap(ItemStack item) {
-        for (Provider<ItemStack> prov : PROVIDERS.values()) {
-            if (!prov.belongs(item)) continue;
-            Identifier id = prov.getId(item);
-            int amount = item.getAmount();
-            return Map.of(id.toString(), amount);
-        }
-        return null;
+        Identifier id = getId(item);
+        if (id == null) return null;
+        return Map.of(id.toString(), item.getAmount());
     }
 
     public static void register(Provider<ItemStack> provider) {

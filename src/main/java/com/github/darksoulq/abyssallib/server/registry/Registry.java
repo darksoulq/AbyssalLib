@@ -13,8 +13,8 @@ public final class Registry<T> {
 
     public void register(String id, T object) {
         if (entries.containsKey(id)) {
-            AbyssalLib.getInstance().getLogger().severe("ID '" + id + "' already registered!");
-            throw new IllegalStateException("Duplicate ID registration: " + id);
+            AbyssalLib.getInstance().getLogger().severe("ID '" + id + "' already registered! Skipping...");
+            return;
         }
         entries.put(id, object);
     }
