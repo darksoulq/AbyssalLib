@@ -217,7 +217,10 @@ public interface Codec<T> {
         Codec<T> self = this;
         return new Codec<>() {
             @Override public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
-                if (input == null || ops.empty().equals(input)) return null;
+                if (input == null) return null;
+                D empty = ops.empty();
+                if (empty != null && empty.equals(input)) return null;
+
                 return self.decode(ops, input);
             }
             @Override public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {

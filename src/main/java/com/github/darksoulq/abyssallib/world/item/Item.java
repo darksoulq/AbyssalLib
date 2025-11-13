@@ -200,7 +200,7 @@ public class Item implements Cloneable {
         private Identifier style = null;
 
         public void setVisible(boolean v) {
-            this.hide = v;
+            this.hide = !v;
         }
         public void withHidden(DataComponentType type) {
             this.hiddenComponents.add(type);

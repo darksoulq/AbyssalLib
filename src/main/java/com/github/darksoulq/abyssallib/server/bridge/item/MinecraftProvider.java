@@ -15,6 +15,7 @@ public class MinecraftProvider extends Provider<ItemStack> {
 
     @Override
     public boolean belongs(ItemStack value) {
+        if (value == null) return false;
         return value.equals(ItemStack.of(value.getType()));
     }
 
