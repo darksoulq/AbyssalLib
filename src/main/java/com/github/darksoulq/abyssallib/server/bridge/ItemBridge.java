@@ -47,7 +47,6 @@ public class ItemBridge {
             return null;
         }
         Provider<ItemStack> prov = PROVIDERS.get(id.getKey() == null ? id.getNamespace() : id.getKey());
-        AbyssalLib.LOGGER.info(prov.toString());
         if (id.getKey() != null) return prov.get(Identifier.of(id.getNamespace(), id.getPath()));
         return prov.get(id);
     }
