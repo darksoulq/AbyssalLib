@@ -184,11 +184,33 @@ public class Namespace {
      *
      * @param name                 Item name (e.g. {@code custom_sword})
      * @param selector             Item model selector
+     * @return Registered item definition
+     */
+    public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector) {
+        return itemDefinition(name, selector, true, false);
+    }
+    /**
+     * Registers a programmatic item definition asset.
+     *
+     * @param name                 Item name (e.g. {@code custom_sword})
+     * @param selector             Item model selector
      * @param handAnimationOnSwap  Whether to play hand animation on item swap
      * @return Registered item definition
      */
     public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap) {
-        ItemDefinition def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap);
+        return itemDefinition(name, selector, handAnimationOnSwap, false);
+    }
+    /**
+     * Registers a programmatic item definition asset.
+     *
+     * @param name                 Item name (e.g. {@code custom_sword})
+     * @param selector             Item model selector
+     * @param handAnimationOnSwap  Whether to play hand animation on item swap
+     * @param oversizedInGui Whether the model should be oversized or not
+     * @return Registered item definition
+     */
+    public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap, boolean oversizedInGui) {
+        ItemDefinition def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap, oversizedInGui);
         assets.add(def);
         return def;
     }
