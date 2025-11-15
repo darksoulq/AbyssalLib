@@ -110,7 +110,7 @@ public class EntityAttributes {
     public <T extends Number> T getBaseValue(Attribute<T> attr) {
         String raw = rawValues.get(attr.key());
         if (raw == null) return null;
-        return deserialize(raw, attr.type(), null);
+        return deserialize(raw, attr.type());
     }
 
     /**
@@ -124,7 +124,7 @@ public class EntityAttributes {
     public <T extends Number> T get(Attribute<T> attr) {
         String raw = rawValues.get(attr.key());
         if (raw == null) return null;
-        T base = deserialize(raw, attr.type(), null);
+        T base = deserialize(raw, attr.type());
         return attr.applyModifiers(base);
     }
 
@@ -140,22 +140,20 @@ public class EntityAttributes {
     /**
      * Deserializes a string value into the specified type.
      *
-     * @param value    the raw string value
-     * @param type     the expected Java class
-     * @param fallback the fallback value to return on failure
-     * @param <T>      the generic type
+     * @param <T>   the generic type
+     * @param value the raw string value
+     * @param type  the expected Java class
      * @return the parsed value, or fallback if invalid
      */
-    private <T> T deserialize(String value, Class<T> type, T fallback) {
+    private <T> T deserialize(String value, Class<T> type) {
         try {
             if (type == Integer.class) return type.cast(Integer.parseInt(value));
-            if (type == Boolean.class) return type.cast(Boolean.parseBoolean(value));
             if (type == Double.class) return type.cast(Double.parseDouble(value));
             if (type == String.class) return type.cast(value);
         } catch (Exception e) {
-            return fallback;
+            return null;
         }
-        return fallback;
+        return null;
     }
 
     /**

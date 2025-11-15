@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
+import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
@@ -17,6 +18,7 @@ import org.bukkit.inventory.*;
 
 public class Registries {
     public static final Registry<Class<? extends DataComponent<?>>> DATA_COMPONENTS = new Registry<>();
+    public static final Registry<Statistic> STATISTICS = new Registry<>();
 
     public static final Registry<Item> ITEMS = new Registry<>();
     public static final Registry<CustomBlock> BLOCKS = new Registry<>();

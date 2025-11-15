@@ -156,12 +156,12 @@ public class ComponentMap {
         else return components.getOrDefault(id, null);
     }
     @SuppressWarnings("unchecked")
-    public <T extends DataComponent<?>> T getData(Class<T> clazz) {
+    public <C extends DataComponent<?>> C getData(Class<C> clazz) {
         for (DataComponent<?> cmp : components.values()) {
-            if (clazz.isInstance(cmp)) return (T) cmp;
+            if (clazz.isInstance(cmp)) return (C) cmp;
         }
         for (Vanilla v : vanillaComponents.values()) {
-            if (clazz.isInstance(v)) return (T) v;
+            if (clazz.isInstance(v)) return (C) v;
         }
         return null;
     }

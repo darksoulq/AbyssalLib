@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Encoder;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;

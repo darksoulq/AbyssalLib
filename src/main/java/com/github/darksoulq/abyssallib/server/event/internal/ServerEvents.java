@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
+import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
@@ -26,6 +27,7 @@ public class ServerEvents {
                     EntityManager.load();
                     EntityManager.restoreEntities();
                     EntityAttributes.init();
+                    PlayerStatistics.init();
                     RecipeLoader.reload();
                     TagLoader.loadTags();
                 }
