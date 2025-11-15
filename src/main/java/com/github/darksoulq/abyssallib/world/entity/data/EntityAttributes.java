@@ -55,6 +55,7 @@ public class EntityAttributes {
      */
     private EntityAttributes(UUID uuid) {
         this.uuid = uuid;
+        load();
     }
 
     /**

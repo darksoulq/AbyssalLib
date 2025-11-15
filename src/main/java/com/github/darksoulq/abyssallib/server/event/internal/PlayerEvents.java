@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
@@ -22,7 +23,8 @@ public class PlayerEvents {
     @SubscribeEvent
     public void onJoin(PlayerJoinEvent event) {
         PacketInterceptor.inject(event.getPlayer());
-        EntityAttributes.of(event.getPlayer()).load();
+        EntityAttributes.of(event.getPlayer());
+        PlayerStatistics.of(event.getPlayer());
     }
 
     @SubscribeEvent

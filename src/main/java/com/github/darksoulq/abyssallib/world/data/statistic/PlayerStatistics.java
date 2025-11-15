@@ -108,6 +108,11 @@ public class PlayerStatistics {
                     .select(rs -> Map.entry(rs.getString("key"), rs.getString("value")));
 
             Map<Identifier, Statistic> temp = new ConcurrentHashMap<>();
+            if (rows.isEmpty()) {
+                Registries.STATISTICS.getAll().forEach((key, stat) -> {
+                    temp.put(Identifier.of(key), stat.clone());
+                });
+            }
             for (var entry : rows) {
                 Identifier id = Identifier.of(entry.getKey());
 
