@@ -36,7 +36,20 @@ public class Model implements Asset {
      */
     private final byte[] data;
 
+    /**
+     * the size of the textures.
+     */
+    private int[] textureSize = null;
+
+    /**
+     * the direction from where light should fall on item in the GUI.
+     */
     private GuiLight guiLight = GuiLight.FRONT;
+
+    /**
+     * whether ambient occlusion should be enabled.
+     */
+    private boolean ambientOcclusion = true;
 
     /**
      * List of geometric elements defined for the model.
@@ -84,9 +97,21 @@ public class Model implements Asset {
      * @param path      The model path within the namespace
      */
     public Model(@NotNull String namespace, @NotNull String path) {
+        this(namespace, path, 16, 16);
+    }
+    /**
+     * Creates a new, empty model to be defined programmatically.
+     *
+     * @param namespace The model namespace
+     * @param path      The model path within the namespace
+     * @param texWidth The width of the textures.
+     * @param texHeight The height of the textures
+     */
+    public Model(@NotNull String namespace, @NotNull String path, int texWidth, int texHeight) {
         this.namespace = namespace;
         this.path = path;
         this.data = null;
+        this.textureSize = new int[] {texWidth, texHeight};
     }
 
     /**
@@ -112,6 +137,16 @@ public class Model implements Asset {
     }
 
     /**
+     * Sets whether ambient occlusion should be enabled.
+     * @param ambientOcclusion whether ambient occlusion should be enabled.
+     * @return This model for chaining.
+     */
+    public @NotNull Model ambientOcculsion(boolean ambientOcclusion) {
+        this.ambientOcclusion = ambientOcclusion;
+        return this;
+    }
+
+    /**
      * Adds a texture reference.
      *
      * @param key   Texture key (e.g., "layer0")
@@ -131,20 +166,7 @@ public class Model implements Asset {
      * @return The created element
      */
     public @NotNull Element addElement(@NotNull float[] from, @NotNull float[] to) {
-        Element element = new Element(from, to, 0);
-        this.elements.add(element);
-        return element;
-    }
-    /**
-     * Adds a cuboid element to the model.
-     *
-     * @param from Minimum XYZ coordinate
-     * @param to   Maximum XYZ coordinate
-     * @param lightEmission Light value to emit from this element
-     * @return The created element
-     */
-    public @NotNull Element addElement(@NotNull float[] from, @NotNull float[] to, @IntRange(from = 0, to = 15) int lightEmission) {
-        Element element = new Element(from, to, lightEmission);
+        Element element = new Element(from, to);
         this.elements.add(element);
         return element;
     }
@@ -178,8 +200,10 @@ public class Model implements Asset {
         }
 
         JsonObject obj = new JsonObject();
+        if (textureSize[0] != 16 && textureSize[1] != 16) obj.add("texture_size", toArray(textureSize));
         if (parent != null) obj.addProperty("parent", parent);
         obj.addProperty("gui_light", guiLight.name().toLowerCase());
+        if (!ambientOcclusion) obj.addProperty("ambientocclusion", false);
 
         if (!textures.isEmpty()) {
             JsonObject tex = new JsonObject();
@@ -205,12 +229,25 @@ public class Model implements Asset {
                 new GsonBuilder().setPrettyPrinting().create().toJson(obj).getBytes(StandardCharsets.UTF_8));
     }
 
+    private JsonArray toArray(int[] arr) {
+        JsonArray a = new JsonArray();
+        for (int f : arr) a.add(f);
+        return a;
+    }
+
     /**
      * Represents a cube element in a block/item model.
      */
     @ApiStatus.Experimental
     public static class Element {
-        private final int lightEmission;
+        /**
+         * How much light this element should emit.
+         */
+        private int lightEmission = 0;
+        /**
+         * Whether to apply directional shading.
+         */
+        private boolean shade = true;
 
         /**
          * Minimum corner coordinates.
@@ -232,10 +269,9 @@ public class Model implements Asset {
          */
         private final Map<String, Face> faces = new HashMap<>();
 
-        public Element(float @NotNull [] from, float @NotNull [] to, @IntRange(from = 0, to = 15) int lightEmission) {
+        public Element(float @NotNull [] from, float @NotNull [] to) {
             this.from = from;
             this.to = to;
-            this.lightEmission = lightEmission;
         }
 
         public @NotNull Element rotation(float[] origin, String axis, float angle, boolean rescale) {
@@ -248,11 +284,24 @@ public class Model implements Asset {
             return this;
         }
 
+        public @NotNull Element lightEmission(@IntRange(from = 0, to = 15) int lightEmission) {
+            this.lightEmission = lightEmission;
+            return this;
+        }
+
+        public @NotNull Element shade(boolean shade) {
+            this.shade = shade;
+            return this;
+        }
+
         public @NotNull JsonObject toJson() {
             JsonObject o = new JsonObject();
             o.add("from", toArray(from));
             o.add("to", toArray(to));
             if (rotation != null) o.add("rotation", rotation.toJson());
+            if (lightEmission != 0) o.addProperty("light_emission", lightEmission);
+            if (!shade) o.addProperty("shade", false);
+            if (lightEmission != 0) o.addProperty("light_emission", lightEmission);
 
             JsonObject faceObj = new JsonObject();
             for (var entry : faces.entrySet()) {
