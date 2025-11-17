@@ -24,6 +24,11 @@ public class PostEffect implements Asset {
         this.namespace = namespace;
         this.id = id;
     }
+    public PostEffect(@NotNull String namespace, @NotNull String id, byte[] data) {
+        this.namespace = namespace;
+        this.id = id;
+        this.rawData = data;
+    }
 
     public PostEffect(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;

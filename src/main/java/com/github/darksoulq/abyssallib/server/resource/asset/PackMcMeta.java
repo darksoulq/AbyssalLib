@@ -20,7 +20,7 @@ public class PackMcMeta implements Asset {
     private int packFormat;
     private Object description;
     private Integer minFormat, maxFormat;
-    private byte[] rawData;
+    private final byte[] rawData;
 
     /**
      * Loads {@code pack.mcmeta} directly from {@code resourcepack/pack.mcmeta} inside the plugin JAR.
@@ -32,6 +32,10 @@ public class PackMcMeta implements Asset {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load pack.mcmeta", e);
         }
+    }
+
+    public PackMcMeta(byte[] data) {
+        this.rawData = data;
     }
 
     /**

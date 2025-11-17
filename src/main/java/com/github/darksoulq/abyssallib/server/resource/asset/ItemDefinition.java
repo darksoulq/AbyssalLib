@@ -12,17 +12,23 @@ import java.util.Map;
 public class ItemDefinition implements Asset {
     private final String namespace;
     private final String id;
-    private final byte[] json;
+    private final byte[] rawData;
 
     public ItemDefinition(Plugin plugin, String namespace, String id) {
         this.namespace = namespace;
         this.id = id;
         try (InputStream in = plugin.getResource("resourcepack/" + namespace + "/items/" + id + ".json")) {
             if (in == null) throw new RuntimeException("ItemDefinition not found");
-            this.json = in.readAllBytes();
+            this.rawData = in.readAllBytes();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load item definition", e);
         }
+    }
+
+    public ItemDefinition(String namespace, String id, byte[] data) {
+        this.namespace = namespace;
+        this.id = id;
+        this.rawData = data;
     }
 
     public ItemDefinition(String namespace, String id, Selector selector) {
@@ -38,7 +44,7 @@ public class ItemDefinition implements Asset {
         root.put("model", selector.toJson());
         root.put("hand_animation_on_swap", handAnimationOnSwap);
         root.put("oversized_in_gui", oversizedInGui);
-        this.json = new GsonBuilder().setPrettyPrinting().create()
+        this.rawData = new GsonBuilder().setPrettyPrinting().create()
                 .toJson(root).getBytes(StandardCharsets.UTF_8);
     }
 
@@ -48,6 +54,6 @@ public class ItemDefinition implements Asset {
 
     @Override
     public void emit(Map<String, byte[]> files) {
-        files.put("assets/" + namespace + "/items/" + id + ".json", json);
+        files.put("assets/" + namespace + "/items/" + id + ".json", rawData);
     }
 }

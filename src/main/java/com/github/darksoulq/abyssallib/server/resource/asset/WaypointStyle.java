@@ -16,14 +16,14 @@ import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
 public class WaypointStyle implements Asset {
     private final String namespace;
     private final String id;
-    private final byte[] json;
+    private final byte[] rawData;
 
     public WaypointStyle(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
         this.id = id;
         try (InputStream in = plugin.getResource("resourcepack/" + namespace + "/waypoint_style/" + id + ".json")) {
             if (in == null) throw new RuntimeException("WaypointStyle not found: " + id);
-            this.json = in.readAllBytes();
+            this.rawData = in.readAllBytes();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load WaypointStyle: " + id, e);
         }
@@ -35,7 +35,12 @@ public class WaypointStyle implements Asset {
     public WaypointStyle(String namespace, String id) {
         this.namespace = namespace;
         this.id = id;
-        this.json = null;
+        this.rawData = null;
+    }
+    public WaypointStyle(String namespace, String id, byte[] data) {
+        this.namespace = namespace;
+        this.id = id;
+        this.rawData = data;
     }
 
     public WaypointStyle near(float d) {
@@ -55,8 +60,8 @@ public class WaypointStyle implements Asset {
 
     @Override
     public void emit(Map<String, byte[]> files) {
-        if (json != null) {
-            files.put("assets/" + namespace + "/waypoint_style/" + id + ".json", json);
+        if (rawData != null) {
+            files.put("assets/" + namespace + "/waypoint_style/" + id + ".json", rawData);
             return;
         }
 

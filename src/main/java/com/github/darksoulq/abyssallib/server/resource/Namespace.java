@@ -77,6 +77,18 @@ public class Namespace {
         assets.add(m);
         return m;
     }
+    /**
+     * Registers a .mcmeta file asset (e.g. animation metadata).
+     *
+     * @param path     File path (e.g. {@code item/sword})
+     * @param data     The data to use.
+     * @return Registered McMeta asset
+     */
+    public McMeta mcmeta(String path, byte[] data) {
+        McMeta m = new McMeta(namespace, path, data);
+        assets.add(m);
+        return m;
+    }
 
     /**
      * Registers a waypoint style asset.
@@ -87,6 +99,18 @@ public class Namespace {
      */
     public WaypointStyle waypointStyle(String name, boolean autoLoad) {
         WaypointStyle w = autoLoad ? new WaypointStyle(plugin, namespace, name) : new WaypointStyle(namespace, name);
+        assets.add(w);
+        return w;
+    }
+    /**
+     * Registers a waypoint style asset.
+     *
+     * @param name     Style name
+     * @param data     The data to use.
+     * @return Registered waypoint style asset
+     */
+    public WaypointStyle waypointStyle(String name, byte[] data) {
+        WaypointStyle w = new WaypointStyle(namespace, name, data);
         assets.add(w);
         return w;
     }
@@ -103,6 +127,18 @@ public class Namespace {
         assets.add(p);
         return p;
     }
+    /**
+     * Registers a post-processing effect asset.
+     *
+     * @param name     Effect name
+     * @param data     The data to use
+     * @return Registered post effect asset
+     */
+    public PostEffect postEffect(String name, byte[] data) {
+        PostEffect p = new PostEffect(namespace, name, data);
+        assets.add(p);
+        return p;
+    }
 
     /**
      * Registers a font asset.
@@ -116,6 +152,18 @@ public class Namespace {
         assets.add(f);
         return f;
     }
+    /**
+     * Registers a font asset.
+     *
+     * @param name     Font name (e.g. {@code default})
+     * @param data     The data to use.
+     * @return Registered font asset
+     */
+    public @NotNull Font font(@NotNull String name, byte[] data) {
+        Font f = new Font(namespace, name, data);
+        assets.add(f);
+        return f;
+    }
 
     /**
      * Registers a model asset.
@@ -126,6 +174,18 @@ public class Namespace {
      */
     public @NotNull Model model(@NotNull String name, boolean autoLoad) {
         Model m = autoLoad ? new Model(plugin, namespace, name) : new Model(namespace, name);
+        assets.add(m);
+        return m;
+    }
+    /**
+     * Registers a model asset.
+     *
+     * @param name     Model name (without extension)
+     * @param data     The data to use.
+     * @return Registered model asset
+     */
+    public @NotNull Model model(@NotNull String name, byte[] data) {
+        Model m = new Model(namespace, name, data);
         assets.add(m);
         return m;
     }
@@ -155,6 +215,18 @@ public class Namespace {
         assets.add(b);
         return b;
     }
+    /**
+     * Registers a blockstate asset.
+     *
+     * @param name     Block name (e.g. {@code acacia_fence})
+     * @param data     The data to use.
+     * @return Registered blockstate asset
+     */
+    public BlockState blockstate(String name, byte[] data) {
+        BlockState b = new BlockState(namespace, name, data);
+        assets.add(b);
+        return b;
+    }
 
     /**
      * Registers a language file asset.
@@ -165,6 +237,18 @@ public class Namespace {
      */
     public @NotNull Lang lang(@NotNull String locale, boolean autoLoad) {
         Lang lang = autoLoad ? new Lang(plugin, namespace, locale) : new Lang(namespace, locale);
+        assets.add(lang);
+        return lang;
+    }
+    /**
+     * Registers a language file asset.
+     *
+     * @param locale   Locale ID (e.g. {@code en_us})
+     * @param data     The data to use.
+     * @return Registered lang asset
+     */
+    public @NotNull Lang lang(@NotNull String locale, byte[] data) {
+        Lang lang = new Lang(namespace, locale, data);
         assets.add(lang);
         return lang;
     }
@@ -188,6 +272,18 @@ public class Namespace {
      */
     public @NotNull ItemDefinition itemDefinition(@NotNull String name) {
         ItemDefinition def = new ItemDefinition(plugin, namespace, name);
+        assets.add(def);
+        return def;
+    }
+    /**
+     * Registers an item definition asset from the plugin JAR.
+     *
+     * @param name Item name (e.g. {@code custom_sword})
+     * @param data The data to use.
+     * @return Registered item definition
+     */
+    public @NotNull ItemDefinition itemDefinition(@NotNull String name, byte[] data) {
+        ItemDefinition def = new ItemDefinition(namespace, name, data);
         assets.add(def);
         return def;
     }
@@ -237,6 +333,18 @@ public class Namespace {
      */
     public Equipment equipment(String path, boolean autoLoad) {
         Equipment e = autoLoad ? new Equipment(plugin, namespace, path) : new Equipment(namespace, path);
+        assets.add(e);
+        return e;
+    }
+    /**
+     * Registers an equipment asset.
+     *
+     * @param path     Asset path (e.g. {@code myarmor})
+     * @param data     The data to use.
+     * @return Registered equipment asset
+     */
+    public Equipment equipment(String path, byte[] data) {
+        Equipment e = new Equipment(namespace, path, data);
         assets.add(e);
         return e;
     }

@@ -30,6 +30,12 @@ public class BlockState implements Asset {
         this.id = id;
     }
 
+    public BlockState(@NotNull String namespace, @NotNull String id, byte[] data) {
+        this.namespace = namespace;
+        this.id = id;
+        this.rawData = data;
+    }
+
     public BlockState(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
         this.id = id;

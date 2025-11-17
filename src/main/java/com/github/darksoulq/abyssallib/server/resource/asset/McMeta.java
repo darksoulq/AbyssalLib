@@ -22,6 +22,7 @@ public class McMeta implements Asset {
     private int width = -99;
     private int height = -99;
     private final List<Object> frames = new ArrayList<>();
+    private byte[] rawData = null;
 
     public McMeta(Plugin plugin, String namespace, @NotNull String path, boolean autoLoad) {
         this.path = path;
@@ -60,6 +61,12 @@ public class McMeta implements Asset {
         }
     }
 
+    public McMeta(String namespace, String path, byte[] data) {
+        this.namespace = namespace;
+        this.path = path;
+        this.rawData = data;
+    }
+
     public McMeta frametime(int t) { this.defaultFrameTime = t; return this; }
     public McMeta interpolate(boolean b) { this.interpolate = b; return this; }
     public McMeta width(int w) {
@@ -81,6 +88,9 @@ public class McMeta implements Asset {
 
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
+        if (rawData != null) {
+            files.put("assets/" + namespace + "/textures/" + path + ".png.mcmeta", rawData);
+        }
         JsonObject root = new JsonObject();
         JsonObject anim = new JsonObject();
         anim.addProperty("frametime", defaultFrameTime);

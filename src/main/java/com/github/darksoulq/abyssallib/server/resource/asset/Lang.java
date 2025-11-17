@@ -30,6 +30,8 @@ public class Lang implements Asset {
      */
     private final String lang;
 
+    private byte[] rawData = null;
+
     /**
      * Key-value translation pairs.
      */
@@ -44,6 +46,12 @@ public class Lang implements Asset {
     public Lang(@NotNull String namespace, @NotNull String lang) {
         this.namespace = namespace;
         this.lang = lang;
+    }
+
+    public Lang(@NotNull String namespace, @NotNull String lang, byte[] data) {
+        this.namespace = namespace;
+        this.lang = lang;
+        this.rawData = data;
     }
 
     /**

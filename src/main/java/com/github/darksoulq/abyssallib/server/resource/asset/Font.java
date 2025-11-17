@@ -43,6 +43,8 @@ public class Font implements Asset {
     /** Base Unicode code point for private-use area allocations. */
     private int unicodeBase = 0xE000;
 
+    private byte[] rawData = null;
+
     /**
      * Constructs a new empty Font.
      *
@@ -52,6 +54,12 @@ public class Font implements Asset {
     public Font(@NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
         this.id = id;
+
+    }
+    public Font(@NotNull String namespace, @NotNull String id, byte[] data) {
+        this.namespace = namespace;
+        this.id = id;
+        this.rawData = data;
     }
 
     /**
@@ -205,6 +213,10 @@ public class Font implements Asset {
      */
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
+        if (rawData != null) {
+            files.put("assets/" + namespace + "/font/" + id + ".json", rawData);
+            return;
+        }
         JsonArray providers = new JsonArray();
 
         Map<BitmapKey, LinkedList<TextureGlyph>> bitmapGroups = new LinkedHashMap<>();

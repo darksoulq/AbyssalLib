@@ -34,7 +34,7 @@ public class Model implements Asset {
     /**
      * Raw JSON model data if loaded from the JAR. Null if defined programmatically.
      */
-    private final byte[] data;
+    private final byte[] rawData;
 
     /**
      * the size of the textures.
@@ -84,7 +84,7 @@ public class Model implements Asset {
         String resourcePath = "resourcepack/" + namespace + "/models/" + path + ".json";
         try (InputStream in = plugin.getResource(resourcePath)) {
             if (in == null) throw new IllegalStateException("Model not found in plugin JAR at: " + resourcePath);
-            this.data = in.readAllBytes();
+            this.rawData = in.readAllBytes();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load model from plugin JAR: " + resourcePath, e);
         }
@@ -110,8 +110,14 @@ public class Model implements Asset {
     public Model(@NotNull String namespace, @NotNull String path, int texWidth, int texHeight) {
         this.namespace = namespace;
         this.path = path;
-        this.data = null;
+        this.rawData = null;
         this.textureSize = new int[] {texWidth, texHeight};
+    }
+
+    public Model(String namespace, String path, byte[] data) {
+        this.namespace = namespace;
+        this.path = path;
+        this.rawData = data;
     }
 
     /**
@@ -194,8 +200,8 @@ public class Model implements Asset {
 
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
-        if (data != null) {
-            files.put("assets/" + namespace + "/models/" + path + ".json", data);
+        if (rawData != null) {
+            files.put("assets/" + namespace + "/models/" + path + ".json", rawData);
             return;
         }
 

@@ -48,6 +48,11 @@ public class Equipment implements Asset {
         this.id = id;
         this.rawData = null;
     }
+    public Equipment(@NotNull String namespace, @NotNull String id, byte[] data) {
+        this.namespace = namespace;
+        this.id = id;
+        this.rawData = data;
+    }
 
     /**
      * Adds a layer entry under the specified entity layer (e.g. "humanoid", "wings").
