@@ -175,6 +175,12 @@ public class ResourcePack {
         }
     }
 
+    public void unregister() {
+        if (AbyssalLib.PACK_SERVER != null) {
+            AbyssalLib.PACK_SERVER.unregisterResourcePack(modid);
+        }
+    }
+
     /**
      * Adds a raw binary file to the pack.
      *

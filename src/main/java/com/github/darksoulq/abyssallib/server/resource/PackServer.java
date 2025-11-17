@@ -60,9 +60,13 @@ public class PackServer {
         if (server != null) server.stop(0);
     }
 
-    public void registerResourcePack(String modid, Path resourcePackFile) {
-        registeredPaths.put(modid, resourcePackFile);
-        AbyssalLib.getInstance().getLogger().info("Registered resource pack for /" + modid + "/resourcepack.zip");
+    public void registerResourcePack(String pluginid, Path resourcePackFile) {
+        registeredPaths.put(pluginid, resourcePackFile);
+        AbyssalLib.getInstance().getLogger().info("Registered resource pack for /" + pluginid + "/resourcepack.zip");
+    }
+    public void unregisterResourcePack(String pluginid) {
+        registeredPaths.remove(pluginid);
+        AbyssalLib.getInstance().getLogger().info("Unregistered resource pack for /" + pluginid + "/resourcepack.zip");
     }
 
     public String getUrl(String modid) {
