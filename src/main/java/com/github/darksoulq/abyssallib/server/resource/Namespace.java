@@ -129,6 +129,19 @@ public class Namespace {
         assets.add(m);
         return m;
     }
+    /**
+     * Registers a model asset.
+     *
+     * @param name     Model name (without extension).
+     * @param texWidth the width of the textures.
+     * @param texHeight the height of the textures.
+     * @return Registered model asset
+     */
+    public @NotNull Model model(@NotNull String name, int texWidth, int texHeight) {
+        Model m = new Model(namespace, name, texWidth, texHeight);
+        assets.add(m);
+        return m;
+    }
 
     /**
      * Registers a blockstate asset.
