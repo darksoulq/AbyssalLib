@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.bukkit.plugin.Plugin;
+import org.checkerframework.common.value.qual.IntRange;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,8 @@ public class Model implements Asset {
      * Raw JSON model data if loaded from the JAR. Null if defined programmatically.
      */
     private final byte[] data;
+
+    private GuiLight guiLight = GuiLight.FRONT;
 
     /**
      * List of geometric elements defined for the model.
@@ -98,6 +101,17 @@ public class Model implements Asset {
     }
 
     /**
+     * Sets the direction from where light should fall on item in the GUI.
+     *
+     * @param mode The direction of the light
+     * @return This model for chaining
+     */
+    public @NotNull Model guiLight(GuiLight mode) {
+        this.guiLight = mode;
+        return this;
+    }
+
+    /**
      * Adds a texture reference.
      *
      * @param key   Texture key (e.g., "layer0")
@@ -117,7 +131,20 @@ public class Model implements Asset {
      * @return The created element
      */
     public @NotNull Element addElement(@NotNull float[] from, @NotNull float[] to) {
-        Element element = new Element(from, to);
+        Element element = new Element(from, to, 0);
+        this.elements.add(element);
+        return element;
+    }
+    /**
+     * Adds a cuboid element to the model.
+     *
+     * @param from Minimum XYZ coordinate
+     * @param to   Maximum XYZ coordinate
+     * @param lightEmission Light value to emit from this element
+     * @return The created element
+     */
+    public @NotNull Element addElement(@NotNull float[] from, @NotNull float[] to, @IntRange(from = 0, to = 15) int lightEmission) {
+        Element element = new Element(from, to, lightEmission);
         this.elements.add(element);
         return element;
     }
@@ -152,6 +179,7 @@ public class Model implements Asset {
 
         JsonObject obj = new JsonObject();
         if (parent != null) obj.addProperty("parent", parent);
+        obj.addProperty("gui_light", guiLight.name().toLowerCase());
 
         if (!textures.isEmpty()) {
             JsonObject tex = new JsonObject();
@@ -182,6 +210,7 @@ public class Model implements Asset {
      */
     @ApiStatus.Experimental
     public static class Element {
+        private final int lightEmission;
 
         /**
          * Minimum corner coordinates.
@@ -203,9 +232,10 @@ public class Model implements Asset {
          */
         private final Map<String, Face> faces = new HashMap<>();
 
-        public Element(@NotNull float[] from, @NotNull float[] to) {
+        public Element(float @NotNull [] from, float @NotNull [] to, @IntRange(from = 0, to = 15) int lightEmission) {
             this.from = from;
             this.to = to;
+            this.lightEmission = lightEmission;
         }
 
         public @NotNull Element rotation(float[] origin, String axis, float angle, boolean rescale) {
@@ -443,5 +473,9 @@ public class Model implements Asset {
             for (float v : vals) a.add(v);
             return a;
         }
+    }
+
+    public enum GuiLight {
+        FRONT, SIDE
     }
 }
