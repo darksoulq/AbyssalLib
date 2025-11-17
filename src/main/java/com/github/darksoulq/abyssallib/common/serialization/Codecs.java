@@ -8,6 +8,7 @@ import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -97,8 +98,8 @@ public class Codecs {
             java.util.UUID::toString
     );
     public static final Codec<Component> TEXT_COMPONENT = Codecs.STRING.xmap(
-            JSONComponentSerializer.json()::deserialize,
-            JSONComponentSerializer.json()::serialize
+            MiniMessage.miniMessage()::deserialize,
+            MiniMessage.miniMessage()::serialize
     );
     public static final Codec<Key> KEY = STRING.xmap(Key::key, Key::asString);
     public static final Codec<NamespacedKey> NAMESPACED_KEY = STRING.xmap(NamespacedKey::fromString, NamespacedKey::toString);
