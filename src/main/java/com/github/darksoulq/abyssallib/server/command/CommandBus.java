@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class CommandBus {
     /**
      * A record representing a registered command, containing the mod ID, the method that handles the command, and the handler object.
      */
-    private record RegisteredCommand(String modid, Method method, Object handler) {}
+    private record RegisteredCommand(String pluginId, Method method, Object handler) {}
 
     /**
      * Initializes the {@code CommandBus} with the given Brigadier {@link CommandDispatcher}.
@@ -43,21 +44,26 @@ public class CommandBus {
      * Registers all methods in the given handler class that are annotated with {@link Command}.
      * Each method must accept a single parameter of type {@link LiteralArgumentBuilder}.
      *
-     * @param modid   The mod ID this command belongs to.
+     * @param pluginId   The mod ID this command belongs to.
      * @param handler The object containing command methods.
      */
-    public static void register(String modid, Object handler) {
+    public static void register(String pluginId, Object handler) {
         for (Method method : handler.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(Command.class)) {
                 Command command = method.getAnnotation(Command.class);
                 String commandName = command.name();
 
-                registered.add(new RegisteredCommand(modid, method, handler));
-
                 LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(commandName);
+                List<LiteralArgumentBuilder<CommandSourceStack>> aliases = new ArrayList<>();
+                for (String alias : command.aliases()) {
+                    aliases.add(LiteralArgumentBuilder.literal(alias));
+                }
                 if (method.getParameterCount() == 1 && method.getParameterTypes()[0] == LiteralArgumentBuilder.class) {
                     try {
                         method.invoke(handler, root);
+                        for (LiteralArgumentBuilder<CommandSourceStack> alias : aliases) {
+                            method.invoke(handler, alias);
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -65,7 +71,11 @@ public class CommandBus {
                     throw new IllegalArgumentException("Method " + method + " must have exactly one parameter of type LiteralArgumentBuilder.");
                 }
 
+                registered.add(new RegisteredCommand(pluginId, method, handler));
                 getDispatcher().register(root);
+                for (LiteralArgumentBuilder<CommandSourceStack> alias : aliases) {
+                    registered.add(new RegisteredCommand(pluginId, method, handler));
+                }
             }
         }
     }
@@ -78,10 +88,17 @@ public class CommandBus {
 
         for (RegisteredCommand cmd : registered) {
             LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(cmd.method.getAnnotation(Command.class).name());
+            List<LiteralArgumentBuilder<CommandSourceStack>> aliases = new ArrayList<>();
+            for (String alias : cmd.method.getAnnotation(Command.class).aliases()) {
+                aliases.add(LiteralArgumentBuilder.literal(alias));
+            }
 
             if (cmd.method.getParameterCount() == 1 && cmd.method.getParameterTypes()[0] == LiteralArgumentBuilder.class) {
                 try {
                     cmd.method.invoke(cmd.handler, root);
+                    for (LiteralArgumentBuilder<CommandSourceStack> alias : aliases) {
+                        cmd.method.invoke(cmd.handler, alias);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -103,7 +120,8 @@ public class CommandBus {
 
         for (CommandNode<CommandSourceStack> child : commandMap) {
             String name = child.getName();
-            boolean ours = registered.stream().anyMatch(r -> r.method.getAnnotation(Command.class).name().equals(name));
+            boolean ours = registered.stream().anyMatch(r ->(r.method.getAnnotation(Command.class).name().equals(name)
+                    || Arrays.asList(r.method.getAnnotation(Command.class).aliases()).contains(name)));
             if (ours) toRemove.add(name);
         }
 

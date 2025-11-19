@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Marks a method as a command definition for registration via the {@link CommandBus}.
  *
- * <p>Methods annotated with {@code @AbyssalCommand} must accept a single parameter of type
+ * <p>Methods annotated with {@code @Command} must accept a single parameter of type
  * {@link com.mojang.brigadier.builder.LiteralArgumentBuilder LiteralArgumentBuilder} and will be invoked during command registration.</p>
  *
  * <p>The method must be registered using {@link CommandBus#register(String, Object)} to be active.
@@ -35,4 +35,5 @@ public @interface Command {
      * @return the command name
      */
     String name();
+    String[] aliases() default {};
 }
