@@ -74,7 +74,7 @@ public class CommandBus {
                 registered.add(new RegisteredCommand(pluginId, method, handler));
                 getDispatcher().register(root);
                 for (LiteralArgumentBuilder<CommandSourceStack> alias : aliases) {
-                    registered.add(new RegisteredCommand(pluginId, method, handler));
+                    getDispatcher().register(alias);
                 }
             }
         }
@@ -107,6 +107,9 @@ public class CommandBus {
             }
 
             getDispatcher().register(root);
+            for (LiteralArgumentBuilder<CommandSourceStack> alias : aliases) {
+                getDispatcher().register(alias);
+            }
         }
     }
 
