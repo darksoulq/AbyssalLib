@@ -9,8 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -89,6 +88,10 @@ public class PlayerStatistics {
     public void set(Statistic stat) {
         stats.put(stat.getId(), stat.clone());
         save(stat);
+    }
+
+    public List<Statistic> get() {
+        return stats.values().stream().toList();
     }
 
     private void save(Statistic stat) {

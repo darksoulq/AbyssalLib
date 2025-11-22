@@ -25,12 +25,12 @@ public class PluginConfig {
         public Config.Value<Integer> waterAmbient;
 
         public SpawnLimits(Config cfg) {
-            monster = cfg.value("monster", 70);
-            creature = cfg.value("creature", 10);
-            ambient = cfg.value("ambient", 5);
-            waterMonster = cfg.value("water_monster", 15);
-            waterCreature = cfg.value("water_creature", 10);
-            waterAmbient = cfg.value("water_ambient", 5);
+            monster = cfg.value("spawn_limits.monster", 70);
+            creature = cfg.value("spawn_limits.creature", 10);
+            ambient = cfg.value("spawn_limits.ambient", 5);
+            waterMonster = cfg.value("spawn_limits.water_monster", 15);
+            waterCreature = cfg.value("spawn_limits.water_creature", 10);
+            waterAmbient = cfg.value("spawn_limits.water_ambient", 5);
         }
     }
 

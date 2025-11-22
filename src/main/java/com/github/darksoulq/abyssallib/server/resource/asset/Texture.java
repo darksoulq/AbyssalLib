@@ -66,7 +66,7 @@
             /**
              * @return the image data of the texture
              */
-            public @NotNull byte[] data() {
+            public byte @NotNull [] data() {
                 return data;
             }
 

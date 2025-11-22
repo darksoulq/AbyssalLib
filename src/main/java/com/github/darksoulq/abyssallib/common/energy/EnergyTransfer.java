@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.common.energy;
 
 import com.github.darksoulq.abyssallib.server.event.EventBus;
-import com.github.darksoulq.abyssallib.server.event.context.EnergyTransferEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyTransferEvent;
 import org.bukkit.Bukkit;
 
 /**

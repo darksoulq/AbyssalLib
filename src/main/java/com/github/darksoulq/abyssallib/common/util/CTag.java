@@ -167,6 +167,12 @@ public class CTag {
         return baseTag.getByteArray(key);
     }
 
+    public void clear() {
+        for (String key : baseTag.keySet()) {
+            baseTag.remove(key);
+        }
+    }
+
     /**
      * Returns the underlying {@link CompoundTag}.
      *

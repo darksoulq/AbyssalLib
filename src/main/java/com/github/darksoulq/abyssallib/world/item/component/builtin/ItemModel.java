@@ -16,7 +16,7 @@ public class ItemModel extends DataComponent<Key> implements Vanilla {
     );
 
     public ItemModel(Key id) {
-        super(Identifier.of(DataComponentTypes.ITEM_NAME.key().asString()), id, CODEC);
+        super(Identifier.of(DataComponentTypes.ITEM_MODEL.key().asString()), id, CODEC);
     }
 
     @Override

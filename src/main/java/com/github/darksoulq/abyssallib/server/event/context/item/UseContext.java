@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.server.event.internal;
+package com.github.darksoulq.abyssallib.server.event.context.item;
 
 import com.github.darksoulq.abyssallib.server.event.ClickType;
 import org.bukkit.block.Block;

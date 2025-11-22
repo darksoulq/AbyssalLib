@@ -5,7 +5,7 @@ import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
-import com.github.darksoulq.abyssallib.server.event.internal.UseContext;
+import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
@@ -26,6 +26,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
@@ -158,6 +159,7 @@ public class Item implements Cloneable {
         if (id == null) return null;
         Item clone = Registries.ITEMS.get(id.toString()).clone();
         clone.stack = stack;
+        clone.componentMap = new ComponentMap(clone);
         return clone;
     }
     public static CustomBlock asBlock(Item item) {

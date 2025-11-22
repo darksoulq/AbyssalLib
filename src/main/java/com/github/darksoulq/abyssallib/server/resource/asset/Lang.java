@@ -1,8 +1,6 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -94,9 +92,12 @@ public class Lang implements Asset {
      */
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject json = new JsonObject();
         values.forEach(json::addProperty);
+
+        String prettyJson = gson.toJson(json);
         files.put("assets/" + namespace + "/lang/" + lang + ".json",
-                json.toString().getBytes(StandardCharsets.UTF_8));
+                prettyJson.getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -12,7 +12,7 @@ import com.github.darksoulq.abyssallib.server.event.internal.*;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
-import com.github.darksoulq.abyssallib.server.resource.asset.ItemDefinition;
+import com.github.darksoulq.abyssallib.server.resource.asset.Lang;
 import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
@@ -21,9 +21,11 @@ import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
+import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -94,16 +96,19 @@ public final class AbyssalLib extends JavaPlugin {
 
         ResourcePack rp = new ResourcePack(this, MODID);
         Namespace ns = rp.namespace("abyssallib");
+        ns.icon();
 
         TextOffset.init(ns);
+        GuiTextures.init(ns);
+        createItemDef("invisible", ns);
+        createItemDef("forward", ns);
+        createItemDef("backward", ns);
 
-        Texture invisTexture = ns.texture("item/invis");
-        Model invisModel = ns.model("invis", false);
-        invisModel.parent("minecraft:item/generated");
-        invisModel.texture("layer0", invisTexture);
-
-        Selector.Model invisSelector = new Selector.Model(invisModel);
-        ItemDefinition def = ns.itemDefinition("invisible", invisSelector, false);
+        Lang lang = ns.lang("en_us", false);
+        lang.put("item.abyssallib.invisible", "");
+        lang.put("item.abyssallib.forward", "Forward");
+        lang.put("item.abyssallib.backward", "Backward");
+        lang.put("plugin.abyssallib", "AbyssalLib");
 
         rp.register(false);
     }
@@ -115,7 +120,18 @@ public final class AbyssalLib extends JavaPlugin {
             PACK_SERVER.stop();
         }
     }
+
     public static AbyssalLib getInstance() {
         return INSTANCE;
+    }
+
+    private void createItemDef(String name, Namespace ns) {
+        Texture tex = ns.texture("item/" + name);
+        Model model = ns.model(name, false);
+        model.parent("minecraft:item/generated");
+        model.texture("layer0", tex);
+
+        Selector.Model sel = new Selector.Model(model);
+        ns.itemDefinition(name, sel, false);
     }
 }

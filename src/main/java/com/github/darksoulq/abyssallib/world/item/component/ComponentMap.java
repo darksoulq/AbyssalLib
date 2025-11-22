@@ -70,74 +70,23 @@ public class ComponentMap {
             }
         }
 
-        CTag root = item.getCTag();
-        CompoundTag tag = root.toVanilla().getCompoundOrEmpty("CustomComponents");
-        if (tag.isEmpty()) return;
-
-        for (String cId : tag.keySet()) {
-            Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(cId);
-            if (cls == null) continue;
-
-            try {
-                Optional<String> encoded = tag.getString(cId);
-                if (encoded.isEmpty()) continue;
-
-                Field codecField = cls.getDeclaredField("CODEC");
-                if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
-                codecField.setAccessible(true);
-                Codec<?> codec = (Codec<?>) codecField.get(null);
-
-                DataComponent<?> decoded = (DataComponent<?>) codec.decode(StringOps.INSTANCE, encoded.get());
-                if (decoded != null) components.put(decoded.getId(), decoded);
-
-            } catch (NoSuchFieldException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to find static CODEC field for custom component " + cls.getSimpleName() + ": " + e.getMessage());
-            } catch (Codec.CodecException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + cId + ": " + e.getMessage());
-            } catch (Exception e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to load custom component " + cId + ": " + e.getMessage());
-            }
-        }
+        loadCustomComponents(item.getCTag());
     }
+
     public void loadEntity() {
-        CTag root = entity.getCTag();
-        CompoundTag tag = root.toVanilla().getCompoundOrEmpty("CustomComponents");
-        if (tag.isEmpty()) return;
-
-        for (String cId : tag.keySet()) {
-            Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(cId);
-            if (cls == null) continue;
-
-            try {
-                Optional<String> encoded = tag.getString(cId);
-                if (encoded.isEmpty()) continue;
-
-                Field codecField = cls.getDeclaredField("CODEC");
-                if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
-                codecField.setAccessible(true);
-                Codec<?> codec = (Codec<?>) codecField.get(null);
-
-                DataComponent<?> decoded = (DataComponent<?>) codec.decode(StringOps.INSTANCE, encoded.get());
-                if (decoded != null) components.put(decoded.getId(), decoded);
-
-            } catch (NoSuchFieldException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to find static CODEC field for custom component " + cls.getSimpleName() + ": " + e.getMessage());
-            } catch (Codec.CodecException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + cId + ": " + e.getMessage());
-            } catch (Exception e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to load custom component " + cId + ": " + e.getMessage());
-            }
-        }
+        loadCustomComponents(entity.getCTag());
     }
 
     public void setData(DataComponent<?> component) {
+        if (hasData(component.getId())) removeData(component.getId());
         if (component instanceof Vanilla v) vanillaComponents.put(component.getId(), v);
         else components.put(component.getId(), component);
         applyData();
     }
     public void removeData(Identifier id) {
         if (vanillaComponents.containsKey(id)) {
-            vanillaComponents.remove(id);
+            Vanilla v = vanillaComponents.remove(id);
+            if (item != null) v.remove(item.getStack());
         }
         else if (components.containsKey(id)) {
             removeComponent(components.get(id));
@@ -145,10 +94,13 @@ public class ComponentMap {
     }
     public void removeData(Class<? extends DataComponent> clazz) {
         for (DataComponent<?> cmp : components.values()) {
-            if (clazz.isInstance(cmp)) components.remove(cmp);
+            if (clazz.isInstance(cmp)) components.remove(cmp.getId());
         }
         for (Vanilla v : vanillaComponents.values()) {
-            if (clazz.isInstance(v)) vanillaComponents.remove(v);
+            if (clazz.isInstance(v)) {
+                vanillaComponents.remove(((DataComponent<?>) v).getId());
+                if (item != null) v.remove(item.getStack());
+            }
         }
     }
     public DataComponent<?> getData(Identifier id) {
@@ -174,13 +126,16 @@ public class ComponentMap {
         CompoundTag rootTag = root.toVanilla();
         CompoundTag tag = rootTag.getCompoundOrEmpty("CustomComponents");
         CTag data = new CTag(tag);
+        data.clear();
 
         for (Map.Entry<Identifier, DataComponent<?>> cmp : components.entrySet()) {
             String encoded = encodeComponent(cmp.getValue(), StringOps.INSTANCE);
             data.set(cmp.getKey().toString(), encoded);
         }
-        for (Vanilla v : vanillaComponents.values()) {
-            v.apply(item.getStack());
+        if (item != null) {
+            for (Vanilla v : vanillaComponents.values()) {
+                v.apply(item.getStack());
+            }
         }
         rootTag.put("CustomComponents", data.toVanilla());
         if (item != null) item.setCTag(root);
@@ -238,6 +193,35 @@ public class ComponentMap {
             return component.codec.encode(ops, component);
         } catch (Codec.CodecException e) {
             throw new RuntimeException(e);
+        }
+    }
+    private void loadCustomComponents(CTag root) {
+        CompoundTag tag = root.toVanilla().getCompoundOrEmpty("CustomComponents");
+        if (tag.isEmpty()) return;
+
+        for (String cId : tag.keySet()) {
+            Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(cId);
+            if (cls == null) continue;
+
+            try {
+                Optional<String> encoded = tag.getString(cId);
+                if (encoded.isEmpty()) continue;
+
+                Field codecField = cls.getDeclaredField("CODEC");
+                if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
+                codecField.setAccessible(true);
+                Codec<?> codec = (Codec<?>) codecField.get(null);
+
+                DataComponent<?> decoded = (DataComponent<?>) codec.decode(StringOps.INSTANCE, encoded.get());
+                if (decoded != null) components.put(decoded.getId(), decoded);
+
+            } catch (NoSuchFieldException e) {
+                AbyssalLib.getInstance().getLogger().severe("Failed to find static CODEC field for custom component " + cls.getSimpleName() + ": " + e.getMessage());
+            } catch (Codec.CodecException e) {
+                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + cId + ": " + e.getMessage());
+            } catch (Exception e) {
+                AbyssalLib.getInstance().getLogger().severe("Failed to load custom component " + cId + ": " + e.getMessage());
+            }
         }
     }
     private boolean isAssignable(Class<?> paramType, Class<?> valueType) {

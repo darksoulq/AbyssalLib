@@ -2,12 +2,24 @@ package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
+import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
+import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
+import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
+import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
+import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemModel;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemName;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +41,7 @@ public class ResourcePack {
     private final Plugin plugin;
 
     /** The modid. */
-    private final String modid;
+    private final String pluginId;
 
     /** Output path: {@code <plugin>/pack/resourcepack.zip} */
     private final Path outputFile;
@@ -56,14 +68,14 @@ public class ResourcePack {
      * Creates a new resource pack instance.
      *
      * @param plugin Owning plugin
-     * @param modid     The modid
+     * @param pluginId     The modid
      */
-    public ResourcePack(@NotNull Plugin plugin, @NotNull String modid) {
+    public ResourcePack(@NotNull Plugin plugin, @NotNull String pluginId) {
         this.plugin = plugin;
-        this.modid = modid;
+        this.pluginId = pluginId;
         this.outputFile = plugin.getDataFolder().toPath().resolve("pack").resolve("resourcepack.zip");
 
-        uuidMap.put(modid, UUID.randomUUID());
+        uuidMap.put(pluginId, UUID.randomUUID());
     }
 
     /**
@@ -79,10 +91,16 @@ public class ResourcePack {
     /**
      * Sets the Icon for the pack.
      *
-     * @param icon The icon instance
+     * @param data The icon image data
      */
-    public void icon(Icon icon) {
-        this.icon = icon;
+    public void icon(byte[] data) {
+        this.icon = new Icon(data);
+    }
+    /**
+     * Autoloads the Icon for this pack from {@code resourcepack/pack.png}
+     */
+    public void icon() {
+        this.icon = new Icon(plugin);
     }
 
     /**
@@ -121,12 +139,32 @@ public class ResourcePack {
      */
     public void compile(boolean override) {
         if (!override && outputFile.toFile().exists()) {
-            hashMap.put(modid, FileUtils.sha1(outputFile));
+            hashMap.put(pluginId, FileUtils.sha1(outputFile));
+            for (Namespace ns : namespaces.values()) {
+                Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
+                if (ns.getIcon() == null) {
+                    icon.setData(new ItemModel(NamespacedKey.fromString("grass")));
+                }
+                Registries.ITEMS.register(icon.getId().toString(), icon);
+            }
             return;
         }
         files.clear();
 
         for (Namespace ns : namespaces.values()) {
+            Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
+            Texture nsIcon = ns.getIcon();
+            if (nsIcon == null) {
+                icon.setData(new ItemModel(NamespacedKey.fromString("grass")));
+            } else {
+                nsIcon.emit(files);
+                Model model = ns.model("plugin_icon", false);
+                model.parent("builtin/generated");
+                model.texture("layer0", nsIcon);
+                Selector.Model sel = new Selector.Model(model);
+                ns.itemDefinition("plugin_icon", sel);
+            }
+            Registries.ITEMS.register(icon.getId().toString(), icon);
             ns.emit(files);
         }
 
@@ -147,8 +185,8 @@ public class ResourcePack {
                 }
             }
 
-            hashMap.put(modid, FileUtils.sha1(outputFile));
-            EventBus.post(new ResourcePackGenerateEvent(modid, outputFile.toFile()));
+            hashMap.put(pluginId, FileUtils.sha1(outputFile));
+            EventBus.post(new ResourcePackGenerateEvent(pluginId, outputFile.toFile()));
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to write resource pack: " + outputFile, e);
@@ -162,7 +200,7 @@ public class ResourcePack {
     public void register(boolean override) {
         compile(override);
         if (AbyssalLib.PACK_SERVER != null) {
-            AbyssalLib.PACK_SERVER.registerResourcePack(modid, outputFile);
+            AbyssalLib.PACK_SERVER.registerResourcePack(pluginId, outputFile);
         } else if (HookConstants.isEnabled(HookConstants.Plugin.RSPM)) {
             ResourcePackManagerAPI.registerLocalResourcePack(
                     plugin.getName(),
@@ -177,7 +215,7 @@ public class ResourcePack {
 
     public void unregister() {
         if (AbyssalLib.PACK_SERVER != null) {
-            AbyssalLib.PACK_SERVER.unregisterResourcePack(modid);
+            AbyssalLib.PACK_SERVER.unregisterResourcePack(pluginId);
         }
     }
 
@@ -210,7 +248,7 @@ public class ResourcePack {
         return "{\n" +
                 "  \"pack\": {\n" +
                 "    \"pack_format\": 55,\n" +
-                "    \"description\": \"" + modid + " internal Resource Pack\"\n" +
+                "    \"description\": \"" + pluginId + " internal Resource Pack\"\n" +
                 "  }\n" +
                 "}";
     }

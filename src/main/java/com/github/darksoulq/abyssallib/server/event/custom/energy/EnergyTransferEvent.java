@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.server.event.context;
+package com.github.darksoulq.abyssallib.server.event.custom.energy;
 
 import com.github.darksoulq.abyssallib.common.energy.EnergyContainer;
 import org.bukkit.event.Cancellable;

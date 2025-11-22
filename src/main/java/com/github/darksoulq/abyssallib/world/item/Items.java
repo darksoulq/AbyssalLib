@@ -8,6 +8,7 @@ import org.bukkit.Material;
 public class Items {
     public static final DeferredRegistry<Item> ITEMS = DeferredRegistry.create(Registries.ITEMS, "abyssallib");
 
-    public static final Holder<Item> INVISIBLE_ITEM = ITEMS.register("invisible",
-            (id) -> new Item(id, Material.STICK));
+    public static final Holder<Item> INVISIBLE_ITEM = ITEMS.register("invisible", (id) -> new Item(id, Material.STICK));
+    public static final Holder<Item> BACKWARD = ITEMS.register("backward", (id) -> new Item(id, Material.STICK));
+    public static final Holder<Item> FORWARD = ITEMS.register("forward", (id) -> new Item(id, Material.STICK));
 }

@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Represents a resource identifier in the format {@code namespace:path} or {@code key:namespace:path}.
  */
@@ -176,5 +178,19 @@ public class Identifier {
         if (input == null) return false;
         String[] parts = input.split(":", 3);
         return parts.length == 3 && isValid(parts[0]) && isValid(parts[1]) && isValid(parts[2]);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Identifier other)) return false;
+        return Objects.equals(this.key, other.key)
+                && this.namespace.equals(other.namespace)
+                && this.path.equals(other.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, namespace, path);
     }
 }

@@ -27,6 +27,10 @@ public class Namespace {
 
     /** All assets registered under this namespace. */
     private final List<Asset> assets = new ArrayList<>();
+    /**
+     * The icon to display in menus for this namespace. (can be null)
+     */
+    private Texture icon = null;
 
     /**
      * Creates a new namespace under the given resource pack.
@@ -363,6 +367,21 @@ public class Namespace {
     }
 
     /**
+     * Sets the icon for this Namespace to show in menus.
+     *
+     * @param data The Image data.
+     */
+    public void icon(byte[] data) {
+        icon = texture("item/icon", data);
+    }
+    /**
+     * Autoloads the icon for this Namespace to show in menus from {@code resourcepack/<ns>/textures/item/icon.png}
+     */
+    public void icon() {
+        icon = texture("item/icon");
+    }
+
+    /**
      * Emits all registered assets in this namespace into the output file map.
      *
      * @param files Output file map to write to
@@ -396,5 +415,12 @@ public class Namespace {
     /** @return The parent resource pack */
     public @NotNull ResourcePack getPack() {
         return pack;
+    }
+
+    /**
+     * @return The icon of this Namespace
+     */
+    public Texture getIcon() {
+        return icon;
     }
 }
