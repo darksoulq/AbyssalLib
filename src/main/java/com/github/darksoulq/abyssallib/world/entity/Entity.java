@@ -264,22 +264,25 @@ public class Entity<T extends LivingEntity> implements Cloneable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Entity<T> clone() throws CloneNotSupportedException {
-        Entity<T> copy = (Entity<T>) super.clone();
+    public Entity<T> clone() {
+        try {
+            Entity<T> copy = (Entity<T>) super.clone();
 
-        copy.id = id;
-        copy.baseClass = baseClass;
-        copy.category = category;
-        this.pathfinderGoals.forEach(copy::addGoal);
-        this.targetGoals.forEach(copy::addTargetGoal);
-        this.attributes.forEach(copy::setAttribute);
-        copy.spawnConditions.addAll(this.spawnConditions);
+            copy.id = id;
+            copy.baseClass = baseClass;
+            copy.category = category;
+            this.pathfinderGoals.forEach(copy::addGoal);
+            this.targetGoals.forEach(copy::addTargetGoal);
+            this.attributes.forEach(copy::setAttribute);
+            copy.spawnConditions.addAll(this.spawnConditions);
 
-        this.modifiers.forEach((attr, list) ->
-                list.forEach(mod -> copy.addAttributeModifier(attr, mod))
-        );
-
-        return copy;
+            this.modifiers.forEach((attr, list) ->
+                    list.forEach(mod -> copy.addAttributeModifier(attr, mod))
+            );
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public record SpawnEntry(Identifier id, float weight, int minGroup, int maxGroup) {}

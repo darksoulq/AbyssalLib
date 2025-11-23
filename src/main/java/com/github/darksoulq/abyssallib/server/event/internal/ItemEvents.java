@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.EntitySpawner;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.event.player.PlayerArmSwingEvent;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
@@ -14,10 +15,7 @@ import io.papermc.paper.registry.PaperRegistries;
 import io.papermc.paper.registry.PaperRegistryAccess;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
 import net.minecraft.core.registries.Registries;
-import org.bukkit.Bukkit;
-import org.bukkit.Keyed;
-import org.bukkit.Material;
-import org.bukkit.Registry;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
@@ -134,6 +132,14 @@ public class ItemEvents {
                 ActionResult result = item.onUseOn(ctx);
                 if (result == ActionResult.CANCEL) {
                     event.setCancelled(true);
+                }
+                if (item.hasData(EntitySpawner.class)) {
+                    EntitySpawner spawner = (EntitySpawner) item.getData(EntitySpawner.class);
+                    com.github.darksoulq.abyssallib.world.entity.Entity<?> entity =
+                            com.github.darksoulq.abyssallib.server.registry.Registries.ENTITIES.get(spawner.getValue().toString());
+                    if (entity == null) return;
+                    Location loc = block.getLocation().clone().add(0, 1, 0);
+                    entity.clone().spawn(loc);
                 }
             }
         }

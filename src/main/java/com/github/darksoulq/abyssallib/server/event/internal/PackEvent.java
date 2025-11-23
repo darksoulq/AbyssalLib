@@ -17,9 +17,9 @@ public class PackEvent {
         List<ResourcePackInfo> rps = new ArrayList<>();
         for (String modID : AbyssalLib.PACK_SERVER.registeredModIDs()) {
             rps.add(ResourcePackInfo.resourcePackInfo()
-                    .id(ResourcePack.uuidMap.get(modID))
+                    .id(ResourcePack.UUID_MAP.get(modID))
                     .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(modID)))
-                    .hash(ResourcePack.hashMap.get(modID))
+                    .hash(ResourcePack.HASH_MAP.get(modID))
                     .build()
             );
         }

@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.server.resource;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
@@ -15,9 +14,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemModel;
-import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemName;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
@@ -36,6 +33,10 @@ import java.util.zip.ZipOutputStream;
  * Output is written to a ZIP at {@code pluginFolder/pack/output.zip}.
  */
 public class ResourcePack {
+    /**
+     * A Resourcepack cache simply for use inside Glyph Book (TextureGlyphs)
+     */
+    public static final Map<String, ResourcePack> CACHED = new HashMap<>();
 
     /** Plugin that owns this pack. */
     private final Plugin plugin;
@@ -59,10 +60,10 @@ public class ResourcePack {
     private final Map<String, Namespace> namespaces = new HashMap<>();
 
     /** Tracks UUIDs for registered packs (used by the sending server). */
-    public static final Map<String, UUID> uuidMap = new HashMap<>();
+    public static final Map<String, UUID> UUID_MAP = new HashMap<>();
 
     /** Tracks SHA1 hashes of compiled packs. */
-    public static final Map<String, String> hashMap = new HashMap<>();
+    public static final Map<String, String> HASH_MAP = new HashMap<>();
 
     /**
      * Creates a new resource pack instance.
@@ -75,7 +76,7 @@ public class ResourcePack {
         this.pluginId = pluginId;
         this.outputFile = plugin.getDataFolder().toPath().resolve("pack").resolve("resourcepack.zip");
 
-        uuidMap.put(pluginId, UUID.randomUUID());
+        UUID_MAP.put(pluginId, UUID.randomUUID());
     }
 
     /**
@@ -138,8 +139,9 @@ public class ResourcePack {
      * @param override whether to generate zip if it has been generated before
      */
     public void compile(boolean override) {
+        CACHED.put(pluginId, this);
         if (!override && outputFile.toFile().exists()) {
-            hashMap.put(pluginId, FileUtils.sha1(outputFile));
+            HASH_MAP.put(pluginId, FileUtils.sha1(outputFile));
             for (Namespace ns : namespaces.values()) {
                 Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
                 if (ns.getIcon() == null) {
@@ -185,7 +187,7 @@ public class ResourcePack {
                 }
             }
 
-            hashMap.put(pluginId, FileUtils.sha1(outputFile));
+            HASH_MAP.put(pluginId, FileUtils.sha1(outputFile));
             EventBus.post(new ResourcePackGenerateEvent(pluginId, outputFile.toFile()));
 
         } catch (IOException e) {

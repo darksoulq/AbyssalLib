@@ -205,7 +205,7 @@ public class EntityManager {
                 return null;
         }
     }
-    private static void spawnCustomEntity(World world, Location loc, SpawnCategory category) throws CloneNotSupportedException {
+    private static void spawnCustomEntity(World world, Location loc, SpawnCategory category) {
         Entity.EntityEntry entry = Entity.getWeighedSpawnEntry(loc.getBlock().getBiome(), category);
         if (entry == null) {
             return;

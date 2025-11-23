@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.destroystokyo.paper.event.block.BlockDestroyEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
@@ -15,13 +16,13 @@ import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
+import com.github.darksoulq.abyssallib.world.util.BlockPersistentData;
 import io.papermc.paper.event.entity.EntityMoveEvent;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import net.minecraft.world.level.block.Block;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -344,4 +345,26 @@ public class BlockEvents {
         }
     }
 
+    // Vanilla Blocks
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onBlockBreakPDC(BlockBreakEvent event) {
+        if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
+    }
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onBlockFadePDC(BlockFadeEvent event) {
+        if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
+    }
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onBlockExplodePDC(BlockExplodeEvent event) {
+        if (!event.isCancelled()) {
+            BlockPersistentData.remove(event.getExplodedBlockState().getBlock());
+            if (event.getExplosionResult() == ExplosionResult.DESTROY || event.getExplosionResult() == ExplosionResult.DESTROY_WITH_DECAY) {
+                event.blockList().forEach(BlockPersistentData::remove);
+            }
+        }
+    }
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onBlockBurnPDC(BlockBurnEvent event) {
+        if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
+    }
 }
