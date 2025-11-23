@@ -34,6 +34,7 @@
         <toc-element toc-title="Blocks"/>
         <toc-element toc-title="Multiblocks"/>
         <toc-element toc-title="Entities"/>
+        <toc-element topic="Statistics.md"/>
         <toc-element topic="dev.Configs.md"/>
         <toc-element topic="Recipes.md"/>
         <toc-element topic="Events.md"/>
