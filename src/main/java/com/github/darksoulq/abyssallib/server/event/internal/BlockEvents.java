@@ -214,7 +214,7 @@ public class BlockEvents {
         int oldCurrent = event.getOldCurrent();
         int newCurrent = event.getNewCurrent();
         int finalCurrent = block.onRedstone(oldCurrent, newCurrent);
-        event.setNewCurrent(newCurrent);
+        event.setNewCurrent(finalCurrent);
     }
 
     @SubscribeEvent

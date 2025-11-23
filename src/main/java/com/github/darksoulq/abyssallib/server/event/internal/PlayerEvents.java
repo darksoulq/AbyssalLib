@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
@@ -11,14 +13,30 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.HashMap;
 
 public class PlayerEvents {
+    @SubscribeEvent
+    public void onInteract(PlayerInteractEvent event) {
+        CustomBlock block = CustomBlock.from(event.getClickedBlock());
+        if (block == null) return;
+        BlockInteractionEvent be = EventBus.post(new BlockInteractionEvent(
+                event.getPlayer(),
+                block,
+                event.getBlockFace(),
+                event.getInteractionPoint(),
+                event.getAction(),
+                event.getItem()
+        ));
+        if (be.isCancelled()) event.setCancelled(true);
+    }
 
     @SubscribeEvent
     public void onJoin(PlayerJoinEvent event) {
