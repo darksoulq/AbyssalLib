@@ -62,6 +62,7 @@ public class ItemMenu {
         List<GuiElement> elements = new ArrayList<>();
         for (String str : Registries.ITEMS.getAll().keySet()) {
             if (!str.startsWith(namespace)) continue;
+            if (str.endsWith("plugin_icon")) continue;
             elements.add(GuiButton.of(Registries.ITEMS.get(str).getStack().asOne(), (view, click) -> {
                 if (!player.hasPermission("abyssallib.admin.give")) return;
                 player.give(Registries.ITEMS.get(str).getStack().asOne());

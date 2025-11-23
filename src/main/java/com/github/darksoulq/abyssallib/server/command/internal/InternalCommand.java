@@ -192,6 +192,7 @@ public class InternalCommand {
     public static CompletableFuture<Suggestions> giveSuggests(final CommandContext<CommandSourceStack> ctx,
                                                               final SuggestionsBuilder builder) {
         for (Item item: Registries.ITEMS.getAll().values()) {
+            if (item.getId().getPath().equals("plugin_icon")) continue;
             builder.suggest(item.getId().toString());
         }
         return builder.buildFuture();
