@@ -3,11 +3,11 @@ package com.github.darksoulq.abyssallib.common.energy.impl;
 import com.github.darksoulq.abyssallib.common.energy.Action;
 import com.github.darksoulq.abyssallib.common.energy.EnergyContainer;
 import com.github.darksoulq.abyssallib.common.energy.Resizable;
-import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyChangeEvent;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordCodecBuilder;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
+import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyChangeEvent;
 
 /**
  * A simple implementation of {@link EnergyContainer} with mutable energy and capacity.

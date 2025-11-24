@@ -14,7 +14,6 @@ import com.github.darksoulq.abyssallib.world.dialog.Dialogs;
 import com.github.darksoulq.abyssallib.world.dialog.Notice;
 import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
-import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -31,7 +30,6 @@ import io.papermc.paper.command.brigadier.argument.resolvers.FinePositionResolve
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import io.papermc.paper.dialog.Dialog;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;

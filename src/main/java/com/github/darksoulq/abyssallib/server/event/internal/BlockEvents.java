@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
-import com.destroystokyo.paper.event.block.BlockDestroyEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
@@ -18,7 +17,6 @@ import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import com.github.darksoulq.abyssallib.world.util.BlockPersistentData;
 import io.papermc.paper.event.entity.EntityMoveEvent;
-import net.minecraft.world.level.block.Block;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;

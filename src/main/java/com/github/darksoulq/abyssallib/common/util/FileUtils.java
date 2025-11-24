@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.common.util;
 
-import com.google.gson.Gson;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,14 +1,11 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.block.AbyssalLibProvider;
 import com.github.darksoulq.abyssallib.server.bridge.block.BridgeBlock;
 import com.github.darksoulq.abyssallib.server.bridge.block.MinecraftProvider;
 import com.github.darksoulq.abyssallib.server.bridge.block.NexoBlockProvider;
-import org.bukkit.inventory.ItemStack;
 
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 

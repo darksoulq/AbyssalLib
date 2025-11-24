@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.common.config.legacy;
 
-import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

@@ -9,7 +9,6 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.tag.TagKey;
 import net.kyori.adventure.key.Key;
-import org.bukkit.block.banner.PatternType;
 import org.bukkit.inventory.ItemStack;
 
 public class ProvidesBannerPatterns extends DataComponent<Key> implements Vanilla {

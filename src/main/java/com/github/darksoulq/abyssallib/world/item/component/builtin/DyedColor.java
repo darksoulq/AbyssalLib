@@ -8,7 +8,6 @@ import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.DyedItemColor;
 import org.bukkit.Color;
-import org.bukkit.DyeColor;
 import org.bukkit.inventory.ItemStack;
 
 public class DyedColor extends DataComponent<Color> implements Vanilla {

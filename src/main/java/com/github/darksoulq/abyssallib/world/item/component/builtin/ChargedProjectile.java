@@ -7,7 +7,6 @@ import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ChargedProjectiles;
-import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;

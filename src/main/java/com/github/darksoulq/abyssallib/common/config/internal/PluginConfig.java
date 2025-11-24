@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.common.config.internal;
 
 import com.github.darksoulq.abyssallib.common.config.Config;
-import org.bukkit.entity.SpawnCategory;
 
 public class PluginConfig {
     public Config cfg = new Config("abyssallib", "config");

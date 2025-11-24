@@ -7,8 +7,11 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class TagLoader {

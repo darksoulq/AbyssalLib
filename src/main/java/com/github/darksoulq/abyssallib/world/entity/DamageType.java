@@ -7,7 +7,6 @@ import io.papermc.paper.registry.data.DamageTypeRegistryEntry;
 import io.papermc.paper.registry.event.RegistryComposeEvent;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
 import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
 import org.bukkit.damage.DamageEffect;
 import org.bukkit.damage.DamageScaling;
 import org.bukkit.damage.DamageSource;
