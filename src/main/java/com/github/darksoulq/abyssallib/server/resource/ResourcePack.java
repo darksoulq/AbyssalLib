@@ -145,7 +145,7 @@ public class ResourcePack {
             for (Namespace ns : namespaces.values()) {
                 Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
                 if (ns.getIcon() == null) {
-                    icon.setData(new ItemModel(NamespacedKey.fromString("grass")));
+                    icon.setData(new ItemModel(NamespacedKey.fromString("apple")));
                 }
                 Registries.ITEMS.register(icon.getId().toString(), icon);
             }
@@ -157,7 +157,7 @@ public class ResourcePack {
             Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
             Texture nsIcon = ns.getIcon();
             if (nsIcon == null) {
-                icon.setData(new ItemModel(NamespacedKey.fromString("grass")));
+                icon.setData(new ItemModel(NamespacedKey.fromString("apple")));
             } else {
                 nsIcon.emit(files);
                 Model model = ns.model("plugin_icon", false);

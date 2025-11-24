@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.recipe;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 
 public abstract class CustomRecipe<T extends CustomRecipe<T>> {
@@ -13,5 +12,4 @@ public abstract class CustomRecipe<T extends CustomRecipe<T>> {
     public Identifier getId() {
         return id;
     }
-    public abstract Codec<T> getCodec();
 }
