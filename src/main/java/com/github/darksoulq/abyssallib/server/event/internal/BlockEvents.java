@@ -72,7 +72,7 @@ public class BlockEvents {
             return;
         }
         Identifier blockId = (Identifier) heldItem.getData(BlockItem.class).value;
-        CustomBlock block = Registries.BLOCKS.get(blockId.toString());
+        CustomBlock block = Registries.BLOCKS.get(blockId.toString()).clone();
         if (block == null) return;
         block.place(event.getBlock(), false);
         BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(
@@ -83,7 +83,7 @@ public class BlockEvents {
         ActionResult result = block.onPlaced(event.getPlayer(), loc,
                 handItem);
         if (!result.equals(ActionResult.CANCEL) && !placeEvent.isCancelled()) return;
-        BlockManager.remove(loc);
+        BlockManager.remove(loc, block);
         loc.getBlock().setType(Material.AIR);
     }
 
@@ -119,7 +119,7 @@ public class BlockEvents {
             event.setExpToDrop(block.getExpToDrop(player, fortuneLevel, silkTouch));
         }
 
-        BlockManager.remove(loc);
+        BlockManager.remove(loc, block);
     }
 
     @SubscribeEvent
@@ -167,7 +167,7 @@ public class BlockEvents {
                 }
                 dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR),
                         breakEvent, false, 0);
-                BlockManager.remove(block.getLocation());
+                BlockManager.remove(block.getLocation(), block);
             }
         }
     }
@@ -191,7 +191,7 @@ public class BlockEvents {
                 }
                 dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR),
                         breakEvent, false, 0);
-                BlockManager.remove(block.getLocation());
+                BlockManager.remove(block.getLocation(), block);
             }
         }
     }
