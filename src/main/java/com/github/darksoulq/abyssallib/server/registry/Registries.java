@@ -14,12 +14,14 @@ import io.papermc.paper.potion.PotionMix;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.*;
 
+import java.util.function.Supplier;
+
 public class Registries {
     public static final Registry<Class<? extends DataComponent<?>>> DATA_COMPONENTS = new Registry<>();
     public static final Registry<Statistic> STATISTICS = new Registry<>();
 
     public static final Registry<Item> ITEMS = new Registry<>();
-    public static final Registry<CustomBlock> BLOCKS = new Registry<>();
+    public static final Registry<Supplier<CustomBlock>> BLOCKS = new Registry<>();
     public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>();
     public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>();
 

@@ -22,6 +22,6 @@ public class AbyssalLibProvider extends Provider<BridgeBlock<?>> {
 
     @Override
     public BridgeBlock<?> get(Identifier id) {
-        return new BridgeBlock<>(id, getPrefix(), Registries.BLOCKS.get(id.toString()));
+        return new BridgeBlock<>(id, getPrefix(), Registries.BLOCKS.get(id.toString()).get());
     }
 }
