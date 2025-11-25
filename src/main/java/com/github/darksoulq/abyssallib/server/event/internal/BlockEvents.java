@@ -72,7 +72,7 @@ public class BlockEvents {
             return;
         }
         Identifier blockId = (Identifier) heldItem.getData(BlockItem.class).value;
-        CustomBlock block = Registries.BLOCKS.get(blockId.toString()).get();
+        CustomBlock block = Registries.BLOCKS.get(blockId.toString()).clone();
         if (block == null) return;
         block.place(event.getBlock(), false);
         BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(

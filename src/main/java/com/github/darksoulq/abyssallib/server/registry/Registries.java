@@ -21,7 +21,7 @@ public class Registries {
     public static final Registry<Statistic> STATISTICS = new Registry<>();
 
     public static final Registry<Item> ITEMS = new Registry<>();
-    public static final Registry<Supplier<CustomBlock>> BLOCKS = new Registry<>();
+    public static final Registry<CustomBlock> BLOCKS = new Registry<>();
     public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>();
     public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>();
 

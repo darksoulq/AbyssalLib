@@ -164,7 +164,7 @@ public class Item implements Cloneable {
     public static CustomBlock asBlock(Item item) {
         if (!item.hasData(Identifier.of("abyssallib:block_item"))) return null;
         Identifier blockId = (Identifier) item.getData(Identifier.of("abyssallib:block_item")).value;
-        return Registries.BLOCKS.get(blockId.toString()).get();
+        return Registries.BLOCKS.get(blockId.toString()).clone();
     }
 
     @Override

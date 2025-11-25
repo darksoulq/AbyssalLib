@@ -69,7 +69,7 @@ public class BlockManager {
 
             for (BlockRow row : rows) {
                 Location loc = new Location(Bukkit.getWorld(row.world), row.x, row.y, row.z);
-                CustomBlock block = Registries.BLOCKS.get(row.blockId).get();
+                CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
                 if (block == null) {
                     AbyssalLib.getInstance().getLogger().warning("Unknown block id in DB: " + row.blockId);
                     continue;
