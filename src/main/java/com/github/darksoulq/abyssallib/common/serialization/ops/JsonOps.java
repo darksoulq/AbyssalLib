@@ -85,25 +85,25 @@ public class JsonOps extends DynamicOps<JsonNode> {
     /** {@inheritDoc} Extracts an int value from an {@link IntNode}, if present. */
     @Override
     public Optional<Integer> getIntValue(JsonNode input) {
-        return input.isInt() ? Optional.of(input.asInt()) : Optional.empty();
+        return input.isNumber() ? Optional.of(input.asInt()) : Optional.empty();
     }
 
     /** {@inheritDoc} Extracts a long value from a {@link LongNode}, if present. */
     @Override
     public Optional<Long> getLongValue(JsonNode input) {
-        return input.isLong() ? Optional.of(input.asLong()) : Optional.empty();
+        return input.isNumber() ? Optional.of(input.asLong()) : Optional.empty();
     }
 
     /** {@inheritDoc} Extracts a float value from a {@link FloatNode}, if present. */
     @Override
     public Optional<Float> getFloatValue(JsonNode input) {
-        return input.isFloat() ? Optional.of(input.floatValue()) : Optional.empty();
+        return input.isNumber() ? Optional.of(input.floatValue()) : Optional.empty();
     }
 
     /** {@inheritDoc} Extracts a double value from a {@link DoubleNode}, if present. */
     @Override
     public Optional<Double> getDoubleValue(JsonNode input) {
-        return input.isDouble() ? Optional.of(input.doubleValue()) : Optional.empty();
+        return input.isNumber() ? Optional.of(input.doubleValue()) : Optional.empty();
     }
 
     /** {@inheritDoc} Extracts a boolean value from a {@link BooleanNode}, if present. */

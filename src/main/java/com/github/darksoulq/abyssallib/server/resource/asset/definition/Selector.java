@@ -70,7 +70,7 @@ public interface Selector {
 
         @Override
         public Map<String, Object> toJson() {
-            Map<String, Object> json = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", id());
             json.put("property", property.id());
             switch (property) {
@@ -146,7 +146,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst() : when);
                     json.put("model", model.toJson());
                     return json;
@@ -202,7 +202,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", cases.size() == 1 ? cases.getFirst() : cases);
                     json.put("model", model.toJson());
                     return json;
@@ -240,7 +240,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst() : when);
                     json.put("model", model.toJson());
                     return json;
@@ -282,7 +282,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst() : when);
                     json.put("model", model.toJson());
                     return json;
@@ -321,7 +321,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst() : when);
                     json.put("model", model.toJson());
                     return json;
@@ -358,7 +358,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase() : when.stream().map(w -> w.name().toLowerCase()));
                     json.put("model", model.toJson());
                     return json;
@@ -454,7 +454,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst() : when);
                     json.put("model", model.toJson());
                     return json;
@@ -492,7 +492,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase() : when.stream().map(w -> w.name().toLowerCase()));
                     json.put("model", model.toJson());
                     return json;
@@ -533,7 +533,7 @@ public interface Selector {
 
                 @Override
                 public Map<String, Object> toJson() {
-                    Map<String, Object> json = new HashMap<>();
+                    Map<String, Object> json = new LinkedHashMap<>();
                     json.put("when", when.size() == 1 ? when.getFirst() : when);
                     json.put("model", model.toJson());
                     return json;

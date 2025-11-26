@@ -10,6 +10,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.block.Action;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An event that is triggered when a player interacts with a custom block.
@@ -47,7 +48,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
     /**
      * The item used by the player during the interaction.
      */
-    private final ItemStack item;
+    private final @Nullable ItemStack item;
 
     /**
      * The player interacting with the block.
@@ -75,7 +76,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
             @NotNull BlockFace face,
             @NotNull Location interaction,
             @NotNull Action action,
-            @NotNull ItemStack item
+            @Nullable ItemStack item
     ) {
         this.player = player;
         this.block = block;
@@ -135,7 +136,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
      *
      * @return The item used by the player.
      */
-    public @NotNull ItemStack getItem() {
+    public @Nullable ItemStack getItem() {
         return item;
     }
 

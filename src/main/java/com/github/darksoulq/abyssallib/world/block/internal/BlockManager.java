@@ -52,7 +52,7 @@ public class BlockManager {
                     .column("y", "INTEGER")
                     .column("z", "INTEGER")
                     .column("block_id", "TEXT")
-                    .column("data_json", "TEXT")
+                    .column("data", "TEXT")
                     .execute();
 
             TextUtil.buildGson();
@@ -63,7 +63,7 @@ public class BlockManager {
                 int y = rs.getInt("y");
                 int z = rs.getInt("z");
                 String blockId = rs.getString("block_id");
-                String dataJson = rs.getString("data_json");
+                String dataJson = rs.getString("data");
                 return new BlockRow(world, x, y, z, blockId, dataJson);
             });
 
@@ -90,6 +90,8 @@ public class BlockManager {
                     INACTIVE_BLOCKS.add(block);
                 }
             }
+
+            AbyssalLib.LOGGER.info("Loaded " + BLOCKS.size() + " Blocks.");
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + e.getMessage());
             e.printStackTrace();
@@ -169,7 +171,7 @@ public class BlockManager {
                     .value("y", loc.getBlockY())
                     .value("z", loc.getBlockZ())
                     .value("block_id", block.getId().toString())
-                    .value("data_json", json)
+                    .value("data", json)
                     .execute();
 
         } catch (Exception e) {
@@ -221,38 +223,15 @@ public class BlockManager {
 
     /**
      * Represents a row from the blocks database table.
+     *
+     * @param world    The world name where the block is located.
+     * @param x        The X coordinate of the block location.
+     * @param y        The Y coordinate of the block location.
+     * @param z        The Z coordinate of the block location.
+     * @param blockId  The registered block ID.
+     * @param dataJson The serialized JSON data of the block entity.
      */
-    private static class BlockRow {
-        /**
-         * The world name where the block is located.
-         */
-        final String world;
-
-        /**
-         * The X coordinate of the block location.
-         */
-        final int x;
-
-        /**
-         * The Y coordinate of the block location.
-         */
-        final int y;
-
-        /**
-         * The Z coordinate of the block location.
-         */
-        final int z;
-
-        /**
-         * The registered block ID.
-         */
-        final String blockId;
-
-        /**
-         * The serialized JSON data of the block entity.
-         */
-        final String dataJson;
-
+        private record BlockRow(String world, int x, int y, int z, String blockId, String dataJson) {
         /**
          * Constructs a new BlockRow with the specified data.
          *
@@ -263,13 +242,6 @@ public class BlockManager {
          * @param blockId  The block ID.
          * @param dataJson The serialized JSON entity data.
          */
-        public BlockRow(String world, int x, int y, int z, String blockId, String dataJson) {
-            this.world = world;
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.blockId = blockId;
-            this.dataJson = dataJson;
+        private BlockRow {}
         }
-    }
 }
