@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.resource.asset.definition;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 
 import javax.annotation.Nullable;
+import java.time.ZoneId;
 import java.util.*;
 
 public interface Selector {
@@ -38,6 +39,7 @@ public interface Selector {
             return json;
         }
     }
+
     class BundleSelectedItem implements Selector {
         @Override
         public String id() {
@@ -47,6 +49,496 @@ public interface Selector {
         @Override
         public Map<String, Object> toJson() {
             return Map.of("type", id());
+        }
+    }
+    class Select implements Selector {
+        private final Property property;
+        private Selector fallback = null;
+
+        public Select(Property property) {
+            this.property = property;
+        }
+        public Select(Property property, Selector fallback) {
+            this.property = property;
+            this.fallback = fallback;
+        }
+
+        @Override
+        public String id() {
+            return "minecraft:select";
+        }
+
+        @Override
+        public Map<String, Object> toJson() {
+            Map<String, Object> json = new HashMap<>();
+            json.put("type", id());
+            json.put("property", property.id());
+            switch (property) {
+                case BlockState blockState -> {
+                    json.put("block_state_property", blockState.blockStateProperty);
+                    List<Object> cases = new ArrayList<>();
+                    blockState.cases.forEach(c -> cases.add(c.toJson()));
+                    json.put("cases", cases);
+                }
+                case CustomModelData customModelData -> {
+                    if (customModelData.index != 0) json.put("index", customModelData.index);
+                    List<Object> cases = new ArrayList<>();
+                    customModelData.cases.forEach(c -> cases.add(c.toJson()));
+                    json.put("cases", cases);
+                }
+                case LocalTime localTime -> {
+                    if (localTime.pattern != null) json.put("pattern", localTime.pattern);
+                    if (localTime.locale != null) json.put("locale", localTime.locale);
+                    if (localTime.zoneId != null) json.put("time_zone", localTime.zoneId);
+                    List<Object> cases = new ArrayList<>();
+                    localTime.cases.forEach(c -> cases.add(c.toJson()));
+                    json.put("cases", cases);
+                }
+                case Property obj -> {
+                    List<Object> cases = new ArrayList<>();
+                    obj.getCases().forEach(c -> cases.add(c.toJson()));
+                    json.put("cases", cases);
+                }
+            }
+            if (fallback != null) json.put("fallback", fallback.toJson());
+
+            return json;
+        }
+
+        public interface Property {
+            String id();
+            List<Case> getCases();
+        }
+        public interface Case {
+            Map<String, Object> toJson();
+        }
+
+        public static class BlockState implements Property {
+            private final List<Case> cases = new ArrayList<>();
+            private final String blockStateProperty;
+
+            public BlockState(List<Entry> cases, String blockStateProperty) {
+                this.cases.addAll(cases);
+                this.blockStateProperty = blockStateProperty;
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:block_state";
+            }
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<String> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(String when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<String> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst() : when);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+        }
+        public static class CustomModelData implements Property {
+            private final int index;
+            private final List<Case> cases = new ArrayList<>();
+
+            public CustomModelData(List<Case> cases) {
+                this.index = 0;
+                this.cases.addAll(cases);
+            }
+            public CustomModelData(int index, List<Case> cases) {
+                this.index = index;
+                this.cases.addAll(cases);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:custom_model_data";
+            }
+
+            public int getIndex() {
+                return index;
+            }
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<String> cases = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(String cases, Selector model) {
+                    this.cases.add(cases);
+                    this.model = model;
+                }
+
+                public Entry(List<String> cases, Selector model) {
+                    this.cases.addAll(cases);
+                    this.model = model;
+                }
+
+                public List<String> getCases() {
+                    return cases;
+                }
+                public Selector getModel() {
+                    return model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", cases.size() == 1 ? cases.getFirst() : cases);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+        }
+        public static class ChargeType implements Property {
+            private final List<Case> cases = new ArrayList<>();
+
+            public ChargeType(List<Entry> when) {
+                this.cases.addAll(when);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:charge_type";
+            }
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<Type> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(Type type, Selector model) {
+                    this.when.add(type);
+                    this.model = model;
+                }
+                public Entry(List<Type> types, Selector model) {
+                    this.when.addAll(types);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst() : when);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+            public enum Type {
+                NONE, ARROW, ROCKET
+            }
+        }
+        public static class ContextDimension implements Property {
+            private final List<Case> cases = new ArrayList<>();
+
+            public ContextDimension(List<Entry> cases) {
+                this.cases.addAll(cases);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:context_dimension";
+            }
+
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<String> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(String when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<String> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst() : when);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+        }
+        public static class ContextEntityType implements Property {
+            private final List<Case> cases = new ArrayList<>();
+
+            public ContextEntityType(List<Entry> cases) {
+                this.cases.addAll(cases);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:context_entity_type";
+            }
+
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<String> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(String when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<String> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst() : when);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+        }
+        public static class DisplayContext implements Property {
+            private final List<Case> cases = new ArrayList<>();
+
+            public DisplayContext(List<Entry> cases) {
+                this.cases.addAll(cases);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:display_context";
+            }
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<Display> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(Display when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<Display> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase() : when.stream().map(w -> w.name().toLowerCase()));
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+            public enum Display {
+                FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND,
+                THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND,
+                GUI, HEAD, GROUND, FIXED, ON_SHELF, NONE
+            }
+        }
+        public static class LocalTime implements Property {
+            private final List<Case> cases = new ArrayList<>();
+            private String pattern = null;
+            private String locale = null;
+            private String zoneId = null;
+
+            public LocalTime(List<Entry> cases) {
+                this.cases.addAll(cases);
+            }
+
+            public LocalTime(List<Entry> cases, String timeFormat) {
+                this.cases.addAll(cases);
+                this.pattern = timeFormat;
+            }
+
+            public LocalTime(List<Entry> cases, Locale locale) {
+                this.cases.addAll(cases);
+                this.locale = locale.toLanguageTag();
+            }
+
+            public LocalTime(List<Entry> cases, ZoneId zoneId) {
+                this.cases.addAll(cases);
+                this.zoneId = zoneId.getId();
+            }
+
+            public LocalTime(List<Entry> cases, String timeFormat, Locale locale) {
+                this.cases.addAll(cases);
+                this.pattern = timeFormat;
+                this.locale = locale.toLanguageTag();
+            }
+
+            public LocalTime(List<Entry> cases, String timeFormat, ZoneId zoneId) {
+                this.cases.addAll(cases);
+                this.pattern = timeFormat;
+                this.zoneId = zoneId.getId();
+            }
+
+            public LocalTime(List<Entry> cases, Locale locale, ZoneId zoneId) {
+                this.cases.addAll(cases);
+                this.locale = locale.toLanguageTag();
+                this.zoneId = zoneId.getId();
+            }
+
+            public LocalTime(List<Entry> cases, String timeFormat, Locale locale, ZoneId zoneId) {
+                this.cases.addAll(cases);
+                this.pattern = timeFormat;
+                this.locale = locale.toLanguageTag();
+                this.zoneId = zoneId.getId();
+            }
+
+            public String getPattern() {
+                return pattern;
+            }
+            public String getLocale() {
+                return locale;
+            }
+            public String getZoneId() {
+                return zoneId;
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:local_time";
+            }
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<String> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(String when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<String> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst() : when);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+        }
+        public static class MainHand implements Property {
+            private final List<Case> cases = new ArrayList<>();
+
+            public MainHand(List<Entry> cases) {
+                this.cases.addAll(cases);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:main_hand";
+            }
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<Hand> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(Hand when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<Hand> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase() : when.stream().map(w -> w.name().toLowerCase()));
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
+            public enum Hand {
+                LEFT, RIGHT
+            }
+        }
+        public static class TrimMaterial implements Property {
+            private final List<Case> cases = new ArrayList<>();
+
+            public TrimMaterial(List<Entry> cases) {
+                this.cases.addAll(cases);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:trim_material";
+            }
+            @Override
+            public List<Case> getCases() {
+                return cases;
+            }
+
+            public static class Entry implements Case {
+                private final List<String> when = new ArrayList<>();
+                private final Selector model;
+
+                public Entry(String when, Selector model) {
+                    this.when.add(when);
+                    this.model = model;
+                }
+                public Entry(List<String> when, Selector model) {
+                    this.when.addAll(when);
+                    this.model = model;
+                }
+
+                @Override
+                public Map<String, Object> toJson() {
+                    Map<String, Object> json = new HashMap<>();
+                    json.put("when", when.size() == 1 ? when.getFirst() : when);
+                    json.put("model", model.toJson());
+                    return json;
+                }
+            }
         }
     }
     class Condition implements Selector {
@@ -70,13 +562,15 @@ public interface Selector {
             Map<String, Object> json = new HashMap<>();
             json.put("type", id());
             json.put("property", property.id());
-            if (property instanceof CustomModelData) {
-                json.put("index", ((CustomModelData) property).index);
-            } else if (property instanceof KeybindDown) {
-                json.put("keybind", ((KeybindDown) property).keybind.type);
-            } else if (property instanceof HasComponent) {
-                json.put("component", ((HasComponent) property).component.id());
-                json.put("ignore_default", ((HasComponent) property).ignoreDefault);
+            switch (property) {
+                case CustomModelData customModelData -> json.put("index", customModelData.index);
+                case KeybindDown keybindDown -> json.put("keybind", keybindDown.keybind.type);
+                case HasComponent hasComponent -> {
+                    json.put("component", hasComponent.component.id());
+                    json.put("ignore_default", hasComponent.ignoreDefault);
+                }
+                default -> {
+                }
             }
             json.put("on_true", onTrue.toJson());
             json.put("on_false", onFalse.toJson());
@@ -193,7 +687,10 @@ public interface Selector {
                 USE("key.use");
 
                 public final String type;
-                Keybind(String type) { this.type = type; }
+
+                Keybind(String type) {
+                    this.type = type;
+                }
             }
         }
         public static class Selected implements Property {
@@ -261,17 +758,14 @@ public interface Selector {
         public RangeDispatch(Property property) {
             this.property = property;
         }
-
         public RangeDispatch(Property property, int scale) {
             this.property = property;
             this.scale = scale;
         }
-
         public RangeDispatch entry(int threshold, Selector selector) {
             entries.add(new Entry(threshold, selector));
             return this;
         }
-
         public RangeDispatch fallback(Selector selector) {
             this.fallback = selector;
             return this;
@@ -298,8 +792,7 @@ public interface Selector {
                 }
                 case UseCycle useCycleProperty -> json.put("period", useCycleProperty.period);
                 case UseDuration useDurationProperty -> json.put("remaining", useDurationProperty.remaining);
-                case CustomModelData customModelDataProperty ->
-                        json.put("index", customModelDataProperty.index);
+                case CustomModelData customModelDataProperty -> json.put("index", customModelDataProperty.index);
                 case Damage damageProperty -> json.put("normalize", damageProperty.normalize);
                 case Count countProperty -> json.put("normalize", countProperty.normalize);
                 default -> {
@@ -326,8 +819,7 @@ public interface Selector {
         public record Entry(
                 int threshold,
                 Selector selector
-        ) {
-        }
+        ) {}
 
         public static class BundleFullness implements Property {
             @Override
@@ -350,76 +842,75 @@ public interface Selector {
         public record Count(boolean normalize) implements Property {
 
             @Override
-                    public String id() {
-                        return "minecraft:count";
-                    }
-                }
+            public String id() {
+                return "minecraft:count";
+            }
+        }
         public record Damage(boolean normalize) implements Property {
-
             @Override
-                    public String id() {
-                        return "minecraft:damage";
-                    }
-                }
+            public String id() {
+                return "minecraft:damage";
+            }
+        }
         public record UseDuration(boolean remaining) implements Property {
 
             @Override
-                    public String id() {
-                        return "minecraft:use_duration";
-                    }
-                }
+            public String id() {
+                return "minecraft:use_duration";
+            }
+        }
         public record CustomModelData(int index) implements Property {
 
             @Override
-                    public String id() {
-                        return "minecraft:custom_model_data";
-                    }
-                }
+            public String id() {
+                return "minecraft:custom_model_data";
+            }
+        }
         public record UseCycle(int period) implements Property {
 
             @Override
-                    public String id() {
-                        return "minecraft:use_cycle";
-                    }
-                }
+            public String id() {
+                return "minecraft:use_cycle";
+            }
+        }
         public record Compass(RangeDispatch.Compass.Target target, boolean wobble) implements Property {
 
             @Override
-                    public String id() {
-                        return "minecraft:compass";
-                    }
+            public String id() {
+                return "minecraft:compass";
+            }
 
-                    public enum Target {
-                        SPAWN("spawn"),
-                        LODESTONE("lodestone"),
-                        RECOVERY("recovery");
+            public enum Target {
+                SPAWN("spawn"),
+                LODESTONE("lodestone"),
+                RECOVERY("recovery");
 
-                        final String type;
+                final String type;
 
-                        Target(String type) {
-                            this.type = type;
-                        }
-                    }
+                Target(String type) {
+                    this.type = type;
                 }
+            }
+        }
         public record Time(RangeDispatch.Time.Target target, boolean wobble) implements Property {
 
             @Override
-                    public String id() {
-                        return "minecraft:time";
-                    }
+            public String id() {
+                return "minecraft:time";
+            }
 
-                    public enum Target {
-                        DAY_TIME("daytime"),
-                        MOON_PHASE("moon_phase"),
-                        RANDOM("random");
+            public enum Target {
+                DAY_TIME("daytime"),
+                MOON_PHASE("moon_phase"),
+                RANDOM("random");
 
-                        final String type;
+                final String type;
 
-                        Target(String type) {
-                            this.type = type;
-                        }
-                    }
+                Target(String type) {
+                    this.type = type;
                 }
+            }
+        }
     }
     class Special implements Selector {
         private final com.github.darksoulq.abyssallib.server.resource.asset.Model base;
@@ -446,6 +937,7 @@ public interface Selector {
 
         public interface Type {
             String id();
+
             Map<String, Object> toJson();
         }
 
@@ -469,6 +961,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Bed implements Type {
             private final Texture texture;
 
@@ -489,6 +982,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Conduit implements Type {
             @Override
             public String id() {
@@ -500,6 +994,7 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
+
         public static class Chest implements Type {
             private final Texture texture;
             private final int openness;
@@ -523,6 +1018,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class DecoratedPot implements Type {
             @Override
             public String id() {
@@ -534,6 +1030,7 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
+
         public static class HangingSign implements Type {
             private final WoodType type;
             private final Texture texture;
@@ -557,6 +1054,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Head implements Type {
             private final HeadType kind;
             private final Texture texture;
@@ -587,6 +1085,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Shield implements Type {
             @Override
             public String id() {
@@ -598,6 +1097,7 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
+
         public static class ShulkerBox implements Type {
             private final Texture texture;
             private final int openness;
@@ -624,6 +1124,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class StandingSign implements Type {
             private final WoodType type;
             private final Texture texture;
@@ -647,6 +1148,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Trident implements Type {
             @Override
             public String id() {
