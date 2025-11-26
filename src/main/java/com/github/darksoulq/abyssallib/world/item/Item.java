@@ -13,6 +13,7 @@ import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.*;
 import io.papermc.paper.datacomponent.DataComponentType;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.text.Component;
@@ -48,6 +49,8 @@ public class Item implements Cloneable {
         for (Identifier cId : componentMap.getVanillaIds()) {
             componentMap.removeData(cId);
         }
+        Integer size = stack.getData(DataComponentTypes.MAX_STACK_SIZE);
+        if (size != null) setData(new MaxStackSize(size));
         setData(new ItemName(Component.translatable("item." + id.getNamespace() + "." + id.getPath())));
         setData(new ItemModel(id.asNamespacedKey()));
         setData(new CustomMarker(id));
