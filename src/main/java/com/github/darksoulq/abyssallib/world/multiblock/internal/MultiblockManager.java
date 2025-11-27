@@ -38,6 +38,7 @@ public class MultiblockManager {
                 .column("z", "INTEGER")
                 .column("id", "TEXT")
                 .column("data", "TEXT")
+                .primaryKey("world", "x", "y", "z")
                 .execute();
 
         var rows = DB.executor().table("multiblocks").select(rs ->
@@ -102,10 +103,10 @@ public class MultiblockManager {
 
         try {
             DB.executor().table("multiblocks").delete()
-                    .where("world", origin.getWorld().getName())
-                    .where("x", origin.getBlockX())
-                    .where("y", origin.getBlockY())
-                    .where("z", origin.getBlockZ())
+                    .where("world = ?", origin.getWorld().getName())
+                    .where("x = ?", origin.getBlockX())
+                    .where("y = ?", origin.getBlockY())
+                    .where("z = ?", origin.getBlockZ())
                     .execute();
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().warning("Failed removing multiblock");

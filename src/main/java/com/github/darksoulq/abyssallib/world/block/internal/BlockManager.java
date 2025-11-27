@@ -53,6 +53,7 @@ public class BlockManager {
                     .column("z", "INTEGER")
                     .column("block_id", "TEXT")
                     .column("data", "TEXT")
+                    .primaryKey("world", "x", "y", "z")
                     .execute();
 
             TextUtil.buildGson();
@@ -133,10 +134,10 @@ public class BlockManager {
         ACTIVE_BLOCKS.remove(block);
         try {
             DATABASE.executor().table("blocks").delete()
-                    .where("world", loc.getWorld().getName())
-                    .where("x", loc.getBlockX())
-                    .where("y", loc.getBlockY())
-                    .where("z", loc.getBlockZ())
+                    .where("world = ?", loc.getWorld().getName())
+                    .where("x = ?", loc.getBlockX())
+                    .where("y = ?", loc.getBlockY())
+                    .where("z = ?", loc.getBlockZ())
                     .execute();
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().warning("Failed to remove block: " + e.getMessage());

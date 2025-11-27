@@ -76,14 +76,20 @@ public abstract class BlockEntity {
     public <D> D serialize(DynamicOps<D> ops) throws Exception {
         Map<D, D> map = new LinkedHashMap<>();
 
-        for (Field field : getClass().getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) continue;
-            field.setAccessible(true);
-            Object obj = field.get(this);
-            if (obj instanceof Property<?> prop) {
-                D encoded = prop.encode(ops);
-                map.put(ops.createString(field.getName()), encoded);
+        Class<?> cls = getClass();
+        while (cls != BlockEntity.class && cls != Object.class) {
+            for (Field field : cls.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) continue;
+
+                field.setAccessible(true);
+                Object obj = field.get(this);
+
+                if (obj instanceof Property<?> prop) {
+                    D encoded = prop.encode(ops);
+                    map.put(ops.createString(field.getName()), encoded);
+                }
             }
+            cls = cls.getSuperclass();
         }
 
         return ops.createMap(map);
@@ -94,14 +100,23 @@ public abstract class BlockEntity {
      */
     public <D> void deserialize(DynamicOps<D> ops, D input) throws Exception {
         Map<D, D> map = ops.getMap(input).orElse(Map.of());
-        for (Field field : getClass().getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) continue;
-            field.setAccessible(true);
-            Object obj = field.get(this);
-            if (!(obj instanceof Property<?> prop)) continue;
 
-            D encoded = map.get(ops.createString(field.getName()));
-            if (encoded != null) prop.decode(ops, encoded);
+        Class<?> cls = getClass();
+        while (cls != BlockEntity.class && cls != Object.class) {
+            for (Field field : cls.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) continue;
+
+                field.setAccessible(true);
+                Object obj = field.get(this);
+
+                if (!(obj instanceof Property<?> prop)) continue;
+
+                D encoded = map.get(ops.createString(field.getName()));
+                if (encoded != null) {
+                    prop.decode(ops, encoded);
+                }
+            }
+            cls = cls.getSuperclass();
         }
     }
 }

@@ -35,6 +35,7 @@ public class EntityManager {
                     .ifNotExists()
                     .column("entity_uuid", "TEXT")
                     .column("entity_id", "TEXT")
+                    .primaryKey("entity_uuid")
                     .execute();
 
             List<Entity<? extends LivingEntity>> loaded = database.executor().table("entities").select(rs -> {
@@ -70,7 +71,7 @@ public class EntityManager {
         ENTITIES.remove(uuid);
         try {
             database.executor().table("entities").delete()
-                    .where("entity_uuid", uuid.toString())
+                    .where("entity_uuid = ?", uuid.toString())
                     .update();
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().warning("Failed to remove entity: " + e.getMessage());
