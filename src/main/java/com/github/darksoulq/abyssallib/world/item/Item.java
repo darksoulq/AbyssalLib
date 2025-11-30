@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
+import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -28,6 +29,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -110,7 +112,17 @@ public class Item implements Cloneable {
     public ActionResult onUseOn(UseContext ctx) {
         return  ActionResult.PASS;
     }
-    public void onUse(LivingEntity source, EquipmentSlot hand) {}
+    public void onUse(LivingEntity source, EquipmentSlot hand, ClickType type) {}
+    public void onSlotChange(Player player, @Nullable Integer newSlot) {}
+    public ActionResult onDrop(Player player) {
+        return ActionResult.PASS;
+    }
+    public ActionResult onPickup(Player player) {
+        return ActionResult.PASS;
+    }
+    public ActionResult onSwapHand(Player player, EquipmentSlot current) {
+        return ActionResult.PASS;
+    }
     public ActionResult onAnvilPrepare(AnvilContext ctx) {
         return ActionResult.PASS;
     }

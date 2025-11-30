@@ -38,7 +38,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
     /**
      * The location where the interaction occurred.
      */
-    private final Location interaction;
+    private final @Nullable Location interaction;
 
     /**
      * The type of action performed (e.g., right-click, left-click).
@@ -74,7 +74,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
             @NotNull Player player,
             @NotNull CustomBlock block,
             @NotNull BlockFace face,
-            @NotNull Location interaction,
+            Location interaction,
             @NotNull Action action,
             @Nullable ItemStack item
     ) {
@@ -118,7 +118,7 @@ public class BlockInteractionEvent extends Event implements Cancellable {
      *
      * @return The location of the interaction.
      */
-    public @NotNull Location getInteractionPoint() {
+    public @Nullable Location getInteractionPoint() {
         return interaction;
     }
 

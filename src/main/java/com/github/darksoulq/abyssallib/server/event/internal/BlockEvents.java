@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BlockEvents {
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onChunkLoad(ChunkLoadEvent event) {
         if (event.isNewChunk()) return;
         List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
@@ -48,7 +48,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onChunkUnload(ChunkUnloadEvent event) {
         List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
@@ -61,7 +61,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack handItem = event.getItemInHand();
         Item heldItem = Item.resolve(handItem);
@@ -87,7 +87,7 @@ public class BlockEvents {
         loc.getBlock().setType(Material.AIR);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockBreak(BlockBreakEvent event) {
         CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
@@ -122,7 +122,7 @@ public class BlockEvents {
         BlockManager.remove(loc, block);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onEntityMove(EntityMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
@@ -135,7 +135,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
@@ -148,7 +148,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockExplode(BlockExplodeEvent event) {
         Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
         while (it.hasNext()) {
@@ -172,7 +172,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onEntityExplode(EntityExplodeEvent event) {
         Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
         while (it.hasNext()) {
@@ -196,7 +196,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onProjectileHit(ProjectileHitEvent event) {
         if (event.getHitBlock() == null) return;
 
@@ -205,7 +205,7 @@ public class BlockEvents {
         block.onProjectileHit(event.getEntity());
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockRedstone(BlockRedstoneEvent event) {
         CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
@@ -215,7 +215,7 @@ public class BlockEvents {
         event.setNewCurrent(finalCurrent);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockPhysics(BlockPhysicsEvent event) {
         CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
@@ -223,7 +223,7 @@ public class BlockEvents {
         event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         for (org.bukkit.block.Block bukkitBlock : event.getBlocks()) {
             CustomBlock block = CustomBlock.from(bukkitBlock);
@@ -234,7 +234,7 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPistonRetract(BlockPistonRetractEvent event) {
         for (org.bukkit.block.Block bukkitBlock : event.getBlocks()) {
             CustomBlock block = CustomBlock.from(bukkitBlock);
@@ -245,52 +245,52 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockBurn(BlockBurnEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockFade(BlockFadeEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockForm(BlockFormEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockGrow(BlockGrowEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockIgnite(BlockIgniteEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockSpread(BlockSpreadEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onLeavesDecay(LeavesDecayEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onSpongeAbsorb(SpongeAbsorbEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onSignChange(SignChangeEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
         for (CustomBlock block : BlockManager.ACTIVE_BLOCKS) {
             if (block.getEntity() != null) {
@@ -344,15 +344,15 @@ public class BlockEvents {
     }
 
     // Vanilla Blocks
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockBreakPDC(BlockBreakEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
     }
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockFadePDC(BlockFadeEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
     }
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockExplodePDC(BlockExplodeEvent event) {
         if (!event.isCancelled()) {
             BlockPersistentData.remove(event.getExplodedBlockState().getBlock());
@@ -361,7 +361,7 @@ public class BlockEvents {
             }
         }
     }
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockBurnPDC(BlockBurnEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
     }

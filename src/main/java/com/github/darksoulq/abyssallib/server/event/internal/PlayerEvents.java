@@ -22,7 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.HashMap;
 
 public class PlayerEvents {
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
         CustomBlock block = CustomBlock.from(event.getClickedBlock());
         if (block == null) return;
@@ -37,19 +37,19 @@ public class PlayerEvents {
         if (be.isCancelled()) event.setCancelled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onJoin(PlayerJoinEvent event) {
         PacketInterceptor.inject(event.getPlayer());
         EntityAttributes.of(event.getPlayer());
         PlayerStatistics.of(event.getPlayer());
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onLeave(PlayerQuitEvent event) {
         PacketInterceptor.uninject(event.getPlayer());
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPick(PlayerPickBlockEvent event) {
         if (CustomBlock.from(event.getBlock()) != null) {
             event.setCancelled(true);
@@ -64,16 +64,5 @@ public class PlayerEvents {
                         stack);
             }
         }
-    }
-
-    private boolean isBlockSolidBelow(Player player) {
-        Location loc = player.getLocation().clone().subtract(0, 0.1, 0);
-        Block blockBelow = loc.getBlock();
-        return blockBelow.getType().isSolid();
-    }
-
-    private boolean isWaterBlock(Block block) {
-        Material type = block.getType();
-        return type == Material.WATER || type == Material.KELP_PLANT || type == Material.SEAGRASS;
     }
 }

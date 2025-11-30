@@ -47,13 +47,6 @@ public class PaginatedElements implements GuiLayer {
         }
     }
 
-    public int pageCount() {
-        return (int) Math.ceil((double) filtered.size() / slots.length);
-    }
-    public int getPage() {
-        return page;
-    }
-
     @Override
     public void renderTo(GuiView view) {
         if (page == lastRenderedPage) return;
@@ -82,5 +75,15 @@ public class PaginatedElements implements GuiLayer {
             view.getGui().getElements().remove(new SlotPosition(segment, slot));
             inv.setItem(slot, null);
         }
+    }
+
+    public int pageCount() {
+        return (int) Math.ceil((double) filtered.size() / slots.length);
+    }
+    public int getPage() {
+        return page;
+    }
+    public void resetPage() {
+        lastRenderedPage = -1;
     }
 }

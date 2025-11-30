@@ -109,7 +109,7 @@ public class ChatInputHandler {
     /**
      * Handles incoming player chat messages and dispatches to handlers if registered.
      */
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onChat(AsyncPlayerChatEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
         Consumer<String> handler = inputMap.remove(uuid);

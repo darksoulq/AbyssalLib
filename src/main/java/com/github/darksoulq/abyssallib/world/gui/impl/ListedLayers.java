@@ -51,4 +51,7 @@ public class ListedLayers implements GuiLayer {
     public int getSize() {
         return layers.size();
     }
+    public void resetPage() {
+        lastRenderedPage = -1;
+    }
 }

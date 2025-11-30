@@ -15,7 +15,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 
 public class GuiEvents {
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onDropPickup(EntityPickupItemEvent event) {
         if (event.getEntity() instanceof Player player) {
             GuiView view = GuiManager.openViews.get(player.getOpenInventory());
@@ -24,7 +24,7 @@ public class GuiEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onCriterionGrant(PlayerAdvancementCriterionGrantEvent event) {
         GuiView view = GuiManager.openViews.get(event.getPlayer().getOpenInventory());
         if (view == null) return;
@@ -33,7 +33,7 @@ public class GuiEvents {
         };
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onClick(InventoryClickEvent event) {
         GuiView view = GuiManager.openViews.get(event.getView());
         if (view == null) return;
@@ -55,7 +55,7 @@ public class GuiEvents {
         event.setCancelled(result == ActionResult.CANCEL);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onDrag(InventoryDragEvent event) {
         GuiView view = GuiManager.openViews.get(event.getView());
         if (view == null) return;
@@ -74,7 +74,7 @@ public class GuiEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onClose(InventoryCloseEvent event) {
         GuiView view = GuiManager.openViews.remove(event.getView());
         if (view != null) {

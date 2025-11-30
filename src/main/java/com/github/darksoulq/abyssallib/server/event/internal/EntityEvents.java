@@ -13,7 +13,7 @@ import org.bukkit.entity.LivingEntity;
 
 public class EntityEvents {
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onEntityLoad(EntityAddToWorldEvent event) {
         if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
         Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
@@ -25,7 +25,7 @@ public class EntityEvents {
         entity.onLoad();
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onEntityDeath(org.bukkit.event.entity.EntityDeathEvent event) {
         Entity<? extends LivingEntity> entity = Entity.resolve(event.getEntity());
         if (entity == null) return;
@@ -44,7 +44,7 @@ public class EntityEvents {
         EntityManager.remove(entity.uuid);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onEntityUnload(EntityRemoveFromWorldEvent event) {
         if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
         Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());

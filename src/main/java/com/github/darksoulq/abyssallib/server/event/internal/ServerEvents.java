@@ -15,7 +15,7 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class ServerEvents {
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onServerLoad(ServerLoadEvent e) {
         if (e.getType() == ServerLoadEvent.LoadType.STARTUP) {
             new BukkitRunnable() {

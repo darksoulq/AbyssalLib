@@ -30,7 +30,7 @@ public class TextUtil {
      * <p>
      * Rebuilt whenever new type adapters are registered.
      */
-    public static Gson GSON;
+    public static Gson GSON = new Gson();
 
     /**
      * The shared {@link MiniMessage} instance used for parsing MiniMessage text.

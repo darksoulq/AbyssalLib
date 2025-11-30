@@ -1,20 +1,25 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.inventory.PrepareResultEvent;
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
+import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.EntitySpawner;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.event.player.PlayerArmSwingEvent;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
+import io.papermc.paper.event.player.PlayerPickItemEvent;
 import io.papermc.paper.registry.PaperRegistries;
 import io.papermc.paper.registry.PaperRegistryAccess;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.protocol.game.ClientboundSetCursorItemPacket;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -28,13 +33,11 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockCookEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.*;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class ItemEvents {
     private static final List<DamageType> MELEE_TYPES = new ArrayList<>();
@@ -62,15 +65,7 @@ public class ItemEvents {
         RANGED_TYPES.add(type);
     }
 
-    @SubscribeEvent
-    public void odArmSwing(PlayerArmSwingEvent event) {
-        Item item = Item.resolve(event.getPlayer().getInventory().getItem(event.getHand()));
-        if (item != null) {
-            item.onUse(event.getPlayer(), event.getHand());
-        }
-    }
-
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockMine(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
@@ -83,7 +78,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onDamage(EntityDamageByEntityEvent event) {
         Entity source = event.getDamager();
         Entity target = event.getEntity();
@@ -112,7 +107,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         Player player = event.getPlayer();
@@ -126,7 +121,7 @@ public class ItemEvents {
                         block,
                         event.getBlockFace(),
                         null,
-                        event.getAction() == Action.LEFT_CLICK_BLOCK ? ClickType.LEFT_CLICK : ClickType.RIGHT_CLICK,
+                        ClickType.of(event.getAction()),
                         event.getHand()
                         );
                 ActionResult result = item.onUseOn(ctx);
@@ -142,10 +137,20 @@ public class ItemEvents {
                     entity.clone().spawn(loc);
                 }
             }
+            if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
+                item.onUse(player, event.getHand(), ClickType.of(event.getAction()));
+            }
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onChangeSlot(PlayerInventorySlotChangeEvent event) {
+        Item item = Item.resolve(event.getNewItemStack());
+        if (item == null) return;
+        item.onSlotChange(event.getPlayer(), event.getSlot());
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
     public void onUseEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();
         ItemStack stack = player.getInventory().getItem(event.getHand());
@@ -166,7 +171,35 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onItemDrop(PlayerDropItemEvent event) {
+        Item item = Item.resolve(event.getItemDrop().getItemStack());
+        if (item == null) return;
+        if (item.onDrop(event.getPlayer()) == ActionResult.CANCEL) event.setCancelled(true);
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onItemPickup(PlayerAttemptPickupItemEvent event) {
+        Item item = Item.resolve(event.getItem().getItemStack());
+        if (item == null) return;
+        if (item.onPickup(event.getPlayer()) == ActionResult.CANCEL) event.setCancelled(true);
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onSwapItemHand(PlayerSwapHandItemsEvent event) {
+        Item i1 = Item.resolve(event.getMainHandItem());
+        Item i2 = Item.resolve(event.getOffHandItem());
+
+        ActionResult r1 = null;
+        ActionResult r2 = null;
+
+        if (i1 != null) r1 = i1.onSwapHand(event.getPlayer(), EquipmentSlot.HAND);
+        if (i2 != null) r2 = i2.onSwapHand(event.getPlayer(), EquipmentSlot.HAND);
+
+        if (r1 == ActionResult.CANCEL || r2 == ActionResult.CANCEL) event.setCancelled(true);
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
     public void onAnvilCombine(PrepareAnvilEvent event) {
         ItemStack[] stacks = event.getInventory().getContents();
         for (ItemStack stack : stacks) {
@@ -181,7 +214,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onCrafted(CraftItemEvent event) {
         Player player = (Player) event.getWhoClicked();
         Item item = Item.resolve(event.getRecipe().getResult());
@@ -190,7 +223,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onSlotChange(PlayerInventorySlotChangeEvent event) {
         Item item = Item.resolve(event.getNewItemStack());
         if (item != null) {
@@ -198,7 +231,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPrepareCraft(PrepareItemCraftEvent event) {
         CraftingInventory inventory = event.getInventory();
         ItemStack[] contents = inventory.getContents();
@@ -222,7 +255,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onPrepareSmithing(PrepareSmithingEvent event) {
         SmithingInventory inventory = event.getInventory();
         ItemStack a = inventory.getInputTemplate();
@@ -245,7 +278,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onFurnaceBurn(FurnaceBurnEvent event) {
         ItemStack source = event.getFuel();
         Block block = event.getBlock();
@@ -259,7 +292,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onCampfireCook(BlockCookEvent event) {
         ItemStack a = event.getSource();
 
@@ -279,7 +312,7 @@ public class ItemEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(ignoreCancelled = false)
     public void onLoomPrepareEvent(PrepareResultEvent event) {
         InventoryView view = event.getView();
         if (view.getTopInventory().getType() != InventoryType.LOOM) return;
