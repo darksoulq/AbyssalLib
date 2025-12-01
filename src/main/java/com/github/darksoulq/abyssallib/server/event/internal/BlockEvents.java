@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
@@ -40,11 +41,8 @@ public class BlockEvents {
         List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
         for (CustomBlock block : blocks) {
-            BlockManager.INACTIVE_BLOCKS.remove(block);
-            if (!BlockManager.ACTIVE_BLOCKS.contains(block)) {
-                BlockManager.ACTIVE_BLOCKS.add(block);
-                block.onLoad();
-            }
+            BlockManager.ACTIVE_BLOCKS.add(block.getLocation());
+            block.onLoad();
         }
     }
 
@@ -53,11 +51,8 @@ public class BlockEvents {
         List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
         for (CustomBlock block : blocks) {
-            BlockManager.ACTIVE_BLOCKS.remove(block);
-            if (!BlockManager.INACTIVE_BLOCKS.contains(block)) {
-                BlockManager.INACTIVE_BLOCKS.add(block);
-                block.onUnLoad();
-            }
+            BlockManager.ACTIVE_BLOCKS.remove(block.getLocation());
+            block.onUnLoad();
         }
     }
 
@@ -292,7 +287,12 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
-        for (CustomBlock block : BlockManager.ACTIVE_BLOCKS) {
+        for (Location loc : BlockManager.ACTIVE_BLOCKS) {
+            CustomBlock block = CustomBlock.from(loc.getBlock());
+            if (block == null) {
+                AbyssalLib.LOGGER.info("Block at " + loc + " is Null");
+                return;
+            }
             if (block.getEntity() != null) {
                 block.getEntity().serverTick();
                 if (ThreadLocalRandom.current().nextFloat() < 0.001f) {

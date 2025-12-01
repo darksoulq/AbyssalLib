@@ -29,8 +29,8 @@ public class BlockManager {
      * Map storing blocks keyed by their location keys.
      */
     public static final Map<String, CustomBlock> BLOCKS = new HashMap<>();
-    public static final List<CustomBlock> ACTIVE_BLOCKS = new ArrayList<>();
-    public static final List<CustomBlock> INACTIVE_BLOCKS = new ArrayList<>();
+    public static final List<Location> ACTIVE_BLOCKS = new ArrayList<>();
+    public static final List<Location> INACTIVE_BLOCKS = new ArrayList<>();
 
     /**
      * Database instance used for persisting blocks.
@@ -85,11 +85,6 @@ public class BlockManager {
                 }
 
                 BLOCKS.put(locKey(loc), block);
-                if (loc.isChunkLoaded()) {
-                    ACTIVE_BLOCKS.add(block);
-                } else {
-                    INACTIVE_BLOCKS.add(block);
-                }
             }
 
             AbyssalLib.LOGGER.info("Loaded " + BLOCKS.size() + " Blocks.");
@@ -110,7 +105,7 @@ public class BlockManager {
         if (loc == null) return;
 
         BLOCKS.put(locKey(loc), block);
-        ACTIVE_BLOCKS.add(block);
+        ACTIVE_BLOCKS.add(block.getLocation());
         save(block);
     }
 
