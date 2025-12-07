@@ -11,7 +11,7 @@ import org.bukkit.Color;
 import org.bukkit.inventory.ItemStack;
 
 public class DyedColor extends DataComponent<Color> implements Vanilla {
-    private static final Codec<DyedColor> CODEC = ExtraCodecs.COLOR.xmap(
+    public static final Codec<DyedColor> CODEC = ExtraCodecs.COLOR.xmap(
             DyedColor::new,
             DyedColor::getValue
     );

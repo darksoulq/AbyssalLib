@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionType;
 
 public class PotionContent extends DataComponent<PotionContents> implements Vanilla {
-    private static final Codec<PotionContent> CODEC = RecordCodecBuilder.create(
+    public static final Codec<PotionContent> CODEC = RecordCodecBuilder.create(
             Codec.enumCodec(PotionType.class).fieldOf("potion", d -> d.value.potion()),
             ExtraCodecs.COLOR.nullable().fieldOf("color", d -> d.value.customColor()),
             ExtraCodecs.POTION_EFFECT.list().fieldOf("customEffects", d -> d.value.customEffects()),

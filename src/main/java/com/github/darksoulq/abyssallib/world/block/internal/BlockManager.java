@@ -126,7 +126,7 @@ public class BlockManager {
      */
     public static void remove(Location loc, CustomBlock block) {
         BLOCKS.remove(locKey(loc));
-        ACTIVE_BLOCKS.remove(block);
+        ACTIVE_BLOCKS.remove(block.getLocation());
         try {
             DATABASE.executor().table("blocks").delete()
                     .where("world = ?", loc.getWorld().getName())

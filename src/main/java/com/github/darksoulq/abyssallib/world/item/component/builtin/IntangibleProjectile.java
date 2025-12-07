@@ -8,10 +8,12 @@ import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Optional;
+
 public class IntangibleProjectile extends DataComponent<Boolean> implements Vanilla {
-    private static final Codec<IntangibleProjectile> CODEC = Codecs.BOOLEAN.xmap(
+    public static final Codec<IntangibleProjectile> CODEC = Codecs.STRING.optional().xmap(
             b -> new IntangibleProjectile(),
-            IntangibleProjectile::getValue
+            d -> Optional.empty()
     );
 
     public IntangibleProjectile() {

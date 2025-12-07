@@ -9,7 +9,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class RepairCost extends DataComponent<Integer> implements Vanilla {
-    private static final Codec<RepairCost> CODEC = Codecs.INT.xmap(
+    public static final Codec<RepairCost> CODEC = Codecs.INT.xmap(
             RepairCost::new,
             RepairCost::getValue
     );

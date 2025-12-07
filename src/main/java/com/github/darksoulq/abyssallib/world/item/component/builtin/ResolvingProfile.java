@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class ResolvingProfile extends DataComponent<ResolvableProfile> implements Vanilla {
-    private static final Codec<ResolvingProfile> CODEC = ExtraCodecs.RESOLVABLE_PROFILE.xmap(
+    public static final Codec<ResolvingProfile> CODEC = ExtraCodecs.RESOLVABLE_PROFILE.xmap(
             ResolvingProfile::new,
             ResolvingProfile::getValue
     );

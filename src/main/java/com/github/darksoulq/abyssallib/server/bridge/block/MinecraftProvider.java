@@ -5,6 +5,8 @@ import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import org.bukkit.Material;
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 public class MinecraftProvider extends Provider<BridgeBlock<?>> {
     public MinecraftProvider() {
@@ -25,5 +27,15 @@ public class MinecraftProvider extends Provider<BridgeBlock<?>> {
     @Override
     public BridgeBlock<?> get(Identifier id) {
         return new BridgeBlock<>(id, getPrefix(), Material.valueOf(id.getPath().toUpperCase(Locale.ROOT)));
+    }
+
+    @Override
+    public Map<String, Optional<Object>> serializeData(BridgeBlock<?> value) {
+        return Map.of();
+    }
+
+    @Override
+    public void deserializeData(Map<String, Optional<Object>> data, BridgeBlock<?> value) {
+
     }
 }

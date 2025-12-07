@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import org.bukkit.inventory.ItemStack;
 
 public class TrackerLodestone extends DataComponent<LodestoneTracker> implements Vanilla {
-    private static final Codec<TrackerLodestone> CODEC = ExtraCodecs.LODESTONE_TRACKER.xmap(
+    public static final Codec<TrackerLodestone> CODEC = ExtraCodecs.LODESTONE_TRACKER.xmap(
             TrackerLodestone::new,
             TrackerLodestone::getValue
     );

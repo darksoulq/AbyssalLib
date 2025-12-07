@@ -1,6 +1,10 @@
 package com.github.darksoulq.abyssallib.common.util;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.component.CustomData;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.Optional;
 
@@ -180,5 +184,31 @@ public class CTag {
      */
     public CompoundTag toVanilla() {
         return baseTag;
+    }
+
+    public static CTag getCTag(ItemStack stack) {
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
+        CustomData dta = nms.get(DataComponents.CUSTOM_DATA);
+        if (dta == null) dta = CustomData.EMPTY;
+
+        CompoundTag tag = dta.copyTag();
+        if (tag.getCompound("CustomData").isPresent()) {
+            CompoundTag custom = tag.getCompound("CustomData").get();
+            return new CTag(custom);
+        } else {
+            tag.put("CustomData", new CompoundTag());
+            return new CTag(tag.getCompound("CustomData").get());
+        }
+    }
+    public static void setCTag(CTag container, ItemStack stack) {
+        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
+        CustomData data = nms.get(DataComponents.CUSTOM_DATA);
+        if (data == null) data = CustomData.EMPTY;
+        CompoundTag tag = data.copyTag();
+        tag.put("CustomData", container.toVanilla());
+        data = CustomData.of(tag);
+        nms.set(DataComponents.CUSTOM_DATA, data);
+        ItemStack updated = CraftItemStack.asBukkitCopy(nms);
+        stack.setItemMeta(updated.getItemMeta());
     }
 }

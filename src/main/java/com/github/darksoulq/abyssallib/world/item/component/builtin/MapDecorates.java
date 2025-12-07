@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 
 public class MapDecorates extends DataComponent<Map<String, MapDecorations.DecorationEntry>> implements Vanilla {
-    private static final Codec<MapDecorates> CODEC = Codec.map(Codecs.STRING, ExtraCodecs.MAP_DECO_ENTRY).xmap(
+    public static final Codec<MapDecorates> CODEC = Codec.map(Codecs.STRING, ExtraCodecs.MAP_DECO_ENTRY).xmap(
             MapDecorates::new,
             MapDecorates::getValue
     );

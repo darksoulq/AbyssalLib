@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class CustomName extends DataComponent<Component> implements Vanilla {
-    private static final Codec<CustomName> CODEC = Codecs.TEXT_COMPONENT.xmap(
+    public static final Codec<CustomName> CODEC = Codecs.TEXT_COMPONENT.xmap(
             CustomName::new,
             CustomName::getValue
     );

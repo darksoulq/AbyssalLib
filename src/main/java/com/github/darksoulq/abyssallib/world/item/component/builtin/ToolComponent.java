@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.Tool;
 import org.bukkit.inventory.ItemStack;
 
 public class ToolComponent extends DataComponent<Tool> implements Vanilla {
-    private static final Codec<ToolComponent> CODEC = ExtraCodecs.TOOL.xmap(
+    public static final Codec<ToolComponent> CODEC = ExtraCodecs.TOOL.xmap(
             ToolComponent::new,
             ToolComponent::getValue
     );

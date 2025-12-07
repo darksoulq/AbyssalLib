@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class SuspiciousStewEffect extends DataComponent<List<SuspiciousEffectEntry>> implements Vanilla {
-    private static final Codec<SuspiciousStewEffect> CODEC = ExtraCodecs.SUSPICIOUS_EFFECT_ENTRY.list().xmap(
+    public static final Codec<SuspiciousStewEffect> CODEC = ExtraCodecs.SUSPICIOUS_EFFECT_ENTRY.list().xmap(
             SuspiciousStewEffect::new,
             SuspiciousStewEffect::getValue
     );

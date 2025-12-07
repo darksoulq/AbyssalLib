@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class ItemBridge {
     private static final Map<String, Provider<ItemStack>> PROVIDERS = new HashMap<>();
@@ -30,7 +31,7 @@ public class ItemBridge {
     }
     public static boolean hasProvider(ItemStack item) {
         for (Provider<ItemStack> prov : PROVIDERS.values()) {
-            if (prov.belongs(item)) return true;
+            if (prov.belongs(item.asOne())) return true;
         }
         return false;
     }
@@ -53,8 +54,8 @@ public class ItemBridge {
     public static Identifier getId(ItemStack stack) {
         for (Map.Entry<String, Provider<ItemStack>> entry : PROVIDERS.entrySet()) {
             Provider<ItemStack> prov = entry.getValue();
-            if (!prov.belongs(stack)) continue;
-            Identifier base = prov.getId(stack);
+            if (!prov.belongs(stack.asOne())) continue;
+            Identifier base = prov.getId(stack.asOne());
             if (base == null) return null;
             if (prov instanceof MinecraftProvider) return base;
             return Identifier.of(entry.getKey(), base.getNamespace(), base.getPath());
@@ -62,9 +63,29 @@ public class ItemBridge {
         return null;
     }
     public static String getIdAsString(ItemStack stack) {
-        Identifier id = getId(stack);
-        if (id == null) return asString(stack);
+        Identifier id = getId(stack.asOne());
+        if (id == null) return asString(stack.asOne());
         return id.toString();
+    }
+    public static Map<String, Optional<Object>> serializeData(ItemStack stack) {
+        Identifier id = getId(stack.asOne());
+        if (!hasProvider(stack.asOne()) || id == null) return PROVIDERS.get("minecraft").serializeData(stack);
+        Provider<ItemStack> provider = PROVIDERS.get(id.getKey());
+        if (provider == null) return PROVIDERS.get("minecraft").serializeData(stack);
+        return provider.serializeData(stack);
+    }
+    public static void deserializeData(Map<String, Optional<Object>> data, ItemStack stack) {
+        Identifier id = getId(stack);
+        if (!hasProvider(stack) || id == null) {
+            PROVIDERS.get("minecraft").deserializeData(data, stack);
+            return;
+        }
+        Provider<ItemStack> provider = PROVIDERS.get(id.getKey());
+        if (provider == null) {
+            PROVIDERS.get("minecraft").deserializeData(data, stack);
+            return;
+        }
+        provider.deserializeData(data, stack);
     }
 
     public static String asString(ItemStack item) {

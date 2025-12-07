@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.PotDecorations;
 import org.bukkit.inventory.ItemStack;
 
 public class PotDecorates extends DataComponent<PotDecorations> implements Vanilla {
-    private static final Codec<PotDecorates> CODEC = ExtraCodecs.POT_DECORATIONS.xmap(
+    public static final Codec<PotDecorates> CODEC = ExtraCodecs.POT_DECORATIONS.xmap(
             PotDecorates::new,
             PotDecorates::getValue
     );

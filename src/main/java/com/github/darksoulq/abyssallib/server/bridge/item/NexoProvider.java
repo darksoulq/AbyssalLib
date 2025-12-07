@@ -6,6 +6,9 @@ import com.nexomc.nexo.api.NexoItems;
 import com.nexomc.nexo.items.ItemBuilder;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
+import java.util.Optional;
+
 public class NexoProvider extends Provider<ItemStack> {
     public NexoProvider() {
         super("nexo");
@@ -26,5 +29,15 @@ public class NexoProvider extends Provider<ItemStack> {
     public ItemStack get(Identifier id) {
         ItemBuilder builder = NexoItems.itemFromId(id.toString());
         return builder == null ? null : builder.build();
+    }
+
+    @Override
+    public Map<String, Optional<Object>> serializeData(ItemStack value) {
+        return new MinecraftProvider().serializeData(value);
+    }
+
+    @Override
+    public void deserializeData(Map<String, Optional<Object>> data, ItemStack value) {
+        new MinecraftProvider().deserializeData(data, value);
     }
 }

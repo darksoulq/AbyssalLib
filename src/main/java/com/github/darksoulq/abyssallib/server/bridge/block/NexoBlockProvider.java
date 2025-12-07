@@ -4,6 +4,9 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import com.nexomc.nexo.api.NexoBlocks;
 
+import java.util.Map;
+import java.util.Optional;
+
 public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
     public NexoBlockProvider() {
         super("nexo");
@@ -29,5 +32,15 @@ public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
         if (NexoBlocks.isNexoChorusBlock(id.toString()))
             return new BridgeBlock<>(id, getPrefix(), NexoBlocks.chorusBlockMechanic(id.toString()));
         return null;
+    }
+
+    @Override
+    public Map<String, Optional<Object>> serializeData(BridgeBlock<?> value) {
+        return Map.of();
+    }
+
+    @Override
+    public void deserializeData(Map<String, Optional<Object>> data, BridgeBlock<?> value) {
+
     }
 }

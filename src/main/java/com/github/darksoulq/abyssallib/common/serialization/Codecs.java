@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import io.papermc.paper.datacomponent.DataComponentType;
@@ -17,11 +18,23 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.recipe.CookingBookCategory;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public class Codecs {
+    public static final Codec<Object> PASSTHROUGH = new Codec<>() {
+        @Override
+        public <D> Object decode(DynamicOps<D> ops, D input) {
+            return input;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <D> D encode(DynamicOps<D> ops, Object value) {
+            return (D) value;
+        }
+    };
+
     public static final Codec<String> STRING = new Codec<>() {
         @Override
         public <D> String decode(DynamicOps<D> ops, D input) throws Codec.CodecException {
@@ -33,6 +46,7 @@ public class Codecs {
             return ops.createString(value);
         }
     };
+    public static final Codec<Identifier> IDENTIFIER = STRING.xmap(Identifier::of, Identifier::toString);
     public static final Codec<Character> CHARACTER = STRING.xmap((str) -> str.charAt(0), String::valueOf);
     public static final Codec<Integer> INT = new Codec<>() {
         @Override
@@ -116,10 +130,27 @@ public class Codecs {
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getKeyOrThrow
     );
     public static final Codec<ItemStack> ITEM_STACK = Codec.either(
+            RecordCodecBuilder.create(
+                    STRING.fieldOf("id", ItemBridge::getIdAsString),
+                    INT.optional().fieldOf("amount", i -> Optional.of(i.getAmount())),
+                    Codec.map(STRING, PASSTHROUGH.optional()).optional().fieldOf("data", i -> {
+                        Identifier id = ItemBridge.getId(i);
+                        if (id == null) return Optional.empty();
+                        ItemStack o = ItemBridge.get(id.toString());
+                        return i.equals(o) ? Optional.empty() : Optional.of(ItemBridge.serializeData(i));
+                    }),
+                    (itemId, amount, components) -> {
+                        ItemStack stack = ItemBridge.get(itemId);
+                        if (stack == null) throw new Codec.CodecException("Item ID not available in ItemBridge");
+                        amount.ifPresent(stack::setAmount);
+                        components.ifPresent(c -> ItemBridge.deserializeData(c, stack));
+                        return stack;
+                    }
+            ),
             STRING.xmap(
                     (s) -> {
                         if (ItemBridge.hasProvider(s)) {
-                            throw new Codec.CodecException("Provider exists, Not Exprcted");
+                            throw new Codec.CodecException("Provider exists, Not Expected");
                         }
                         return ItemBridge.get(s);
                     },
@@ -128,29 +159,6 @@ public class Codecs {
                             throw new Codec.CodecException("Provider exists, Not Expected.");
                         return ItemBridge.asString(i);
                     }
-            ),
-            Codec.map(STRING, INT).xmap(
-                    (m) -> {
-                        if (m.size() != 1)
-                            throw new Codec.CodecException("Expected single-entry map for item, got: " + m);
-
-                        Map.Entry<String, Integer> entry = m.entrySet().iterator().next();
-                        String key = entry.getKey();
-                        int amount = entry.getValue();
-
-                        if (!ItemBridge.hasProvider(key))
-                            if (!key.contains(":")) {
-                                throw new Codec.CodecException("Not a valid namespaced key: " + key);
-                            } else {
-                                throw new Codec.CodecException("No Provider was found for: " + key);
-                            }
-
-                        ItemStack item = ItemBridge.get(key);
-                        if (item == null) throw new Codec.CodecException("ItemBridge failed to get ItemStack for key: " + key);
-                        item.setAmount(amount);
-                        return item;
-                    },
-                    ItemBridge::asAmountMap
             )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()

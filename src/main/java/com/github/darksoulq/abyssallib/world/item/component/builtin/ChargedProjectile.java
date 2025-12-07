@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class ChargedProjectile extends DataComponent<List<ItemStack>> implements Vanilla {
-    private static final Codec<ChargedProjectile> CODEC = Codecs.ITEM_STACK.list().xmap(
+    public static final Codec<ChargedProjectile> CODEC = Codecs.ITEM_STACK.list().xmap(
             ChargedProjectile::new,
             ChargedProjectile::getValue
     );

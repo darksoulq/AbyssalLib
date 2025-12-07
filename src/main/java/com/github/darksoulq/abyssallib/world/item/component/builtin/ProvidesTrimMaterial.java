@@ -10,7 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
 
 public class ProvidesTrimMaterial extends DataComponent<TrimMaterial> implements Vanilla {
-    private static final Codec<ProvidesTrimMaterial> CODEC = ExtraCodecs.TRIM_MATERIAL.xmap(
+    public static final Codec<ProvidesTrimMaterial> CODEC = ExtraCodecs.TRIM_MATERIAL.xmap(
             ProvidesTrimMaterial::new,
             ProvidesTrimMaterial::getValue
     );

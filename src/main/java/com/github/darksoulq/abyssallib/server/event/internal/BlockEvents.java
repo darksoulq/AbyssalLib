@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
@@ -290,7 +289,6 @@ public class BlockEvents {
         for (Location loc : BlockManager.ACTIVE_BLOCKS) {
             CustomBlock block = CustomBlock.from(loc.getBlock());
             if (block == null) {
-                AbyssalLib.LOGGER.info("Block at " + loc + " is Null");
                 return;
             }
             if (block.getEntity() != null) {

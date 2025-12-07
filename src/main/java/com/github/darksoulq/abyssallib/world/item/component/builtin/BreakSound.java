@@ -10,7 +10,7 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class BreakSound extends DataComponent<Key> implements Vanilla {
-    private static final Codec<BreakSound> CODEC = Codecs.KEY.xmap(
+    public static final Codec<BreakSound> CODEC = Codecs.KEY.xmap(
             BreakSound::new,
             BreakSound::getValue
     );

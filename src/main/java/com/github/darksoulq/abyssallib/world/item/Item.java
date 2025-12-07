@@ -39,7 +39,7 @@ public class Item implements Cloneable {
     private ComponentMap componentMap;
     public Tooltip tooltip = new Tooltip();
 
-    private Item(ItemStack stack) {
+    public Item(ItemStack stack) {
         this.id = Identifier.of("unknown", "unknown");
         this.stack = stack;
         componentMap = new ComponentMap(this);
@@ -171,7 +171,9 @@ public class Item implements Cloneable {
         if (!base.hasData(CustomMarker.class)) return null;
         Identifier id = (Identifier) base.getData(CustomMarker.class).value;
         if (id == null) return null;
-        Item clone = Registries.ITEMS.get(id.toString()).clone();
+        Item item = Registries.ITEMS.get(id.toString());
+        if (item == null) return null;
+        Item clone = item.clone();
         clone.stack = stack;
         clone.componentMap = new ComponentMap(clone);
         return clone;

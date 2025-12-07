@@ -12,7 +12,7 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class ProvidesBannerPatterns extends DataComponent<Key> implements Vanilla {
-    private static final Codec<ProvidesBannerPatterns> CODEC = Codecs.KEY.xmap(
+    public static final Codec<ProvidesBannerPatterns> CODEC = Codecs.KEY.xmap(
             ProvidesBannerPatterns::new,
             ProvidesBannerPatterns::getValue
     );

@@ -8,10 +8,12 @@ import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Optional;
+
 public class Glider extends DataComponent<Boolean> implements Vanilla {
-    private static final Codec<Glider> CODEC = Codecs.BOOLEAN.xmap(
+    public static final Codec<Glider> CODEC = Codecs.STRING.optional().xmap(
             b -> new Glider(),
-            Glider::getValue
+            d -> Optional.empty()
     );
 
     public Glider() {
