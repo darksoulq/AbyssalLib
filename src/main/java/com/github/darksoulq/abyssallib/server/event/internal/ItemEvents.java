@@ -1,25 +1,19 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.inventory.PrepareResultEvent;
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
-import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.EntitySpawner;
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.event.player.PlayerArmSwingEvent;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
-import io.papermc.paper.event.player.PlayerPickItemEvent;
 import io.papermc.paper.registry.PaperRegistries;
 import io.papermc.paper.registry.PaperRegistryAccess;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.protocol.game.ClientboundSetCursorItemPacket;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -35,9 +29,10 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class ItemEvents {
     private static final List<DamageType> MELEE_TYPES = new ArrayList<>();

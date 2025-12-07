@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.BlocksAttacks;
 import org.bukkit.inventory.ItemStack;
 
 public class BlockAttacks extends DataComponent<BlocksAttacks> implements Vanilla {
-    private static final Codec<BlockAttacks> CODEC = ExtraCodecs.BLOCKS_ATTACKS.xmap(
+    public static final Codec<BlockAttacks> CODEC = ExtraCodecs.BLOCKS_ATTACKS.xmap(
             BlockAttacks::new,
             BlockAttacks::getValue
     );

@@ -10,7 +10,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
 
 public class ItemName extends DataComponent<Component> implements Vanilla {
-    private static final Codec<ItemName> CODEC = Codecs.TEXT_COMPONENT.xmap(
+    public static final Codec<ItemName> CODEC = Codecs.TEXT_COMPONENT.xmap(
             ItemName::new,
             ItemName::getValue
     );

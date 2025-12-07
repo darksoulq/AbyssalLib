@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class DeathProtect extends DataComponent<List<ConsumeEffect>> implements Vanilla {
-    private static final Codec<DeathProtect> CODEC = ExtraCodecs.CONSUME_EFFECT.list().xmap(
+    public static final Codec<DeathProtect> CODEC = ExtraCodecs.CONSUME_EFFECT.list().xmap(
             DeathProtect::new,
             DeathProtect::getValue
     );

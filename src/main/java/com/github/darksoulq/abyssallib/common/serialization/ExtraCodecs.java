@@ -1,7 +1,9 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.destroystokyo.paper.profile.ProfileProperty;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.*;
 import io.papermc.paper.block.BlockPredicate;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.*;
 import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
 import io.papermc.paper.datacomponent.item.blocksattacks.ItemDamageFunction;
@@ -441,4 +443,77 @@ public class ExtraCodecs {
                 return map;
             }
     );
+
+    public static final Map<String, Codec<?>> DATA_COMPONENT_CODECS = new HashMap<>();
+
+    static {
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.BANNER_PATTERNS.key().asString(), BannerPatterns.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.BASE_COLOR.key().asString(), BaseColor.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.BLOCKS_ATTACKS.key().asString(), BlockAttacks.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.BREAK_SOUND.key().asString(), BlockAttacks.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.BUNDLE_CONTENTS.key().asString(), BreakSound.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CAN_BREAK.key().asString(), CanBreak.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CAN_PLACE_ON.key().asString(), CanPlaceOn.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CHARGED_PROJECTILES.key().asString(), ChargedProjectile.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CONSUMABLE.key().asString(), Consume.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CONTAINER.key().asString(), Container.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CONTAINER_LOOT.key().asString(), ContainerLoot.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.USE_COOLDOWN.key().asString(), CooldownUse.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CUSTOM_NAME.key().asString(), CustomName.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.DEATH_PROTECTION.key().asString(), DeathProtect.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.TOOLTIP_DISPLAY.key().asString(), DisplayTooltip.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.DAMAGE.key().asString(), Durability.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.DYED_COLOR.key().asString(), DyedColor.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.ENCHANTABLE.key().asString(), EnchantableComponent.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE.key().asString(), EnchantmentGlintOverride.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.ENCHANTMENTS.key().asString(), Enchantments.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.EQUIPPABLE.key().asString(), EquippableComponent.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.FIREWORKS.key().asString(), Firework.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.FIREWORK_EXPLOSION.key().asString(), FireworkExplosion.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.FOOD.key().asString(), Food.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.INSTRUMENT.key().asString(), Instrument.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.GLIDER.key().asString(), Glider.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.INTANGIBLE_PROJECTILE.key().asString(), IntangibleProjectile.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.ATTRIBUTE_MODIFIERS.key().asString(), ItemAttributeModifier.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.ITEM_MODEL.key().asString(), ItemModel.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.ITEM_NAME.key().asString(), ItemName.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.LORE.key().asString(), Lore.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_COLOR.key().asString(), MapColor.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_DECORATIONS.key().asString(), MapDecorates.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_ID.key().asString(), MapID.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_POST_PROCESSING.key().asString(), MapPostProcess.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAX_DAMAGE.key().asString(), MaxDurability.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAX_STACK_SIZE.key().asString(), MaxStackSize.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.CUSTOM_MODEL_DATA.key().asString(), ModelData.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.NOTE_BLOCK_SOUND.key().asString(), NoteBlockSound.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER.key().asString(), OminousAmplifier.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.JUKEBOX_PLAYABLE.key().asString(), PlayableJukebox.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.POT_DECORATIONS.key().asString(), PotDecorates.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.POTION_CONTENTS.key().asString(), PotionContent.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.POTION_DURATION_SCALE.key().asString(), PotionDurationScale.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.PROVIDES_BANNER_PATTERNS.key().asString(), ProvidesBannerPatterns.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.PROVIDES_TRIM_MATERIAL.key().asString(), ProvidesTrimMaterial.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.RARITY.key().asString(), Rarity.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.RECIPES.key().asString(), Recipes.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.USE_REMAINDER.key().asString(), RemainderUse.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.REPAIRABLE.key().asString(), RepairableComponent.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.REPAIR_COST.key().asString(), RepairCost.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.DAMAGE_RESISTANT.key().asString(), ResistantDamage.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.PROFILE.key().asString(), ResolvingProfile.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.SHULKER_COLOR.key().asString(), ShulkerColor.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.STORED_ENCHANTMENTS.key().asString(), StoredEnchantments.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS.key().asString(), SuspiciousStewEffect.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.TOOL.key().asString(), ToolComponent.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.TOOLTIP_STYLE.key().asString(), TooltipStyle.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.LODESTONE_TRACKER.key().asString(), TrackerLodestone.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.TRIM.key().asString(), Trim.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.UNBREAKABLE.key().asString(), Unbreakable.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.WEAPON.key().asString(), WeaponComponent.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.WRITABLE_BOOK_CONTENT.key().asString(), WritableBookContents.CODEC);
+        DATA_COMPONENT_CODECS.put(DataComponentTypes.WRITTEN_BOOK_CONTENT.key().asString(), WrittenBookContents.CODEC);
+        DATA_COMPONENT_CODECS.put("abyssallib:marker", CustomMarker.CODEC);
+        DATA_COMPONENT_CODECS.put("abyssallib:energy_container", EnergyContainer.CODEC);
+        DATA_COMPONENT_CODECS.put("abyssallib:entity_spawner", EntitySpawner.CODEC);
+        DATA_COMPONENT_CODECS.put("abyssallib:block_item", BlockItem.CODEC);
+    }
 }

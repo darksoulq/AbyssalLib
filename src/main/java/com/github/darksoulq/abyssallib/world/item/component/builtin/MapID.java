@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.MapId;
 import org.bukkit.inventory.ItemStack;
 
 public class MapID extends DataComponent<Integer> implements Vanilla {
-    private static final Codec<MapID> CODEC = Codecs.INT.xmap(
+    public static final Codec<MapID> CODEC = Codecs.INT.xmap(
             MapID::new,
             MapID::getValue
     );

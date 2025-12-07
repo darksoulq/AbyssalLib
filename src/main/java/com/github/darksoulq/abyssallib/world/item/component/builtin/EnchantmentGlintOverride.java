@@ -10,7 +10,7 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class EnchantmentGlintOverride extends DataComponent<Boolean> implements Vanilla {
-    private static final Codec<EnchantmentGlintOverride> CODEC = Codecs.BOOLEAN.xmap(
+    public static final Codec<EnchantmentGlintOverride> CODEC = Codecs.BOOLEAN.xmap(
             EnchantmentGlintOverride::new,
             EnchantmentGlintOverride::getValue
     );

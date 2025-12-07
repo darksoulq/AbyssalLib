@@ -9,7 +9,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
 
 public class Durability extends DataComponent<Integer> implements Vanilla {
-    private static final Codec<Durability> CODEC = Codecs.INT.xmap(
+    public static final Codec<Durability> CODEC = Codecs.INT.xmap(
             Durability::new,
             Durability::getValue
     );

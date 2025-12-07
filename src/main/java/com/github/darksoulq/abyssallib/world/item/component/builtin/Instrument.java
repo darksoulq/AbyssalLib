@@ -13,7 +13,7 @@ import org.bukkit.MusicInstrument;
 import org.bukkit.inventory.ItemStack;
 
 public class Instrument extends DataComponent<Key> implements Vanilla {
-    private static final Codec<Instrument> CODEC = Codecs.KEY.xmap(
+    public static final Codec<Instrument> CODEC = Codecs.KEY.xmap(
             v -> new Instrument(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(v)),
             Instrument::getValue
     );

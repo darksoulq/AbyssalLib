@@ -14,6 +14,8 @@ import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
+
 public class ServerEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerLoad(ServerLoadEvent e) {
@@ -21,6 +23,7 @@ public class ServerEvents {
             new BukkitRunnable() {
                 @Override
                 public void run() {
+                    RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
                     MapLoader.load();
                     CommandBus.register(AbyssalLib.MODID, new InternalCommand());
                     BlockManager.load();

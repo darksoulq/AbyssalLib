@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class DisplayTooltip extends DataComponent<TooltipDisplay> implements Vanilla {
-    private static final Codec<DisplayTooltip> CODEC = ExtraCodecs.TOOLTIP_DISPLAY.xmap(
+    public static final Codec<DisplayTooltip> CODEC = ExtraCodecs.TOOLTIP_DISPLAY.xmap(
             DisplayTooltip::new,
             DisplayTooltip::getValue
     );

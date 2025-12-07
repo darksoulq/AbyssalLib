@@ -1,7 +1,5 @@
 package com.github.darksoulq.abyssallib.common.util;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import net.kyori.adventure.key.Key;
 import net.minecraft.resources.ResourceLocation;
 import org.bukkit.NamespacedKey;
@@ -13,11 +11,6 @@ import java.util.Objects;
  * Represents a resource identifier in the format {@code namespace:path} or {@code key:namespace:path}.
  */
 public class Identifier {
-    /**
-     * Codec for serialization/deserialization of Identifier
-     */
-    public static final Codec<Identifier> CODEC = Codecs.STRING.xmap(Identifier::of, Identifier::toString);
-
     private final String key;
     private final String namespace;
     private final String path;

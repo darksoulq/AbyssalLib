@@ -14,8 +14,6 @@ import io.papermc.paper.potion.PotionMix;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.*;
 
-import java.util.function.Supplier;
-
 public class Registries {
     public static final Registry<Class<? extends DataComponent<?>>> DATA_COMPONENTS = new Registry<>();
     public static final Registry<Statistic> STATISTICS = new Registry<>();

@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("UnstableApiUsage")
 public class EnchantableComponent extends DataComponent<Integer> implements Vanilla {
-    private static final Codec<EnchantableComponent> CODEC = Codecs.INT.xmap(
+    public static final Codec<EnchantableComponent> CODEC = Codecs.INT.xmap(
             EnchantableComponent::new,
             EnchantableComponent::getValue
     );

@@ -191,7 +191,7 @@ public interface Codec<T> {
         return new Codec<>() {
             @Override
             public <D> Optional<T> decode(DynamicOps<D> ops, D input) throws CodecException {
-                if (input == null || ops.empty().equals(input)) return Optional.empty();
+                if (input == null || input.equals(ops.empty())) return Optional.empty();
                 return Optional.of(self.decode(ops, input));
             }
 

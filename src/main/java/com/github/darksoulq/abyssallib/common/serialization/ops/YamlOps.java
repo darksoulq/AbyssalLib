@@ -21,7 +21,7 @@ public class YamlOps extends DynamicOps<Object> {
     public static final YamlOps INSTANCE = new YamlOps();
 
     /** Internal SnakeYAML instance for parsing and dumping YAML. */
-    private final Yaml yaml = new Yaml();
+    private static final Yaml yaml = new Yaml();
 
     /** Private constructor to enforce singleton usage. */
     private YamlOps() {}
@@ -156,7 +156,7 @@ public class YamlOps extends DynamicOps<Object> {
      * @param obj the object to dump
      * @return YAML string representation
      */
-    public String dump(Object obj) {
+    public static String dump(Object obj) {
         return yaml.dump(obj);
     }
 

@@ -13,7 +13,7 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 public class ResistantDamage extends DataComponent<Key> implements Vanilla {
-    private static final Codec<ResistantDamage> CODEC = Codecs.KEY.xmap(
+    public static final Codec<ResistantDamage> CODEC = Codecs.KEY.xmap(
             ResistantDamage::new,
             ResistantDamage::getValue
     );

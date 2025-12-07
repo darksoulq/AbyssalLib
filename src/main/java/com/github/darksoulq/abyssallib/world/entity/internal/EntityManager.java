@@ -14,7 +14,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.*;
@@ -93,21 +92,7 @@ public class EntityManager {
         AbyssalLib.LOGGER.info("Loaded " + ENTITIES.size() + " entities");
     }
 
-    public static void start() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (World world : Bukkit.getWorlds()) {
-                    try {
-                        runSpawnCycle(world);
-                    } catch (CloneNotSupportedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        }.runTaskTimer(AbyssalLib.getInstance(), 20L * 5, 20L * 5);
-    }
-    private static void runSpawnCycle(World world) throws CloneNotSupportedException {
+    public static void runSpawnCycle(World world) throws CloneNotSupportedException {
         Collection<? extends Player> players = world.getPlayers();
         if (players.isEmpty()) return;
 
@@ -226,6 +211,7 @@ public class EntityManager {
                     rand.nextInt(3) - 1
             );
             entry.entity().clone().spawn(offset, EntitySpawnEvent.SpawnReason.NATURAL);
+            AbyssalLib.LOGGER.info("Spawned " + entry.entity().getId() + "at " + offset);
         }
     }
 }

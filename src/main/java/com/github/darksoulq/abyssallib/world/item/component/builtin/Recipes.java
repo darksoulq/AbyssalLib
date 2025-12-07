@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class Recipes extends DataComponent<List<Key>> implements Vanilla {
-    private static final Codec<Recipes> CODEC = Codecs.KEY.list().xmap(
+    public static final Codec<Recipes> CODEC = Codecs.KEY.list().xmap(
             Recipes::new,
             Recipes::getValue
     );

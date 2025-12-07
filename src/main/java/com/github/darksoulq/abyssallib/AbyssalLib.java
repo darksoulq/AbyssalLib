@@ -24,8 +24,8 @@ import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
-import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -51,6 +51,9 @@ public final class AbyssalLib extends JavaPlugin {
         HookConstants.load();
 
         ItemBridge.setup();
+        Components.DATA_COMPONENTS_VANILLA.apply();
+        Components.DATA_COMPONENTS.apply();
+        Items.ITEMS.apply();
 
         new BukkitRunnable() {
             @Override
@@ -64,9 +67,19 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
-        RecipeLoader.loadFolder(new File(getDataFolder(), "recipes"));
 
-        EntityManager.start();
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (World world : Bukkit.getWorlds()) {
+                    try {
+                        EntityManager.runSpawnCycle(world);
+                    } catch (CloneNotSupportedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }.runTaskTimer(this, 20L * 5, 20L * 5);
 
         EVENT_BUS = new EventBus(this);
 
@@ -89,10 +102,6 @@ public final class AbyssalLib extends JavaPlugin {
         if (CONFIG.metrics.get()) {
             new Metrics(this, 25772);
         }
-
-        Components.DATA_COMPONENTS_VANILLA.apply();
-        Components.DATA_COMPONENTS.apply();
-        Items.ITEMS.apply();
 
         ResourcePack rp = new ResourcePack(this, MODID);
         Namespace ns = rp.namespace("abyssallib");

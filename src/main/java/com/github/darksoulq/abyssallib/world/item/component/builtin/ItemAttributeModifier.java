@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.ItemAttributeModifiers;
 import org.bukkit.inventory.ItemStack;
 
 public class ItemAttributeModifier extends DataComponent<ItemAttributeModifiers> implements Vanilla {
-    private static final Codec<ItemAttributeModifier> CODEC = ExtraCodecs.ITEM_ATTRIBUTE_MODIFIERS.xmap(
+    public static final Codec<ItemAttributeModifier> CODEC = ExtraCodecs.ITEM_ATTRIBUTE_MODIFIERS.xmap(
             ItemAttributeModifier::new,
             ItemAttributeModifier::getValue
     );

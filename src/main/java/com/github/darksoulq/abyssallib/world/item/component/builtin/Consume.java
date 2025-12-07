@@ -10,7 +10,7 @@ import io.papermc.paper.datacomponent.item.Consumable;
 import org.bukkit.inventory.ItemStack;
 
 public class Consume extends DataComponent<Consumable> implements Vanilla {
-    private static final Codec<Consume> CODEC = ExtraCodecs.CONSUMABLE.xmap(
+    public static final Codec<Consume> CODEC = ExtraCodecs.CONSUMABLE.xmap(
             Consume::new,
             Consume::getValue
     );

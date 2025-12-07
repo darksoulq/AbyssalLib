@@ -120,6 +120,7 @@ public class RecipeLoader {
             Map<Object, Object> data = new LinkedHashMap<>(map);
             data.remove("type");
 
+
             RecipeHandler handler = HANDLERS.get(type);
             if (handler != null) {
                 handler.handle(data);
