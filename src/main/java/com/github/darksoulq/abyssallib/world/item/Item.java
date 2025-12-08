@@ -47,11 +47,11 @@ public class Item implements Cloneable {
     public Item(Identifier id, Material base) {
         this.id = id;
         stack = ItemStack.of(base);
+        Integer size = stack.getData(DataComponentTypes.MAX_STACK_SIZE);
         componentMap = new ComponentMap(this);
         for (Identifier cId : componentMap.getVanillaIds()) {
             componentMap.removeData(cId);
         }
-        Integer size = stack.getData(DataComponentTypes.MAX_STACK_SIZE);
         if (size != null) setData(new MaxStackSize(size));
         setData(new ItemName(Component.translatable("item." + id.getNamespace() + "." + id.getPath())));
         setData(new ItemModel(id.asNamespacedKey()));

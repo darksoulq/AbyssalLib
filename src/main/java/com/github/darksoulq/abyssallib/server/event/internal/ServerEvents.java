@@ -23,7 +23,6 @@ public class ServerEvents {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
                     MapLoader.load();
                     CommandBus.register(AbyssalLib.MODID, new InternalCommand());
                     BlockManager.load();

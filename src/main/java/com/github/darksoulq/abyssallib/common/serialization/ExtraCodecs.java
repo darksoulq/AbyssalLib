@@ -298,10 +298,10 @@ public class ExtraCodecs {
             ConsumeEffect::applyStatusEffects
     );
     public static Codec<ConsumeEffect.ClearAllStatusEffects> CONSUME_CLEAR_ALL_EFFECTS = Codec.of(o -> ConsumeEffect.clearAllStatusEffects(), null);
-    public static Codec<ConsumeEffect> CONSUME_EFFECT = Codec.either(
+    public static Codec<ConsumeEffect> CONSUME_EFFECT = Codec.fallback(
             CONSUME_APPLY_STATUS_EFFECTS,
-            Codec.either(CONSUME_PLAY_SOUND, Codec.either(CONSUME_TELEPORT_RANDOMLY,
-                    Codec.either(CONSUME_REMOVE_STATUS_EFFECTS, CONSUME_CLEAR_ALL_EFFECTS)))
+            Codec.fallback(CONSUME_PLAY_SOUND, Codec.fallback(CONSUME_TELEPORT_RANDOMLY,
+                    Codec.fallback(CONSUME_REMOVE_STATUS_EFFECTS, CONSUME_CLEAR_ALL_EFFECTS)))
     );
 
     public static Codec<SuspiciousEffectEntry> SUSPICIOUS_EFFECT_ENTRY = RecordCodecBuilder.create(
@@ -511,9 +511,5 @@ public class ExtraCodecs {
         DATA_COMPONENT_CODECS.put(DataComponentTypes.WEAPON.key().asString(), WeaponComponent.CODEC);
         DATA_COMPONENT_CODECS.put(DataComponentTypes.WRITABLE_BOOK_CONTENT.key().asString(), WritableBookContents.CODEC);
         DATA_COMPONENT_CODECS.put(DataComponentTypes.WRITTEN_BOOK_CONTENT.key().asString(), WrittenBookContents.CODEC);
-        DATA_COMPONENT_CODECS.put("abyssallib:marker", CustomMarker.CODEC);
-        DATA_COMPONENT_CODECS.put("abyssallib:energy_container", EnergyContainer.CODEC);
-        DATA_COMPONENT_CODECS.put("abyssallib:entity_spawner", EntitySpawner.CODEC);
-        DATA_COMPONENT_CODECS.put("abyssallib:block_item", BlockItem.CODEC);
     }
 }

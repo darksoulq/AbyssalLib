@@ -24,12 +24,19 @@ import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
+import java.util.List;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
@@ -67,6 +74,7 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
+        RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
 
         new BukkitRunnable() {
             @Override
@@ -120,6 +128,15 @@ public final class AbyssalLib extends JavaPlugin {
         lang.put("plugin.abyssallib", "AbyssalLib");
 
         rp.register(false);
+
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "tets"), ItemStack.of(Material.EGG));
+        recipe.shape(
+                "x  ",
+                "x  ",
+                "   "
+        );
+        recipe.setIngredient('x', new RecipeChoice.ExactChoice(List.of(ItemStack.of(Material.APPLE))));
+        Bukkit.addRecipe(recipe, true);
     }
 
     @Override

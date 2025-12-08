@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
@@ -129,7 +130,7 @@ public class Codecs {
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getOrThrow,
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getKeyOrThrow
     );
-    public static final Codec<ItemStack> ITEM_STACK = Codec.either(
+    public static final Codec<ItemStack> ITEM_STACK = Codec.fallback(
             RecordCodecBuilder.create(
                     STRING.fieldOf("id", ItemBridge::getIdAsString),
                     INT.optional().fieldOf("amount", i -> Optional.of(i.getAmount())),
@@ -148,17 +149,8 @@ public class Codecs {
                     }
             ),
             STRING.xmap(
-                    (s) -> {
-                        if (ItemBridge.hasProvider(s)) {
-                            throw new Codec.CodecException("Provider exists, Not Expected");
-                        }
-                        return ItemBridge.get(s);
-                    },
-                    (i) -> {
-                        if (ItemBridge.hasProvider(i))
-                            throw new Codec.CodecException("Provider exists, Not Expected.");
-                        return ItemBridge.asString(i);
-                    }
+                    ItemBridge::get,
+                    ItemBridge::getIdAsString
             )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()
@@ -166,8 +158,7 @@ public class Codecs {
     public static final Codec<RecipeChoice.MaterialChoice> MATERIAL_CHOICE = ITEM_STACK.list().xmap(
                         (list) -> new RecipeChoice.MaterialChoice(list.stream().map(ItemStack::getType).toList()),
                         (mats) -> mats.getChoices().stream().map(ItemStack::of).toList());
-    public static final Codec<RecipeChoice> RECIPE_CHOICE = Codec.either(EXACT_CHOICE, MATERIAL_CHOICE)
-                .xmap((o) -> o, (r) -> r);
+    public static final Codec<RecipeChoice> RECIPE_CHOICE = Codec.fallback(EXACT_CHOICE, MATERIAL_CHOICE);
 
     public static final Codec<ShapedRecipe> SHAPED_RECIPE = RecordCodecBuilder.create(
             NAMESPACED_KEY.fieldOf("id", ShapedRecipe::getKey),
@@ -181,7 +172,12 @@ public class Codecs {
              group, category) -> {
                 ShapedRecipe recipe = new ShapedRecipe(id, result);
                 recipe.shape(TextUtil.convertToArray(shape));
-                ing.forEach(recipe::setIngredient);
+                ing.forEach((c, r) -> {
+                    recipe.setIngredient(c, r);
+                    if (r instanceof RecipeChoice.ExactChoice exactChoice) {
+                        exactChoice.getChoices().forEach(i -> AbyssalLib.LOGGER.info(i.serialize().toString()));
+                    }
+                });
                 group.ifPresent(recipe::setGroup);
                 category.ifPresent(recipe::setCategory);
                 return recipe;
@@ -309,8 +305,6 @@ public class Codecs {
             RECIPE_CHOICE.fieldOf("input", PotionMix::getInput),
             RECIPE_CHOICE.fieldOf("ingredient", PotionMix::getIngredient),
             ITEM_STACK.fieldOf("result", PotionMix::getResult),
-            (id, input, ingredient, result) -> {
-                return new PotionMix(id, result, input, ingredient);
-            }
+            (id, input, ingredient, result) -> new PotionMix(id, result, input, ingredient)
     );
 }
