@@ -233,15 +233,11 @@ public class ItemEvents {
 
         if (inventory.getRecipe() == null) return;
         boolean isCustom = true;
-        for (Iterator<Recipe> it = Bukkit.recipeIterator(); it.hasNext(); ) {
-            Recipe recipe = it.next();
-            if (recipe instanceof Keyed keyed && "minecraft".equals(keyed.getKey().getNamespace())) {
-                isCustom = false;
-                break;
-            }
+        Recipe recipe = event.getRecipe();
+        if (recipe instanceof Keyed keyed && "minecraft".equals(keyed.getKey().getNamespace())) {
+            isCustom = false;
         }
         if (isCustom) return;
-
         for (ItemStack item : contents) {
             if (Item.resolve(item) != null) {
                 inventory.setResult(null);

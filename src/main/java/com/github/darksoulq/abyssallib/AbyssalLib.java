@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Metrics;
 import com.github.darksoulq.abyssallib.server.HookConstants;
+import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.data.Datapack;
@@ -58,6 +59,7 @@ public final class AbyssalLib extends JavaPlugin {
         HookConstants.load();
 
         ItemBridge.setup();
+        BlockBridge.setup();
         Components.DATA_COMPONENTS_VANILLA.apply();
         Components.DATA_COMPONENTS.apply();
         Items.ITEMS.apply();
@@ -128,15 +130,6 @@ public final class AbyssalLib extends JavaPlugin {
         lang.put("plugin.abyssallib", "AbyssalLib");
 
         rp.register(false);
-
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "tets"), ItemStack.of(Material.EGG));
-        recipe.shape(
-                "x  ",
-                "x  ",
-                "   "
-        );
-        recipe.setIngredient('x', new RecipeChoice.ExactChoice(List.of(ItemStack.of(Material.APPLE))));
-        Bukkit.addRecipe(recipe, true);
     }
 
     @Override

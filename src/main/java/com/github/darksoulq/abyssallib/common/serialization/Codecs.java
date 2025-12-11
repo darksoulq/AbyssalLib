@@ -172,12 +172,7 @@ public class Codecs {
              group, category) -> {
                 ShapedRecipe recipe = new ShapedRecipe(id, result);
                 recipe.shape(TextUtil.convertToArray(shape));
-                ing.forEach((c, r) -> {
-                    recipe.setIngredient(c, r);
-                    if (r instanceof RecipeChoice.ExactChoice exactChoice) {
-                        exactChoice.getChoices().forEach(i -> AbyssalLib.LOGGER.info(i.serialize().toString()));
-                    }
-                });
+                ing.forEach(recipe::setIngredient);
                 group.ifPresent(recipe::setGroup);
                 category.ifPresent(recipe::setCategory);
                 return recipe;

@@ -2,19 +2,19 @@ package com.github.darksoulq.abyssallib.server.bridge.block;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
-import com.nexomc.nexo.api.NexoBlocks;
+import dev.lone.itemsadder.api.CustomBlock;
 
 import java.util.Map;
 import java.util.Optional;
 
-public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
-    public NexoBlockProvider() {
-        super("nexo");
+public class ItemsAdderProvider extends Provider<BridgeBlock<?>> {
+    public ItemsAdderProvider() {
+        super("ia");
     }
 
     @Override
     public boolean belongs(BridgeBlock<?> value) {
-        return NexoBlocks.isCustomBlock(Identifier.of(value.id().getNamespace(), value.id().getPath()).toString());
+        return CustomBlock.isInRegistry(Identifier.of(value.id().getNamespace(), value.id().getPath()).toString());
     }
 
     @Override
@@ -24,13 +24,9 @@ public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
 
     @Override
     public BridgeBlock<?> get(Identifier id) {
-        if (NexoBlocks.isNexoNoteBlock(id.toString()))
-            return new BridgeBlock<>(id, getPrefix(), NexoBlocks.noteBlockMechanic(id.toString()));
-        if (NexoBlocks.isNexoStringBlock(id.toString()))
-            return new BridgeBlock<>(id, getPrefix(), NexoBlocks.stringMechanic(id.toString()));
-        if (NexoBlocks.isNexoChorusBlock(id.toString()))
-            return new BridgeBlock<>(id, getPrefix(), NexoBlocks.chorusBlockMechanic(id.toString()));
-        return null;
+        CustomBlock block = CustomBlock.getInstance(id.toString());
+        if (block == null) return null;
+        return new BridgeBlock<>(id, getPrefix(), block);
     }
 
     @Override

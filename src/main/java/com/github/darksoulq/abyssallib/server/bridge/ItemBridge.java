@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.item.AbyssalLibProvider;
+import com.github.darksoulq.abyssallib.server.bridge.item.ItemsAdderProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.MinecraftProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.NexoProvider;
 import org.bukkit.inventory.ItemStack;
@@ -20,6 +21,7 @@ public class ItemBridge {
         register(new MinecraftProvider());
         register(new AbyssalLibProvider());
         if (HookConstants.isEnabled(HookConstants.Plugin.NEXO)) register(new NexoProvider());
+        if (HookConstants.isEnabled(HookConstants.Plugin.IA)) register(new ItemsAdderProvider());
     }
 
     public static boolean hasProvider(String id) {

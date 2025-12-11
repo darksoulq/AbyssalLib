@@ -1,10 +1,8 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.block.AbyssalLibProvider;
-import com.github.darksoulq.abyssallib.server.bridge.block.BridgeBlock;
-import com.github.darksoulq.abyssallib.server.bridge.block.MinecraftProvider;
-import com.github.darksoulq.abyssallib.server.bridge.block.NexoBlockProvider;
+import com.github.darksoulq.abyssallib.server.HookConstants;
+import com.github.darksoulq.abyssallib.server.bridge.block.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +13,8 @@ public class BlockBridge {
     public static void setup() {
         register(new MinecraftProvider());
         register(new AbyssalLibProvider());
-        register(new NexoBlockProvider());
+        if (HookConstants.isEnabled(HookConstants.Plugin.NEXO)) register(new NexoBlockProvider());
+        if (HookConstants.isEnabled(HookConstants.Plugin.IA)) register(new ItemsAdderProvider());
     }
 
     public static boolean hasProvider(String id) {

@@ -35,13 +35,5 @@ public class ServerEvents {
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         }
-        if (e.getType() == ServerLoadEvent.LoadType.RELOAD){
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    RecipeLoader.reload();
-                }
-            }.runTaskLater(AbyssalLib.getInstance(), 10);
-        }
     }
 }
