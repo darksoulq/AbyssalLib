@@ -14,6 +14,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.*;
@@ -23,10 +24,22 @@ public class EntityManager {
     public static final Random rand = new Random();
 
     private static final Map<UUID, Entity<? extends LivingEntity>> ENTITIES = new HashMap<>();
-    private static final Database database = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(),
-            "entities.db"));
+    private static final Database database = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "entities.db"));
 
     public static void load() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (World world : Bukkit.getWorlds()) {
+                    try {
+                        EntityManager.runSpawnCycle(world);
+                    } catch (CloneNotSupportedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }.runTaskTimer(AbyssalLib.getInstance(), 20L * 5, 20L * 5);
+
         try {
             database.connect();
 
@@ -71,7 +84,7 @@ public class EntityManager {
         try {
             database.executor().table("entities").delete()
                     .where("entity_uuid = ?", uuid.toString())
-                    .update();
+                    .execute();
         } catch (Exception e) {
             AbyssalLib.getInstance().getLogger().warning("Failed to remove entity: " + e.getMessage());
         }
@@ -92,7 +105,7 @@ public class EntityManager {
         AbyssalLib.LOGGER.info("Loaded " + ENTITIES.size() + " entities");
     }
 
-    public static void runSpawnCycle(World world) throws CloneNotSupportedException {
+    private static void runSpawnCycle(World world) throws CloneNotSupportedException {
         Collection<? extends Player> players = world.getPlayers();
         if (players.isEmpty()) return;
 

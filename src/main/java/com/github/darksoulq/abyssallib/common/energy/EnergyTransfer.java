@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
  * Utility class for transferring energy between {@link EnergyMutator} instances.
  * Handles event firing and supports simulation mode.
  */
+@Deprecated(forRemoval = true)
 public final class EnergyTransfer {
     private EnergyTransfer() {
     }

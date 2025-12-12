@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;

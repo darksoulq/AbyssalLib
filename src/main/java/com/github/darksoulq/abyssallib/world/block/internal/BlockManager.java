@@ -13,6 +13,7 @@ import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,6 +42,14 @@ public class BlockManager {
      * Loads blocks from the database, initializes the database if necessary, and sets up Gson.
      */
     public static void load() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                int saved = BlockManager.save();
+                AbyssalLib.LOGGER.info("Saved " + saved + " blocks");
+            }
+        }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
+
         try {
             DATABASE = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
             DATABASE.connect();

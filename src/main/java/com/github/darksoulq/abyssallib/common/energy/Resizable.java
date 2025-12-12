@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.common.energy;
 /**
  * Allows an energy container's capacity to be changed dynamically.
  */
+@Deprecated(forRemoval = true)
 public interface Resizable {
 
     /**

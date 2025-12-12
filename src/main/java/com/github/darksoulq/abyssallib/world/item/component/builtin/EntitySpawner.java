@@ -13,6 +13,6 @@ public class EntitySpawner extends DataComponent<Identifier> {
     );
 
     public EntitySpawner(Identifier id) {
-        super(Identifier.of(AbyssalLib.MODID, "entity_spawner"), id, CODEC);
+        super(Identifier.of(AbyssalLib.PLUGIN_ID, "entity_spawner"), id, CODEC);
     }
 }

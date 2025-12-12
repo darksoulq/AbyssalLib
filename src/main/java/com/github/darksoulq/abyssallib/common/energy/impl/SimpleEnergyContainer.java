@@ -13,6 +13,7 @@ import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyChangeEv
  * A simple implementation of {@link EnergyContainer} with mutable energy and capacity.
  * Supports event firing when energy changes and can be serialized using {@link #CODEC}.
  */
+@Deprecated(forRemoval = true)
 public final class SimpleEnergyContainer implements EnergyContainer, Resizable {
 
     /**

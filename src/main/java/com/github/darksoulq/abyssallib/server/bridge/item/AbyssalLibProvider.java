@@ -3,16 +3,13 @@ package com.github.darksoulq.abyssallib.server.bridge.item;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
-import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
-import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
-import net.minecraft.nbt.CompoundTag;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Field;

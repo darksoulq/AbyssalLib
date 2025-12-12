@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+@Deprecated
 public class EnergyChangeEvent extends Event {
     private static final HandlerList HANDLERS = new HandlerList();
     private final EnergyContainer container;

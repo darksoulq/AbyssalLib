@@ -10,6 +10,7 @@ package com.github.darksoulq.abyssallib.common.energy;
  * </ul>
  * Useful for predicting outcomes of energy insertion, extraction, or transfer.
  */
+@Deprecated
 public enum Action {
     /** Execute the action and apply changes to the container. */
     EXECUTE,

@@ -15,6 +15,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -256,7 +257,7 @@ public class CustomBlock implements Cloneable {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CustomBlock block)) return false;
-        return Objects.equals(id, block.id);
+        return Objects.equals(id, block.id) && Objects.equals(location, block.location);
     }
 
     /**
@@ -342,7 +343,10 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when this block is hit by a projectile.
      *
-     * @param shooter the entity that shot the projectile
+     * @param projectile the entity projectile that hit the block
+     * @return Whether to cancel event
      */
-    public void onProjectileHit(Entity shooter) {}
+    public ActionResult onProjectileHit(Projectile projectile) {
+        return ActionResult.PASS;
+    }
 }

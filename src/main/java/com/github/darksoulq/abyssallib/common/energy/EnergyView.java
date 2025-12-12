@@ -4,6 +4,7 @@ package com.github.darksoulq.abyssallib.common.energy;
  * Represents a read-only view of an energy container.
  * Provides information about the current energy level and capacity.
  */
+@Deprecated(forRemoval = true)
 public interface EnergyView {
 
     /**

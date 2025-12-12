@@ -196,7 +196,7 @@ public class BlockEvents {
 
         CustomBlock block = CustomBlock.from(event.getHitBlock());
         if (block == null) return;
-        block.onProjectileHit(event.getEntity());
+        if (block.onProjectileHit(event.getEntity()) == ActionResult.CANCEL) event.setCancelled(true);
     }
 
     @SubscribeEvent(ignoreCancelled = false)

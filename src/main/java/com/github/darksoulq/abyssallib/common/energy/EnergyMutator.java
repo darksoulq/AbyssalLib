@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.common.energy;
 /**
  * Represents a modifiable energy container that supports insertion and extraction.
  */
+@Deprecated(forRemoval = true)
 public interface EnergyMutator extends EnergyView {
 
     /**

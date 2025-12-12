@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
@@ -10,11 +11,10 @@ import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
+import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import java.io.File;
 
 public class ServerEvents {
     @SubscribeEvent(ignoreCancelled = false)
@@ -24,10 +24,12 @@ public class ServerEvents {
                 @Override
                 public void run() {
                     MapLoader.load();
-                    CommandBus.register(AbyssalLib.MODID, new InternalCommand());
+                    CommandBus.register(AbyssalLib.PLUGIN_ID, new InternalCommand());
                     BlockManager.load();
+                    MultiblockManager.load();
                     EntityManager.load();
                     EntityManager.restoreEntities();
+                    EnergyNetwork.load();
                     EntityAttributes.init();
                     PlayerStatistics.init();
                     RecipeLoader.reload();

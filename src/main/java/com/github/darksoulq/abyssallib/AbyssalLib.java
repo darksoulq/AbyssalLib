@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
+import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Metrics;
 import com.github.darksoulq.abyssallib.server.HookConstants;
@@ -20,29 +21,20 @@ import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
-import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
+import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.RecipeChoice;
-import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
-import java.util.List;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
 
-    public static final String MODID = "abyssallib";
+    public static final String PLUGIN_ID = "abyssallib";
     private static AbyssalLib INSTANCE;
     public static Logger LOGGER;
 
@@ -64,32 +56,11 @@ public final class AbyssalLib extends JavaPlugin {
         Components.DATA_COMPONENTS.apply();
         Items.ITEMS.apply();
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                int saved = BlockManager.save();
-                getLogger().info("Saved " + saved + " blocks");
-            }
-        }.runTaskTimerAsynchronously(this, 20L * 60 * 2, 20L * 60 * 5);
-
         CONFIG = new PluginConfig();
         CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
         RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (World world : Bukkit.getWorlds()) {
-                    try {
-                        EntityManager.runSpawnCycle(world);
-                    } catch (CloneNotSupportedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        }.runTaskTimer(this, 20L * 5, 20L * 5);
 
         EVENT_BUS = new EventBus(this);
 
@@ -97,11 +68,13 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new PlayerEvents());
         EVENT_BUS.register(new EntityEvents());
         EVENT_BUS.register(new BlockEvents());
+        EVENT_BUS.register(new MultiblockEvents());
         EVENT_BUS.register(new ItemEvents());
         EVENT_BUS.register(new ServerEvents());
         EVENT_BUS.register(new GuiEvents());
 
         GuiManager.init(this);
+        EnergyNetwork.init();
 
         if (CONFIG.rp.enabled.get()) {
             EVENT_BUS.register(new PackEvent());
@@ -113,7 +86,7 @@ public final class AbyssalLib extends JavaPlugin {
             new Metrics(this, 25772);
         }
 
-        ResourcePack rp = new ResourcePack(this, MODID);
+        ResourcePack rp = new ResourcePack(this, PLUGIN_ID);
         Namespace ns = rp.namespace("abyssallib");
         ns.icon();
 
@@ -135,6 +108,8 @@ public final class AbyssalLib extends JavaPlugin {
     @Override
     public void onDisable() {
         BlockManager.save();
+        MultiblockManager.save();
+        EnergyNetwork.save();
         if (PACK_SERVER != null) {
             PACK_SERVER.stop();
         }
