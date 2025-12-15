@@ -5,8 +5,8 @@
 ### Creating Data Components
 ```Java
 public class MyComponent extends DataComponent<Float> {
-    private static final Codec<DataComponent<Float>> CODEC = Codecs.FLOAT.xmap(
-            MyComponent::new, (inst) -> inst.value
+    private static final Codec<MyComponent> CODEC = Codecs.FLOAT.xmap(
+            MyComponent::new, MyComponent::getValue
     );
 
     public CustomMarker(float value) {
@@ -22,14 +22,14 @@ This creates a custom component with the id `plugin_id:my_component` and its val
 public class MyComponents {
     public static final DeferredRegistry<DataComponent<?>> DATA_COMPONENTS = DeferredRegistry.create(Registries.DATA_COMPONENTS, "plugin_id");
     
-    public static Holder<DataComponent<?>> MY_COMPONENT = DATA_COMPONENTS.register("my_component", MyComponent.class);
+    public static Holder<DataComponent<?>> MY_COMPONENT = DATA_COMPONENTS.register("my_component", id -> MyComponent.class);
 }
 ```
 
 Lastly in your main class call DATA_COMPONENTS.apply() in onEnable:
 
 ```Java
-public void onEnable{} {
+public void onEnable() {
     MyComponents.DATA_COMPONENTS.apply();
 }
 ```

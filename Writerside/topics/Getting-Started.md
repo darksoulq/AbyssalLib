@@ -1,6 +1,6 @@
 # Getting Started
 <warning>
-AbyssalLib is in Development, not all features are fleshed out, there may be bugs and inconsistencies aswell as major changes in some parts (i WILL be notifying of changes beforehand on the discord)
+AbyssalLib is in Development, not all features are fleshed out, there may be bugs and inconsistencies aswell as major changes in some parts.
 </warning>
 
 AbyssalLib eases creation of content in minecraft plugins and is developed to provide as many useful features as possible (as well as provide easy ways to integrate with other plugins using AbyssalLib)

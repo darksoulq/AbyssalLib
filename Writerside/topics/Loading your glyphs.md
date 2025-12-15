@@ -34,8 +34,6 @@ public static Font.OffsetGlyph offset;
 public static void load(Plugin plugin) {
     ResourcePack pack = new ResourcePack(plugin, "plugin_id");
     Namespace ns = pack.namespace("plugin_id");
-
-    Texture texture = ns.texture("glyph/smiley_face");
         
     Font font = ns.font("glyphs");
     offset = font.offset(offset, unicode)
@@ -54,8 +52,6 @@ You can afterwards use the offset using `OffsetGlyph#toMiniMessageString` and `O
 public static void load(Plugin plugin) {
     ResourcePack pack = new ResourcePack(plugin, "plugin_id");
     Namespace ns = pack.namespace("plugin_id");
-
-    Texture texture = ns.texture("glyph/smiley_face");
         
     Font font = ns.font("my_ttf_font");
     font.ttf(file, xShift, yShift, size, oversample)
@@ -77,8 +73,6 @@ public static void load(Plugin plugin) {
     ResourcePack pack = new ResourcePack(plugin, "plugin_id");
     Namespace ns = pack.namespace("plugin_id");
 
-    Texture texture = ns.texture("glyph/smiley_face");
-        
     Font font = ns.font("my_font");
     font.unihex(unihexZipFile, overrides)
 
@@ -89,7 +83,7 @@ public static void load(Plugin plugin) {
 > - unihexZipFile is a File object of the zip containing the unihex
 > - overrides is a List&lt;UnihexFont.Overrides&gt; object
 
-`Font#unihex` does NOT return anything, it simple loads given font
+`Font#unihex` does NOT return anything, it simply loads given font
 </tab>
 <tab title="Multi-Bitmap">
 <code-block lang="Java">

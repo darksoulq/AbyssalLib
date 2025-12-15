@@ -24,7 +24,7 @@ public class MyResourcePack {
 > - Create a resourcepack/plugin_id/ folder inside your resources/ folder, this is where assets are loaded from.
 
 ### Loading your first texture:
-There are two ways to load textures: load using a file inside your resources folder. OR; load using byte data.
+There are two ways to load textures: load using a file inside your `resources` folder. OR; load using byte data.
 
 ```java
 public class MyResourcePack {
@@ -45,6 +45,6 @@ public class MyResourcePack {
 
 > - The texture is loaded from `resources/resourcepack/plugin_id/textures/item/iron_sword.png` and saved properly.
 > - In case where you provide the byte[] data, you need not have the texture in resources/
-> - In some cases you might not want to store the texture in static vars (well mostly), as you normally would just have l=to load and forget.
+> - In some cases you might not want to store the texture in static vars (well mostly), as you normally would just have to load and forget.
 
 Next sections will cover Glyphs (font files), Lang, and Item Definitions

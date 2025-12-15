@@ -31,8 +31,11 @@
             <toc-element topic="Creating-a-simple-GUI.md"/>
             <toc-element topic="Extending-GuiElement-and-GuiLayer.md"/>
         </toc-element>
-        <toc-element toc-title="Blocks"/>
-        <toc-element toc-title="Multiblocks"/>
+        <toc-element toc-title="Blocks">
+            <toc-element topic="Creating-a-Block.md"/>
+            <toc-element topic="Extending-BlockEntity-for-Custom-Data.md"/>
+        </toc-element>
+        <toc-element topic="Multiblock.md"/>
         <toc-element toc-title="Entities"/>
         <toc-element topic="Statistics.md"/>
         <toc-element topic="dev.Configs.md"/>
