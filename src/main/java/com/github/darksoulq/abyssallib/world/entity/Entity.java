@@ -1,13 +1,11 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.PDCTag;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntitySpawnEvent;
-import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.entity.internal.NMSGoalHandler;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
@@ -15,19 +13,18 @@ import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import io.papermc.paper.datacomponent.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.component.CustomData;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.block.Biome;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -38,14 +35,13 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     private Identifier id;
     private Class<T> baseClass;
     private SpawnCategory category;
+    private SpawnSettings spawnSettings;
 
     private final Map<Integer, Function<T, Goal>> pathfinderGoals = new LinkedHashMap<>();
     private final Map<Integer, Function<T, Goal>> targetGoals = new LinkedHashMap<>();
     private final Map<Attribute, Double> attributes = new LinkedHashMap<>();
     private ComponentMap componentMap;
     private final Map<Attribute, List<AttributeModifier>> modifiers = new LinkedHashMap<>();
-    private final List<BiPredicate<World, Location>> spawnConditions = new ArrayList<>();
-    private static final Map<Biome, List<SpawnEntry>> spawnTable = new HashMap<>();
 
     public Entity(Identifier id, Class<T> baseClass, SpawnCategory category) {
         this.id = id;
@@ -60,18 +56,18 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         targetGoals.put(priority, goal);
     }
 
-    public void addSpawnCondition(BiPredicate<World, Location> cond) {
-        spawnConditions.add(cond);
-    }
-    public void addSpawnWeight(Biome biome, float weight, int minGroup, int maxGroup) {
-        spawnTable.computeIfAbsent(biome, k -> new ArrayList<>()).add(new SpawnEntry(id, weight, minGroup, maxGroup));
-    }
-
     public void setAttribute(Attribute attribute, double value) {
         attributes.put(attribute, value);
     }
     public void addAttributeModifier(Attribute attribute, AttributeModifier modifier) {
         modifiers.computeIfAbsent(attribute, k -> new ArrayList<>()).add(modifier);
+    }
+
+    public void setSpawnSettings(SpawnSettings settings) {
+        this.spawnSettings = settings;
+    }
+    public @Nullable SpawnSettings getSpawnSettings() {
+        return spawnSettings;
     }
 
     public void spawn(Location loc) {
@@ -93,7 +89,6 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         applyAttributes();
         applyComponents();
 
-        AbyssalLib.LOGGER.info("Entity spawned at " + loc);
         EntityManager.add(this);
     }
     public void spawn(T entity) {
@@ -122,7 +117,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     public DataComponent<?> getData(DataComponentType type) {
         return componentMap.getData(type);
     }
-    public <T extends DataComponent<?>> DataComponent<?> getData(Class<T> clazz) {
+    public <D extends DataComponent<?>> DataComponent<?> getData(Class<D> clazz) {
         return clazz.cast(componentMap.getData(clazz));
     }
     public boolean hasData(Identifier id) {
@@ -137,7 +132,7 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     public void unsetData(Class<? extends DataComponent> clazz) {
         componentMap.removeData(clazz);
     }
-    public <T extends DataComponent<?>> boolean hasData(Class<T> clazz) {
+    public <D extends DataComponent<?>> boolean hasData(Class<D> clazz) {
         return componentMap.hasData(clazz);
     }
 
@@ -226,10 +221,6 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         return category;
     }
 
-    public List<BiPredicate<World, Location>> getSpawnConditions() {
-        return spawnConditions;
-    }
-
     public void onSpawn() {}
     public ActionResult onDeath(EntityDeathEvent event) { return ActionResult.PASS; }
     public void onUnload() {}
@@ -238,29 +229,6 @@ public class Entity<T extends LivingEntity> implements Cloneable {
     public static Entity<? extends LivingEntity> resolve(org.bukkit.entity.Entity entity) {
         return EntityManager.get(entity.getUniqueId());
     }
-    public static EntityEntry getWeighedSpawnEntry(Biome biome, SpawnCategory category) {
-        Map<SpawnEntry, Entity<? extends LivingEntity>> entities = new HashMap<>();
-        List<SpawnEntry> entries = spawnTable.get(biome);
-        if (entries == null) return null;
-        entries.forEach(se -> {
-            Entity<? extends LivingEntity> entity = Registries.ENTITIES.get(se.id.toString());
-            if (entity == null) return;
-            if (!entity.category.equals(category)) return;
-            entities.put(se, entity);
-        });
-        if (entities.isEmpty()) return null;
-
-        double totalWeight = entities.keySet().stream().mapToDouble(e -> e.weight).sum();
-        double r = EntityManager.rand.nextDouble(totalWeight);
-        double running = 0;
-
-        for (SpawnEntry entry : entities.keySet()) {
-            running += entry.weight;
-            if (r < running) return new EntityEntry(entry, entities.get(entry));
-        }
-        return null;
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public Entity<T> clone() {
@@ -270,10 +238,11 @@ public class Entity<T extends LivingEntity> implements Cloneable {
             copy.id = id;
             copy.baseClass = baseClass;
             copy.category = category;
+            copy.spawnSettings = spawnSettings;
+
             this.pathfinderGoals.forEach(copy::addGoal);
             this.targetGoals.forEach(copy::addTargetGoal);
             this.attributes.forEach(copy::setAttribute);
-            copy.spawnConditions.addAll(this.spawnConditions);
 
             this.modifiers.forEach((attr, list) ->
                     list.forEach(mod -> copy.addAttributeModifier(attr, mod))
@@ -284,6 +253,81 @@ public class Entity<T extends LivingEntity> implements Cloneable {
         }
     }
 
-    public record SpawnEntry(Identifier id, float weight, int minGroup, int maxGroup) {}
-    public record EntityEntry(SpawnEntry entry, Entity<? extends LivingEntity> entity) {}
+    public static class SpawnSettings {
+        public int weight;
+        public int minPack;
+        public int maxPack;
+        public int minY = ServerLevel.MIN_ENTITY_SPAWN_Y;
+        public int maxY = ServerLevel.MAX_ENTITY_SPAWN_Y;
+        public int minLight = 0;
+        public int maxLight = 15;
+        public boolean requireSkyDarkness;
+        public boolean requireSkyAccess;
+        public SpawnPlacement placement;
+        public HeightMap heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES;
+        public Set<NamespacedKey> biomes = new HashSet<>();
+        public BiPredicate<World, Location> canSpawn;
+
+        private SpawnSettings(int weight, int minPack, int maxPack, SpawnPlacement placement) {
+            this.weight = Math.max(0, weight);
+            this.minPack = Math.max(1, minPack);
+            this.maxPack = Math.max(this.minPack, maxPack);
+            this.placement = placement;
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder {
+            private int weight = 1;
+            private int minPack = 1;
+            private int maxPack = 1;
+            private int minY = ServerLevel.MIN_ENTITY_SPAWN_Y;
+            private int maxY = ServerLevel.MAX_ENTITY_SPAWN_Y;
+            private int minLight = 0;
+            private int maxLight = 15;
+            private boolean requireSkyDarkness;
+            private boolean requireSkyAccess;
+            private SpawnPlacement placement = SpawnPlacement.ON_GROUND;
+            private HeightMap heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES;
+            private final Set<NamespacedKey> biomes = new HashSet<>();
+            private BiPredicate<World, Location> canSpawn;
+
+            public Builder weight(int weight) { this.weight = weight; return this; }
+            public Builder pack(int min, int max) { this.minPack = min; this.maxPack = max; return this; }
+            public Builder placement(SpawnPlacement placement) { this.placement = placement; return this; }
+            public Builder heightRange(int minY, int maxY) { this.minY = minY; this.maxY = maxY; return this; }
+            public Builder heightMap(HeightMap map) { this.heightMap = map; return this; }
+            public Builder light(int min, int max) { this.minLight = min; this.maxLight = max; return this; }
+            public Builder nightOnly() { this.requireSkyDarkness = true; this.maxLight = Math.min(this.maxLight, 7); return this; }
+            public Builder requireSkyAccess() { this.requireSkyAccess = true; return this; }
+            public Builder biome(NamespacedKey biome) { this.biomes.add(biome); return this; }
+            public Builder biomes(Collection<NamespacedKey> biomes) { this.biomes.addAll(biomes); return this; }
+            public Builder canSpawn(BiPredicate<World, Location> predicate) { this.canSpawn = predicate; return this; }
+            public Builder groundMob() { this.placement = SpawnPlacement.ON_GROUND; this.heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES; return this; }
+            public Builder waterMob() { this.placement = SpawnPlacement.IN_WATER; this.heightMap = HeightMap.OCEAN_FLOOR; return this; }
+            public Builder lavaMob() { this.placement = SpawnPlacement.IN_LAVA; this.heightMap = HeightMap.MOTION_BLOCKING; return this; }
+
+            public SpawnSettings build() {
+                SpawnSettings s = new SpawnSettings(weight, minPack, maxPack, placement);
+                s.minY = minY;
+                s.maxY = maxY;
+                s.minLight = minLight;
+                s.maxLight = maxLight;
+                s.requireSkyDarkness = requireSkyDarkness;
+                s.requireSkyAccess = requireSkyAccess;
+                s.heightMap = heightMap;
+                s.biomes.addAll(biomes);
+                s.canSpawn = canSpawn;
+                return s;
+            }
+        }
+    }
+
+    public enum SpawnPlacement {
+        ON_GROUND,
+        IN_WATER,
+        IN_LAVA
+    }
 }

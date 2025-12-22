@@ -69,6 +69,10 @@ public class Gui {
         return title;
     }
 
+    public static Builder builder(MenuType type, Component title) {
+        return new Builder(type, title);
+    }
+
     public static class Builder {
         private final MenuType menuType;
         private final Component title;

@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.block.*;
+import com.github.darksoulq.abyssallib.server.util.HookConstants;
 
 import java.util.HashMap;
 import java.util.Map;

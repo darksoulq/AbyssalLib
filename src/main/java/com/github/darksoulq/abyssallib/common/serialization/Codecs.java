@@ -18,6 +18,8 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.recipe.CookingBookCategory;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -129,28 +131,44 @@ public class Codecs {
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getOrThrow,
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getKeyOrThrow
     );
+    @SuppressWarnings("unchecked")
     public static final Codec<ItemStack> ITEM_STACK = Codec.fallback(
-            RecordCodecBuilder.create(
-                    STRING.fieldOf("id", ItemBridge::getIdAsString),
-                    INT.optional().fieldOf("amount", i -> Optional.of(i.getAmount())),
-                    Codec.map(STRING, PASSTHROUGH.optional()).optional().fieldOf("data", i -> {
-                        Identifier id = ItemBridge.getId(i);
-                        if (id == null) return Optional.empty();
-                        ItemStack o = ItemBridge.get(id.toString());
-                        return i.equals(o) ? Optional.empty() : Optional.of(ItemBridge.serializeData(i));
-                    }),
-                    (itemId, amount, components) -> {
-                        ItemStack stack = ItemBridge.get(itemId);
-                        if (stack == null) throw new Codec.CodecException("Item ID not available in ItemBridge");
-                        amount.ifPresent(stack::setAmount);
-                        components.ifPresent(c -> ItemBridge.deserializeData(c, stack));
-                        return stack;
-                    }
-            ),
-            STRING.xmap(
-                    ItemBridge::get,
-                    ItemBridge::getIdAsString
-            )
+        new Codec<>() {
+            @Override
+            public <D> ItemStack decode(DynamicOps<D> ops, D input) throws CodecException {
+                if (ops.getMap(input).isEmpty()) throw new CodecException("Expected map");
+                Map<D, D> map = ops.getMap(input).get();
+                D itemIDKey = map.get(ops.createString("id"));
+                Optional<String> itemID = itemIDKey == null ? Optional.empty() : ops.getStringValue(itemIDKey);
+                D amountKey = map.get(ops.createString("amount"));
+                Optional<Integer> amount = amountKey == null ? Optional.empty() : ops.getIntValue(amountKey);
+                D dataKey = map.get(ops.createString("data"));
+                Optional<Map<String, Optional<D>>> data = (Optional<Map<String, Optional<D>>>) (dataKey == null ? Optional.empty() : ops.getMap(dataKey));
+                if (itemID.isEmpty()) throw new CodecException("Expected id string");
+                ItemStack stack = ItemBridge.get(itemID.get());
+                if (stack == null) throw new CodecException("ItemBridge does not contain ID " + itemID.get());
+                amount.ifPresent(stack::setAmount);
+                data.ifPresent(c -> ItemBridge.deserializeData(c, stack, ops));
+                return stack;
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, ItemStack value) throws CodecException {
+                Map<D, D> map = new LinkedHashMap<>();
+                map.put(ops.createString("id"), ops.createString(ItemBridge.getIdAsString(value)));
+                if (value.getAmount() > 1) map.put(ops.createString("amount"), ops.createInt(value.getAmount()));
+                Identifier id = ItemBridge.getId(value);
+                Map<String, Optional<Object>> data = ItemBridge.serializeData(value, ops);
+                if (id != null && !value.equals(ItemBridge.get(id)) && !data.isEmpty())
+                    map.put(ops.createString("data"), ops.createMap((Map<D, D>) data));
+                if (!map.containsKey(ops.createString("amount")) && !map.containsKey(ops.createString("data"))) throw new CodecException("Neither data nor amount is present");
+                return (D) map;
+            }
+        },
+        STRING.xmap(
+            ItemBridge::get,
+            ItemBridge::getIdAsString
+        )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()
             .xmap(RecipeChoice.ExactChoice::new, RecipeChoice.ExactChoice::getChoices);

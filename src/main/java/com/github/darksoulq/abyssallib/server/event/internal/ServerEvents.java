@@ -11,6 +11,7 @@ import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
+import com.github.darksoulq.abyssallib.world.entity.internal.NaturalSpawnRegistry;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.event.server.ServerLoadEvent;
@@ -34,6 +35,8 @@ public class ServerEvents {
                     PlayerStatistics.init();
                     RecipeLoader.reload();
                     TagLoader.loadTags();
+                    NaturalSpawnRegistry.load();
+                    AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         }

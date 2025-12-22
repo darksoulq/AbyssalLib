@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 
 import java.util.Map;
@@ -18,6 +19,6 @@ public abstract class Provider<T> {
     public abstract boolean belongs(T value);
     public abstract Identifier getId(T value);
     public abstract T get(Identifier id);
-    public abstract Map<String, Optional<Object>> serializeData(T value);
-    public abstract void deserializeData(Map<String, Optional<Object>> data, T value);
+    public abstract Map<String, Optional<Object>> serializeData(T value, DynamicOps<?> ops);
+    public abstract <D> void deserializeData(Map<String, Optional<D>> data, T value, DynamicOps<D> ops);
 }

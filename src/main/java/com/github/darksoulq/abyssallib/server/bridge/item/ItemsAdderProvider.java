@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.bridge.item;
 
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import dev.lone.itemsadder.api.CustomStack;
@@ -31,12 +32,12 @@ public class ItemsAdderProvider extends Provider<ItemStack> {
     }
 
     @Override
-    public Map<String, Optional<Object>> serializeData(ItemStack value) {
-        return new MinecraftProvider().serializeData(value);
+    public Map<String, Optional<Object>> serializeData(ItemStack value, DynamicOps<?> ops) {
+        return new MinecraftProvider().serializeData(value, ops);
     }
 
     @Override
-    public void deserializeData(Map<String, Optional<Object>> data, ItemStack value) {
-        new MinecraftProvider().deserializeData(data, value);
+    public <T> void deserializeData(Map<String, Optional<T>> data, ItemStack value, DynamicOps<T> ops) {
+        new MinecraftProvider().deserializeData(data, value, ops);
     }
 }

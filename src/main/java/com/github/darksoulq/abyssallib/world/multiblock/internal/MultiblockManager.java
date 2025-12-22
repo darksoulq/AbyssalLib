@@ -6,7 +6,9 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.Database;
 import com.github.darksoulq.abyssallib.common.database.impl.sqlite.SqliteDatabase;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.multiblock.Multiblock;
 import com.github.darksoulq.abyssallib.world.multiblock.MultiblockEntity;
 import com.github.darksoulq.abyssallib.world.multiblock.RelativeBlockPos;
@@ -112,16 +114,14 @@ public class MultiblockManager {
             MULTIBLOCKS.remove(locKey(abs));
         }
         ACTIVE_MULTIBLOCKS.remove(loc);
-        try {
+        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             DATABASE.executor().table("multiblocks").delete()
-                    .where("world = ?", loc.getWorld().getName())
-                    .where("x = ?", loc.getBlockX())
-                    .where("y = ?", loc.getBlockY())
-                    .where("z = ?", loc.getBlockZ())
-                    .execute();
-        } catch (Exception e) {
-            AbyssalLib.getInstance().getLogger().warning("Failed to remove multiblock: " + e.getMessage());
-        }
+                .where("world = ?", loc.getWorld().getName())
+                .where("x = ?", loc.getBlockX())
+                .where("y = ?", loc.getBlockY())
+                .where("z = ?", loc.getBlockZ())
+                .execute();
+        });
     }
 
     public static Multiblock getAt(Location loc) {
@@ -136,29 +136,27 @@ public class MultiblockManager {
     }
 
     public static void save(Multiblock mb) {
-        try {
+        Location loc = mb.getOrigin();
+        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             String data = "{}";
             MultiblockEntity ent = mb.getEntity();
             if (ent != null) {
                 ent.onSave();
-                JsonNode node = ent.serialize(JsonOps.INSTANCE);
+                JsonNode node = Try.get(() -> ent.serialize(JsonOps.INSTANCE), (JsonNode) null);
+                if (node == null) return;
                 data = node.toString();
             }
-            Location loc = mb.getOrigin();
             DATABASE.executor().table("multiblocks").insert()
-                    .value("world", loc.getWorld().getName())
-                    .value("x", loc.getBlockX())
-                    .value("y", loc.getBlockY())
-                    .value("z", loc.getBlockZ())
-                    .value("id", mb.getId().toString())
-                    .value("rotation", mb.getRotation())
-                    .value("mirror", mb.isMirrored() ? 1 : 0)
-                    .value("data", data)
-                    .execute();
-        } catch (Exception e) {
-            AbyssalLib.getInstance().getLogger().warning("Failed to save multiblock: " + e.getMessage());
-            e.printStackTrace();
-        }
+                .value("world", loc.getWorld().getName())
+                .value("x", loc.getBlockX())
+                .value("y", loc.getBlockY())
+                .value("z", loc.getBlockZ())
+                .value("id", mb.getId().toString())
+                .value("rotation", mb.getRotation())
+                .value("mirror", mb.isMirrored() ? 1 : 0)
+                .value("data", data)
+                .execute();
+        });
     }
 
     public static int save() {

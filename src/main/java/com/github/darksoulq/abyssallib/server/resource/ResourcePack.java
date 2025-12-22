@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.server.resource;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -12,15 +11,21 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
+import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemModel;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
+import net.kyori.adventure.resource.ResourcePackInfo;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,10 +38,7 @@ import java.util.zip.ZipOutputStream;
  * Output is written to a ZIP at {@code pluginFolder/pack/output.zip}.
  */
 public class ResourcePack {
-    /**
-     * A Resourcepack cache simply for use inside Glyph Book (TextureGlyphs)
-     */
-    public static final Map<String, ResourcePack> CACHED = new HashMap<>();
+    public static final Set<String> EXTERNAL_CACHE = new HashSet<>();
 
     /** Plugin that owns this pack. */
     private final Plugin plugin;
@@ -139,7 +141,6 @@ public class ResourcePack {
      * @param override whether to generate zip if it has been generated before
      */
     public void compile(boolean override) {
-        CACHED.put(pluginId, this);
         if (!override && outputFile.toFile().exists()) {
             HASH_MAP.put(pluginId, FileUtils.sha1(outputFile));
             for (Namespace ns : namespaces.values()) {
@@ -148,6 +149,7 @@ public class ResourcePack {
                     icon.setData(new ItemModel(NamespacedKey.fromString("apple")));
                 }
                 Registries.ITEMS.register(icon.getId().toString(), icon);
+                EventBus.post(new ResourcePackGenerateEvent(pluginId, outputFile.toFile()));
             }
             return;
         }
@@ -201,9 +203,8 @@ public class ResourcePack {
      */
     public void register(boolean override) {
         compile(override);
-        if (AbyssalLib.PACK_SERVER != null) {
-            AbyssalLib.PACK_SERVER.registerResourcePack(pluginId, outputFile);
-        } else if (HookConstants.isEnabled(HookConstants.Plugin.RSPM)) {
+        AbyssalLib.PACK_SERVER.registerResourcePack(pluginId, outputFile);
+        if (HookConstants.isEnabled(HookConstants.Plugin.RSPM)) {
             ResourcePackManagerAPI.registerLocalResourcePack(
                     plugin.getName(),
                     plugin.getName() + "/pack/resourcepack.zip",
@@ -216,8 +217,34 @@ public class ResourcePack {
     }
 
     public void unregister() {
-        if (AbyssalLib.PACK_SERVER != null) {
+        if (AbyssalLib.PACK_SERVER.isEnabled()) {
             AbyssalLib.PACK_SERVER.unregisterResourcePack(pluginId);
+        }
+    }
+
+    /**
+     * Resends pack to either a list of players or whole server depending on argument
+     * Resends to everyone if RSPM is being used instead of builtin server
+     * @param players The players to send to, or null if to whole server
+     */
+    public void resend(@Nullable List<Player> players) {
+        if (!HASH_MAP.containsKey(pluginId) || !UUID_MAP.containsKey(pluginId)) return;
+        if (AbyssalLib.PACK_SERVER.isEnabled()) {
+            if (players != null) {
+                players.forEach(p -> {
+                    p.sendResourcePacks(ResourcePackInfo.resourcePackInfo()
+                        .id(UUID_MAP.get(pluginId))
+                        .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(pluginId)))
+                        .hash(HASH_MAP.get(pluginId)));
+                });
+            } else {
+                Bukkit.getServer().sendResourcePacks(ResourcePackInfo.resourcePackInfo()
+                    .id(UUID_MAP.get(pluginId))
+                    .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(pluginId)))
+                    .hash(HASH_MAP.get(pluginId)));
+            }
+        } else if (HookConstants.isEnabled(HookConstants.Plugin.RSPM)) {
+            ResourcePackManagerAPI.reloadResourcePack();
         }
     }
 

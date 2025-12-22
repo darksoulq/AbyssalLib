@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;
+import com.github.darksoulq.abyssallib.server.event.InventoryClickType;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -18,17 +19,14 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.text.Component;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.component.CustomData;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -62,8 +60,8 @@ public class Item implements Cloneable {
     public void updateTooltip() {
         setData(new Lore(ItemLore.lore(tooltip.lines)));
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
-                .hideTooltip(tooltip.hide)
-                .hiddenComponents(tooltip.hiddenComponents).build()));
+            .hideTooltip(tooltip.hide)
+            .hiddenComponents(tooltip.hiddenComponents).build()));
         if (tooltip.style != null) setData(new TooltipStyle(tooltip.style.asNamespacedKey()));
         else unsetData(TooltipStyle.class);
     }
@@ -112,8 +110,14 @@ public class Item implements Cloneable {
     public ActionResult onUseOn(UseContext ctx) {
         return  ActionResult.PASS;
     }
-    public void onUse(LivingEntity source, EquipmentSlot hand, ClickType type) {}
+    public ActionResult onUse(LivingEntity source, EquipmentSlot hand, ClickType type) {
+        return ActionResult.PASS;
+    }
+    public void onInventoryTick(Player player) {}
     public void onSlotChange(Player player, @Nullable Integer newSlot) {}
+    public ActionResult onClickInInventory(Player player, int slot, PlayerInventory inventory, InventoryClickType type) {
+        return ActionResult.PASS;
+    }
     public ActionResult onDrop(Player player) {
         return ActionResult.PASS;
     }
@@ -126,8 +130,7 @@ public class Item implements Cloneable {
     public ActionResult onAnvilPrepare(AnvilContext ctx) {
         return ActionResult.PASS;
     }
-    public void onCraftedBy(Player player) {
-    }
+    public void onCraftedBy(Player player) {}
 
     public Identifier getId() {
         return id;
@@ -140,29 +143,10 @@ public class Item implements Cloneable {
     }
 
     public CTag getCTag() {
-        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
-        CustomData dta = nms.get(DataComponents.CUSTOM_DATA);
-        if (dta == null) dta = CustomData.EMPTY;
-
-        CompoundTag tag = dta.copyTag();
-        if (tag.getCompound("CustomData").isPresent()) {
-            CompoundTag custom = tag.getCompound("CustomData").get();
-            return new CTag(custom);
-        } else {
-            tag.put("CustomData", new CompoundTag());
-            return new CTag(tag.getCompound("CustomData").get());
-        }
+        return CTag.getCTag(stack);
     }
     public void setCTag(CTag container) {
-        net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
-        CustomData data = nms.get(DataComponents.CUSTOM_DATA);
-        if (data == null) data = CustomData.EMPTY;
-        CompoundTag tag = data.copyTag();
-        tag.put("CustomData", container.toVanilla());
-        data = CustomData.of(tag);
-        nms.set(DataComponents.CUSTOM_DATA, data);
-        ItemStack updated = CraftItemStack.asBukkitCopy(nms);
-        stack.setItemMeta(updated.getItemMeta());
+        CTag.setCTag(container, stack);
     }
 
     public static Item resolve(ItemStack stack) {

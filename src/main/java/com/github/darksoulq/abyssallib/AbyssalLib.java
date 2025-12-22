@@ -4,7 +4,6 @@ import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Metrics;
-import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
@@ -19,12 +18,14 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
+import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
+import com.github.darksoulq.abyssallib.world.item.internal.ItemTicker;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -74,11 +75,12 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new GuiEvents());
 
         GuiManager.init(this);
+        ItemTicker.start();
         EnergyNetwork.init();
 
+        PACK_SERVER = new PackServer();
         if (CONFIG.rp.enabled.get()) {
             EVENT_BUS.register(new PackEvent());
-            PACK_SERVER = new PackServer();
             PACK_SERVER.start(CONFIG.rp.ip.get(), CONFIG.rp.port.get());
         }
 
@@ -110,7 +112,7 @@ public final class AbyssalLib extends JavaPlugin {
         BlockManager.save();
         MultiblockManager.save();
         EnergyNetwork.save();
-        if (PACK_SERVER != null) {
+        if (PACK_SERVER.isEnabled()) {
             PACK_SERVER.stop();
         }
     }
@@ -128,4 +130,5 @@ public final class AbyssalLib extends JavaPlugin {
         Selector.Model sel = new Selector.Model(model);
         ns.itemDefinition(name, sel, false);
     }
+
 }

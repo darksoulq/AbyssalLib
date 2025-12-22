@@ -4,9 +4,6 @@ import org.bukkit.event.block.Action;
 
 /**
  * Represents the type of click interaction performed by a player.
- * <p>
- * This enum is typically used to distinguish between left and right mouse clicks
- * in custom block or item interactions.
  */
 public enum ClickType {
 

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -11,13 +12,15 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.zip.ZipFile;
 
 public class PackServer {
-
     private String host;
     private int port;
     private HttpServer server;
     private final Map<String, Path> registeredPaths = new HashMap<>();
+    private boolean enabled = false;
 
     public void start(String host, int port) {
         try {
@@ -33,8 +36,8 @@ public class PackServer {
                     return;
                 }
 
-                String modid = parts[1];
-                Path file = registeredPaths.get(modid);
+                String pluginId = parts[1];
+                Path file = registeredPaths.get(pluginId);
                 if (file == null || !Files.exists(file)) {
                     exchange.sendResponseHeaders(404, -1);
                     return;
@@ -49,6 +52,7 @@ public class PackServer {
 
             server.setExecutor(null);
             server.start();
+            this.enabled = true;
             AbyssalLib.getInstance().getLogger().info("Hosting resource packs at http://" + host + ":" + port);
         } catch (IOException e) {
             AbyssalLib.getInstance().getLogger().severe("ResourcePackServer failed: " + e.getMessage());
@@ -56,8 +60,47 @@ public class PackServer {
         }
     }
 
+    public void loadThirdPartyPacks() {
+        int loaded = 0;
+        ResourcePack.EXTERNAL_CACHE.clear();
+        registeredPaths.keySet().removeIf(id -> id.startsWith("external_"));
+        ResourcePack.UUID_MAP.keySet().removeIf(id -> id.startsWith("external_"));
+        ResourcePack.HASH_MAP.keySet().removeIf(id -> id.startsWith("external_"));
+
+        for (String value : AbyssalLib.CONFIG.rp.externalPacks.get()) {
+            String packId = "external_" + loaded;
+            Path path = Path.of(value);
+            if (!Files.exists(path) || !Files.isRegularFile(path)) {
+                AbyssalLib.LOGGER.warning( String.format("Skipping external resource pack (not found or not a file): %s", value));
+                continue;
+            }
+            if (!value.toLowerCase().endsWith(".zip")) {
+                AbyssalLib.LOGGER.warning( String.format("Skipping external resource pack (not a zip): %s", value));
+                continue;
+            }
+            try (ZipFile ignored = new ZipFile(path.toFile())) {
+            } catch (Exception e) {
+                AbyssalLib.LOGGER.warning(String.format("Skipping external resource pack (invalid zip): %s", value));
+                continue;
+            }
+
+            String hash = FileUtils.sha1(path);
+            registeredPaths.put(packId, path);
+            ResourcePack.EXTERNAL_CACHE.add(packId);
+            ResourcePack.UUID_MAP.put(packId, UUID.randomUUID());
+            ResourcePack.HASH_MAP.put(packId, hash);
+            loaded++;
+        }
+        AbyssalLib.LOGGER.info(String.format("Loaded %d External Resource Packs", loaded));
+    }
+
+
     public void stop() {
         if (server != null) server.stop(0);
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public void registerResourcePack(String pluginid, Path resourcePackFile) {
@@ -69,11 +112,14 @@ public class PackServer {
         AbyssalLib.getInstance().getLogger().info("Unregistered resource pack for /" + pluginid + "/resourcepack.zip");
     }
 
-    public String getUrl(String modid) {
-        return "http://" + host + ":" + port + "/" + modid + "/resourcepack.zip";
+    public String getUrl(String pluginId) {
+        return "http://" + host + ":" + port + "/" + pluginId + "/resourcepack.zip";
+    }
+    public Path getPath(String pluginId) {
+        return registeredPaths.get(pluginId);
     }
 
-    public Set<String> registeredModIDs() {
+    public Set<String> registeredPluginIDs() {
         return registeredPaths.keySet();
     }
 }

@@ -1,5 +1,5 @@
 name: AbyssalLib
-version: '1.6.7-mc1.21.9'
+version: '1.6.8-mc1.21.9'
 main: com.github.darksoulq.abyssallib.AbyssalLib
 api-version: '1.21'
 authors: [ DarkSoul ]
@@ -17,3 +17,35 @@ dependencies:
     Nexo:
       required: false
       load: BEFORE
+
+permissions:
+  abyssallib.reload:
+    description: Allows reloading AbyssalLib commands
+    default: op
+
+  abyssallib.items.give:
+    description: Allows giving items to players
+    default: op
+  abyssallib.attributes.get:
+    description: Allows reading entity attributes
+    default: op
+  abyssallib.summon.use:
+    description: Allows summoning entities
+    default: op
+
+  abyssallib.statistics.view.self:
+    description: Allows viewing your own statistics
+    default: true
+  abyssallib.statistics.view.all:
+    description: Allows viewing all players' statistics
+    default: op
+  abyssallib.statistics.menu.self:
+    description: Allows opening your own statistics menu
+    default: true
+  abyssallib.statistics.menu.all:
+    description: Allows opening any player's statistics menu
+    default: op
+
+  abyssallib.content.items.view:
+    description: Allows opening the content items menu
+    default: true

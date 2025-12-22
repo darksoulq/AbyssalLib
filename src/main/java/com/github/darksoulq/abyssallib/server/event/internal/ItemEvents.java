@@ -3,17 +3,24 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 import com.destroystokyo.paper.event.inventory.PrepareResultEvent;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;
+import com.github.darksoulq.abyssallib.server.event.InventoryClickType;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
+import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.EntitySpawner;
+import com.github.darksoulq.abyssallib.world.item.internal.ItemTicker;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import io.papermc.paper.registry.PaperRegistries;
 import io.papermc.paper.registry.PaperRegistryAccess;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetDataPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -39,8 +46,7 @@ public class ItemEvents {
     private static final List<DamageType> RANGED_TYPES = new ArrayList<>();
 
     static {
-        Registry<DamageType> reg = PaperRegistryAccess.instance()
-                .getRegistry(PaperRegistries.registryFromNms(Registries.DAMAGE_TYPE));
+        Registry<DamageType> reg = PaperRegistryAccess.instance().getRegistry(PaperRegistries.registryFromNms(Registries.DAMAGE_TYPE));
         addMeleeDamageType(reg.get(DamageTypeKeys.MACE_SMASH));
         addMeleeDamageType(reg.get(DamageTypeKeys.MOB_ATTACK));
         addMeleeDamageType(reg.get(DamageTypeKeys.MOB_ATTACK_NO_AGGRO));
@@ -58,6 +64,26 @@ public class ItemEvents {
     }
     public static void addRangedDamageType(DamageType type) {
         RANGED_TYPES.add(type);
+    }
+
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onInventoryUpdate(PacketSendEvent event) {
+        if (event.getPacket() instanceof ClientboundContainerSetSlotPacket
+            || event.getPacket() instanceof ClientboundContainerSetContentPacket
+            || event.getPacket() instanceof ClientboundSetPlayerInventoryPacket
+            || event.getPlayer() instanceof ClientboundContainerSetDataPacket) return;
+        ItemTicker.update(event.getPlayer());
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        ItemTicker.update(event.getPlayer());
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        ItemTicker.remove(event.getPlayer());
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -86,10 +112,10 @@ public class ItemEvents {
                 ItemStack main = lSource.getEquipment().getItemInMainHand();
                 ItemStack off = lSource.getEquipment().getItemInOffHand();
                 if (main.hasData(DataComponentTypes.CHARGED_PROJECTILES) ||
-                        main.getType().equals(Material.BOW)) {
+                    main.getType().equals(Material.BOW)) {
                     item = Item.resolve(main);
                 } else if (off.hasData(DataComponentTypes.CHARGED_PROJECTILES) ||
-                        off.getType().equals(Material.BOW)) {
+                    off.getType().equals(Material.BOW)) {
                     item = Item.resolve(off);
                 }
             }
@@ -109,33 +135,41 @@ public class ItemEvents {
         ItemStack stack = event.getItem();
         Item item = Item.resolve(stack);
         if (item != null) {
-            if (block != null && (event.getAction() == Action.LEFT_CLICK_BLOCK ||
-                    event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+            if (block != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
                 UseContext ctx = new UseContext(
-                        player,
-                        block,
-                        event.getBlockFace(),
-                        null,
-                        ClickType.of(event.getAction()),
-                        event.getHand()
-                        );
-                ActionResult result = item.onUseOn(ctx);
-                if (result == ActionResult.CANCEL) {
+                    player,
+                    block,
+                    event.getBlockFace(),
+                    null,
+                    ClickType.of(event.getAction()),
+                    event.getHand()
+                );
+                if (item.onUseOn(ctx) == ActionResult.CANCEL) {
                     event.setCancelled(true);
+                    return;
                 }
                 if (item.hasData(EntitySpawner.class)) {
                     EntitySpawner spawner = (EntitySpawner) item.getData(EntitySpawner.class);
                     com.github.darksoulq.abyssallib.world.entity.Entity<?> entity =
-                            com.github.darksoulq.abyssallib.server.registry.Registries.ENTITIES.get(spawner.getValue().toString());
+                        com.github.darksoulq.abyssallib.server.registry.Registries.ENTITIES.get(spawner.getValue().toString());
                     if (entity == null) return;
                     Location loc = block.getLocation().clone().add(0, 1, 0);
                     entity.clone().spawn(loc);
                 }
             }
             if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
-                item.onUse(player, event.getHand(), ClickType.of(event.getAction()));
+                if (item.onUse(player, event.getHand(), ClickType.of(event.getAction())) == ActionResult.CANCEL)
+                    event.setCancelled(true);
             }
         }
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onClickInInventory(InventoryClickEvent event) {
+        if (!(event.getClickedInventory() instanceof PlayerInventory pInv)) return;
+        Item item = Item.resolve(event.getCurrentItem());
+        if (item == null) return;
+        if (item.onClickInInventory((Player) event.getWhoClicked(), event.getSlot(), pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -152,12 +186,12 @@ public class ItemEvents {
         Item item = Item.resolve(stack);
         if (item != null) {
             UseContext ctx = new UseContext(
-                    player,
-                    null,
-                    null,
-                    event.getRightClicked(),
-                    ClickType.RIGHT_CLICK,
-                    event.getHand()
+                player,
+                null,
+                null,
+                event.getRightClicked(),
+                ClickType.RIGHT_CLICK,
+                event.getHand()
             );
             ActionResult result = item.onUseOn(ctx);
             if (result == ActionResult.CANCEL) {
@@ -308,7 +342,8 @@ public class ItemEvents {
         InventoryView view = event.getView();
         if (view.getTopInventory().getType() != InventoryType.LOOM) return;
         ItemStack result = event.getResult();
-        if (result == null) return;;
+        if (result == null) return;
+        ;
         if (Item.resolve(result) != null) return;
 
         Inventory inv = view.getTopInventory();

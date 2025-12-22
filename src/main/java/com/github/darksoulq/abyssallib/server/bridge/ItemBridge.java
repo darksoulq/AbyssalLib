@@ -1,12 +1,13 @@
 package com.github.darksoulq.abyssallib.server.bridge;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.HookConstants;
 import com.github.darksoulq.abyssallib.server.bridge.item.AbyssalLibProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.ItemsAdderProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.MinecraftProvider;
 import com.github.darksoulq.abyssallib.server.bridge.item.NexoProvider;
+import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Base64;
@@ -28,11 +29,14 @@ public class ItemBridge {
         if (!Identifier.isValid2Part(id) && !Identifier.isValid3Part(id)) {
             return false;
         }
-        Identifier idd = Identifier.of(id);
-        return PROVIDERS.containsKey(idd.getKey() == null ? idd.getNamespace() : idd.getKey());
+        return hasProvider(Identifier.of(id));
+    }
+    public static boolean hasProvider(Identifier id) {
+        return PROVIDERS.containsKey(id.getKey() == null ? id.getNamespace() : id.getKey());
     }
     public static boolean hasProvider(ItemStack item) {
         for (Provider<ItemStack> prov : PROVIDERS.values()) {
+            if (prov instanceof MinecraftProvider) continue;
             if (prov.belongs(item.asOne())) return true;
         }
         return false;
@@ -45,7 +49,7 @@ public class ItemBridge {
         return ItemStack.deserializeBytes(Base64.getDecoder().decode(id));
     }
     public static ItemStack get(Identifier id) {
-        if (!PROVIDERS.containsKey(id.getKey()) && !PROVIDERS.containsKey(id.getNamespace())) {
+        if (!hasProvider(id)) {
             AbyssalLib.LOGGER.warning("No Provider Found for " + id);
             return null;
         }
@@ -56,38 +60,40 @@ public class ItemBridge {
     public static Identifier getId(ItemStack stack) {
         for (Map.Entry<String, Provider<ItemStack>> entry : PROVIDERS.entrySet()) {
             Provider<ItemStack> prov = entry.getValue();
+            if (prov instanceof MinecraftProvider) continue;
             if (!prov.belongs(stack.asOne())) continue;
             Identifier base = prov.getId(stack.asOne());
-            if (base == null) return null;
-            if (prov instanceof MinecraftProvider) return base;
+            if (base == null) return null;;
             return Identifier.of(entry.getKey(), base.getNamespace(), base.getPath());
         }
-        return null;
+        MinecraftProvider provider = (MinecraftProvider) PROVIDERS.get("minecraft");
+        if (!provider.belongs(stack.asOne())) return null;
+        return provider.getId(stack.asOne());
     }
     public static String getIdAsString(ItemStack stack) {
         Identifier id = getId(stack.asOne());
         if (id == null) return asString(stack.asOne());
         return id.toString();
     }
-    public static Map<String, Optional<Object>> serializeData(ItemStack stack) {
+    public static Map<String, Optional<Object>> serializeData(ItemStack stack, DynamicOps<?> ops) {
         Identifier id = getId(stack.asOne());
-        if (!hasProvider(stack.asOne()) || id == null) return PROVIDERS.get("minecraft").serializeData(stack);
+        if (!hasProvider(stack.asOne()) || id == null) return PROVIDERS.get("minecraft").serializeData(stack, ops);
         Provider<ItemStack> provider = PROVIDERS.get(id.getKey());
-        if (provider == null) return PROVIDERS.get("minecraft").serializeData(stack);
-        return provider.serializeData(stack);
+        if (provider == null) return PROVIDERS.get("minecraft").serializeData(stack, ops);
+        return provider.serializeData(stack, ops);
     }
-    public static void deserializeData(Map<String, Optional<Object>> data, ItemStack stack) {
+    public static <T> void deserializeData(Map<String, Optional<T>> data, ItemStack stack, DynamicOps<T> ops) {
         Identifier id = getId(stack);
         if (!hasProvider(stack) || id == null) {
-            PROVIDERS.get("minecraft").deserializeData(data, stack);
+            PROVIDERS.get("minecraft").deserializeData(data, stack, ops);
             return;
         }
         Provider<ItemStack> provider = PROVIDERS.get(id.getKey());
         if (provider == null) {
-            PROVIDERS.get("minecraft").deserializeData(data, stack);
+            PROVIDERS.get("minecraft").deserializeData(data, stack, ops);
             return;
         }
-        provider.deserializeData(data, stack);
+        provider.deserializeData(data, stack, ops);
     }
 
     public static String asString(ItemStack item) {

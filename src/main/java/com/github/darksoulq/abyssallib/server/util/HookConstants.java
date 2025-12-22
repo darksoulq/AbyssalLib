@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.server;
+package com.github.darksoulq.abyssallib.server.util;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import org.bukkit.Bukkit;

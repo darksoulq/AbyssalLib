@@ -1,5 +1,7 @@
 package com.github.darksoulq.abyssallib.common.config;
 
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -53,7 +55,21 @@ public class Config {
      * @return a {@link Value} wrapper for accessing and modifying the configuration
      */
     public <T> Value<T> value(String path, T defaultValue) {
-        Value<T> val = new Value<>(path, defaultValue);
+        Value<T> val = new Value<>(path, defaultValue, null);
+        if (!yaml.contains(path)) val.set(defaultValue);
+        return val;
+    }
+    /**
+     * Retrieves a typed value at the given path, initializing it with a default if not present and using the given codec for serialization.
+     *
+     * @param path         the configuration path
+     * @param defaultValue the default value if the path is missing
+     * @param codec the codec to use for this value
+     * @param <T>          the value type
+     * @return a {@link Value} wrapper for accessing and modifying the configuration
+     */
+    public <T> Value<T> value(String path, T defaultValue, Codec<T> codec) {
+        Value<T> val = new Value<>(path, defaultValue, codec);
         if (!yaml.contains(path)) val.set(defaultValue);
         return val;
     }
@@ -103,8 +119,7 @@ public class Config {
         List<String> newLines = new ArrayList<>();
         Deque<String> pathStack = new ArrayDeque<>();
 
-        for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i);
+        for (String line : lines) {
             String trimmed = line.trim();
 
             if (trimmed.startsWith("#") || !trimmed.contains(":")) {
@@ -166,6 +181,7 @@ public class Config {
 
         private final String path;
         private final T defaultValue;
+        private final Codec<T> codec;
 
         /**
          * Creates a new typed value wrapper.
@@ -173,9 +189,10 @@ public class Config {
          * @param path         the configuration path
          * @param defaultValue the default value if missing
          */
-        public Value(String path, T defaultValue) {
+        public Value(String path, T defaultValue, Codec<T> codec) {
             this.path = path;
             this.defaultValue = defaultValue;
+            this.codec = codec;
         }
 
         /**
@@ -185,7 +202,11 @@ public class Config {
          */
         @SuppressWarnings("unchecked")
         public T get() {
-            return (T) readRaw(yaml.get(path, defaultValue));
+            try {
+                return (T) readRaw(yaml.get(path, defaultValue));
+            } catch (Codec.CodecException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         /**
@@ -194,6 +215,14 @@ public class Config {
          * @param value the value to set
          */
         public void set(T value) {
+            if (codec != null) {
+                try {
+                    yaml.set(path, codec.encode(YamlOps.INSTANCE, value));
+                    return;
+                } catch (Codec.CodecException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             yaml.set(path, value);
         }
 
@@ -214,7 +243,7 @@ public class Config {
          * @param obj the object to convert
          * @return the converted raw object
          */
-        private Object readRaw(Object obj) {
+        private Object readRaw(Object obj) throws Codec.CodecException {
             if (obj instanceof ConfigurationSection section) {
                 Map<String, Object> map = new LinkedHashMap<>();
                 for (String key : section.getKeys(false)) {
@@ -228,6 +257,9 @@ public class Config {
                 }
                 return newList;
             } else {
+                if (codec != null) {
+                    codec.decode(YamlOps.INSTANCE, obj);
+                }
                 return obj;
             }
         }

@@ -4,6 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -110,6 +113,9 @@ public class CommandBus {
             for (LiteralArgumentBuilder<CommandSourceStack> alias : aliases) {
                 getDispatcher().register(alias);
             }
+            Bukkit.getOnlinePlayers().forEach(p ->
+                MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle())
+            );
         }
     }
 

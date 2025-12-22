@@ -1,9 +1,11 @@
 package com.github.darksoulq.abyssallib.world.item.component;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
+import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -129,7 +131,8 @@ public class ComponentMap {
         data.clear();
 
         for (Map.Entry<Identifier, DataComponent<?>> cmp : components.entrySet()) {
-            String encoded = encodeComponent(cmp.getValue(), StringOps.INSTANCE);
+            JsonNode json = encodeComponent(cmp.getValue(), JsonOps.INSTANCE);
+            String encoded = json.toString();
             data.set(cmp.getKey().toString(), encoded);
         }
         if (item != null) {
@@ -188,7 +191,7 @@ public class ComponentMap {
     public static Identifier getId(DataComponentType type) {
         return Identifier.of(type.key().asString());
     }
-    private static <T, D> D encodeComponent(DataComponent<T> component, DynamicOps<D> ops) {
+    public static <T, D> D encodeComponent(DataComponent<T> component, DynamicOps<D> ops) {
         try {
             return component.codec.encode(ops, component);
         } catch (Codec.CodecException e) {
@@ -206,13 +209,14 @@ public class ComponentMap {
             try {
                 Optional<String> encoded = tag.getString(cId);
                 if (encoded.isEmpty()) continue;
+                JsonNode json = new ObjectMapper().readTree(encoded.get());
 
                 Field codecField = cls.getDeclaredField("CODEC");
                 if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
                 codecField.setAccessible(true);
                 Codec<?> codec = (Codec<?>) codecField.get(null);
 
-                DataComponent<?> decoded = (DataComponent<?>) codec.decode(StringOps.INSTANCE, encoded.get());
+                DataComponent<?> decoded = (DataComponent<?>) codec.decode(JsonOps.INSTANCE, json);
                 if (decoded != null) components.put(decoded.getId(), decoded);
 
             } catch (NoSuchFieldException e) {

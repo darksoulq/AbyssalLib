@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.bridge.block;
 
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import com.nexomc.nexo.api.NexoBlocks;
@@ -34,10 +35,10 @@ public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
     }
 
     @Override
-    public Map<String, Optional<Object>> serializeData(BridgeBlock<?> value) {
+    public Map<String, Optional<Object>> serializeData(BridgeBlock<?> value, DynamicOps<?> ops) {
         return Map.of();
     }
 
     @Override
-    public void deserializeData(Map<String, Optional<Object>> data, BridgeBlock<?> value) {}
+    public <T> void deserializeData(Map<String, Optional<T>> data, BridgeBlock<?> value, DynamicOps<T> ops) {}
 }

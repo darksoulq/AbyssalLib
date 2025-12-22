@@ -2,8 +2,8 @@ package com.github.darksoulq.abyssallib.server.bridge.item;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
-import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.Provider;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -16,7 +16,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+
+import static com.github.darksoulq.abyssallib.world.item.component.ComponentMap.encodeComponent;
 
 public class AbyssalLibProvider extends Provider<ItemStack> {
     public AbyssalLibProvider() {
@@ -43,27 +46,37 @@ public class AbyssalLibProvider extends Provider<ItemStack> {
     }
 
     @Override
-    public Map<String, Optional<Object>> serializeData(ItemStack value) {
-        return new MinecraftProvider().serializeData(value);
+    public Map<String, Optional<Object>> serializeData(ItemStack value, DynamicOps<?> ops) {
+        Map<String, Optional<Object>> map = new HashMap<>();
+        Item item = Item.resolve(value);
+        Item base = Item.resolve(value);
+        if (item == null) return map;
+        for (DataComponent<?> component : item.getComponentMap().getAllComponents()) {
+            DataComponent<?> vComp = base.getData(component.getId());
+            if (vComp != null && Objects.equals(component.value, vComp.value)) continue;
+            Object encoded = encodeComponent(component, ops);
+            map.put(component.getId().toString(), Optional.ofNullable(encoded));
+        }
+        return map;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void deserializeData(Map<String, Optional<Object>> data, ItemStack value) {
-        Map<String, Optional<Object>> custom = new HashMap<>();
+    public <T> void deserializeData(Map<String, Optional<T>> data, ItemStack value, DynamicOps<T> ops) {
+        Map<String, Optional<T>> custom = new HashMap<>();
         Item item = Item.resolve(value);
         if (item == null) return;
-        for (Map.Entry<String, Optional<Object>> entry : data.entrySet()) {
+        for (Map.Entry<String, Optional<T>> entry : data.entrySet()) {
             if (!entry.getKey().startsWith("minecraft")) {
                 custom.put(entry.getKey(), entry.getValue());
                 continue;
             }
-            Optional<Object> optional = entry.getValue();
+            Optional<T> optional = entry.getValue();
             if (optional.isEmpty()) continue;
             Codec<Object> codec = (Codec<Object>) ExtraCodecs.DATA_COMPONENT_CODECS.get(entry.getKey());
             if (codec == null) continue;
             try {
-                Object decoded = codec.decode(YamlOps.INSTANCE, optional.get());
+                Object decoded = codec.decode(ops, optional.get());
                 if (decoded instanceof DataComponent<?> comp) {
                     item.setData(comp);
                 }
@@ -72,12 +85,12 @@ public class AbyssalLibProvider extends Provider<ItemStack> {
             }
         }
 
-        for (Map.Entry<String, Optional<Object>> entry : custom.entrySet()) {
+        for (Map.Entry<String, Optional<T>> entry : custom.entrySet()) {
             Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(entry.getKey());
             if (cls == null) continue;
 
             try {
-                Optional<Object> optional = entry.getValue();
+                Optional<T> optional = entry.getValue();
                 if (optional.isEmpty()) continue;
 
                 Field codecField = cls.getDeclaredField("CODEC");
@@ -85,7 +98,7 @@ public class AbyssalLibProvider extends Provider<ItemStack> {
                 codecField.setAccessible(true);
                 Codec<?> codec = (Codec<?>) codecField.get(null);
 
-                DataComponent<?> decoded = (DataComponent<?>) codec.decode(YamlOps.INSTANCE, optional.get());
+                DataComponent<?> decoded = (DataComponent<?>) codec.decode(ops, optional.get());
                 if (decoded != null) item.setData(decoded);
 
             } catch (NoSuchFieldException e) {

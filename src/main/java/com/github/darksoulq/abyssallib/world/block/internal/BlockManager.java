@@ -7,7 +7,9 @@ import com.github.darksoulq.abyssallib.common.database.Database;
 import com.github.darksoulq.abyssallib.common.database.impl.sqlite.SqliteDatabase;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.block.BlockEntity;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.Bukkit;
@@ -25,13 +27,11 @@ import java.util.Map;
  * Manages custom blocks including their registration, persistence, and loading from a database.
  */
 public class BlockManager {
-
     /**
      * Map storing blocks keyed by their location keys.
      */
     public static final Map<String, CustomBlock> BLOCKS = new HashMap<>();
     public static final List<Location> ACTIVE_BLOCKS = new ArrayList<>();
-    public static final List<Location> INACTIVE_BLOCKS = new ArrayList<>();
 
     /**
      * Database instance used for persisting blocks.
@@ -136,16 +136,14 @@ public class BlockManager {
     public static void remove(Location loc, CustomBlock block) {
         BLOCKS.remove(locKey(loc));
         ACTIVE_BLOCKS.remove(block.getLocation());
-        try {
+        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             DATABASE.executor().table("blocks").delete()
-                    .where("world = ?", loc.getWorld().getName())
-                    .where("x = ?", loc.getBlockX())
-                    .where("y = ?", loc.getBlockY())
-                    .where("z = ?", loc.getBlockZ())
-                    .execute();
-        } catch (Exception e) {
-            AbyssalLib.getInstance().getLogger().warning("Failed to remove block: " + e.getMessage());
-        }
+                .where("world = ?", loc.getWorld().getName())
+                .where("x = ?", loc.getBlockX())
+                .where("y = ?", loc.getBlockY())
+                .where("z = ?", loc.getBlockZ())
+                .execute();
+        });
     }
 
     /**
@@ -154,7 +152,7 @@ public class BlockManager {
      * @param block The block to save.
      */
     public static void save(CustomBlock block) {
-        try {
+        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             Location loc = block.getLocation();
             if (loc == null) return;
 
@@ -163,26 +161,22 @@ public class BlockManager {
 
             if (entity != null) {
                 entity.onSave();
-
-                JsonNode node = entity.serialize(JsonOps.INSTANCE);
+                JsonNode node = Try.get(() -> entity.serialize(JsonOps.INSTANCE), (JsonNode) null);
+                if (node == null) return;
                 json = node.toString();
             } else {
                 json = "{}";
             }
 
             DATABASE.executor().table("blocks").insert()
-                    .value("world", loc.getWorld().getName())
-                    .value("x", loc.getBlockX())
-                    .value("y", loc.getBlockY())
-                    .value("z", loc.getBlockZ())
-                    .value("block_id", block.getId().toString())
-                    .value("data", json)
-                    .execute();
-
-        } catch (Exception e) {
-            AbyssalLib.getInstance().getLogger().warning("Failed to save block: " + e.getMessage());
-            e.printStackTrace();
-        }
+                .value("world", loc.getWorld().getName())
+                .value("x", loc.getBlockX())
+                .value("y", loc.getBlockY())
+                .value("z", loc.getBlockZ())
+                .value("block_id", block.getId().toString())
+                .value("data", json)
+                .execute();
+        });
     }
 
 

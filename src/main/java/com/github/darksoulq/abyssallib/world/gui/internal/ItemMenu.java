@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.gui.internal;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
+import com.github.darksoulq.abyssallib.server.util.PermissionConstants;
 import com.github.darksoulq.abyssallib.world.gui.*;
 import com.github.darksoulq.abyssallib.world.gui.impl.GuiButton;
 import com.github.darksoulq.abyssallib.world.gui.impl.PaginatedElements;
@@ -39,9 +40,13 @@ public class ItemMenu {
                                 Collectors.counting()
                         ));
 
+        for (Map.Entry<String, Long> entry : namespaceCounts.entrySet()) {
+            String plugin = entry.getKey();
+            long count = entry.getValue();
 
-        for (String plugin : namespaceCounts.keySet()) {
-            Item icon = getPluginIcon(plugin, namespaceCounts.get(plugin));
+            if (count <= 1) continue;
+
+            Item icon = getPluginIcon(plugin, count - 1);
             if (icon == null) continue;
 
             elements.add(GuiButton.of(icon.getStack(), (view, click) -> {
@@ -65,7 +70,7 @@ public class ItemMenu {
             if (!str.startsWith(namespace)) continue;
             if (str.endsWith("plugin_icon")) continue;
             elements.add(GuiButton.of(Registries.ITEMS.get(str).getStack().asOne(), (view, click) -> {
-                if (!player.hasPermission("abyssallib.admin.give")) return;
+                if (!player.hasPermission(PermissionConstants.Items.GIVE)) return;
                 player.give(Registries.ITEMS.get(str).getStack().asOne());
             }));
         }
