@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.github.darksoulq'
-version = '1.6.8-mc1.21.9'
+version = '1.7.1-mc1.21.9'
 
 def targetJavaVersion = 21
 
@@ -58,7 +58,7 @@ dependencies {
     implementation('com.fasterxml.jackson.core:jackson-databind:2.17.0')
     implementation('com.fasterxml.jackson.core:jackson-core:2.17.0')
 
-    compileOnly('com.magmaguy:ResourcePackManager:1.5.0')
+    compileOnly('com.magmaguy:ResourcePackManager:1.7.1')
     compileOnly("com.nexomc:nexo:1.12.0-dev")
     compileOnly("dev.lone:api-itemsadder:4.0.10")
 }

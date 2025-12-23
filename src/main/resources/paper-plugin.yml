@@ -1,5 +1,5 @@
 name: AbyssalLib
-version: '1.6.8-mc1.21.9'
+version: '1.7.1-mc1.21.9'
 main: com.github.darksoulq.abyssallib.AbyssalLib
 api-version: '1.21'
 authors: [ DarkSoul ]
@@ -7,14 +7,15 @@ authors: [ DarkSoul ]
 bootstrapper: com.github.darksoulq.abyssallib.Bootstrap
 loader: com.github.darksoulq.abyssallib.Loader
 
-load: STARTUP
-
 dependencies:
   server:
     ResourcePackManager:
       required: false
       load: BEFORE
     Nexo:
+      required: false
+      load: BEFORE
+    ItemsAdder:
       required: false
       load: BEFORE
 

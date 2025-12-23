@@ -17,7 +17,7 @@ public class HookConstants {
             this.pluginName = name;
         }
     }
-    private static Map<Plugin, Boolean> PLUGIN_STATE = new HashMap<>();
+    private static final Map<Plugin, Boolean> PLUGIN_STATE = new HashMap<>();
 
     public static void load() {
         for (Plugin val : Plugin.values()) {

@@ -167,6 +167,12 @@ public class ItemEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onClickInInventory(InventoryClickEvent event) {
         if (!(event.getClickedInventory() instanceof PlayerInventory pInv)) return;
+        if (event.getClick().isKeyboardClick()) {
+            int hotbarSlot = event.getHotbarButton();
+            Item item = Item.resolve(event.getClickedInventory().getItem(hotbarSlot));
+            if (item != null
+                && item.onClickInInventory((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+        }
         Item item = Item.resolve(event.getCurrentItem());
         if (item == null) return;
         if (item.onClickInInventory((Player) event.getWhoClicked(), event.getSlot(), pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
