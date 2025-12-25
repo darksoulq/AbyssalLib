@@ -169,9 +169,11 @@ public class ItemEvents {
         if (!(event.getClickedInventory() instanceof PlayerInventory pInv)) return;
         if (event.getClick().isKeyboardClick()) {
             int hotbarSlot = event.getHotbarButton();
-            Item item = Item.resolve(event.getClickedInventory().getItem(hotbarSlot));
-            if (item != null
-                && item.onClickInInventory((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+            if (hotbarSlot >= 0 && hotbarSlot <= 8) {
+                Item item = Item.resolve(event.getClickedInventory().getItem(hotbarSlot));
+                if (item != null
+                        && item.onClickInInventory((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+            }
         }
         Item item = Item.resolve(event.getCurrentItem());
         if (item == null) return;
