@@ -54,9 +54,12 @@ public class Item implements Cloneable {
         setData(new ItemName(Component.translatable("item." + id.getNamespace() + "." + id.getPath())));
         setData(new ItemModel(id.asNamespacedKey()));
         setData(new CustomMarker(id));
+        createTooltip(tooltip, null);
+        updateTooltip();
     }
 
     public void createTooltip(Tooltip tooltip) {}
+    public void createTooltip(Tooltip tooltip, @Nullable Player player) {}
     public void updateTooltip() {
         setData(new Lore(ItemLore.lore(tooltip.lines)));
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
@@ -137,6 +140,13 @@ public class Item implements Cloneable {
     }
     public ItemStack getStack() {
         return stack;
+    }
+    public ItemStack getStack(@Nullable Player player) {
+        Item contextItem = this.clone();
+        contextItem.tooltip.lines.clear();
+        contextItem.createTooltip(contextItem.tooltip, player);
+        contextItem.updateTooltip();
+        return contextItem.getStack();
     }
     public ComponentMap getComponentMap() {
         return componentMap;
