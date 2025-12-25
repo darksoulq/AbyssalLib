@@ -34,7 +34,6 @@ import java.io.File;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
-
     public static final String PLUGIN_ID = "abyssallib";
     private static AbyssalLib INSTANCE;
     public static Logger LOGGER;

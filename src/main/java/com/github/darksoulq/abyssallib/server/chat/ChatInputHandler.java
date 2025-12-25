@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.chat;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
@@ -24,7 +25,7 @@ public class ChatInputHandler {
     /**
      * Map of player UUIDs to their pending chat input handlers.
      */
-    private static final Map<UUID, Consumer<String>> inputMap = new ConcurrentHashMap<>();
+    private static final Map<UUID, Consumer<String>> INPUT_MAP = new ConcurrentHashMap<>();
 
     /**
      * Prompts the player and captures their next chat message with a default prompt and no timeout.
@@ -33,8 +34,7 @@ public class ChatInputHandler {
      * @param inputHandler the function that handles their next message
      */
     public static void await(Player player, Consumer<String> inputHandler) {
-        registerAwait(player, inputHandler, MiniMessage.miniMessage()
-                .deserialize("<gray>[<bold>Abyssal</bold></gray>] Please type your input in chat."), -1);
+        registerAwait(player, inputHandler, MiniMessage.miniMessage().deserialize("<gray>[<bold>AbyssalLib</bold></gray>] Please type your input in chat."), -1);
     }
 
     /**
@@ -56,8 +56,7 @@ public class ChatInputHandler {
      * @param timeoutTicks number of ticks before the input expires; -1 for no timeout
      */
     public static void await(Player player, Consumer<String> inputHandler, long timeoutTicks) {
-        registerAwait(player, inputHandler, MiniMessage.miniMessage()
-                .deserialize("<gray>[<bold>Abyssal</bold></gray>] Please type your input in chat."), timeoutTicks);
+        registerAwait(player, inputHandler, MiniMessage.miniMessage().deserialize("<gray>[<bold>AbyssalLib</bold></gray>] Please type your input in chat."), timeoutTicks);
     }
 
     /**
@@ -79,7 +78,7 @@ public class ChatInputHandler {
      * @return true if there was an active input to cancel, false otherwise
      */
     public static boolean cancel(Player player) {
-        return inputMap.remove(player.getUniqueId()) != null;
+        return INPUT_MAP.remove(player.getUniqueId()) != null;
     }
 
     /**
@@ -87,22 +86,19 @@ public class ChatInputHandler {
      */
     private static void registerAwait(Player player, Consumer<String> inputHandler, Component prompt, long timeoutTicks) {
         UUID uuid = player.getUniqueId();
-        inputMap.put(uuid, inputHandler);
+        INPUT_MAP.put(uuid, inputHandler);
 
         if (prompt != null) {
             player.sendMessage(prompt);
         }
 
         if (timeoutTicks > 0) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    Consumer<String> removed = inputMap.remove(uuid);
-                    if (removed != null) {
-                        player.sendMessage("§7[§cTimeout§7] §fInput request expired.");
-                    }
+            TaskUtil.delayedTask(AbyssalLib.getInstance(), (int) timeoutTicks, () -> {
+                Consumer<String> removed = INPUT_MAP.remove(uuid);
+                if (removed != null) {
+                    player.sendMessage("§7[§cTimeout§7] §fInput request expired.");
                 }
-            }.runTaskLater(AbyssalLib.getInstance(), timeoutTicks);
+            });
         }
     }
 
@@ -112,7 +108,7 @@ public class ChatInputHandler {
     @SubscribeEvent(ignoreCancelled = false)
     public void onChat(AsyncPlayerChatEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
-        Consumer<String> handler = inputMap.remove(uuid);
+        Consumer<String> handler = INPUT_MAP.remove(uuid);
 
         if (handler != null) {
             event.setCancelled(true);

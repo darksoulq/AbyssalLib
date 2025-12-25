@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.github.darksoulq'
-version = '1.7.1-mc1.21.9'
+version = '1.7.2-mc1.21.9'
 
 def targetJavaVersion = 21
 
@@ -51,7 +51,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle('1.21.9-R0.1-SNAPSHOT')
 
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+    implementation('org.jetbrains.kotlin:kotlin-stdlib')
 
     implementation('org.xerial:sqlite-jdbc:3.44.1.0')
     implementation('org.apache.pdfbox:fontbox:3.0.5')

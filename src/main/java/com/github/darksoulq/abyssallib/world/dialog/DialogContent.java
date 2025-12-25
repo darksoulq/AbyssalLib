@@ -21,98 +21,97 @@ import java.util.List;
 public class DialogContent {
     // Inputs
     public static SingleOptionDialogInput single(String name, Component label, List<SingleOptionDialogInput.OptionEntry> entries) {
-        return DialogInput.singleOption(name, label, entries)
-                .build();
+        return DialogInput.singleOption(name, label, entries).build();
     }
     public static SingleOptionDialogInput single(String name, Component label, List<SingleOptionDialogInput.OptionEntry> entries, boolean labelVisible) {
         return DialogInput.singleOption(name, label, entries)
-                .labelVisible(labelVisible)
-                .build();
+            .labelVisible(labelVisible)
+            .build();
     }
     public static SingleOptionDialogInput single(String name, Component label, List<SingleOptionDialogInput.OptionEntry> entries, int width) {
         return DialogInput.singleOption(name, label, entries)
-                .width(width)
-                .build();
+            .width(width)
+            .build();
     }
     public static SingleOptionDialogInput single(String name, Component label, List<SingleOptionDialogInput.OptionEntry> entries, boolean labelVisible,
                                                  int width) {
         return DialogInput.singleOption(name, label, entries)
-                .labelVisible(labelVisible)
-                .width(width)
-                .build();
+            .labelVisible(labelVisible)
+            .width(width)
+            .build();
     }
 
     public static TextDialogInput text(String name, Component label) {
         return DialogInput.text(name, label)
-                .build();
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible) {
         return DialogInput.text(name, label)
-                .labelVisible(labelVisible)
-                .build();
+            .labelVisible(labelVisible)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, int width) {
         return DialogInput.text(name, label)
-                .labelVisible(labelVisible)
-                .width(width)
-                .build();
+            .labelVisible(labelVisible)
+            .width(width)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, String initial) {
         return DialogInput.text(name, label)
-                .initial(initial)
-                .build();
+            .initial(initial)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, String initial) {
         return DialogInput.text(name, label)
-                .initial(initial)
-                .labelVisible(labelVisible)
-                .build();
+            .initial(initial)
+            .labelVisible(labelVisible)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, int width, String initial) {
         return DialogInput.text(name, label)
-                .initial(initial)
-                .width(width)
-                .build();
+            .initial(initial)
+            .width(width)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, int width, String initial) {
         return DialogInput.text(name, label)
-                .initial(initial)
-                .labelVisible(labelVisible)
-                .width(width)
-                .build();
+            .initial(initial)
+            .labelVisible(labelVisible)
+            .width(width)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, int width, int maxLength) {
         return DialogInput.text(name, label)
-                .maxLength(maxLength)
-                .width(width)
-                .build();
+            .maxLength(maxLength)
+            .width(width)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, int width, int maxLength) {
         return DialogInput.text(name, label)
-                .labelVisible(labelVisible)
-                .maxLength(maxLength)
-                .width(width)
-                .build();
+            .labelVisible(labelVisible)
+            .maxLength(maxLength)
+            .width(width)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, int width, String initial, int maxLength) {
         return DialogInput.text(name, label)
-                .initial(initial)
-                .labelVisible(labelVisible)
-                .maxLength(maxLength)
-                .width(width)
-                .build();
+            .initial(initial)
+            .labelVisible(labelVisible)
+            .maxLength(maxLength)
+            .width(width)
+            .build();
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, int width, String initial, int maxLength, int height) {
         return text(name, label, labelVisible, width, initial, maxLength, null, height);
     }
     public static TextDialogInput text(String name, Component label, boolean labelVisible, int width, String initial, int maxLength, Integer maxLines, int height) {
         return DialogInput.text(name, label)
-                .initial(initial)
-                .labelVisible(labelVisible)
-                .maxLength(maxLength)
-                .multiline(TextDialogInput.MultilineOptions.create(maxLines, height))
-                .width(width)
-                .build();
+            .initial(initial)
+            .labelVisible(labelVisible)
+            .maxLength(maxLength)
+            .multiline(TextDialogInput.MultilineOptions.create(maxLines, height))
+            .width(width)
+            .build();
     }
 
     public static BooleanDialogInput bool(String name, Component label) {
@@ -126,59 +125,59 @@ public class DialogContent {
     }
     public static BooleanDialogInput bool(String name, Component label, String trueValue, String falseValue, boolean initial) {
         return DialogInput.bool(name, label)
-                .onFalse(falseValue)
-                .onTrue(trueValue)
-                .initial(initial)
-                .build();
+            .onFalse(falseValue)
+            .onTrue(trueValue)
+            .initial(initial)
+            .build();
     }
 
     public static NumberRangeDialogInput range(String name, Component label, float min, float max) {
         return DialogInput.numberRange(name, label, min, max)
-                .build();
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, int width, float min, float max) {
         return DialogInput.numberRange(name, label, min, max)
-                .width(width)
-                .build();
+            .width(width)
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, int width, float min, float max, float step) {
         return DialogInput.numberRange(name, label, min, max)
-                .step(step)
-                .width(width)
-                .build();
+            .step(step)
+            .width(width)
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, int width, float min, float max, float initial, float step) {
         return DialogInput.numberRange(name, label, min, max)
-                .initial(initial)
-                .step(step)
-                .width(width)
-                .build();
+            .initial(initial)
+            .step(step)
+            .width(width)
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, String labelFormat, float min, float max) {
         return DialogInput.numberRange(name, label, min, max)
-                .labelFormat(labelFormat)
-                .build();
+            .labelFormat(labelFormat)
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, String labelFormat, int width, float min, float max) {
         return DialogInput.numberRange(name, label, min, max)
-                .labelFormat(labelFormat)
-                .width(width)
-                .build();
+            .labelFormat(labelFormat)
+            .width(width)
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, String labelFormat, int width, float min, float max, float step) {
         return DialogInput.numberRange(name, label, min, max)
-                .step(step)
-                .labelFormat(labelFormat)
-                .width(width)
-                .build();
+            .step(step)
+            .labelFormat(labelFormat)
+            .width(width)
+            .build();
     }
     public static NumberRangeDialogInput range(String name, Component label, String labelFormat, int width, float min, float max, float initial, float step) {
         return DialogInput.numberRange(name, label, min, max)
-                .initial(initial)
-                .step(step)
-                .labelFormat(labelFormat)
-                .width(width)
-                .build();
+            .initial(initial)
+            .step(step)
+            .labelFormat(labelFormat)
+            .width(width)
+            .build();
     }
 
     public static ActionButton button (Component label, Key actionId) {
@@ -192,9 +191,9 @@ public class DialogContent {
     }
     public static ActionButton button (Component label, Component tooltip, Key actionId, BinaryTagHolder additions) {
         return ActionButton.builder(label)
-                .action(DialogAction.customClick(actionId, additions))
-                .tooltip(tooltip)
-                .build();
+            .action(DialogAction.customClick(actionId, additions))
+            .tooltip(tooltip)
+            .build();
     }
     public static ActionButton button (Component label, int width, Key actionId) {
         return button(label, null, width, actionId, null);
@@ -207,10 +206,10 @@ public class DialogContent {
     }
     public static ActionButton button (Component label, Component tooltip, int width, Key actionId, BinaryTagHolder additions) {
         return ActionButton.builder(label)
-                .action(DialogAction.customClick(actionId, additions))
-                .tooltip(tooltip)
-                .width(width)
-                .build();
+            .action(DialogAction.customClick(actionId, additions))
+            .tooltip(tooltip)
+            .width(width)
+            .build();
     }
     public static ActionButton button(Component label, DialogActionCallback action) {
         return button(label, null, action, Duration.ofHours(12), -1);
@@ -232,9 +231,9 @@ public class DialogContent {
     }
     public static ActionButton button(Component label, Component tooltip, DialogActionCallback action, TemporalAmount lifetime, int uses) {
         return ActionButton.builder(label)
-                .action(DialogAction.customClick(action, ClickCallback.Options.builder().uses(uses).lifetime(lifetime).build()))
-                .tooltip(tooltip)
-                .build();
+            .action(DialogAction.customClick(action, ClickCallback.Options.builder().uses(uses).lifetime(lifetime).build()))
+            .tooltip(tooltip)
+            .build();
     }
     public static ActionButton button(Component label, int width, DialogActionCallback action) {
         return button(label, null, width, action, Duration.ofHours(12), -1);
@@ -256,10 +255,10 @@ public class DialogContent {
     }
     public static ActionButton button(Component label, Component tooltip, int width, DialogActionCallback action, TemporalAmount lifetime, int uses) {
         return ActionButton.builder(label)
-                .action(DialogAction.customClick(action, ClickCallback.Options.builder().uses(uses).lifetime(lifetime).build()))
-                .tooltip(tooltip)
-                .width(width)
-                .build();
+            .action(DialogAction.customClick(action, ClickCallback.Options.builder().uses(uses).lifetime(lifetime).build()))
+            .tooltip(tooltip)
+            .width(width)
+            .build();
     }
 
     // Body
@@ -283,12 +282,12 @@ public class DialogContent {
     }
     public static ItemDialogBody item(ItemStack stack, PlainMessageDialogBody description, int width, int height, boolean showDeco, boolean showTooltips) {
         return DialogBody.item(stack)
-                .description(description)
-                .width(width)
-                .height(height)
-                .showDecorations(showDeco)
-                .showTooltip(showTooltips)
-                .build();
+            .description(description)
+            .width(width)
+            .height(height)
+            .showDecorations(showDeco)
+            .showTooltip(showTooltips)
+            .build();
     }
 
     public static PlainMessageDialogBody text(Component text) {
