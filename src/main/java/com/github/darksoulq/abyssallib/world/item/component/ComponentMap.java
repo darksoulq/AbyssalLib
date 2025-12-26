@@ -45,15 +45,15 @@ public class ComponentMap {
         if (this.entity != null) loadEntity();
     }
     public void loadItem() {
-        if (item == null || item.getStack() == null) return;
+        if (item == null || item.getRawStack() == null) return;
 
-        for (DataComponentType type : item.getStack().getDataTypes()) {
+        for (DataComponentType type : item.getRawStack().getDataTypes()) {
             Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(type.key().toString());
             if (cls == null) continue;
 
             try {
                 if (type instanceof DataComponentType.Valued<?> vl) {
-                    Object val = item.getStack().getData(vl);
+                    Object val = item.getRawStack().getData(vl);
                     if (val == null) continue;
                     Constructor<?> cons = Arrays.stream(cls.getConstructors())
                             .filter(c -> c.getParameterCount() == 1 &&
@@ -88,7 +88,7 @@ public class ComponentMap {
     public void removeData(Identifier id) {
         if (vanillaComponents.containsKey(id)) {
             Vanilla v = vanillaComponents.remove(id);
-            if (item != null) v.remove(item.getStack());
+            if (item != null) v.remove(item.getRawStack());
         }
         else if (components.containsKey(id)) {
             removeComponent(components.get(id));
@@ -101,7 +101,7 @@ public class ComponentMap {
         for (Vanilla v : vanillaComponents.values()) {
             if (clazz.isInstance(v)) {
                 vanillaComponents.remove(((DataComponent<?>) v).getId());
-                if (item != null) v.remove(item.getStack());
+                if (item != null) v.remove(item.getRawStack());
             }
         }
     }
@@ -137,7 +137,7 @@ public class ComponentMap {
         }
         if (item != null) {
             for (Vanilla v : vanillaComponents.values()) {
-                v.apply(item.getStack());
+                v.apply(item.getRawStack());
             }
         }
         rootTag.put("CustomComponents", data.toVanilla());

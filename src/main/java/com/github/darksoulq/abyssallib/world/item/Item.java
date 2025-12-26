@@ -57,6 +57,9 @@ public class Item implements Cloneable {
     }
 
     public void createTooltip(Tooltip tooltip) {}
+    public void createTooltip(Tooltip tooltip, @Nullable Player player) {
+        createTooltip(tooltip);
+    }
     public void updateTooltip() {
         setData(new Lore(ItemLore.lore(tooltip.lines)));
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
@@ -135,8 +138,18 @@ public class Item implements Cloneable {
     public Identifier getId() {
         return id;
     }
-    public ItemStack getStack() {
+    public ItemStack getRawStack() {
         return stack;
+    }
+    public ItemStack getStack() {
+        return getStack(null);
+    }
+    public ItemStack getStack(@Nullable Player player) {
+        Item contextItem = this.clone();
+        contextItem.tooltip.lines.clear();
+        contextItem.createTooltip(contextItem.tooltip, player);
+        contextItem.updateTooltip();
+        return contextItem.getRawStack();
     }
     public ComponentMap getComponentMap() {
         return componentMap;
