@@ -169,7 +169,7 @@ public class ItemEvents {
         if (!(event.getClickedInventory() instanceof PlayerInventory pInv)) return;
         if (event.getClick().isKeyboardClick()) {
             int hotbarSlot = event.getHotbarButton();
-            if (hotbarSlot >= 0 && hotbarSlot <= 8) {
+            if (hotbarSlot != -1) {
                 Item item = Item.resolve(event.getClickedInventory().getItem(hotbarSlot));
                 if (item != null
                         && item.onClickInInventory((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
