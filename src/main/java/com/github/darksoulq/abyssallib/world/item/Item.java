@@ -138,18 +138,15 @@ public class Item implements Cloneable {
     public Identifier getId() {
         return id;
     }
-    public ItemStack getRawStack() {
-        return stack;
-    }
     public ItemStack getStack() {
-        return getStack(null);
+        return stack;
     }
     public ItemStack getStack(@Nullable Player player) {
         Item contextItem = this.clone();
         contextItem.tooltip.lines.clear();
         contextItem.createTooltip(contextItem.tooltip, player);
         contextItem.updateTooltip();
-        return contextItem.getRawStack();
+        return contextItem.getStack();
     }
     public ComponentMap getComponentMap() {
         return componentMap;

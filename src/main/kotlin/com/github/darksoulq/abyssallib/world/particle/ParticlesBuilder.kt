@@ -1,78 +1,102 @@
-package com.github.darksoulq.abyssallib.world.particle
-
+import com.github.darksoulq.abyssallib.world.particle.*
 import org.bukkit.Location
-import org.bukkit.Particle
-import org.bukkit.entity.Display
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
+import org.bukkit.util.Vector
 import java.util.function.BooleanSupplier
+import java.util.function.Supplier
 
 fun particles(block: ParticlesBuilder.() -> Unit): Particles {
-    val builder = ParticlesBuilder()
-    builder.block()
-    return builder.build()
+    val dsl = ParticlesBuilder()
+    dsl.block()
+    return dsl.build()
 }
 
+@DslMarker
+annotation class ParticlesDsl
+
+@ParticlesDsl
 class ParticlesBuilder {
-    var type: Particle? = null
-    var displayItem: ItemStack? = null
-    var origin: Location? = null
-    var emitter: ParticleEmitter? = null
-    var count: Int = 1
-    var offsetX: Double = 0.0
-    var offsetY: Double = 0.0
-    var offsetZ: Double = 0.0
-    var speed: Double = 0.0
-    var shape: Shape? = null
-    var scaleX: Float = 1f
-    var scaleY: Float = 1f
-    var scaleZ: Float = 1f
-    var billboard: Display.Billboard = Display.Billboard.HORIZONTAL
-    var xRotDeg: Float = 0f
-    var yRotDeg: Float = 0f
-    var zRotDeg: Float = 0f
-    var data: Any? = null
-    var interval: Long = 1
-    var duration: Long = -1
-    var cancelIf: BooleanSupplier? = null
-    var viewers: List<Player>? = null
-    var asyncShape: Boolean = false
 
-    fun scale(value: Float) {
-        scaleX = value
-        scaleY = value
-        scaleZ = value
+    private var origin: Supplier<Location>? = null
+    private var generator: Generator? = null
+    private var renderer: ParticleRenderer? = null
+    private val transformers = mutableListOf<Transformer>()
+    private var interval: Long = 1
+    private var duration: Long = -1
+    private var smoothen: Boolean = false
+    private var viewers: Supplier<List<Player>>? = null
+    private var cancelIf: BooleanSupplier? = null
+
+    fun origin(location: Location) {
+        origin = Supplier { location }
+    }
+    fun origin(block: () -> Location) {
+        origin = Supplier { block() }
     }
 
-    fun scale(x: Float, y: Float, z: Float) {
-        scaleX = x
-        scaleY = y
-        scaleZ = z
+    fun shape(generator: Generator) {
+        this.generator = generator
     }
 
-    fun viewers(vararg players: Player) {
-        viewers = players.toList()
+    fun render(renderer: ParticleRenderer) {
+        this.renderer = renderer
+    }
+
+    fun transform(block: (Vector, Long) -> Vector) {
+        transformers += Transformer { v, tick -> block(v, tick) }
+    }
+    fun rotate(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) =
+        transform { v, _ ->
+            v.rotateAroundX(x)
+                .rotateAroundY(y)
+                .rotateAroundZ(z)
+        }
+    fun scale(scale: Double) =
+        transform { v, _ -> v.multiply(scale) }
+    fun offset(x: Double, y: Double, z: Double) =
+        transform { v, _ -> v.add(Vector(x, y, z)) }
+
+    fun interval(ticks: Long) {
+        interval = ticks
+    }
+    fun duration(ticks: Long) {
+        duration = ticks
+    }
+    fun smooth(smooth: Boolean) {
+        smoothen = smooth
+    }
+
+
+    fun viewers(players: List<Player>) {
+        viewers = Supplier { players }
+    }
+    fun viewers(block: () -> List<Player>) {
+        viewers = Supplier { block() }
+    }
+    fun viewers(vararg players: Player) =
+        viewers(players.toList())
+
+    fun stopIf(block: () -> Boolean) {
+        cancelIf = BooleanSupplier { block() }
     }
 
     fun build(): Particles {
-        val builder = Particles.Builder()
-        type?.let { builder.particle(it) }
-        displayItem?.let { builder.display(it) }
-        origin?.let { builder.spawnAt(it) }
-        emitter?.let { builder.spawnAt(it) }
-        builder.count(count)
-            .offset(offsetX, offsetY, offsetZ)
-            .speed(speed)
-            .shape(shape)
-            .scale(scaleX, scaleY, scaleZ)
-            .billboard(billboard)
-            .rotation(xRotDeg, yRotDeg, zRotDeg)
-            .data(data)
+        val b = Particles.builder()
+        val o = origin ?: error("Particles origin not set")
+        val g = generator ?: error("Particles generator not set")
+        val r = renderer ?: error("Particles renderer not set")
+
+        b.origin(o)
+            .shape(g)
+            .render(r)
             .interval(interval)
             .duration(duration)
-            .asyncShape(asyncShape)
-        cancelIf?.let { builder.cancelIf(it) }
-        viewers?.let { builder.viewers(it) }
-        return builder.build()
+            .smooth(smoothen)
+
+        viewers?.let { b.viewers(it) }
+        cancelIf?.let { b.stopIf(it) }
+        transformers.forEach { b.transform(it) }
+
+        return b.build()
     }
 }

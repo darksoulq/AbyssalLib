@@ -9,7 +9,6 @@ import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.multiblock.Multiblock;
-import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
 import io.papermc.paper.potion.PotionMix;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.*;
@@ -22,9 +21,6 @@ public class Registries {
     public static final Registry<CustomBlock> BLOCKS = new Registry<>();
     public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>();
     public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>();
-
-    public static final Registry<RecipeChoice> RECIPE_CHOICES = new Registry<>();
-    public static final Registry<Class<? extends CustomRecipe>> RECIPE_TYPES = new Registry<>();
 
     public static final Registry<LootTable> LOOT_TABLES = new Registry<>();
     public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>();

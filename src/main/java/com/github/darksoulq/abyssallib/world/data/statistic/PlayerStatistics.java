@@ -3,7 +3,11 @@ package com.github.darksoulq.abyssallib.world.data.statistic;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.Database;
 import com.github.darksoulq.abyssallib.common.database.impl.sqlite.SqliteDatabase;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,9 +26,7 @@ public class PlayerStatistics {
     /** Cache of all loaded player statistics mapped by player UUID. */
     private static final Map<UUID, PlayerStatistics> CACHE = new ConcurrentHashMap<>();
     /** The database used to persist player statistics. */
-    private static Database DATABASE = new SqliteDatabase(
-            new File(AbyssalLib.getInstance().getDataFolder(), "player_statistics.db")
-    );
+    private static final Database DATABASE = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "player_statistics.db"));
 
     /** The UUID of the player this statistics object belongs to. */
     private final UUID uuid;
@@ -107,8 +109,8 @@ public class PlayerStatistics {
     }
 
     private void load() {
-        Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
-            var rows = DATABASE.executor().table("player_statistics")
+        Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> {
+            List<Map.Entry<String, String>> rows = DATABASE.executor().table("player_statistics")
                     .where("uuid = ?", uuid.toString())
                     .select(rs -> Map.entry(rs.getString("key"), rs.getString("value")));
 
@@ -127,27 +129,24 @@ public class PlayerStatistics {
                 }
 
                 Statistic template = Registries.STATISTICS.get(id.toString()).clone();
-                Object value = deserialize(entry.getValue(), template.getClass(), template.getValue());
+                Object value = Try.get(() -> Codec.oneOf(Codecs.INT, Codecs.FLOAT, Codecs.BOOLEAN).decode(StringOps.INSTANCE, entry.getValue()), template.getValue());
                 template.setValue(value);
                 temp.put(id, template);
             }
 
             stats.clear();
             stats.putAll(temp);
-        });
-    }
 
-    private <T> T deserialize(String value, Class<? extends Statistic> type, Object fallback) {
-        try {
-            if (Statistic.IntStatistic.class.isAssignableFrom(type))
-                return (T) Integer.valueOf(value);
-            if (Statistic.FloatStatistic.class.isAssignableFrom(type))
-                return (T) Float.valueOf(value);
-            if (Statistic.BooleanStatistic.class.isAssignableFrom(type))
-                return (T) Boolean.valueOf(value);
-        } catch (Exception ignored) {
-        }
-        return (T) fallback;
+            Registries.STATISTICS.getAll().forEach((key, template) -> {
+                Identifier id = Identifier.of(key);
+
+                if (!temp.containsKey(id)) {
+                    Statistic clone = template.clone();
+                    temp.put(id, clone);
+                    save(clone);
+                }
+            });
+        });
     }
 
     private static void initTable() {

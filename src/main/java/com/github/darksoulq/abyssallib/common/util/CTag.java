@@ -98,6 +98,15 @@ public class CTag {
     }
 
     /**
+     * Sets a {@code CTag} value for the given key
+     * @param key the key
+     * @param compound the value
+     */
+    public void set(String key, CTag compound) {
+        baseTag.put(key, compound.baseTag);
+    }
+
+    /**
      * Checks whether the given key exists in this tag.
      *
      * @param key the key
@@ -169,6 +178,19 @@ public class CTag {
      */
     public Optional<byte[]> getByteArray(String key) {
         return baseTag.getByteArray(key);
+    }
+
+    /**
+     * Gets the {@code CTag} value stored for the given key, if present
+     * @param key the key
+     * @return an {@link Optional} containing the CTag, or empty if not present
+     */
+    public Optional<CTag> getCompound(String key) {
+        CTag tag = null;
+        Optional<CompoundTag> compound = baseTag.getCompound(key);
+        if (compound.isEmpty()) return Optional.empty();
+        tag = new CTag(compound.get());
+        return Optional.of(tag);
     }
 
     public void clear() {

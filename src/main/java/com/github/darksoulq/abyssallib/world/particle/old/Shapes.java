@@ -1,12 +1,17 @@
-package com.github.darksoulq.abyssallib.world.particle;
+package com.github.darksoulq.abyssallib.world.particle.old;
 
+import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
+import com.github.darksoulq.abyssallib.world.particle.timeline.Timeline;
 import org.bukkit.Location;
 
 import java.util.List;
 import java.util.Random;
 
+/**
+ * @deprecated Use either {@link Generators} or {@link Timeline} for Animations
+ */
+@Deprecated(forRemoval = true, since = "v1.8.0-mc1.21.9")
 public final class Shapes {
-
     private static final Random RANDOM = new Random();
 
     private Shapes() {}

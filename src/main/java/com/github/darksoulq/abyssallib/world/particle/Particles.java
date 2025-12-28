@@ -1,106 +1,89 @@
 package com.github.darksoulq.abyssallib.world.particle;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.world.particle.style.MotionVector;
+import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.World;
-import org.bukkit.entity.Display;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Transformation;
-import org.joml.Quaternionf;
+import org.bukkit.util.Vector;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
-public final class Particles {
+public class Particles {
 
-    private static final Random RANDOM = new Random();
-
-    private final Particle type;
-    private final ItemStack displayItem;
-    private final Location origin;
-    private final ParticleEmitter emitter;
-    private final int count;
-    private final double offsetX, offsetY, offsetZ;
-    private final double speed;
-    private final Shape shape;
-    private final float scaleX, scaleY, scaleZ;
-    private final Display.Billboard billboard;
-    private final float xRotDeg, yRotDeg, zRotDeg;
-    private final Object data;
+    private final Supplier<Location> origin;
+    private final Generator generator;
+    private final ParticleRenderer renderer;
+    private final List<Transformer> transformers;
     private final long interval;
     private final long duration;
+    private final boolean smoothen;
+    private final Supplier<List<Player>> viewers;
     private final BooleanSupplier cancelIf;
-    private final List<Player> viewers;
-    private final boolean asyncShape;
-
-    private final Quaternionf precomputedRotation;
-    private final LocationPool locationPool = new LocationPool();
-    private final List<ItemDisplay> spawnedDisplays = new ArrayList<>();
 
     private BukkitTask task;
 
     private Particles(Builder b) {
-        this.type = b.type;
-        this.displayItem = b.displayItem;
         this.origin = b.origin;
-        this.emitter = b.emitter;
-        this.count = b.count;
-        this.offsetX = b.offsetX;
-        this.offsetY = b.offsetY;
-        this.offsetZ = b.offsetZ;
-        this.speed = b.speed;
-        this.shape = b.shape;
-        this.scaleX = b.scaleX;
-        this.scaleY = b.scaleY;
-        this.scaleZ = b.scaleZ;
-        this.billboard = b.billboard;
-        this.xRotDeg = b.xRotDeg;
-        this.yRotDeg = b.yRotDeg;
-        this.zRotDeg = b.zRotDeg;
-        this.data = b.data;
+        this.generator = b.generator;
+        this.renderer = b.renderer;
+        this.transformers = b.transformers;
         this.interval = b.interval;
         this.duration = b.duration;
-        this.cancelIf = b.cancelIf;
+        this.smoothen = b.smoothen;
         this.viewers = b.viewers;
-        this.asyncShape = b.asyncShape;
-        this.precomputedRotation = new Quaternionf()
-                .rotateX((float) Math.toRadians(xRotDeg))
-                .rotateY((float) Math.toRadians(yRotDeg))
-                .rotateZ((float) Math.toRadians(zRotDeg));
+        this.cancelIf = b.cancelIf;
     }
 
     public void start() {
-        if (origin == null && emitter == null)
-            throw new IllegalStateException("Origin or emitter required");
         stop();
-        final long[] elapsed = {0};
-        Runnable tickRunnable = () -> {
-            Location base = (emitter != null ? emitter.getLocation() : origin);
-            if (base == null || (cancelIf != null && cancelIf.getAsBoolean())) {
+        Location loc = origin.get();
+        if (loc != null) renderer.start(loc);
+
+        final long[] ticks = {0};
+
+        task = Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
+            if ((duration > 0 && ticks[0] >= duration) || (cancelIf != null && cancelIf.getAsBoolean())) {
                 stop();
                 return;
             }
-            if (asyncShape && shape != null) {
-                long tickNow = elapsed[0];
-                CompletableFuture
-                        .supplyAsync(() -> shape.points(base, tickNow, this))
-                        .thenAccept(points -> Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> spawnAt(points)));
-            } else {
-                List<Location> points = (shape != null)
-                        ? shape.points(base, elapsed[0], this)
-                        : randomPoints(base);
-                spawnAt(points);
+
+            Location center = origin.get();
+            if (center == null || center.getWorld() == null) return;
+            List<Vector> points = generator.generate(ticks[0]);
+            List<Vector> finalPoints = new ArrayList<>(points.size());
+
+            List<Vector> nextPoints = null;
+            if (smoothen) {
+                nextPoints = generator.generate(ticks[0] + interval);
             }
-            elapsed[0] += interval;
-            if (duration > 0 && elapsed[0] >= duration) stop();
-        };
-        task = Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), tickRunnable, 0L, interval);
+
+            for (int i = 0; i < points.size(); i++) {
+                Vector v = points.get(i);
+                Vector temp = v.clone();
+                for (Transformer t : transformers) {
+                    temp = t.transform(temp, ticks[0]);
+                }
+                if (smoothen && nextPoints != null && i < nextPoints.size()) {
+                    Vector nextV = nextPoints.get(i).clone();
+                    for (Transformer t : transformers) {
+                        nextV = t.transform(nextV, ticks[0] + interval);
+                    }
+                    Vector velocity = nextV.subtract(temp);
+                    Color c = (v instanceof Pixel p) ? p.getColor() : Color.WHITE;
+                    temp = new MotionVector(temp, velocity, c);
+                }
+                finalPoints.add(temp);
+            }
+            renderer.render(center, finalPoints, viewers == null ? null : viewers.get());
+            ticks[0] += interval;
+        }, 0L, interval);
     }
 
     public void stop() {
@@ -108,156 +91,61 @@ public final class Particles {
             task.cancel();
             task = null;
         }
-        if (!spawnedDisplays.isEmpty()) {
-            for (ItemDisplay d : spawnedDisplays) {
-                if (d != null && !d.isDead()) d.remove();
-            }
-            spawnedDisplays.clear();
-        }
-        locationPool.clear();
-    }
-
-    public Location poolLocation(double x, double y, double z) {
-        Location loc = locationPool.acquire(origin.getWorld());
-        loc.set(x, y, z);
-        return loc;
-    }
-
-    public List<Location> getLocationBuffer(int size) {
-        List<Location> list = new ArrayList<>(size);
-        World w = origin.getWorld();
-        for (int i = 0; i < size; i++) {
-            list.add(locationPool.acquire(w));
-        }
-        return list;
-    }
-
-    private List<Location> randomPoints(Location base) {
-        List<Location> pts = new ArrayList<>(count);
-        World w = base.getWorld();
-        for (int i = 0; i < count; i++) {
-            Location l = locationPool.acquire(w);
-            l.setX(base.getX() + (RANDOM.nextDouble() - 0.5) * offsetX * 2.0);
-            l.setY(base.getY() + (RANDOM.nextDouble() - 0.5) * offsetY * 2.0);
-            l.setZ(base.getZ() + (RANDOM.nextDouble() - 0.5) * offsetZ * 2.0);
-            pts.add(l);
-        }
-        return pts;
-    }
-
-    public void spawnAt(List<Location> points) {
-        if (points == null || points.isEmpty()) return;
-        if (displayItem == null) {
-            spawnBukkitParticles(points);
-        } else {
-            spawnItemDisplays(points);
-        }
-        for (Location l : points) locationPool.release(l);
-    }
-
-    private void spawnBukkitParticles(List<Location> points) {
-        if (viewers != null && !viewers.isEmpty()) {
-            for (Player p : viewers) {
-                for (Location pt : points) {
-                    if (data != null) p.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed, data);
-                    else p.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed);
-                }
-            }
-        } else {
-            for (Location pt : points) {
-                World w = pt.getWorld();
-                if (w == null) continue;
-                if (data != null) w.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed, data);
-                else w.spawnParticle(type, pt, 1, offsetX, offsetY, offsetZ, speed);
-            }
-        }
-    }
-
-    private void spawnItemDisplays(List<Location> points) {
-        for (ItemDisplay d : spawnedDisplays) if (d != null && !d.isDead()) d.remove();
-        spawnedDisplays.clear();
-        for (Location pt : points) {
-            World w = pt.getWorld();
-            if (w == null) continue;
-            ItemDisplay d = w.spawn(pt.clone(), ItemDisplay.class);
-            d.setItemStack(displayItem.clone());
-            d.setBillboard(billboard);
-            Transformation transform = d.getTransformation();
-            transform.getScale().set(scaleX, scaleY, scaleZ);
-            transform.getLeftRotation().set(precomputedRotation);
-            d.setTransformation(transform);
-            spawnedDisplays.add(d);
-        }
-        if (viewers != null && !viewers.isEmpty()) {
-            for (ItemDisplay d : spawnedDisplays) {
-                d.setVisibleByDefault(false);
-                for (Player p : viewers) p.showEntity(AbyssalLib.getInstance(), d);
-            }
-        }
+        renderer.stop();
     }
 
     public static Builder builder() { return new Builder(); }
 
-    public static final class Builder {
-        private Particle type;
-        private ItemStack displayItem;
-        private Location origin;
-        private ParticleEmitter emitter;
-        private int count = 1;
-        private double offsetX, offsetY, offsetZ;
-        private double speed;
-        private Shape shape;
-        private float scaleX = 1f, scaleY = 1f, scaleZ = 1f;
-        private Display.Billboard billboard = Display.Billboard.HORIZONTAL;
-        private float xRotDeg, yRotDeg, zRotDeg;
-        private Object data;
+    public static class Builder {
+        private Supplier<Location> origin;
+        private Generator generator;
+        private ParticleRenderer renderer;
+        private final List<Transformer> transformers = new ArrayList<>();
         private long interval = 1;
         private long duration = -1;
+        private boolean smoothen;
+        private Supplier<List<Player>> viewers = null;
         private BooleanSupplier cancelIf;
-        private List<Player> viewers;
-        private boolean asyncShape = false;
 
-        public Builder particle(Particle p) { this.type = p; return this; }
-        public Builder display(ItemStack item) { this.displayItem = item; return this; }
-        public Builder spawnAt(Location loc) { this.origin = loc; return this; }
-        public Builder spawnAt(ParticleEmitter e) { this.emitter = e; return this; }
-        public Builder count(int c) { this.count = c; return this; }
-        public Builder offset(double x, double y, double z) { this.offsetX = x; this.offsetY = y; this.offsetZ = z; return this; }
-        public Builder speed(double s) { this.speed = s; return this; }
-        public Builder shape(Shape s) { this.shape = s; return this; }
-        public Builder scale(float s) { return scale(s, s, s); }
-        public Builder scale(float x, float y, float z) { this.scaleX = x; this.scaleY = y; this.scaleZ = z; return this; }
-        public Builder billboard(Display.Billboard b) { this.billboard = b; return this; }
-        public Builder rotation(float xDeg, float yDeg, float zDeg) { this.xRotDeg = xDeg; this.yRotDeg = yDeg; this.zRotDeg = zDeg; return this; }
-        public Builder data(Object d) { this.data = d; return this; }
-        public Builder interval(long ticks) { this.interval = ticks; return this; }
-        public Builder duration(long ticks) { this.duration = ticks; return this; }
-        public Builder cancelIf(BooleanSupplier s) { this.cancelIf = s; return this; }
-        public Builder viewers(List<Player> vs) { this.viewers = vs; return this; }
-        public Builder viewers(Player single) { this.viewers = Collections.singletonList(single); return this; }
-        public Builder asyncShape(boolean v) { this.asyncShape = v; return this; }
+        public Builder origin(Location loc) { this.origin = () -> loc; return this; }
+        public Builder origin(Supplier<Location> loc) { this.origin = loc; return this; }
+        
+        public Builder shape(Generator g) { this.generator = g; return this; }
+        public Builder render(ParticleRenderer r) { this.renderer = r; return this; }
+
+        public Builder transform(Transformer t) { this.transformers.add(t); return this; }
+        public Builder rotate(double xRad, double yRad, double zRad) {
+            return transform((v, tick) -> v.rotateAroundX(xRad).rotateAroundY(yRad).rotateAroundZ(zRad));
+        }
+        public Builder scale(double s) {
+            return transform((v, tick) -> v.multiply(s));
+        }
+        public Builder offset(double x, double y, double z) {
+            return transform((v, tick) -> v.add(new Vector(x, y, z)));
+        }
+
+        public Builder interval(long i) { this.interval = i; return this; }
+        public Builder duration(long d) { this.duration = d; return this; }
+        public Builder smooth(boolean s) {
+            this.smoothen = s;
+            return this;
+        }
+
+        public Builder viewers(List<Player> players) {
+            this.viewers = () -> players;
+            return this;
+        }
+
+        public Builder viewers(Supplier<List<Player>> viewers) {
+            this.viewers = viewers;
+            return this;
+        }
+
+        public Builder stopIf(BooleanSupplier s) { this.cancelIf = s; return this; }
 
         public Particles build() {
-            if (type == null && displayItem == null)
-                throw new IllegalStateException("Need either particle type or display item");
+            if (origin == null || generator == null || renderer == null) throw new IllegalStateException("Missing origin, generator, or renderer");
             return new Particles(this);
         }
-    }
-
-    private static final class LocationPool {
-        private final Deque<Location> pool = new ArrayDeque<>(64);
-        Location acquire(World w) {
-            Location l = pool.pollFirst();
-            if (l == null) return new Location(w, 0, 0, 0);
-            l.setWorld(w);
-            return l;
-        }
-        void release(Location l) {
-            if (l != null) {
-                l.setWorld(null);
-                pool.offerFirst(l);
-            }
-        }
-        void clear() { pool.clear(); }
     }
 }

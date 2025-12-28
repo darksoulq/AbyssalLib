@@ -1,11 +1,15 @@
-package com.github.darksoulq.abyssallib.world.particle;
+package com.github.darksoulq.abyssallib.world.particle.old;
 
+import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
 import org.bukkit.Location;
 
 import java.util.List;
 
+/**
+ * @deprecated Use {@link Generators} instead.
+ */
+@Deprecated(forRemoval = true, since = "v1.8.0-mc1.21.9")
 public class AnimatedShapes {
-
     public static Shape rotatingCircle(double radius, int points, double rotationSpeed) {
         return (origin, tick, builder) -> {
             List<Location> buffer = builder.getLocationBuffer(points);

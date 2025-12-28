@@ -2,7 +2,8 @@ package com.github.darksoulq.abyssallib.world.data.statistic;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 
-public abstract class Statistic {
+public sealed abstract class Statistic
+    permits Statistic.IntStatistic, Statistic.FloatStatistic, Statistic.BooleanStatistic {
     private final Identifier id;
 
     protected Statistic(Identifier id) {

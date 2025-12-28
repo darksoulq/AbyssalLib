@@ -11,6 +11,10 @@ fun damageType(id: Identifier, block: DamageTypeBuilder.() -> Unit = {}): Damage
     return builder.build()
 }
 
+@DslMarker
+annotation class DamageTypeDsl
+
+@DamageTypeDsl
 class DamageTypeBuilder(private val id: Identifier) {
     var effect: DamageEffect = DamageEffect.HURT
     var scaling: DamageScaling = DamageScaling.NEVER

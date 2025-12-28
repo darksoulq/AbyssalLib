@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.github.darksoulq'
-version = '1.7.3-mc1.21.9'
+version = '1.8.0-mc1.21.9'
 
 def targetJavaVersion = 21
 
