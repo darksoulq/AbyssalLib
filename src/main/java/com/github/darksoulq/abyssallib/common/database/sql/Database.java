@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Database {
     private final File file;
@@ -34,13 +35,21 @@ public class Database {
     }
 
     public void transaction(Consumer<QueryExecutor> action) {
+        transactionResult(executor -> {
+            action.accept(executor);
+            return null;
+        });
+    }
+
+    public <T> T transactionResult(Function<QueryExecutor, T> action) {
         try {
             boolean originalAutoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
 
             try {
-                action.accept(executor());
+                T result = action.apply(executor());
                 connection.commit();
+                return result;
             } catch (Exception e) {
                 connection.rollback();
                 throw new RuntimeException("Transaction failed, rolled back.", e);
@@ -50,5 +59,9 @@ public class Database {
         } catch (SQLException e) {
             throw new RuntimeException("Database error during transaction", e);
         }
+    }
+
+    public ExecutorService getAsyncPool() {
+        return asyncPool;
     }
 }

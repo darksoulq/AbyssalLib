@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.common.database.sql;
+package com.github.darksoulq.abyssallib.common.database;
 
 import java.sql.ResultSet;
 

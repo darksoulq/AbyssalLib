@@ -17,6 +17,10 @@ public class QueryExecutor {
         return new TableQuery(connection, name, asyncPool);
     }
 
+    public TableBuilder create(String name) {
+        return new TableBuilder(connection, name);
+    }
+
     public void executeRaw(String sql) throws Exception {
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);

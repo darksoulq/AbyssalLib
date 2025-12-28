@@ -1,19 +1,15 @@
-package com.github.darksoulq.abyssallib.common.database.sql;
+package com.github.darksoulq.abyssallib.common.database.mysql;
 
 import com.github.darksoulq.abyssallib.common.database.ResultMapper;
-
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 public class TableQuery {
-    private final Connection conn;
+    private final Database database;
     private final String table;
-    private final ExecutorService asyncPool;
 
     private enum Type { INSERT, REPLACE, UPDATE, DELETE }
     private Type type = Type.INSERT;
@@ -27,15 +23,14 @@ public class TableQuery {
     private Integer limit = null;
     private Integer offset = null;
 
-    public TableQuery(Connection conn, String table, ExecutorService asyncPool) {
-        this.conn = conn;
+    public TableQuery(Database database, String table) {
+        this.database = database;
         this.table = table;
-        this.asyncPool = asyncPool;
     }
 
     // Access the new BatchQuery API
     public BatchQuery batch(String... columns) {
-        return new BatchQuery(conn, table, asyncPool, columns);
+        return new BatchQuery(database, table, columns);
     }
 
     public TableQuery insert() { this.type = Type.INSERT; return this; }
@@ -84,11 +79,12 @@ public class TableQuery {
     }
 
     public CompletableFuture<Integer> executeAsync() {
-        return CompletableFuture.supplyAsync(this::execute, asyncPool);
+        return CompletableFuture.supplyAsync(this::execute, database.getAsyncPool());
     }
 
     private int executeInsert(boolean replace) throws SQLException {
-        String cmd = replace ? "INSERT OR REPLACE INTO " : "INSERT INTO ";
+        // MySQL uses REPLACE INTO directly
+        String cmd = replace ? "REPLACE INTO " : "INSERT INTO ";
         StringBuilder sql = new StringBuilder(cmd).append(table).append(" (");
 
         StringJoiner cols = new StringJoiner(", ");
@@ -101,7 +97,7 @@ public class TableQuery {
 
         sql.append(cols).append(") VALUES (").append(placeholders).append(")");
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = database.getConnection().prepareStatement(sql.toString())) {
             setValues(stmt, values.values().toArray());
             return stmt.executeUpdate();
         }
@@ -116,7 +112,7 @@ public class TableQuery {
         sql.append(updates);
         appendWhereClause(sql);
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = database.getConnection().prepareStatement(sql.toString())) {
             List<Object> all = new ArrayList<>(values.values());
             if (whereParams != null) all.addAll(List.of(whereParams));
             setValues(stmt, all.toArray());
@@ -128,7 +124,7 @@ public class TableQuery {
         StringBuilder sql = new StringBuilder("DELETE FROM " + table);
         appendWhereClause(sql);
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = database.getConnection().prepareStatement(sql.toString())) {
             setValues(stmt, whereParams);
             return stmt.executeUpdate();
         }
@@ -137,7 +133,7 @@ public class TableQuery {
     public long count() {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM " + table);
         appendWhereClause(sql);
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = database.getConnection().prepareStatement(sql.toString())) {
             setValues(stmt, whereParams);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getLong(1);
@@ -157,13 +153,8 @@ public class TableQuery {
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public <T> List<T> select(ResultMapper<T> mapper) {
-        return select(mapper, "*");
-    }
-
     public <T> List<T> select(ResultMapper<T> mapper, String... columns) {
         List<T> results = new ArrayList<>();
-
         String colStr = (columns == null || columns.length == 0) ? "*" : String.join(", ", columns);
         StringBuilder sql = new StringBuilder("SELECT " + colStr + " FROM " + table);
 
@@ -179,7 +170,7 @@ public class TableQuery {
             sql.append(" OFFSET ").append(offset);
         }
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = database.getConnection().prepareStatement(sql.toString())) {
             setValues(stmt, whereParams);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -193,12 +184,14 @@ public class TableQuery {
         return results;
     }
 
+    public <T> List<T> select(ResultMapper<T> mapper) { return select(mapper, "*"); }
+
     public <T> CompletableFuture<List<T>> selectAsync(ResultMapper<T> mapper) {
-        return CompletableFuture.supplyAsync(() -> select(mapper), asyncPool);
+        return CompletableFuture.supplyAsync(() -> select(mapper), database.getAsyncPool());
     }
 
     public <T> CompletableFuture<List<T>> selectAsync(ResultMapper<T> mapper, String... columns) {
-        return CompletableFuture.supplyAsync(() -> select(mapper, columns), asyncPool);
+        return CompletableFuture.supplyAsync(() -> select(mapper, columns), database.getAsyncPool());
     }
 
     private void appendWhereClause(StringBuilder sql) {

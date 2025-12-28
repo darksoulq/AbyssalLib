@@ -1,6 +1,5 @@
-package com.github.darksoulq.abyssallib.common.database.sql;
+package com.github.darksoulq.abyssallib.common.database.mysql;
 
-import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TableBuilder {
-    private final Connection conn;
+    private final Database database;
     private final String table;
     private boolean ifNotExists = false;
     private final List<String> columns = new ArrayList<>();
@@ -18,15 +17,12 @@ public class TableBuilder {
     private final List<String> checkConstraints = new ArrayList<>();
     private final Map<String, String> defaultValues = new HashMap<>();
 
-    public TableBuilder(Connection conn, String table) {
-        this.conn = conn;
+    public TableBuilder(Database database, String table) {
+        this.database = database;
         this.table = table;
     }
 
-    public TableBuilder ifNotExists() {
-        this.ifNotExists = true;
-        return this;
-    }
+    public TableBuilder ifNotExists() { this.ifNotExists = true; return this; }
 
     public TableBuilder column(String name, String type) {
         StringBuilder columnDef = new StringBuilder(name + " " + type);
@@ -44,7 +40,7 @@ public class TableBuilder {
 
     public TableBuilder autoIncrement(String column) {
         columns.removeIf(s -> s.startsWith(column + " "));
-        columns.add(column + " INTEGER PRIMARY KEY AUTOINCREMENT");
+        columns.add(column + " INT PRIMARY KEY AUTO_INCREMENT");
         return this;
     }
 
@@ -69,7 +65,7 @@ public class TableBuilder {
     }
 
     public void dropIfExists() {
-        try (Statement stmt = conn.createStatement()) {
+        try (Statement stmt = database.getConnection().createStatement()) {
             stmt.execute("DROP TABLE IF EXISTS " + table);
         } catch (Exception e) {
             throw new RuntimeException("Failed to drop table: " + table, e);
@@ -90,9 +86,9 @@ public class TableBuilder {
         if (!uniqueColumns.isEmpty()) sql.append(", ").append(String.join(", ", uniqueColumns));
         if (!checkConstraints.isEmpty()) sql.append(", ").append(String.join(", ", checkConstraints));
 
-        sql.append(")");
+        sql.append(") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
-        try (Statement stmt = conn.createStatement()) {
+        try (Statement stmt = database.getConnection().createStatement()) {
             stmt.execute(sql.toString());
         } catch (Exception e) {
             throw new RuntimeException("Failed to create table: " + table, e);
