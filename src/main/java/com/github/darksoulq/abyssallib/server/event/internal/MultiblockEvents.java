@@ -33,8 +33,7 @@ public class MultiblockEvents {
         List<Multiblock> blocks = MultiblockManager.getMultiblocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
         for (Multiblock block : blocks) {
-            MultiblockManager.ACTIVE_MULTIBLOCKS.add(block.getOrigin());
-            block.onLoad();
+            MultiblockManager.loadMultiblock(block);
         }
     }
 
@@ -43,8 +42,7 @@ public class MultiblockEvents {
         List<Multiblock> blocks = MultiblockManager.getMultiblocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
         for (Multiblock block : blocks) {
-            MultiblockManager.ACTIVE_MULTIBLOCKS.remove(block.getOrigin());
-            block.onUnLoad();
+            MultiblockManager.unloadMultiblock(block);
         }
     }
 
@@ -54,54 +52,49 @@ public class MultiblockEvents {
         Action action = event.getAction();
         Block clicked = event.getClickedBlock();
         Player player = event.getPlayer();
-
         Multiblock existing = MultiblockManager.getAt(clicked.getLocation());
+
         if (existing != null) {
-            MultiblockInteractionEvent inter = new MultiblockInteractionEvent(
-                    player,
-                    existing,
-                    event.getBlockFace(),
-                    clicked.getLocation(),
-                    action,
-                    player.getInventory().getItemInMainHand()
-            );
-            Bukkit.getPluginManager().callEvent(inter);
+            MultiblockInteractionEvent inter = EventBus.post(new MultiblockInteractionEvent(
+                player,
+                existing,
+                event.getBlockFace(),
+                clicked.getLocation(),
+                action,
+                player.getInventory().getItemInMainHand()
+            ));
             if (inter.isCancelled()) event.setCancelled(true);
+            return;
         }
 
         if (action == Action.RIGHT_CLICK_BLOCK) {
+            if (player.isSneaking()) return;
             for (String id : Registries.MULTIBLOCKS.getAll().keySet()) {
                 Multiblock proto = Registries.MULTIBLOCKS.get(id);
                 if (proto == null) continue;
                 if (!proto.getTriggerChoice().matches(clicked)) continue;
+
                 Location trigger = clicked.getLocation();
                 Multiblock clone = proto.clone();
                 if (!clone.matchesLayout(trigger)) {
                     continue;
                 }
-                MultiblockPlaceEvent placeEvent = EventBus.post(new MultiblockPlaceEvent(
-                        player,
-                        clone,
-                        trigger,
-                        player.getInventory().getItemInMainHand()
-                ));
+                MultiblockPlaceEvent placeEvent = EventBus.post(new MultiblockPlaceEvent(player, clone, trigger, player.getInventory().getItemInMainHand()));
                 if (placeEvent.isCancelled()) {
                     event.setCancelled(true);
                     return;
                 }
-                ActionResult result = clone.onConstruct(
-                        player,
-                        clone,
-                        player.getInventory().getItemInMainHand()
-                );
+                ActionResult result = clone.onConstruct(player, clone, player.getInventory().getItemInMainHand());
                 if (result == ActionResult.CANCEL) {
                     event.setCancelled(true);
                     return;
                 }
+
                 try {
                     clone.place(trigger, false);
                 } catch (Throwable t) {
                     AbyssalLib.getInstance().getLogger().warning("Failed to place multiblock: " + t.getMessage());
+                    t.printStackTrace();
                     event.setCancelled(true);
                     return;
                 }
@@ -112,7 +105,7 @@ public class MultiblockEvents {
 
     @SubscribeEvent
     public void onBlockBreak(BlockBreakEvent event) {
-        Multiblock mb = Multiblock.from(event.getBlock());
+        Multiblock mb = MultiblockManager.getAt(event.getBlock().getLocation());
         if (mb == null) return;
         MultiblockBreakEvent e = EventBus.post(new MultiblockBreakEvent(event.getPlayer(), mb, event.getPlayer().getInventory().getItemInMainHand()));
         if (e.isCancelled()) {
@@ -134,8 +127,13 @@ public class MultiblockEvents {
             Multiblock mb = MultiblockManager.getAt(b.getLocation());
             if (mb == null) continue;
             MultiblockBreakEvent broken = EventBus.post(new MultiblockBreakEvent(event.getBlock(), mb));
-            if (broken.isCancelled()) it.remove();
-            MultiblockManager.remove(mb);
+            if (broken.isCancelled()) {
+                it.remove();
+                return;
+            }
+            if (MultiblockManager.isPartOfMultiblock(b.getLocation())) {
+                MultiblockManager.remove(mb);
+            }
         }
     }
 
@@ -147,8 +145,13 @@ public class MultiblockEvents {
             Multiblock mb = MultiblockManager.getAt(b.getLocation());
             if (mb == null) continue;
             MultiblockBreakEvent broken = EventBus.post(new MultiblockBreakEvent(event.getEntity(), mb));
-            if (broken.isCancelled()) it.remove();
-            MultiblockManager.remove(mb);
+            if (broken.isCancelled()) {
+                it.remove();
+                return;
+            }
+            if (MultiblockManager.isPartOfMultiblock(b.getLocation())) {
+                MultiblockManager.remove(mb);
+            }
         }
     }
 
@@ -198,8 +201,7 @@ public class MultiblockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
-        for (Location loc : MultiblockManager.ACTIVE_MULTIBLOCKS) {
-            Multiblock mb = MultiblockManager.getAt(loc);
+        for (Multiblock mb : MultiblockManager.getTickingMultiblocks()) {
             if (mb == null) continue;
             if (mb.getEntity() != null) {
                 mb.getEntity().serverTick();

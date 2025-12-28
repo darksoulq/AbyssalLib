@@ -21,7 +21,7 @@ public class PlayerEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
         CustomBlock block = CustomBlock.from(event.getClickedBlock());
-        if (block == null) return;
+        if (block == null || event.getPlayer().isSneaking()) return;
         BlockInteractionEvent be = EventBus.post(new BlockInteractionEvent(
                 event.getPlayer(),
                 block,

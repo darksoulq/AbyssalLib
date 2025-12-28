@@ -105,23 +105,13 @@ public abstract class Multiblock implements Cloneable {
 
     public boolean isPartOfMultiblock(Location loc) {
         if (origin == null) return false;
-        for (RelativeBlockPos rel : pattern.keySet()) {
-            Location abs = absolute(origin, Multiblock.transform(rel, rotation, mirror));
-            if (abs.getWorld().equals(loc.getWorld())
-                    && abs.getBlockX() == loc.getBlockX()
-                    && abs.getBlockY() == loc.getBlockY()
-                    && abs.getBlockZ() == loc.getBlockZ()) {
-                return true;
-            }
-        }
-        return false;
+        Multiblock found = MultiblockManager.getAt(loc);
+        return found == this;
     }
     public boolean matchesLayout(Location trigger) {
         for (boolean mirror : new boolean[]{false, true}) {
             for (int rot = 0; rot < 4; rot++) {
-
                 boolean ok = true;
-
                 for (Map.Entry<RelativeBlockPos, MultiblockChoice> e : pattern.entrySet()) {
                     RelativeBlockPos transformed = transform(e.getKey(), rot, mirror);
                     Location abs = absolute(trigger, transformed);
@@ -131,7 +121,6 @@ public abstract class Multiblock implements Cloneable {
                         ok = false;
                         break;
                     }
-
                     if (!e.getValue().matches(block)) {
                         ok = false;
                         break;
@@ -145,7 +134,6 @@ public abstract class Multiblock implements Cloneable {
                 }
             }
         }
-
         return false;
     }
     public Map<RelativeBlockPos, MultiblockChoice> getPattern() { return pattern; }

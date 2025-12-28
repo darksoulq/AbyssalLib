@@ -3,8 +3,7 @@ package com.github.darksoulq.abyssallib.world.block.internal;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.database.Database;
-import com.github.darksoulq.abyssallib.common.database.impl.sqlite.SqliteDatabase;
+import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
@@ -23,24 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Manages custom blocks including their registration, persistence, and loading from a database.
- */
 public class BlockManager {
-    /**
-     * Map storing blocks keyed by their location keys.
-     */
+
     public static final Map<String, CustomBlock> BLOCKS = new HashMap<>();
     public static final List<Location> ACTIVE_BLOCKS = new ArrayList<>();
-
-    /**
-     * Database instance used for persisting blocks.
-     */
     private static Database DATABASE;
 
-    /**
-     * Loads blocks from the database, initializes the database if necessary, and sets up Gson.
-     */
     public static void load() {
         new BukkitRunnable() {
             @Override
@@ -51,22 +38,21 @@ public class BlockManager {
         }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
 
         try {
-            DATABASE = new SqliteDatabase(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
+            DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
             DATABASE.connect();
 
             DATABASE.executor().table("blocks").create()
-                    .ifNotExists()
-                    .column("world", "TEXT")
-                    .column("x", "INTEGER")
-                    .column("y", "INTEGER")
-                    .column("z", "INTEGER")
-                    .column("block_id", "TEXT")
-                    .column("data", "TEXT")
-                    .primaryKey("world", "x", "y", "z")
-                    .execute();
+                .ifNotExists()
+                .column("world", "TEXT")
+                .column("x", "INTEGER")
+                .column("y", "INTEGER")
+                .column("z", "INTEGER")
+                .column("block_id", "TEXT")
+                .column("data", "TEXT")
+                .primaryKey("world", "x", "y", "z")
+                .execute();
 
             TextUtil.buildGson();
-
             List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
                 String world = rs.getString("world");
                 int x = rs.getInt("x");
@@ -78,19 +64,27 @@ public class BlockManager {
             });
 
             for (BlockRow row : rows) {
+                if (Bukkit.getWorld(row.world) == null) continue;
+
                 Location loc = new Location(Bukkit.getWorld(row.world), row.x, row.y, row.z);
-                CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
-                if (block == null) {
+
+                if (!Registries.BLOCKS.contains(row.blockId)) {
                     AbyssalLib.getInstance().getLogger().warning("Unknown block id in DB: " + row.blockId);
                     continue;
                 }
+
+                CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
                 block.place(loc.getBlock(), true);
 
                 BlockEntity entity = block.createBlockEntity(loc);
                 if (entity != null) {
-                    entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
-                    entity.onLoad();
-                    block.setEntity(entity);
+                    try {
+                        entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
+                        entity.onLoad();
+                        block.setEntity(entity);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 BLOCKS.put(locKey(loc), block);
@@ -103,12 +97,6 @@ public class BlockManager {
         }
     }
 
-
-    /**
-     * Registers or updates a block in the manager and saves it to the database.
-     *
-     * @param block The block to register.
-     */
     public static void register(CustomBlock block) {
         Location loc = block.getLocation();
         if (loc == null) return;
@@ -118,39 +106,21 @@ public class BlockManager {
         save(block);
     }
 
-    /**
-     * Retrieves the block at the specified location.
-     *
-     * @param loc The location to query.
-     * @return The block at the location or {@code null} if none is registered.
-     */
     public static CustomBlock get(Location loc) {
         return BLOCKS.get(locKey(loc));
     }
 
-    /**
-     * Removes the block at the specified location and deletes its data from the database.
-     *
-     * @param loc The location of the block to remove.
-     */
     public static void remove(Location loc, CustomBlock block) {
         BLOCKS.remove(locKey(loc));
         ACTIVE_BLOCKS.remove(block.getLocation());
         TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             DATABASE.executor().table("blocks").delete()
-                .where("world = ?", loc.getWorld().getName())
-                .where("x = ?", loc.getBlockX())
-                .where("y = ?", loc.getBlockY())
-                .where("z = ?", loc.getBlockZ())
+                .where("world = ? AND x = ? AND y = ? AND z = ?",
+                    loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())
                 .execute();
         });
     }
 
-    /**
-     * Saves the state of a block and its associated entity to the database.
-     *
-     * @param block The block to save.
-     */
     public static void save(CustomBlock block) {
         TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             Location loc = block.getLocation();
@@ -168,7 +138,7 @@ public class BlockManager {
                 json = "{}";
             }
 
-            DATABASE.executor().table("blocks").insert()
+            DATABASE.executor().table("blocks").replace()
                 .value("world", loc.getWorld().getName())
                 .value("x", loc.getBlockX())
                 .value("y", loc.getBlockY())
@@ -179,19 +149,41 @@ public class BlockManager {
         });
     }
 
-
-    /**
-     * Saves all cached blocks and their associated entities to the database.
-     * Updates existing rows or inserts new ones.
-     * @return saved The amount of saved blocks
-     */
     public static int save() {
-        int saved = 0;
-        for (CustomBlock block : BLOCKS.values()) {
-            save(block);
-            saved++;
-        }
-        return saved;
+        if (BLOCKS.isEmpty()) return 0;
+
+        final int[] saved = {0};
+        DATABASE.transaction(executor -> {
+            for (CustomBlock block : BLOCKS.values()) {
+                Location loc = block.getLocation();
+                if (loc == null) continue;
+
+                BlockEntity entity = block.getEntity();
+                String json;
+
+                if (entity != null) {
+                    entity.onSave();
+                    JsonNode node = Try.get(() -> entity.serialize(JsonOps.INSTANCE), (JsonNode) null);
+                    if (node == null) continue;
+                    json = node.toString();
+                } else {
+                    json = "{}";
+                }
+
+                executor.table("blocks").replace()
+                    .value("world", loc.getWorld().getName())
+                    .value("x", loc.getBlockX())
+                    .value("y", loc.getBlockY())
+                    .value("z", loc.getBlockZ())
+                    .value("block_id", block.getId().toString())
+                    .value("data", json)
+                    .execute();
+
+                saved[0]++;
+            }
+        });
+
+        return saved[0];
     }
 
     public static List<CustomBlock> getBlocksInChunk(Chunk chunk) {
@@ -210,37 +202,9 @@ public class BlockManager {
         return blocks;
     }
 
-    /**
-     * Creates a unique string key for a block location used internally for map keys.
-     *
-     * @param loc The location to convert.
-     * @return A string key representing the location.
-     */
     private static String locKey(Location loc) {
         return loc.getWorld().getName() + ":" + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 
-    /**
-     * Represents a row from the blocks database table.
-     *
-     * @param world    The world name where the block is located.
-     * @param x        The X coordinate of the block location.
-     * @param y        The Y coordinate of the block location.
-     * @param z        The Z coordinate of the block location.
-     * @param blockId  The registered block ID.
-     * @param dataJson The serialized JSON data of the block entity.
-     */
-        private record BlockRow(String world, int x, int y, int z, String blockId, String dataJson) {
-        /**
-         * Constructs a new BlockRow with the specified data.
-         *
-         * @param world    The world name.
-         * @param x        The X coordinate.
-         * @param y        The Y coordinate.
-         * @param z        The Z coordinate.
-         * @param blockId  The block ID.
-         * @param dataJson The serialized JSON entity data.
-         */
-        private BlockRow {}
-        }
+    private record BlockRow(String world, int x, int y, int z, String blockId, String dataJson) { }
 }

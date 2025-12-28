@@ -70,6 +70,7 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new BlockEvents());
         EVENT_BUS.register(new MultiblockEvents());
         EVENT_BUS.register(new ItemEvents());
+        EVENT_BUS.register(new EnergyEvents());
         EVENT_BUS.register(new ServerEvents());
         EVENT_BUS.register(new GuiEvents());
 
@@ -110,7 +111,7 @@ public final class AbyssalLib extends JavaPlugin {
     public void onDisable() {
         BlockManager.save();
         MultiblockManager.save();
-        EnergyNetwork.save();
+        EnergyNetwork.saveAll();
         if (PACK_SERVER.isEnabled()) {
             PACK_SERVER.stop();
         }
