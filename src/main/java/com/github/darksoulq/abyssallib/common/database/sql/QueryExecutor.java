@@ -16,7 +16,6 @@ public class QueryExecutor {
     public TableQuery table(String name) {
         return new TableQuery(connection, name, asyncPool);
     }
-
     public TableBuilder create(String name) {
         return new TableBuilder(connection, name);
     }

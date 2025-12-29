@@ -6,7 +6,6 @@ import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.entity.SpawnCategory;
 import io.papermc.paper.registry.RegistryAccess;
@@ -35,20 +34,25 @@ public class EntityManager {
     public static void load() {
         try {
             DATABASE.connect();
-            DATABASE.executor().table("entities").create()
+            DATABASE.executor().create("entities")
                 .ifNotExists()
                 .column("entity_uuid", "TEXT")
                 .column("entity_id", "TEXT")
                 .primaryKey("entity_uuid")
                 .execute();
+
             List<Entity<? extends LivingEntity>> loaded = DATABASE.executor().table("entities").select(rs -> {
-                UUID uuid = UUID.fromString(rs.getString("entity_uuid"));
-                Identifier id = Identifier.of(rs.getString("entity_id"));
-                Entity<? extends LivingEntity> proto = Registries.ENTITIES.get(id.toString());
-                if (proto == null) return null;
-                Entity<? extends LivingEntity> e = proto.clone();
-                e.uuid = uuid;
-                return e;
+                try {
+                    UUID uuid = UUID.fromString(rs.getString("entity_uuid"));
+                    Identifier id = Identifier.of(rs.getString("entity_id"));
+                    Entity<? extends LivingEntity> proto = Registries.ENTITIES.get(id.toString());
+                    if (proto == null) return null;
+                    Entity<? extends LivingEntity> e = proto.clone();
+                    e.uuid = uuid;
+                    return e;
+                } catch (Exception ex) {
+                    return null;
+                }
             });
 
             loaded.forEach(e -> {
@@ -79,12 +83,10 @@ public class EntityManager {
                 .computeIfAbsent(w, x -> new HashMap<>())
                 .merge(region, 1, Integer::sum);
         });
-        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
-            DATABASE.executor().table("entities").replace()
-                .value("entity_uuid", entity.uuid.toString())
-                .value("entity_id", entity.getId().toString())
-                .execute();
-        });
+        DATABASE.executor().table("entities").replace()
+            .value("entity_uuid", entity.uuid.toString())
+            .value("entity_id", entity.getId().toString())
+            .executeAsync();
     }
 
     public static Entity<? extends LivingEntity> get(UUID uuid) {
@@ -106,12 +108,9 @@ public class EntityManager {
                     .merge(region, -1, (a, b) -> Math.max(0, a + b));
             });
         }
-
-        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
-            DATABASE.executor().table("entities").delete()
-                .where("entity_uuid = ?", uuid.toString())
-                .execute();
-        });
+        DATABASE.executor().table("entities").delete()
+            .where("entity_uuid = ?", uuid.toString())
+            .executeAsync();
     }
 
     public static void restoreEntities() {
@@ -133,7 +132,7 @@ public class EntityManager {
 
     private static boolean shouldDespawn(LivingEntity entity) {
         if (!entity.getLocation().isChunkLoaded()) return false;
-        if (entity.isPersistent() || entity.getCustomName() != null) return false;
+        if (entity.isPersistent() || entity.customName() != null) return false;
 
         Location loc = entity.getLocation();
         World world = entity.getWorld();
@@ -327,17 +326,18 @@ public class EntityManager {
 
     private static Entity<? extends LivingEntity> weightedRandom(List<Entity<? extends LivingEntity>> list) {
         int total = list.stream()
-            .mapToInt(e -> e.getSpawnSettings().weight)
+            .mapToInt(e -> e.getSpawnSettings() != null ? e.getSpawnSettings().weight : 0)
             .sum();
 
         int roll = RAND.nextInt(total);
         int cur = 0;
 
         for (Entity<? extends LivingEntity> e : list) {
+            if (e.getSpawnSettings() == null) continue;
             cur += e.getSpawnSettings().weight;
             if (roll < cur) return e;
         }
-        return list.get(0);
+        return list.getFirst();
     }
     private static class ChunkCacheTask extends BukkitRunnable {
         @Override

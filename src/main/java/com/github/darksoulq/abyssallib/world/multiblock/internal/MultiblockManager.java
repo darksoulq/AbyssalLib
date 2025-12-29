@@ -3,11 +3,11 @@ package com.github.darksoulq.abyssallib.world.multiblock.internal;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.database.sql.BatchQuery;
 import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.multiblock.Multiblock;
 import com.github.darksoulq.abyssallib.world.multiblock.MultiblockEntity;
 import com.github.darksoulq.abyssallib.world.multiblock.RelativeBlockPos;
@@ -33,15 +33,16 @@ public class MultiblockManager {
             @Override
             public void run() {
                 int saved = MultiblockManager.save();
-                AbyssalLib.LOGGER.info("Saved " + saved + " multiblocks");
+                if (saved > 0) {
+                    AbyssalLib.LOGGER.info("Saved " + saved + " multiblocks");
+                }
             }
         }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
 
         try {
             DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "multiblocks.db"));
             DATABASE.connect();
-
-            DATABASE.executor().table("multiblocks").create()
+            DATABASE.executor().create("multiblocks")
                 .ifNotExists()
                 .column("world", "TEXT")
                 .column("x", "INTEGER")
@@ -134,13 +135,10 @@ public class MultiblockManager {
         ORIGINS.remove(originKey);
         ACTIVE.remove(mb);
         unmapMultiblockBlocks(mb);
-
-        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
-            DATABASE.executor().table("multiblocks").delete()
-                .where("world = ? AND x = ? AND y = ? AND z = ?",
-                    loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())
-                .execute();
-        });
+        DATABASE.executor().table("multiblocks").delete()
+            .where("world = ? AND x = ? AND y = ? AND z = ?",
+                loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())
+            .executeAsync();
     }
 
     public static Multiblock getAt(Location loc) {
@@ -152,38 +150,39 @@ public class MultiblockManager {
     }
 
     public static void save(Multiblock mb) {
-        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
-            Location loc = mb.getOrigin();
-            if (loc == null) return;
+        Location loc = mb.getOrigin();
+        if (loc == null) return;
 
-            String data = "{}";
-            MultiblockEntity ent = mb.getEntity();
-            if (ent != null) {
-                ent.onSave();
-                JsonNode node = Try.get(() -> ent.serialize(JsonOps.INSTANCE), (JsonNode) null);
-                if (node == null) return;
-                data = node.toString();
-            }
+        String data = "{}";
+        MultiblockEntity ent = mb.getEntity();
+        if (ent != null) {
+            ent.onSave();
+            JsonNode node = Try.get(() -> ent.serialize(JsonOps.INSTANCE), (JsonNode) null);
+            if (node != null) data = node.toString();
+        }
 
-            DATABASE.executor().table("multiblocks").replace()
-                .value("world", loc.getWorld().getName())
-                .value("x", loc.getBlockX())
-                .value("y", loc.getBlockY())
-                .value("z", loc.getBlockZ())
-                .value("id", mb.getId().toString())
-                .value("rotation", mb.getRotation())
-                .value("mirror", mb.isMirrored() ? 1 : 0)
-                .value("data", data)
-                .execute();
-        });
+        String finalData = data;
+        DATABASE.executor().table("multiblocks").replace()
+            .value("world", loc.getWorld().getName())
+            .value("x", loc.getBlockX())
+            .value("y", loc.getBlockY())
+            .value("z", loc.getBlockZ())
+            .value("id", mb.getId().toString())
+            .value("rotation", mb.getRotation())
+            .value("mirror", mb.isMirrored() ? 1 : 0)
+            .value("data", finalData)
+            .executeAsync();
     }
 
     public static int save() {
         if (ORIGINS.isEmpty()) return 0;
+        return DATABASE.transactionResult(executor -> {
+            BatchQuery batch = executor.table("multiblocks")
+                .batch("world", "x", "y", "z", "id", "rotation", "mirror", "data")
+                .replace();
 
-        final int[] saved = {0};
+            int count = 0;
 
-        DATABASE.transaction(executor -> {
             for (Multiblock mb : ORIGINS.values()) {
                 Location loc = mb.getOrigin();
                 if (loc == null) continue;
@@ -197,22 +196,24 @@ public class MultiblockManager {
                     data = node.toString();
                 }
 
-                executor.table("multiblocks").replace()
-                    .value("world", loc.getWorld().getName())
-                    .value("x", loc.getBlockX())
-                    .value("y", loc.getBlockY())
-                    .value("z", loc.getBlockZ())
-                    .value("id", mb.getId().toString())
-                    .value("rotation", mb.getRotation())
-                    .value("mirror", mb.isMirrored() ? 1 : 0)
-                    .value("data", data)
-                    .execute();
-
-                saved[0]++;
+                batch.add(
+                    loc.getWorld().getName(),
+                    loc.getBlockX(),
+                    loc.getBlockY(),
+                    loc.getBlockZ(),
+                    mb.getId().toString(),
+                    mb.getRotation(),
+                    mb.isMirrored() ? 1 : 0,
+                    data
+                );
+                count++;
             }
-        });
 
-        return saved[0];
+            if (count > 0) {
+                batch.execute();
+            }
+            return count;
+        });
     }
 
     public static List<Multiblock> getMultiblocksInChunk(Chunk chunk) {

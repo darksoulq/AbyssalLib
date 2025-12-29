@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.sql.Database;
+import com.github.darksoulq.abyssallib.common.database.sql.BatchQuery;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
@@ -33,15 +34,16 @@ public class BlockManager {
             @Override
             public void run() {
                 int saved = BlockManager.save();
-                AbyssalLib.LOGGER.info("Saved " + saved + " blocks");
+                if (saved > 0) {
+                    AbyssalLib.LOGGER.info("Saved " + saved + " blocks");
+                }
             }
         }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
 
         try {
             DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
             DATABASE.connect();
-
-            DATABASE.executor().table("blocks").create()
+            DATABASE.executor().create("blocks")
                 .ifNotExists()
                 .column("world", "TEXT")
                 .column("x", "INTEGER")
@@ -53,6 +55,7 @@ public class BlockManager {
                 .execute();
 
             TextUtil.buildGson();
+
             List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
                 String world = rs.getString("world");
                 int x = rs.getInt("x");
@@ -113,6 +116,7 @@ public class BlockManager {
     public static void remove(Location loc, CustomBlock block) {
         BLOCKS.remove(locKey(loc));
         ACTIVE_BLOCKS.remove(block.getLocation());
+
         TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             DATABASE.executor().table("blocks").delete()
                 .where("world = ? AND x = ? AND y = ? AND z = ?",
@@ -137,7 +141,6 @@ public class BlockManager {
             } else {
                 json = "{}";
             }
-
             DATABASE.executor().table("blocks").replace()
                 .value("world", loc.getWorld().getName())
                 .value("x", loc.getBlockX())
@@ -151,9 +154,13 @@ public class BlockManager {
 
     public static int save() {
         if (BLOCKS.isEmpty()) return 0;
+        return DATABASE.transactionResult(executor -> {
+            BatchQuery batch = executor.table("blocks")
+                .batch("world", "x", "y", "z", "block_id", "data")
+                .replace();
 
-        final int[] saved = {0};
-        DATABASE.transaction(executor -> {
+            int count = 0;
+
             for (CustomBlock block : BLOCKS.values()) {
                 Location loc = block.getLocation();
                 if (loc == null) continue;
@@ -169,21 +176,22 @@ public class BlockManager {
                 } else {
                     json = "{}";
                 }
-
-                executor.table("blocks").replace()
-                    .value("world", loc.getWorld().getName())
-                    .value("x", loc.getBlockX())
-                    .value("y", loc.getBlockY())
-                    .value("z", loc.getBlockZ())
-                    .value("block_id", block.getId().toString())
-                    .value("data", json)
-                    .execute();
-
-                saved[0]++;
+                batch.add(
+                    loc.getWorld().getName(),
+                    loc.getBlockX(),
+                    loc.getBlockY(),
+                    loc.getBlockZ(),
+                    block.getId().toString(),
+                    json
+                );
+                count++;
             }
-        });
 
-        return saved[0];
+            if (count > 0) {
+                batch.execute();
+            }
+            return count;
+        });
     }
 
     public static List<CustomBlock> getBlocksInChunk(Chunk chunk) {

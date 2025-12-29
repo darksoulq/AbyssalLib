@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.common.energy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.database.sql.BatchQuery;
 import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
@@ -13,7 +14,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -43,7 +43,7 @@ public final class EnergyNetwork {
 
         try {
             DATABASE.connect();
-            DATABASE.executor().table("energy_nodes").create()
+            DATABASE.executor().create("energy_nodes")
                 .ifNotExists()
                 .column("id", "TEXT")
                 .column("json", "TEXT")
@@ -118,35 +118,43 @@ public final class EnergyNetwork {
     }
 
     public static void save() {
-        try {
-            DATABASE.transaction(executor -> {
-                for (EnergyNode node : NODES) {
-                    String id = node.getClass().getName() + "@" + node.hashCode();
-                    JsonNode json = node.serialize(JsonOps.INSTANCE);
-                    executor.table("energy_nodes").replace()
-                        .value("id", id)
-                        .value("json", json.toString())
-                        .execute();
-                }
-            });
-        } catch (Exception e) {
+        BatchQuery batch = DATABASE.executor().table("energy_nodes").batch("id", "json").replace();
+
+        for (EnergyNode node : NODES) {
+            try {
+                String id = node.getClass().getName() + "@" + node.hashCode();
+                JsonNode json = node.serialize(JsonOps.INSTANCE);
+                batch.add(id, json.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        batch.executeAsync().exceptionally(e -> {
             AbyssalLib.getInstance().getLogger().severe("Failed to save energy network: " + e.getMessage());
             e.printStackTrace();
-        }
+            return 0;
+        });
     }
 
     public static void load() {
-        try {
-            List<EnergyNode> loadedNodes = DATABASE.executor().table("energy_nodes").select(rs -> {
+        DATABASE.executor().table("energy_nodes").selectAsync(rs -> {
+            try {
                 String jsonStr = rs.getString("json");
                 JsonNode nodeJson = JSON_MAPPER.readTree(jsonStr);
                 return EnergyNode.deserialize(JsonOps.INSTANCE, nodeJson);
-            });
-            loadedNodes.forEach(EnergyNetwork::register);
-
-        } catch (Exception e) {
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }).thenAccept(loadedNodes -> {
+            for (EnergyNode node : loadedNodes) {
+                if (node != null) register(node);
+            }
+        }).exceptionally(e -> {
             AbyssalLib.getInstance().getLogger().severe("Failed to load energy network: " + e.getMessage());
             e.printStackTrace();
-        }
+            return null;
+        });
     }
 }

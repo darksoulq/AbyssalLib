@@ -4,7 +4,6 @@ import java.sql.Statement;
 
 public class QueryExecutor {
     private final Database database;
-
     public QueryExecutor(Database database) {
         this.database = database;
     }
@@ -12,7 +11,6 @@ public class QueryExecutor {
     public TableQuery table(String name) {
         return new TableQuery(database, name);
     }
-
     public TableBuilder create(String name) {
         return new TableBuilder(database, name);
     }
