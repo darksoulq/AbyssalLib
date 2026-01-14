@@ -149,7 +149,7 @@ public class ItemEvents {
                     return;
                 }
                 if (item.hasData(EntitySpawner.class)) {
-                    EntitySpawner spawner = (EntitySpawner) item.getData(EntitySpawner.class);
+                    EntitySpawner spawner = item.getData(EntitySpawner.class);
                     com.github.darksoulq.abyssallib.world.entity.Entity<?> entity =
                         com.github.darksoulq.abyssallib.server.registry.Registries.ENTITIES.get(spawner.getValue().toString());
                     if (entity == null) return;

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.database.mysql;
 
 import com.github.darksoulq.abyssallib.common.database.AbstractTableQuery;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 

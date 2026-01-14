@@ -2,7 +2,8 @@ package com.github.darksoulq.abyssallib.world.block;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.block.BridgeBlock;
+import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
+import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
@@ -12,6 +13,7 @@ import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -170,18 +172,18 @@ public class CustomBlock implements Cloneable {
     /**
      * Places this block into the world at the location specified by {@code bukkitBlock}.
      *
-     * @param bukkitBlock the Bukkit block
+     * @param block the Bukkit block
      */
-    public void place(org.bukkit.block.Block bukkitBlock, boolean loading) {
+    public void place(Block block, boolean loading) {
         if (!material.isBlock()) {
             AbyssalLib.getInstance().getLogger().severe("Invalid block material for " + id);
             return;
         }
 
-        setLocation(bukkitBlock.getLocation());
+        setLocation(block.getLocation());
 
         if (!loading) {
-            bukkitBlock.setType(material);
+            if (block.getType() != material) block.setType(material);
             BlockEntity newEntity = createBlockEntity(getLocation());
             if (newEntity != null) {
                 setEntity(newEntity);
@@ -222,19 +224,21 @@ public class CustomBlock implements Cloneable {
             AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
             return false;
         }
-        return tag.contains(new BridgeBlock<>(id, "abyssallib", this));
+        BridgeBlock<?> block = BlockBridge.get(Identifier.of("abyssallib", this.id.getNamespace(), this.id.getPath()));
+        if (block == null) return false;
+        return tag.contains(block);
     }
 
     /**
      * Checks whether the given Bukkit block is a custom block managed by AbyssalLib,
      * and returns the corresponding {@link CustomBlock} instance if it is.
      *
-     * @param bukkitBlock the Bukkit block to check
+     * @param block the Bukkit block to check
      * @return the associated custom {@link CustomBlock}, or {@code null} if not a custom block
      */
-    public static CustomBlock from(org.bukkit.block.Block bukkitBlock) {
-        if (bukkitBlock == null) return null;
-        return BlockManager.get(bukkitBlock.getLocation());
+    public static CustomBlock from(Block block) {
+        if (block == null) return null;
+        return BlockManager.get(block.getLocation());
     }
 
     /**
@@ -318,7 +322,7 @@ public class CustomBlock implements Cloneable {
      * @param blockCause the source block of the explosion, or {@code null}
      * @return {@link ActionResult} to cancel vanilla event or allow it
      */
-    public ActionResult onDestroyedByExplosion(@Nullable Entity eCause, @Nullable org.bukkit.block.Block blockCause) {
+    public ActionResult onDestroyedByExplosion(@Nullable Entity eCause, @Nullable Block blockCause) {
         return ActionResult.PASS;
     }
 

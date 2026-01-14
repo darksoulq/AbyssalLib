@@ -2,14 +2,14 @@ package com.github.darksoulq.abyssallib.server.bridge.item;
 
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.Provider;
+import com.github.darksoulq.abyssallib.server.bridge.ItemProvider;
 import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
 import java.util.Optional;
 
-public class ItemsAdderProvider extends Provider<ItemStack> {
+public class ItemsAdderProvider extends ItemProvider {
     public ItemsAdderProvider() {
         super("ia");
     }

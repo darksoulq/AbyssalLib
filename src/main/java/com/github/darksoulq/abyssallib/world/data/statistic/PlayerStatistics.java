@@ -18,10 +18,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Handles statistics for individual players, including loading, saving,
- * and caching of player statistics.
- */
 public class PlayerStatistics {
     private static final Map<UUID, PlayerStatistics> CACHE = new ConcurrentHashMap<>();
     private static final Database DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "player_statistics.db"));
@@ -35,42 +31,20 @@ public class PlayerStatistics {
     }
 
     public static void init() {
-        try {
+        Try.run(() -> {
             DATABASE.connect();
             initTable();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize PlayerStatistics database", e);
-        }
+        }).orElseThrow(t -> new RuntimeException("Failed to initialize PlayerStatistics database", t));
     }
 
-    /**
-     * Retrieves the PlayerStatistics object for a given player.
-     *
-     * @param player the player
-     * @return the PlayerStatistics instance
-     */
     public static PlayerStatistics of(Player player) {
         return of(player.getUniqueId());
     }
 
-    /**
-     * Retrieves the PlayerStatistics object for a given UUID.
-     * If not already cached, a new instance is created and cached.
-     *
-     * @param uuid the player's UUID
-     * @return the PlayerStatistics instance
-     */
     public static PlayerStatistics of(UUID uuid) {
         return CACHE.computeIfAbsent(uuid, PlayerStatistics::new);
     }
 
-    /**
-     * Gets a statistic by its identifier.
-     * Returns a clone to prevent direct modification of the internal state.
-     *
-     * @param id the identifier of the statistic
-     * @return a cloned Statistic, or null if not found
-     */
     public Statistic get(Identifier id) {
         Statistic stat = stats.get(id);
         return stat != null ? stat.clone() : null;
@@ -113,8 +87,10 @@ public class PlayerStatistics {
                     }
 
                     Statistic template = Registries.STATISTICS.get(id.toString()).clone();
-                    Object value = Try.get(() -> Codec.oneOf(Codecs.INT, Codecs.FLOAT, Codecs.BOOLEAN)
-                        .decode(StringOps.INSTANCE, entry.getValue()), template.getValue());
+
+                    Object value = Try.of(() -> (Object) Codec.oneOf(Codecs.INT, Codecs.FLOAT, Codecs.BOOLEAN)
+                            .decode(StringOps.INSTANCE, entry.getValue()))
+                        .orElse(template.getValue());
 
                     template.setValue(value);
                     tempStats.put(id, template);

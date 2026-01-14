@@ -1,16 +1,22 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockPlacedEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlock;
+import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlockEntity;
+import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlockMenu;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.item.Item;
@@ -34,6 +40,19 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BlockEvents {
+    // Structure Block start
+    @SubscribeEvent
+    public void onInteractStructure(BlockInteractionEvent e) {
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (!(e.getBlock() instanceof StructureBlock)) return;
+
+        if (e.getBlock().getEntity() instanceof StructureBlockEntity sbe) {
+            e.setCancelled(true);
+            TaskUtil.delayedTask(AbyssalLib.getInstance(), 2, () ->  new StructureBlockMenu(sbe).open(e.getPlayer()));
+        }
+    }
+    // End
+
     @SubscribeEvent(ignoreCancelled = false)
     public void onChunkLoad(ChunkLoadEvent event) {
         if (event.isNewChunk()) return;
@@ -65,7 +84,7 @@ public class BlockEvents {
             event.setCancelled(true);
             return;
         }
-        Identifier blockId = (Identifier) heldItem.getData(BlockItem.class).value;
+        Identifier blockId = heldItem.getData(BlockItem.class).value;
         CustomBlock block = Registries.BLOCKS.get(blockId.toString()).clone();
         if (block == null) return;
         block.place(event.getBlock(), false);

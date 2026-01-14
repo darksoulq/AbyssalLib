@@ -5,9 +5,11 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.Provider;
+import com.github.darksoulq.abyssallib.common.util.Try;
+import com.github.darksoulq.abyssallib.server.bridge.ItemProvider;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
 import org.bukkit.inventory.ItemStack;
@@ -21,7 +23,7 @@ import java.util.Optional;
 
 import static com.github.darksoulq.abyssallib.world.item.component.ComponentMap.encodeComponent;
 
-public class AbyssalLibProvider extends Provider<ItemStack> {
+public class AbyssalLibProvider extends ItemProvider {
     public AbyssalLibProvider() {
         super("abyssallib");
     }
@@ -35,7 +37,7 @@ public class AbyssalLibProvider extends Provider<ItemStack> {
     public Identifier getId(ItemStack value) {
         Item item = Item.resolve(value);
         if (item == null) return null;
-        return (Identifier) item.getData(CustomMarker.class).value;
+        return item.getData(CustomMarker.class).value;
     }
 
     @Override
@@ -49,11 +51,12 @@ public class AbyssalLibProvider extends Provider<ItemStack> {
     public Map<String, Optional<Object>> serializeData(ItemStack value, DynamicOps<?> ops) {
         Map<String, Optional<Object>> map = new HashMap<>();
         Item item = Item.resolve(value);
-        Item base = Item.resolve(value);
         if (item == null) return map;
+        Item base = Registries.ITEMS.get(item.getId().toString());
+        if (base == null) return map;
         for (DataComponent<?> component : item.getComponentMap().getAllComponents()) {
-            DataComponent<?> vComp = base.getData(component.getId());
-            if (vComp != null && Objects.equals(component.value, vComp.value)) continue;
+            DataComponent<?> baseComp = base.getData(component.getId());
+            if (baseComp != null && Objects.equals(component.value, baseComp.value)) continue;
             Object encoded = encodeComponent(component, ops);
             map.put(component.getId().toString(), Optional.ofNullable(encoded));
         }
@@ -89,25 +92,32 @@ public class AbyssalLibProvider extends Provider<ItemStack> {
             Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(entry.getKey());
             if (cls == null) continue;
 
-            try {
-                Optional<T> optional = entry.getValue();
-                if (optional.isEmpty()) continue;
+            Optional<T> optional = entry.getValue();
+            if (optional.isEmpty()) continue;
 
-                Field codecField = cls.getDeclaredField("CODEC");
-                if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
-                codecField.setAccessible(true);
-                Codec<?> codec = (Codec<?>) codecField.get(null);
+            Try.of(() -> {
+                Codec<?> codec = ComponentMap.COMPONENT_CODEC_CACHE.computeIfAbsent(cls, k ->
+                    Try.of(() -> {
+                        Field codecField = k.getDeclaredField("CODEC");
+                        if (!Modifier.isStatic(codecField.getModifiers())) {
+                            throw new NoSuchFieldException("Field CODEC must be static");
+                        }
+                        codecField.setAccessible(true);
+                        return (Codec<?>) codecField.get(null);
+                    }).orElseThrow(e -> new RuntimeException(e))
+                );
 
-                DataComponent<?> decoded = (DataComponent<?>) codec.decode(ops, optional.get());
+                return (DataComponent<?>) codec.decode(ops, optional.get());
+
+            }).onSuccess(decoded -> {
                 if (decoded != null) item.setData(decoded);
-
-            } catch (NoSuchFieldException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to find static CODEC field for custom component " + cls.getSimpleName() + ": " + e.getMessage());
-            } catch (Codec.CodecException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + entry.getKey() + ": " + e.getMessage());
-            } catch (Exception e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to load custom component " + entry.getKey() + ": " + e.getMessage());
-            }
+            }).onFailure(t -> {
+                String errorMsg = t.getMessage();
+                if (t instanceof RuntimeException && t.getCause() != null) {
+                    errorMsg = t.getCause().getMessage();
+                }
+                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + entry.getKey() + ": " + errorMsg);
+            });
         }
     }
 }

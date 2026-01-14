@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.database.sql;
 
 import com.github.darksoulq.abyssallib.common.database.AbstractBatchQuery;
+
 import java.sql.Connection;
 import java.util.concurrent.ExecutorService;
 

@@ -29,4 +29,5 @@ public class PermissionConstants {
 
     public static final class Content {
         public static final String ITEMS_VIEW = ROOT + "content.items.view";
-    }}
+    }
+}

@@ -32,9 +32,7 @@ public abstract class DataComponent<T> {
         if (obj == null || getClass() != obj.getClass()) return false;
 
         DataComponent<?> other = (DataComponent<?>) obj;
-        if (!id.equals(other.id)) return false;
-
-        return Objects.equals(value, other.value);
+        return Objects.equals(id, other.id) && Objects.equals(value, other.value);
     }
 
     @Override

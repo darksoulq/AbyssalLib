@@ -2,43 +2,46 @@ package com.github.darksoulq.abyssallib.server.bridge.block;
 
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.Provider;
+import com.github.darksoulq.abyssallib.server.bridge.BlockProvider;
+import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import com.nexomc.nexo.api.NexoBlocks;
+import com.nexomc.nexo.mechanics.custom_block.CustomBlockMechanic;
+import org.bukkit.Location;
 
 import java.util.Map;
-import java.util.Optional;
 
-public class NexoBlockProvider extends Provider<BridgeBlock<?>> {
+public class NexoBlockProvider extends BlockProvider<CustomBlockMechanic> {
     public NexoBlockProvider() {
         super("nexo");
     }
 
     @Override
-    public boolean belongs(BridgeBlock<?> value) {
-        return NexoBlocks.isCustomBlock(Identifier.of(value.id().getNamespace(), value.id().getPath()).toString());
-    }
-
-    @Override
-    public Identifier getId(BridgeBlock<?> value) {
+    public Identifier getId(BridgeBlock<CustomBlockMechanic> value) {
         return Identifier.of(value.id().getNamespace(), value.id().getPath());
     }
 
     @Override
-    public BridgeBlock<?> get(Identifier id) {
-        if (NexoBlocks.isNexoNoteBlock(id.toString()))
-            return new BridgeBlock<>(id, getPrefix(), NexoBlocks.noteBlockMechanic(id.toString()));
-        if (NexoBlocks.isNexoStringBlock(id.toString()))
-            return new BridgeBlock<>(id, getPrefix(), NexoBlocks.stringMechanic(id.toString()));
-        if (NexoBlocks.isNexoChorusBlock(id.toString()))
-            return new BridgeBlock<>(id, getPrefix(), NexoBlocks.chorusBlockMechanic(id.toString()));
-        return null;
+    public BridgeBlock<CustomBlockMechanic> get(Identifier id) {
+        String registryKey = id.getNamespace() + ":" + id.getPath();
+        CustomBlockMechanic block = NexoBlocks.customBlockMechanic(registryKey);
+        if (block == null) return null;
+        return new BridgeBlock<>(id, getPrefix(), block) {
+            @Override
+            public void place(Location location) {
+                NexoBlocks.place(id.toString(), location);
+            }
+        };
     }
 
+    // TODO: Figure out how the fuck i can set/get states for Nexo Blocks
+
     @Override
-    public Map<String, Optional<Object>> serializeData(BridgeBlock<?> value, DynamicOps<?> ops) {
+    public <D> Map<D, D> serializeData(CustomBlockMechanic value, DynamicOps<D> ops) throws Exception {
         return Map.of();
     }
 
     @Override
-    public <T> void deserializeData(Map<String, Optional<T>> data, BridgeBlock<?> value, DynamicOps<T> ops) {}
+    public <D> BridgeBlock<CustomBlockMechanic> deserializeData(Map<D, D> data, BridgeBlock<CustomBlockMechanic> value, DynamicOps<D> ops) {
+        return value;
+    }
 }

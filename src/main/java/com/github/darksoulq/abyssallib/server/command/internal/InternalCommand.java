@@ -21,10 +21,6 @@ import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
-import com.github.darksoulq.abyssallib.world.particle.Particles;
-import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
-import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
-import com.github.darksoulq.abyssallib.world.particle.timeline.Billboarding;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -44,12 +40,10 @@ import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Particle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,6 +55,7 @@ import static com.github.darksoulq.abyssallib.server.resource.ResourcePack.HASH_
 import static com.github.darksoulq.abyssallib.server.resource.ResourcePack.UUID_MAP;
 
 public class InternalCommand {
+
     @Command(name = "abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
@@ -199,8 +194,12 @@ public class InternalCommand {
             Path file = AbyssalLib.PACK_SERVER.getPath(id);
             if (file == null || !Files.exists(file)) continue;
 
-            HASH_MAP.put(id, FileUtils.sha1(file));
-            UUID_MAP.put(id, UUID.randomUUID());
+            Try.of(() -> FileUtils.sha1(file))
+                .onSuccess(hash -> {
+                    HASH_MAP.put(id, hash);
+                    UUID_MAP.put(id, UUID.randomUUID());
+                })
+                .onFailure(Throwable::printStackTrace);
         }
     }
 
@@ -239,39 +238,35 @@ public class InternalCommand {
     public static int attributeGetExecutor(CommandContext<CommandSourceStack> ctx) {
         NamespacedKey key = ctx.getArgument("type", NamespacedKey.class);
         EntitySelectorArgumentResolver selector = ctx.getArgument("selector", EntitySelectorArgumentResolver.class);
-        List<org.bukkit.entity.Entity> entities;
-        try {
-            entities = selector.resolve(ctx.getSource());
-            if (!entities.isEmpty()) {
-                EntityAttributes data = EntityAttributes.of(entities.getFirst());
-                data.load();
-                Map<String, String> attribMap = data.getAllAttributes();
-                if (attribMap.containsKey(key.toString())) {
-                    ctx.getSource().getSender().sendMessage(key.toString() + ": " + attribMap.get(key.toString()));
+
+        Try.of(() -> selector.resolve(ctx.getSource()))
+            .onSuccess(entities -> {
+                if (!entities.isEmpty()) {
+                    EntityAttributes data = EntityAttributes.of(entities.getFirst());
+                    data.load();
+                    Map<String, String> attribMap = data.getAllAttributes();
+                    if (attribMap.containsKey(key.toString())) {
+                        ctx.getSource().getSender().sendMessage(key.toString() + ": " + attribMap.get(key.toString()));
+                    }
                 }
-            }
-        } catch (CommandSyntaxException e) {
-            throw new RuntimeException(e);
-        }
+            })
+            .orElseThrow(RuntimeException::new);
         return Command.SUCCESS;
     }
     public static CompletableFuture<Suggestions> attributeTypeSuggests(final CommandContext<CommandSourceStack> ctx,
                                                                        final SuggestionsBuilder builder) {
         EntitySelectorArgumentResolver selector = ctx.getArgument("selector", EntitySelectorArgumentResolver.class);
-        try {
-            List<org.bukkit.entity.Entity> entities = selector.resolve(ctx.getSource());
-            if (!entities.isEmpty()) {
-                EntityAttributes data = EntityAttributes.of(entities.getFirst());
-                data.load();
-                for (String attrib : data.getAllAttributes().keySet()) {
-                    builder.suggest(attrib);
+
+        return Try.of(() -> selector.resolve(ctx.getSource()))
+            .map(entities -> {
+                if (!entities.isEmpty()) {
+                    EntityAttributes data = EntityAttributes.of(entities.getFirst());
+                    data.load();
+                    data.getAllAttributes().keySet().forEach(builder::suggest);
                 }
                 return builder.buildFuture();
-            }
-        } catch (CommandSyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        return builder.buildFuture();
+            })
+            .orElseThrow(RuntimeException::new);
     }
 
     public int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
@@ -369,6 +364,7 @@ public class InternalCommand {
     }
     private static Player resolvePlayer(CommandContext<CommandSourceStack> ctx) {
         PlayerSelectorArgumentResolver resolver = ctx.getArgument("player", PlayerSelectorArgumentResolver.class);
-        return Try.get((() -> resolver.resolve(ctx.getSource()).getFirst()), (Player) null);
+        return Try.of(() -> resolver.resolve(ctx.getSource()).getFirst())
+            .orElse(null);
     }
 }

@@ -4,7 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.Provider;
+import com.github.darksoulq.abyssallib.server.bridge.ItemProvider;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -15,7 +15,7 @@ import java.util.*;
 
 import static com.github.darksoulq.abyssallib.world.item.component.ComponentMap.encodeComponent;
 
-public class MinecraftProvider extends Provider<ItemStack> {
+public class MinecraftProvider extends ItemProvider {
 
     public MinecraftProvider() {
         super("minecraft");

@@ -444,6 +444,7 @@ public class ExtraCodecs {
             }
     );
 
+    // Internal usage maps
     public static final Map<String, Codec<?>> DATA_COMPONENT_CODECS = new HashMap<>();
 
     static {

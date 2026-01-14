@@ -27,6 +27,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -37,6 +38,7 @@ public class Item implements Cloneable {
     private ComponentMap componentMap;
     public Tooltip tooltip = new Tooltip();
 
+    @ApiStatus.Internal
     public Item(ItemStack stack) {
         this.id = Identifier.of("unknown", "unknown");
         this.stack = stack;
@@ -78,8 +80,8 @@ public class Item implements Cloneable {
     public DataComponent<?> getData(DataComponentType type) {
         return componentMap.getData(type);
     }
-    public <T extends DataComponent<?>> DataComponent<?> getData(Class<T> clazz) {
-        return clazz.cast(componentMap.getData(clazz));
+    public <T extends DataComponent<?>> T getData(Class<T> clazz) {
+        return componentMap.getData(clazz);
     }
     public boolean hasData(Identifier id) {
         return componentMap.hasData(id);
@@ -102,6 +104,14 @@ public class Item implements Cloneable {
             return false;
         }
         return tag.contains(stack);
+    }
+    public boolean hasTag(ItemTag tag) {
+        return tag.contains(stack);
+    }
+    public void setTag(ItemTag tag) {
+        tag.add(ItemPredicate.builder()
+            .value(new CustomMarker(id))
+            .build());
     }
 
     public ActionResult postMine(LivingEntity source, Block target) {

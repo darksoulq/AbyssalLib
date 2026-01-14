@@ -2,39 +2,43 @@ package com.github.darksoulq.abyssallib.server.bridge.block;
 
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.Provider;
+import com.github.darksoulq.abyssallib.server.bridge.BlockProvider;
+import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import dev.lone.itemsadder.api.CustomBlock;
+import org.bukkit.Location;
 
 import java.util.Map;
-import java.util.Optional;
 
-public class ItemsAdderProvider extends Provider<BridgeBlock<?>> {
+public class ItemsAdderProvider extends BlockProvider<CustomBlock> {
     public ItemsAdderProvider() {
         super("ia");
     }
 
     @Override
-    public boolean belongs(BridgeBlock<?> value) {
-        return CustomBlock.isInRegistry(Identifier.of(value.id().getNamespace(), value.id().getPath()).toString());
-    }
-
-    @Override
-    public Identifier getId(BridgeBlock<?> value) {
+    public Identifier getId(BridgeBlock<CustomBlock> value) {
         return Identifier.of(value.id().getNamespace(), value.id().getPath());
     }
 
     @Override
-    public BridgeBlock<?> get(Identifier id) {
-        CustomBlock block = CustomBlock.getInstance(id.toString());
+    public BridgeBlock<CustomBlock> get(Identifier id) {
+        String registryKey = id.getNamespace() + ":" + id.getPath();
+        CustomBlock block = CustomBlock.getInstance(registryKey);
         if (block == null) return null;
-        return new BridgeBlock<>(id, getPrefix(), block);
+        return new BridgeBlock<>(id, getPrefix(), block) {
+            @Override
+            public void place(Location location) {
+                block.place(location);
+            }
+        };
     }
 
     @Override
-    public Map<String, Optional<Object>> serializeData(BridgeBlock<?> value, DynamicOps<?> ops) {
+    public <D> Map<D, D> serializeData(CustomBlock value, DynamicOps<D> ops) throws Exception {
         return Map.of();
     }
 
     @Override
-    public <T> void deserializeData(Map<String, Optional<T>> data, BridgeBlock<?> value, DynamicOps<T> ops) {}
+    public <D> BridgeBlock<CustomBlock> deserializeData(Map<D, D> data, BridgeBlock<CustomBlock> value, DynamicOps<D> ops) {
+        return value;
+    }
 }

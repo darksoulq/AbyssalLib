@@ -7,6 +7,8 @@ import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,12 +50,21 @@ public final class DeferredRegistry<T> {
 
         for (Map.Entry<String, Holder<T>> entries : entries.entrySet()) {
             T value = entries.getValue().get();
-            registry.register(pluginId + ":" + entries.getKey(), value);
+            String id = pluginId + ":" + entries.getKey();
+            registry.register(id, value);
 
             if (value instanceof DamageType) damageTypes.add((DamageType) value);
             if (value instanceof CustomBlock block && block.generateItem()) {
                 Item blockItem = block.getItem().get();
-                Registries.ITEMS.register(pluginId + ":" + entries.getKey(), blockItem);
+                Registries.PREDICATES.register(id, ItemPredicate.builder()
+                    .value(new CustomMarker(Identifier.of(id)))
+                    .build());
+                Registries.ITEMS.register(id, blockItem);
+            }
+            if (value instanceof Item) {
+                Registries.PREDICATES.register(id, ItemPredicate.builder()
+                    .value(new CustomMarker(Identifier.of(id)))
+                    .build());
             }
         }
         if (!damageTypes.isEmpty()) AbyssalLib.DAMAGE_TYPE_REGISTRAR.register(damageTypes);

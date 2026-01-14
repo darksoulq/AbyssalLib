@@ -14,6 +14,7 @@ import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.entity.internal.NaturalSpawnRegistry;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
+import com.github.darksoulq.abyssallib.world.structure.internal.StructureLoader;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -36,6 +37,7 @@ public class ServerEvents {
                     RecipeLoader.reload();
                     TagLoader.loadTags();
                     NaturalSpawnRegistry.load();
+                    StructureLoader.load();
                     AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);

@@ -8,6 +8,7 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.item.Item;
@@ -20,9 +21,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 public class ComponentMap {
+    public static final Map<Class<?>, Codec<?>> COMPONENT_CODEC_CACHE = new ConcurrentHashMap<>();
     private final Map<Identifier, DataComponent<?>> components = new HashMap<>();
     private final Map<Identifier, Vanilla> vanillaComponents = new HashMap<>();
     private final Item item;
@@ -44,6 +47,7 @@ public class ComponentMap {
         if (this.item != null) loadItem();
         if (this.entity != null) loadEntity();
     }
+
     public void loadItem() {
         if (item == null || item.getStack() == null) return;
 
@@ -51,25 +55,28 @@ public class ComponentMap {
             Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(type.key().toString());
             if (cls == null) continue;
 
-            try {
+            if (type instanceof DataComponentType.Valued<?> vl && item.getStack().getData(vl) == null) {
+                continue;
+            }
+
+            Try.of(() -> {
                 if (type instanceof DataComponentType.Valued<?> vl) {
                     Object val = item.getStack().getData(vl);
-                    if (val == null) continue;
                     Constructor<?> cons = Arrays.stream(cls.getConstructors())
-                            .filter(c -> c.getParameterCount() == 1 &&
-                                    isAssignable(c.getParameterTypes()[0], val.getClass()))
-                            .findFirst()
-                            .orElseThrow(() -> new NoSuchMethodException("No suitable constructor for value type: " + val.getClass()));
-                    vanillaComponents.put(Identifier.of(type.key().toString()), (Vanilla) cons.newInstance(val));
+                        .filter(c -> c.getParameterCount() == 1 &&
+                            isAssignable(c.getParameterTypes()[0], val.getClass()))
+                        .findFirst()
+                        .orElseThrow(() -> new NoSuchMethodException("No suitable constructor for value type: " + val.getClass()));
+                    return (Vanilla) cons.newInstance(val);
                 } else {
                     Constructor<?> cons = cls.getConstructor();
-                    vanillaComponents.put(Identifier.of(type.key().toString()), (Vanilla) cons.newInstance());
+                    return (Vanilla) cons.newInstance();
                 }
-            } catch (NoSuchMethodException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to find constructor for vanilla component " + cls.getSimpleName() + ": " + e.getMessage());
-            } catch (Exception e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to instantiate vanilla component " + cls.getSimpleName() + ": " + e.getMessage());
-            }
+            }).onSuccess(vanillaComponent ->
+                vanillaComponents.put(Identifier.of(type.key().toString()), vanillaComponent)
+            ).onFailure(t ->
+                AbyssalLib.getInstance().getLogger().severe("Failed to load vanilla component " + cls.getSimpleName() + ": " + t.getMessage())
+            );
         }
 
         loadCustomComponents(item.getCTag());
@@ -85,15 +92,16 @@ public class ComponentMap {
         else components.put(component.getId(), component);
         applyData();
     }
+
     public void removeData(Identifier id) {
         if (vanillaComponents.containsKey(id)) {
             Vanilla v = vanillaComponents.remove(id);
             if (item != null) v.remove(item.getStack());
-        }
-        else if (components.containsKey(id)) {
+        } else if (components.containsKey(id)) {
             removeComponent(components.get(id));
         }
     }
+
     public void removeData(Class<? extends DataComponent> clazz) {
         for (DataComponent<?> cmp : components.values()) {
             if (clazz.isInstance(cmp)) components.remove(cmp.getId());
@@ -105,10 +113,12 @@ public class ComponentMap {
             }
         }
     }
+
     public DataComponent<?> getData(Identifier id) {
         if (vanillaComponents.containsKey(id)) return (DataComponent<?>) vanillaComponents.get(id);
         else return components.getOrDefault(id, null);
     }
+
     @SuppressWarnings("unchecked")
     public <C extends DataComponent<?>> C getData(Class<C> clazz) {
         for (DataComponent<?> cmp : components.values()) {
@@ -119,10 +129,12 @@ public class ComponentMap {
         }
         return null;
     }
+
     public DataComponent<?> getData(DataComponentType type) {
         Identifier id = getId(type);
         return (DataComponent<?>) vanillaComponents.get(id);
     }
+
     public void applyData() {
         CTag root = item != null ? item.getCTag() : entity.getCTag();
         CompoundTag rootTag = root.toVanilla();
@@ -144,12 +156,15 @@ public class ComponentMap {
         if (item != null) item.setCTag(root);
         if (entity != null) entity.setCTag(root);
     }
+
     public boolean hasData(Identifier id) {
         return components.containsKey(id) || vanillaComponents.containsKey(id);
     }
+
     public boolean hasData(DataComponentType type) {
         return vanillaComponents.containsKey(getId(type));
     }
+
     public <T extends DataComponent<?>> boolean hasData(Class<T> clazz) {
         return getData(clazz) != null;
     }
@@ -160,21 +175,26 @@ public class ComponentMap {
         toReturn.addAll(vanillaComponents.values().stream().map(k -> (DataComponent<?>) k).toList());
         return toReturn;
     }
+
     public List<DataComponent<?>> getVanillaComponents() {
         return new ArrayList<>(vanillaComponents.values().stream().map(k -> (DataComponent<?>) k).toList());
     }
+
     public List<DataComponent<?>> getCustomComponents() {
         return new ArrayList<>(components.values());
     }
+
     public List<Identifier> getAllIds() {
         List<Identifier> toReturn = new ArrayList<>();
         toReturn.addAll(components.keySet());
         toReturn.addAll(vanillaComponents.keySet());
         return toReturn;
     }
+
     public List<Identifier> getVanillaIds() {
         return new ArrayList<>(vanillaComponents.keySet());
     }
+
     public List<Identifier> getCustomIds() {
         return new ArrayList<>(components.keySet());
     }
@@ -188,16 +208,15 @@ public class ComponentMap {
         if (item != null) item.setCTag(root);
         if (entity != null) entity.setCTag(root);
     }
+
     public static Identifier getId(DataComponentType type) {
         return Identifier.of(type.key().asString());
     }
+
     public static <T, D> D encodeComponent(DataComponent<T> component, DynamicOps<D> ops) {
-        try {
-            return component.codec.encode(ops, component);
-        } catch (Codec.CodecException e) {
-            throw new RuntimeException(e);
-        }
+        return Try.of(() -> component.codec.encode(ops, component)).get();
     }
+
     private void loadCustomComponents(CTag root) {
         CompoundTag tag = root.toVanilla().getCompoundOrEmpty("CustomComponents");
         if (tag.isEmpty()) return;
@@ -206,28 +225,39 @@ public class ComponentMap {
             Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(cId);
             if (cls == null) continue;
 
-            try {
-                Optional<String> encoded = tag.getString(cId);
-                if (encoded.isEmpty()) continue;
+            Optional<String> encoded = tag.getString(cId);
+            if (encoded.isEmpty()) continue;
+
+            Try.of(() -> {
                 JsonNode json = new ObjectMapper().readTree(encoded.get());
 
-                Field codecField = cls.getDeclaredField("CODEC");
-                if (!Modifier.isStatic(codecField.getModifiers())) throw new RuntimeException("Missing static CODEC in " + cls.getName());
-                codecField.setAccessible(true);
-                Codec<?> codec = (Codec<?>) codecField.get(null);
-
-                DataComponent<?> decoded = (DataComponent<?>) codec.decode(JsonOps.INSTANCE, json);
+                Codec<?> codec = COMPONENT_CODEC_CACHE.computeIfAbsent(cls, k ->
+                    Try.of(() -> {
+                        Field codecField = k.getDeclaredField("CODEC");
+                        if (!Modifier.isStatic(codecField.getModifiers())) {
+                            throw new NoSuchFieldException("Field CODEC must be static");
+                        }
+                        codecField.setAccessible(true);
+                        return (Codec<?>) codecField.get(null);
+                    }).orElseThrow(e -> new RuntimeException("Failed to retrieve Codec for " + k.getSimpleName(), e))
+                );
+                return (DataComponent<?>) codec.decode(JsonOps.INSTANCE, json);
+            }).onSuccess(decoded -> {
                 if (decoded != null) components.put(decoded.getId(), decoded);
-
-            } catch (NoSuchFieldException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to find static CODEC field for custom component " + cls.getSimpleName() + ": " + e.getMessage());
-            } catch (Codec.CodecException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to decode custom component " + cId + ": " + e.getMessage());
-            } catch (Exception e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to load custom component " + cId + ": " + e.getMessage());
-            }
+            }).onFailure(t -> {
+                String context;
+                if (t instanceof NoSuchFieldException) {
+                    context = "Failed to find static CODEC field for custom component " + cls.getSimpleName();
+                } else if (t instanceof Codec.CodecException) {
+                    context = "Failed to decode custom component " + cId;
+                } else {
+                    context = "Failed to load custom component " + cId;
+                }
+                AbyssalLib.getInstance().getLogger().severe(context + ": " + t.getMessage());
+            });
         }
     }
+
     private boolean isAssignable(Class<?> paramType, Class<?> valueType) {
         if (paramType.isPrimitive()) {
             if (paramType == int.class && valueType == Integer.class) return true;

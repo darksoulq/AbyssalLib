@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.registry;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.Map;
@@ -22,7 +23,6 @@ public final class Registry<T> {
     public T get(String id) {
         return entries.get(id);
     }
-
     public String getId(T value) {
         return entries.inverse().get(value);
     }
@@ -30,8 +30,12 @@ public final class Registry<T> {
     public boolean contains(String id) {
         return entries.containsKey(id);
     }
-
     public Map<String, T> getAll() {
         return Collections.unmodifiableMap(entries);
+    }
+
+    @ApiStatus.Internal
+    public T remove(String id) {
+        return entries.remove(id);
     }
 }

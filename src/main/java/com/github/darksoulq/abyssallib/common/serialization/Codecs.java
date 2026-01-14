@@ -2,6 +2,8 @@ package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
+import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
+import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.potion.PotionMix;
@@ -168,6 +170,23 @@ public class Codecs {
         STRING.xmap(
             ItemBridge::get,
             ItemBridge::getIdAsString
+        )
+    );
+    public static final Codec<BridgeBlock<?>> BRIDGE_BLOCK = Codec.fallback(
+        new Codec<BridgeBlock<?>>() {
+            @Override
+            public <D> BridgeBlock<?> decode(DynamicOps<D> ops, D input) throws CodecException {
+                return null;
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, BridgeBlock<?> value) throws CodecException {
+                return null;
+            }
+        },
+        STRING.xmap(
+            BlockBridge::get,
+            BlockBridge::getIdAsString
         )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()

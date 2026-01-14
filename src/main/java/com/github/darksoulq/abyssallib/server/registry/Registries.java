@@ -7,8 +7,11 @@ import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.entity.Entity;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.multiblock.Multiblock;
+import com.github.darksoulq.abyssallib.world.structure.Structure;
+import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessorType;
 import io.papermc.paper.potion.PotionMix;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.*;
@@ -21,10 +24,13 @@ public class Registries {
     public static final Registry<CustomBlock> BLOCKS = new Registry<>();
     public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>();
     public static final Registry<Entity<? extends LivingEntity>> ENTITIES = new Registry<>();
+    public static final Registry<Structure> STRUCTURES = new Registry<>();
+    public static final Registry<StructureProcessorType<?>> PROCESSOR_TYPES = new Registry<>();
 
     public static final Registry<LootTable> LOOT_TABLES = new Registry<>();
     public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>();
-    public static final Registry<Tag<?>> TAGS = new Registry<>();
+    public static final Registry<Tag<?, ?>> TAGS = new Registry<>();
+    public static final Registry<ItemPredicate> PREDICATES = new Registry<>();
 
     public static final Registry<ShapedRecipe> SHAPED_RECIPES = new Registry<>();
     public static final Registry<ShapelessRecipe> SHAPELESS_RECIPES = new Registry<>();
@@ -36,16 +42,4 @@ public class Registries {
     public static final Registry<StonecuttingRecipe> STONECUTTING_RECIPES = new Registry<>();
     public static final Registry<SmithingTransformRecipe> SMITHING_TRANSFORM_RECIPES = new Registry<>();
     public static final Registry<PotionMix> POTION_MIXES = new Registry<>();
-
-
-
-
-
-
-
-
-
-
-
-
 }

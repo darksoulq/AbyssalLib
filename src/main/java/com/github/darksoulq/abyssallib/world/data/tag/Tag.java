@@ -5,29 +5,29 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class Tag<T> {
+public abstract class Tag<T, D> {
     public final Identifier id;
-    protected final Set<String> values = new HashSet<>();
-    protected final Set<Tag<T>> included = new HashSet<>();
+    protected final Set<T> values = new HashSet<>();
+    protected final Set<Tag<T, D>> included = new HashSet<>();
 
     public Tag(Identifier id) {
         this.id = id;
     }
 
-    public abstract void add(T value);
-    public void add(String id) {
-        values.add(id);
+    public void add(T value) {
+        this.values.add(value);
     }
-    public void include(Tag<T> tag) {
-        included.add(tag);
+    public void include(Tag<T, D> tag) {
+        this.included.add(tag);
     }
-    public abstract boolean contains(T value);
+
+    public abstract boolean contains(D input);
     public abstract Set<T> getAll();
 
-    public Set<String> getValues() {
+    public Set<T> getValues() {
         return values;
     }
-    public Set<Tag<T>> getIncluded() {
+    public Set<Tag<T, D>> getIncluded() {
         return included;
     }
 }

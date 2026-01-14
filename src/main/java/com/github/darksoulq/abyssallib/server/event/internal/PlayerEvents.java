@@ -47,17 +47,17 @@ public class PlayerEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onPick(PlayerPickBlockEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) {
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
             event.setCancelled(true);
-            Item item = CustomBlock.asItem(CustomBlock.from(event.getBlock()));
+            Item item = CustomBlock.asItem(block);
             if (item == null) return;
             ItemStack stack = item.getStack().clone();
             HashMap<Integer, ItemStack> remaining = event.getPlayer().getInventory().addItem(stack);
             if (!remaining.isEmpty()) {
                 stack = stack.clone();
                 stack.setAmount(remaining.values().stream().toList().getFirst().getAmount());
-                event.getPlayer().getInventory().setItem(EquipmentSlot.HAND,
-                        stack);
+                event.getPlayer().getInventory().setItem(EquipmentSlot.HAND, stack);
             }
         }
     }

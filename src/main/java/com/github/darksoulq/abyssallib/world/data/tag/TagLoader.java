@@ -1,102 +1,153 @@
 package com.github.darksoulq.abyssallib.world.data.tag;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
+import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class TagLoader {
-    private static final File TAGS_FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "tags");
+    private static final Path TAGS_FOLDER = new java.io.File(AbyssalLib.getInstance().getDataFolder(), "tags").toPath();
+    private static final List<TagType<?, ?>> TAG_TYPES = new ArrayList<>();
 
     public static void loadTags() {
-        if (!TAGS_FOLDER.exists()) TAGS_FOLDER.mkdirs();
-        loadKind(new File(TAGS_FOLDER, "items"), Type.ITEM);
-        loadKind(new File(TAGS_FOLDER, "blocks"), Type.BLOCK);
-    }
+        if (!Files.exists(TAGS_FOLDER)) {
+            try { Files.createDirectories(TAGS_FOLDER); }
+            catch (IOException e) { e.printStackTrace(); }
+        }
 
-    private static void loadKind(File folder, Type type) {
-        if (!folder.exists()) folder.mkdirs();
-        if (!folder.isDirectory()) return;
-
-        File[] namespaces = folder.listFiles(File::isDirectory);
-        if (namespaces == null) return;
-
-        for (File ns : namespaces) {
-            File[] files = ns.listFiles((d, n) -> n.endsWith(".yml") || n.endsWith(".yaml"));
-            if (files == null) continue;
-            for (File file : files) {
-                addValuesToTag(file, type);
-            }
+        for (TagType<?, ?> type : TAG_TYPES) {
+            Path typeFolder = TAGS_FOLDER.resolve(type.folder);
+            if (!Files.exists(typeFolder)) continue;
+            scanAndRegister(typeFolder, type);
+        }
+        for (TagType<?, ?> type : TAG_TYPES) {
+            Path typeFolder = TAGS_FOLDER.resolve(type.folder);
+            if (!Files.exists(typeFolder)) continue;
+            parseValues(typeFolder, type);
         }
     }
 
-    private static void addValuesToTag(File file, Type type) {
-        Tag<?> tag = Registries.TAGS.get(getTagId(file).toString());
+    private static <T, D> void scanAndRegister(Path folder, TagType<T, D> type) {
+        try (Stream<Path> stream = Files.walk(folder)) {
+            stream.filter(Files::isRegularFile)
+                .filter(p -> p.toString().endsWith(".yml") || p.toString().endsWith(".yaml"))
+                .forEach(file -> {
+                    Identifier tagId = getTagId(file, folder);
+                    if (tagId != null && !Registries.TAGS.contains(tagId.toString())) {
+                        Tag<T, D> tag = type.factory.apply(tagId);
+                        Registries.TAGS.register(tagId.toString(), tag);
+                    }
+                });
+        } catch (IOException e) {
+            AbyssalLib.LOGGER.warning("Failed to scan tag folder " + folder + ": " + e.getMessage());
+        }
+    }
 
-        if (tag == null) {
-            AbyssalLib.LOGGER.warning("Tag file " + file + " does not correspond to an existing tag, skipping.");
+    @SuppressWarnings("unchecked")
+    private static <T, D> void parseValues(Path folder, TagType<T, D> type) {
+        try (Stream<Path> stream = Files.walk(folder)) {
+            stream.filter(Files::isRegularFile)
+                .filter(p -> p.toString().endsWith(".yml") || p.toString().endsWith(".yaml"))
+                .forEach(file -> {
+                    Identifier tagId = getTagId(file, folder);
+                    if (tagId == null) return;
+
+                    Tag<T, D> tag = (Tag<T, D>) Registries.TAGS.get(tagId.toString());
+                    if (tag == null) return;
+
+                    List<Object> rawList;
+                    try (InputStream in = Files.newInputStream(file)) {
+                        Object root = YamlOps.INSTANCE.parse(in);
+                        if (!(root instanceof Map<?, ?> map)) return;
+                        Object v = map.get("values");
+                        if (!(v instanceof List<?> list)) return;
+                        rawList = (List<Object>) list;
+                    } catch (Exception e) {
+                        AbyssalLib.LOGGER.warning("Failed to parse tag file " + file + ": " + e.getMessage());
+                        return;
+                    }
+
+                    for (Object rawEntry : rawList) {
+                        if (rawEntry instanceof String s && s.startsWith("#")) {
+                            String refId = s.substring(1);
+                            Tag<?, ?> rawIncluded = Registries.TAGS.get(refId);
+
+                            if (rawIncluded == null) {
+                                AbyssalLib.LOGGER.warning("Tag " + tagId + " references missing tag: " + refId);
+                                continue;
+                            }
+
+                            try {
+                                tag.include((Tag<T, D>) rawIncluded);
+                            } catch (ClassCastException ex) {
+                                AbyssalLib.LOGGER.warning("Tag " + tagId + " tried to include incompatible tag type " + refId);
+                            }
+                            continue;
+                        }
+                        try {
+                            T value = type.codec.decode(YamlOps.INSTANCE, rawEntry);
+                            tag.add(value);
+                        } catch (Exception e) {
+                            AbyssalLib.LOGGER.warning("Error decoding value in tag " + tagId + ": " + e.getMessage());
+                        }
+                    }
+                });
+        } catch (IOException e) {
+            AbyssalLib.LOGGER.warning("Failed to parse tag values in " + folder + ": " + e.getMessage());
+        }
+    }
+
+    private static Identifier getTagId(Path file, Path rootFolder) {
+        Path relative = rootFolder.relativize(file);
+        if (relative.getNameCount() < 2) {
+            AbyssalLib.LOGGER.warning("Skipping tag file " + file + ": Must be inside a namespace folder");
+            return null;
+        }
+        String namespace = relative.getName(0).toString();
+
+        StringBuilder pathBuilder = new StringBuilder();
+        for (int i = 1; i < relative.getNameCount(); i++) {
+            if (i > 1) pathBuilder.append("/");
+            pathBuilder.append(relative.getName(i).toString());
+        }
+
+        String fullPath = pathBuilder.toString();
+        int lastDot = fullPath.lastIndexOf('.');
+        if (lastDot > 0) fullPath = fullPath.substring(0, lastDot);
+
+        return Identifier.of(namespace, fullPath);
+    }
+
+    public static <T, D> void register(TagType<T, D> type) {
+        if (TAG_TYPES.stream().anyMatch(t -> Objects.equals(t.folder, type.folder))) {
+            AbyssalLib.LOGGER.warning("TagType folder conflict: " + type.folder);
             return;
         }
-
-        List<?> values;
-        try (InputStream in = new FileInputStream(file)) {
-            Object root = YamlOps.INSTANCE.parse(in);
-            if (!(root instanceof Map<?, ?> map)) return;
-            Object v = map.get("values");
-            if (!(v instanceof List<?> list)) return;
-            values = list;
-        } catch (Exception e) {
-            AbyssalLib.LOGGER.warning("Failed to parse tag file " + file + ": " + e.getMessage());
-            return;
-        }
-
-        for (Object v : values) {
-            if (!(v instanceof String s)) continue;
-            boolean include = s.startsWith("#");
-            String valueStr = include ? s.substring(1) : s;
-
-            if (include) {
-                Tag<?> included = Registries.TAGS.get(valueStr);
-                if (included == null) {
-                    AbyssalLib.LOGGER.warning("Referenced tag: " + valueStr + " in: "
-                            + getTagId(file) + " does not exist, skipping");
-                    continue;
-                }
-                if (type.condition.test(included)) {
-                    AbyssalLib.LOGGER.warning("Referenced tag: " + valueStr + " is not "
-                            + type.error +", skipping");
-                }
-            } else {
-                tag.add(valueStr);
-            }
-        }
+        TAG_TYPES.add(type);
     }
 
-    private static Identifier getTagId(File file) {
-        File nsFolder = file.getParentFile();
-        String namespace = nsFolder.getName();
-        String path = file.getName().substring(0, file.getName().lastIndexOf('.'));
-        return Identifier.of(namespace, path);
-    }
-
-    enum Type {
-        ITEM(t -> t instanceof ItemTag, "an item tag"),
-        BLOCK(t -> t instanceof BlockTag, "a block tag");
-
-        public final Predicate<Tag<?>> condition;
-        public final String error;
-        Type(Predicate<Tag<?>> condition, String error) {
-            this.condition = condition;
-            this.error = error;
-        }
+    public record TagType<T, D>(String folder, Codec<T> codec, Function<Identifier, Tag<T, D>> factory) {
+        public static final TagType<ItemPredicate, ?> ITEM = new TagType<>(
+            "items", ItemPredicate.CODEC, ItemTag::new
+        );
+        public static final TagType<String, ?> BLOCK = new TagType<>(
+            "blocks", Codecs.STRING, BlockTag::new
+        );
     }
 }

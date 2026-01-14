@@ -6,13 +6,18 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 public class Property<T> {
     private final Codec<T> codec;
     private T value;
+    private final T defaultValue;
 
     public Property(Codec<T> codec, T initialValue) {
         this.codec = codec;
         this.value = initialValue;
+        this.defaultValue = initialValue;
     }
 
     public T get() { return value; }
+    public T getDefault() {
+        return defaultValue;
+    }
     public void set(T value) { this.value = value; }
 
     public <D> D encode(DynamicOps<D> ops) throws Codec.CodecException {

@@ -3,8 +3,8 @@ package com.github.darksoulq.abyssallib.world.block.internal;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.database.sql.BatchQuery;
+import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
@@ -40,7 +40,7 @@ public class BlockManager {
             }
         }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
 
-        try {
+        Try.run(() -> {
             DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
             DATABASE.connect();
             DATABASE.executor().create("blocks")
@@ -81,23 +81,21 @@ public class BlockManager {
 
                 BlockEntity entity = block.createBlockEntity(loc);
                 if (entity != null) {
-                    try {
+                    Try.run(() -> {
                         entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
                         entity.onLoad();
                         block.setEntity(entity);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    }).onFailure(Throwable::printStackTrace);
                 }
 
                 BLOCKS.put(locKey(loc), block);
             }
 
             AbyssalLib.LOGGER.info("Loaded " + BLOCKS.size() + " Blocks.");
-        } catch (Exception e) {
-            AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + e.getMessage());
-            e.printStackTrace();
-        }
+        }).onFailure(t -> {
+            AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + t.getMessage());
+            t.printStackTrace();
+        });
     }
 
     public static void register(CustomBlock block) {
@@ -135,7 +133,7 @@ public class BlockManager {
 
             if (entity != null) {
                 entity.onSave();
-                JsonNode node = Try.get(() -> entity.serialize(JsonOps.INSTANCE), (JsonNode) null);
+                JsonNode node = Try.of(() -> entity.serialize(JsonOps.INSTANCE)).orElse(null);
                 if (node == null) return;
                 json = node.toString();
             } else {
@@ -170,7 +168,7 @@ public class BlockManager {
 
                 if (entity != null) {
                     entity.onSave();
-                    JsonNode node = Try.get(() -> entity.serialize(JsonOps.INSTANCE), (JsonNode) null);
+                    JsonNode node = Try.of(() -> entity.serialize(JsonOps.INSTANCE)).orElse(null);
                     if (node == null) continue;
                     json = node.toString();
                 } else {

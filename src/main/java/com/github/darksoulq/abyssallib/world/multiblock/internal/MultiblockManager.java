@@ -39,7 +39,7 @@ public class MultiblockManager {
             }
         }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
 
-        try {
+        Try.run(() -> {
             DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "multiblocks.db"));
             DATABASE.connect();
             DATABASE.executor().create("multiblocks")
@@ -85,13 +85,11 @@ public class MultiblockManager {
 
                 MultiblockEntity ent = mb.createMultiblockEntity(loc);
                 if (ent != null) {
-                    try {
+                    Try.run(() -> {
                         ent.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.data));
                         ent.onLoad();
                         mb.setEntity(ent);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    }).onFailure(Throwable::printStackTrace);
                 }
 
                 registerInternal(mb);
@@ -103,10 +101,10 @@ public class MultiblockManager {
             }
 
             AbyssalLib.LOGGER.info("Loaded " + ORIGINS.size() + " Multiblocks.");
-        } catch (Exception e) {
-            AbyssalLib.getInstance().getLogger().severe("Failed to load multiblock database: " + e.getMessage());
-            e.printStackTrace();
-        }
+        }).onFailure(t -> {
+            AbyssalLib.getInstance().getLogger().severe("Failed to load multiblock database: " + t.getMessage());
+            t.printStackTrace();
+        });
     }
 
     public static void register(Multiblock mb) {
@@ -157,7 +155,7 @@ public class MultiblockManager {
         MultiblockEntity ent = mb.getEntity();
         if (ent != null) {
             ent.onSave();
-            JsonNode node = Try.get(() -> ent.serialize(JsonOps.INSTANCE), (JsonNode) null);
+            JsonNode node = Try.of(() -> ent.serialize(JsonOps.INSTANCE)).orElse(null);
             if (node != null) data = node.toString();
         }
 
@@ -191,7 +189,7 @@ public class MultiblockManager {
                 MultiblockEntity ent = mb.getEntity();
                 if (ent != null) {
                     ent.onSave();
-                    JsonNode node = Try.get(() -> ent.serialize(JsonOps.INSTANCE), (JsonNode) null);
+                    JsonNode node = Try.of(() -> ent.serialize(JsonOps.INSTANCE)).orElse(null);
                     if (node == null) continue;
                     data = node.toString();
                 }
