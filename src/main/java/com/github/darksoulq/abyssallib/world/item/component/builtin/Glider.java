@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
@@ -15,9 +16,15 @@ public class Glider extends DataComponent<Boolean> implements Vanilla {
             b -> new Glider(),
             d -> Optional.empty()
     );
+    public static final DataComponentType<Glider> TYPE = DataComponentType.valued(CODEC, v -> new Glider());
 
     public Glider() {
-        super(Identifier.of(DataComponentTypes.GLIDER.key().asString()), true, CODEC);
+        super(true);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

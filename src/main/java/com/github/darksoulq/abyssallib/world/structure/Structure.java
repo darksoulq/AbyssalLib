@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
+import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import com.github.darksoulq.abyssallib.world.structure.processor.impl.IntegrityProcessor;
@@ -14,9 +16,9 @@ import com.github.darksoulq.abyssallib.world.structure.serializer.AbyssalLibBloc
 import com.github.darksoulq.abyssallib.world.structure.serializer.MinecraftBlockSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.plugin.Plugin;
@@ -112,7 +114,15 @@ public class Structure {
         Random random = new Random();
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-            placeBlock(sb, origin, rotation, mirror);
+            placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+        }
+    }
+
+    public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
+        Random random = new Random();
+        for (StructureBlock sb : blocks) {
+            if (integrity < 1.0f && random.nextFloat() > integrity) continue;
+            placeBlock(level, origin, sb, rotation, mirror);
         }
     }
 
@@ -120,7 +130,7 @@ public class Structure {
         processors.add(processor);
     }
 
-    private void placeBlock(StructureBlock sb, Location origin, StructureRotation rotation, Mirror mirror) {
+    private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror) {
         if (sb.stateIndex < 0 || sb.stateIndex >= palette.size()) return;
 
         Vector transformedPos = transform(new Vector(sb.x, sb.y, sb.z), mirror, rotation);
@@ -141,54 +151,26 @@ public class Structure {
 
         if (blockObject == null) return;
 
-        BlockInfo original = new BlockInfo(new Vector(sb.x, sb.y, sb.z), blockObject, sb.nbt);
-        BlockInfo current = new BlockInfo(transformedPos, blockObject, sb.nbt);
+        BlockInfo original = new BlockInfo(new Vector(sb.x, sb.y, sb.z), blockObject, entry.stateData, sb.nbt);
+        BlockInfo current = new BlockInfo(transformedPos, blockObject, entry.stateData, sb.nbt);
 
         for (StructureProcessor processor : processors) {
-            current = processor.process(origin.getWorld(), origin, current, original);
+            if (worldOrLevel instanceof WorldGenAccess level) {
+                current = processor.process(level, origin, current, original);
+            } else if (worldOrLevel instanceof World world) {
+                current = processor.process(world, origin, current, original);
+            }
             if (current == null) return;
         }
 
-        try {
-            blockObject = current.block();
-            ObjectNode nbt = current.nbt();
-            ObjectNode fullData = entry.stateData.deepCopy();
-            if (nbt != null) {
-                nbt.fields().forEachRemaining(f -> fullData.set(f.getKey(), f.getValue()));
-            }
-            Map<JsonNode, JsonNode> mapData = JsonOps.INSTANCE.getMap(fullData).orElse(Collections.emptyMap());
-
-            if (blockObject instanceof CustomBlock cb) {
-                BlockData bd = cb.getMaterial().createBlockData();
-                AbyssalLibBlockSerializer.deserialize(cb, mapData, JsonOps.INSTANCE, bd);
-
-                if (mirror != Mirror.NONE) bd.mirror(mirror);
-                if (rotation != StructureRotation.NONE) bd.rotate(rotation);
-
-                if (target.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-
-                target.getBlock().setBlockData(bd, false);
-                cb.place(target.getBlock(), false);
-            } else if (blockObject instanceof BlockData bd) {
-                MinecraftBlockSerializer.deserialize(bd, mapData, JsonOps.INSTANCE);
-
-                if (mirror != Mirror.NONE) bd.mirror(mirror);
-                if (rotation != StructureRotation.NONE) bd.rotate(rotation);
-
-                if (target.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-
-                target.getBlock().setBlockData(bd, false);
-                if (nbt != null) {
-                    Map<JsonNode, JsonNode> nbtMap = JsonOps.INSTANCE.getMap(nbt).orElse(null);
-                    if (nbtMap != null) MinecraftBlockSerializer.deserializeTile(target.getBlock(), nbtMap, JsonOps.INSTANCE);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (worldOrLevel instanceof WorldGenAccess level) {
+            WorldGenUtils.placeBlock(level, target, current, rotation, mirror);
+        } else if (worldOrLevel instanceof World world) {
+            WorldGenUtils.placeBlock(world, target, current, rotation, mirror);
         }
     }
 
-    public Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
+    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
         double x = pos.getX();
         double z = pos.getZ();
 
@@ -215,32 +197,6 @@ public class Structure {
             }
         }
         return new Vector(newX, pos.getY(), newZ);
-    }
-
-    public Vector getSize() {
-        return size.clone();
-    }
-
-    public List<BlockInfo> findJigsaws() {
-        List<BlockInfo> found = new ArrayList<>();
-        for (StructureBlock sb : blocks) {
-            PaletteEntry entry = palette.get(sb.stateIndex);
-            if (entry.id.equals("minecraft:jigsaw") || entry.id.endsWith("jigsaw_block")) {
-                Object blockObject = null;
-                if (entry.id.startsWith("minecraft:")) {
-                    try {
-                        blockObject = Material.JIGSAW.createBlockData();
-                    } catch (Exception ignored) {}
-                } else {
-                    blockObject = Registries.BLOCKS.get(entry.id);
-                }
-
-                if (blockObject != null) {
-                    found.add(new BlockInfo(new Vector(sb.x, sb.y, sb.z), blockObject, sb.nbt));
-                }
-            }
-        }
-        return found;
     }
 
     public ObjectNode serialize() {
@@ -341,7 +297,7 @@ public class Structure {
             int count = 0;
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
-                placeBlock(sb, origin, rotation, mirror);
+                placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
                 count++;
             }
             if (!iterator.hasNext()) {

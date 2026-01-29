@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordCodecBuilder;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.PotionContents;
@@ -26,9 +27,15 @@ public class PotionContent extends DataComponent<PotionContents> implements Vani
                     .customName(customName)
                     .build())
     );
+    public static final DataComponentType<PotionContent> TYPE = DataComponentType.valued(CODEC, PotionContent::new);
 
     public PotionContent(PotionContents contents) {
-        super(Identifier.of(DataComponentTypes.POTION_CONTENTS.key().asString()), contents, CODEC);
+        super(contents);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

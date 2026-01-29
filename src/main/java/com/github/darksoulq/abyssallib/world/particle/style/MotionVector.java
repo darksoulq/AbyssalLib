@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.particle.style;
 
 import org.bukkit.Color;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
 public class MotionVector extends Pixel {
     private final Vector velocity;
@@ -20,7 +21,7 @@ public class MotionVector extends Pixel {
     }
 
     @Override
-    public MotionVector clone() {
+    public @NotNull MotionVector clone() {
         return new MotionVector(this, this.velocity.clone(), this.getColor());
     }
 }

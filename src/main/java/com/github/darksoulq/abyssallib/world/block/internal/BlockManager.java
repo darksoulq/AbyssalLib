@@ -22,11 +22,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockManager {
 
-    public static final Map<String, CustomBlock> BLOCKS = new HashMap<>();
-    public static final List<Location> ACTIVE_BLOCKS = new ArrayList<>();
+    public static final Map<String, CustomBlock> BLOCKS = new ConcurrentHashMap<>();
+    public static final List<Location> ACTIVE_BLOCKS = new CopyOnWriteArrayList<>();
     private static Database DATABASE;
 
     public static void load() {
@@ -77,7 +79,7 @@ public class BlockManager {
                 }
 
                 CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
-                block.place(loc.getBlock(), true);
+                block.setLocation(loc);
 
                 BlockEntity entity = block.createBlockEntity(loc);
                 if (entity != null) {
@@ -87,6 +89,8 @@ public class BlockManager {
                         block.setEntity(entity);
                     }).onFailure(Throwable::printStackTrace);
                 }
+
+                block.onLoad();
 
                 BLOCKS.put(locKey(loc), block);
             }
@@ -111,9 +115,13 @@ public class BlockManager {
         return BLOCKS.get(locKey(loc));
     }
 
-    public static void remove(Location loc, CustomBlock block) {
+    public static void remove(CustomBlock block) {
+        remove(block.getLocation());
+    }
+
+    public static void remove(Location loc) {
         BLOCKS.remove(locKey(loc));
-        ACTIVE_BLOCKS.remove(block.getLocation());
+        ACTIVE_BLOCKS.remove(loc);
 
         TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
             DATABASE.executor().table("blocks").delete()

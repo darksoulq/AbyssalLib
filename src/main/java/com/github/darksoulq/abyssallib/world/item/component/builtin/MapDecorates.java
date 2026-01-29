@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.MapDecorations;
@@ -17,12 +18,18 @@ public class MapDecorates extends DataComponent<Map<String, MapDecorations.Decor
             MapDecorates::new,
             MapDecorates::getValue
     );
+    public static final DataComponentType<MapDecorates> TYPE = DataComponentType.valued(CODEC, v -> new MapDecorates((MapDecorations) v));
 
     public MapDecorates(MapDecorations decor) {
-        super(Identifier.of(DataComponentTypes.MAP_DECORATIONS.key().asString()), decor.decorations(), CODEC);
+        super(decor.decorations());
     }
     public MapDecorates(Map<String, MapDecorations.DecorationEntry> decor) {
-        super(Identifier.of(DataComponentTypes.MAP_DECORATIONS.key().asString()), decor, CODEC);
+        super(decor);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

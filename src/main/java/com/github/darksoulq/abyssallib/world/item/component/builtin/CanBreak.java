@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemAdventurePredicate;
@@ -14,9 +15,15 @@ public class CanBreak extends DataComponent<ItemAdventurePredicate> implements V
             CanBreak::new,
             CanBreak::getValue
     );
+    public static final DataComponentType<CanBreak> TYPE = DataComponentType.valued(CODEC, CanBreak::new);
 
     public CanBreak(ItemAdventurePredicate blocks) {
-        super(Identifier.of(DataComponentTypes.CAN_BREAK.key().asString()), blocks, CODEC);
+        super(blocks);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

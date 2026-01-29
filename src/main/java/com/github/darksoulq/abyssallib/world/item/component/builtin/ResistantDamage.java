@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.DamageResistant;
@@ -17,12 +18,18 @@ public class ResistantDamage extends DataComponent<Key> implements Vanilla {
             ResistantDamage::new,
             ResistantDamage::getValue
     );
+    public static final DataComponentType<ResistantDamage> TYPE = DataComponentType.valued(CODEC, v -> new ResistantDamage((DamageResistant) v));
 
     public ResistantDamage(DamageResistant resists) {
-        super(Identifier.of(DataComponentTypes.DAMAGE_RESISTANT.key().asString()), resists.types().key(), CODEC);
+        super(resists.types().key());
     }
     public ResistantDamage(Key resists) {
-        super(Identifier.of(DataComponentTypes.DAMAGE_RESISTANT.key().asString()), resists, CODEC);
+        super(resists);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

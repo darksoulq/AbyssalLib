@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Weapon;
@@ -14,9 +15,15 @@ public class WeaponComponent extends DataComponent<Weapon> implements Vanilla {
             WeaponComponent::new,
             WeaponComponent::getValue
     );
+    public static final DataComponentType<WeaponComponent> TYPE = DataComponentType.valued(CODEC, WeaponComponent::new);
 
     public WeaponComponent(Weapon weapon) {
-        super(Identifier.of(DataComponentTypes.WEAPON.key().asString()), weapon, CODEC);
+        super(weapon);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

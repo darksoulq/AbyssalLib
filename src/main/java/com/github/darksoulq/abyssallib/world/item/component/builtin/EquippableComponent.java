@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Equippable;
@@ -14,9 +15,15 @@ public class EquippableComponent extends DataComponent<Equippable> implements Va
             EquippableComponent::new,
             EquippableComponent::getValue
     );
+    public static final DataComponentType<EquippableComponent> TYPE = DataComponentType.valued(CODEC, EquippableComponent::new);
 
     public EquippableComponent(Equippable equip) {
-        super(Identifier.of(DataComponentTypes.EQUIPPABLE.key().asString()), equip, CODEC);
+        super(equip);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

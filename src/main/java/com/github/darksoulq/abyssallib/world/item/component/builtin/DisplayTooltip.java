@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
@@ -15,9 +16,15 @@ public class DisplayTooltip extends DataComponent<TooltipDisplay> implements Van
             DisplayTooltip::new,
             DisplayTooltip::getValue
     );
+    public static final DataComponentType<DisplayTooltip> TYPE = DataComponentType.valued(CODEC, DisplayTooltip::new);
 
     public DisplayTooltip(TooltipDisplay display) {
-        super(Identifier.of(DataComponentTypes.TOOLTIP_DISPLAY.key().asString()), display, CODEC);
+        super(display);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

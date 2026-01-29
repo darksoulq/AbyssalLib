@@ -5,14 +5,13 @@ import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.util.Condition;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -26,24 +25,19 @@ public class ItemPredicate implements Predicate<ItemStack> {
             Map.Entry<D, D> entry = map.entrySet().iterator().next();
             String key = ops.getStringValue(entry.getKey()).orElseThrow(() -> new CodecException("Key must be string"));
 
-            Class<? extends DataComponent<?>> cls = Registries.DATA_COMPONENTS.get(key);
-            if (cls == null) throw new CodecException("Unknown component: " + key);
+            DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(key);
+            if (type == null) throw new CodecException("Unknown component type: " + key);
 
-            Codec<?> codec = ComponentMap.COMPONENT_CODEC_CACHE.computeIfAbsent(cls, k -> Try.of(() -> {
-                java.lang.reflect.Field codecField = k.getDeclaredField("CODEC");
-                if (!Modifier.isStatic(codecField.getModifiers())) throw new NoSuchFieldException("Field CODEC must be static");
-                codecField.setAccessible(true);
-                return (Codec<?>) codecField.get(null);
-            }).orElse(null));
-
-            if (codec == null) throw new CodecException("No Codec found for " + key);
-            return (DataComponent<?>) codec.decode(ops, entry.getValue());
+            return type.codec().decode(ops, entry.getValue());
         }
 
         @Override
-        public <D> D encode(DynamicOps<D> ops, DataComponent<?> value) {
+        public <D> D encode(DynamicOps<D> ops, DataComponent<?> value) throws CodecException {
+            String id = Registries.DATA_COMPONENT_TYPES.getId(value.getType());
+            if (id == null) throw new CodecException("Unregistered component type: " + value.getType());
+
             return ops.createMap(Map.of(
-                ops.createString(value.getId().toString()),
+                ops.createString(id),
                 ComponentMap.encodeComponent(value, ops)
             ));
         }
@@ -159,19 +153,30 @@ public class ItemPredicate implements Predicate<ItemStack> {
         if (material != null && !material.equals(stack.getType())) return false;
 
         for (Condition<Identifier> condition : without) {
-            if (condition.test(finalItem::hasData)) return false;
+            if (condition.test(id -> {
+                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id.toString());
+                return type != null && finalItem.hasData(type);
+            })) return false;
         }
+
         for (Condition<Identifier> condition : with) {
-            if (!condition.test(finalItem::hasData)) return false;
+            if (!condition.test(id -> {
+                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id.toString());
+                return type != null && finalItem.hasData(type);
+            })) return false;
         }
+
         for (Condition<DataComponent<?>> condition : valued) {
             if (!condition.test(comp -> {
-                DataComponent<?> other = finalItem.getData(comp.getId());
-                return other != null && Objects.equals(comp.value, other.value);
+                DataComponentType<?> type = comp.getType();
+                if (!finalItem.hasData(type)) return false;
+                DataComponent<?> other = finalItem.getData(type);
+                return Objects.equals(comp.getValue(), other.getValue());
             })) {
                 return false;
             }
         }
+
         for (Condition<ItemPredicate> condition : predicates) {
             if (!condition.test(sub -> sub.test(stack))) return false;
         }

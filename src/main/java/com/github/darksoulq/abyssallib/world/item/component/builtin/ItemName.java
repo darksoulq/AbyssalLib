@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
@@ -14,9 +15,15 @@ public class ItemName extends DataComponent<Component> implements Vanilla {
             ItemName::new,
             ItemName::getValue
     );
+    public static final DataComponentType<ItemName> TYPE = DataComponentType.valued(CODEC, ItemName::new);
 
     public ItemName(Component name) {
-        super(Identifier.of(DataComponentTypes.ITEM_NAME.key().asString()), name, CODEC);
+        super(name);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

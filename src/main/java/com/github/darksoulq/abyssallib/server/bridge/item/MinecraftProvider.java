@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.ItemProvider;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -43,10 +44,10 @@ public class MinecraftProvider extends ItemProvider {
         Item vanilla = new Item(new ItemStack(value.getType()));
 
         item.getComponentMap().getAllComponents().forEach(component -> {
-            DataComponent<?> vComp = vanilla.getData(component.getId());
-            if (vComp != null && Objects.equals(component.value, vComp.value)) return;
+            DataComponent<?> vComp = vanilla.getData(component.getType());
+            if (vComp != null && Objects.equals(component.getValue(), vComp.getValue())) return;
             Object encoded = encodeComponent(component, ops);
-            map.put(component.getId().toString(), Optional.ofNullable(encoded));
+            map.put(Registries.DATA_COMPONENT_TYPES.getId(component.getType()), Optional.ofNullable(encoded));
         });
 
         return map;

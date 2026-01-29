@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
@@ -14,9 +15,15 @@ public class ProvidesTrimMaterial extends DataComponent<TrimMaterial> implements
             ProvidesTrimMaterial::new,
             ProvidesTrimMaterial::getValue
     );
+    public static final DataComponentType<ProvidesTrimMaterial> TYPE = DataComponentType.valued(CODEC, ProvidesTrimMaterial::new);
 
     public ProvidesTrimMaterial(TrimMaterial material) {
-        super(Identifier.of(DataComponentTypes.PROVIDES_TRIM_MATERIAL.key().asString()), material, CODEC);
+        super(material);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

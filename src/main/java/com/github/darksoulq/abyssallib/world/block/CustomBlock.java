@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
 import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
+import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
@@ -14,22 +15,29 @@ import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.event.block.*;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 /**
  * Represents a custom block type in the AbyssalLib framework.
  * <p>
- * This class defines basic properties and behaviors for blocks, including material type,
- * unique identifier, entity association, and event hooks.
+ * This class defines the behavior, properties, and event hooks for custom blocks.
+ * To create a custom block, extend this class or use the default implementation
+ * with modified {@link BlockProperties}.
  */
 public class CustomBlock implements Cloneable {
 
@@ -39,43 +47,39 @@ public class CustomBlock implements Cloneable {
     protected final Identifier id;
 
     /**
-     * The Bukkit material representing this block.
+     * The underlying Bukkit material of this block.
      */
     private Material material = Material.DIRT;
 
     /**
-     * The Bukkit location of this block instance.
+     * The location of this block instance in the world.
      */
     private Location location;
 
     /**
-     * The block entity associated with this block, if any.
+     * The associated block entity, if any.
      */
     private BlockEntity entity;
 
     /**
-     * Whether to allow physics for the block (only applies to blocks with physics like sand).
-     */
-    public boolean allowPhysics = false;
-
-    /**
-     * The properties associated with this block.
+     * The physical and interaction properties of this block.
      */
     public BlockProperties properties = BlockProperties.of().build();
 
     /**
-     * Constructs a new {@code Block} with the given identifier.
+     * Constructs a new CustomBlock with the given identifier.
      *
-     * @param id the unique identifier for this block
+     * @param id the unique identifier
      */
     public CustomBlock(Identifier id) {
         this.id = id;
     }
 
     /**
-     * Constructs a new {@code Block} with the given identifier and block material.
+     * Constructs a new CustomBlock with the given identifier and base material.
      *
-     * @param id the unique identifier for this block
+     * @param id the unique identifier
+     * @param material the base vanilla material
      */
     public CustomBlock(Identifier id, Material material) {
         this.id = id;
@@ -83,36 +87,36 @@ public class CustomBlock implements Cloneable {
     }
 
     /**
-     * Returns the unique identifier of this block.
+     * Gets the unique identifier of this block.
      *
-     * @return the {@link Identifier} of the block
+     * @return the block identifier
      */
     public Identifier getId() {
         return id;
     }
 
     /**
-     * Returns the Bukkit material of this block.
+     * Gets the base material of this block.
      *
-     * @return the {@link Material} of the block
+     * @return the material
      */
     public Material getMaterial() {
         return material;
     }
 
     /**
-     * Returns whether this block generates an item representation.
+     * Checks if this block should generate a corresponding item.
      *
-     * @return {@code true} if this block generates an item, otherwise {@code false}
+     * @return true if an item should be generated
      */
     public boolean generateItem() {
         return true;
     }
 
     /**
-     * Returns a {@link Supplier} that creates a new {@link Item} representing this block.
+     * Provides the supplier for the item representation of this block.
      *
-     * @return a supplier for the item representation of this block
+     * @return the item supplier
      */
     public Supplier<Item> getItem() {
         return () -> {
@@ -123,19 +127,20 @@ public class CustomBlock implements Cloneable {
     }
 
     /**
-     * Creates and returns a new {@link BlockEntity} for this block at the specified location.
+     * Creates a new block entity instance for this block.
+     * Override this to provide custom logic.
      *
-     * @param loc the Bukkit location where the block entity should be created
-     * @return a new {@link BlockEntity} instance, or {@code null} if none
+     * @param loc the location of the block
+     * @return a new BlockEntity, or null
      */
     public BlockEntity createBlockEntity(Location loc) {
         return null;
     }
 
     /**
-     * Sets the {@link BlockEntity} associated with this block.
+     * Sets the active block entity for this block instance.
      *
-     * @param entity the block entity to associate
+     * @param entity the entity to set
      */
     @ApiStatus.Internal
     public void setEntity(BlockEntity entity) {
@@ -143,36 +148,37 @@ public class CustomBlock implements Cloneable {
     }
 
     /**
-     * Returns the Bukkit location of this block.
+     * Gets the location of this block.
      *
-     * @return the location of the block
+     * @return the location
      */
     public Location getLocation() {
         return location;
     }
 
     /**
-     * Sets the Bukkit location of this block.
+     * Sets the location of this block.
      *
-     * @param location the new location of the block
+     * @param location the new location
      */
-    protected void setLocation(Location location) {
+    public void setLocation(Location location) {
         this.location = location;
     }
 
     /**
-     * Returns the {@link BlockEntity} associated with this block, if any.
+     * Gets the active block entity.
      *
-     * @return the associated block entity, or {@code null} if none
+     * @return the entity, or null
      */
     public BlockEntity getEntity() {
         return entity;
     }
 
     /**
-     * Places this block into the world at the location specified by {@code bukkitBlock}.
+     * Places the block at the specified Bukkit block location.
      *
-     * @param block the Bukkit block
+     * @param block the target block
+     * @param loading true if this is being loaded from disk, false if newly placed
      */
     public void place(Block block, boolean loading) {
         if (!material.isBlock()) {
@@ -196,28 +202,34 @@ public class CustomBlock implements Cloneable {
     }
 
     /**
-     * Returns the loot table associated with this block, or {@code null} if none.
+     * Gets the custom loot table for this block.
      *
-     * @return the {@link LootTable} for this block or {@code null}
+     * @return the loot table, or null
      */
-    public LootTable getLootTable() {
+    public LootTable getDrops() {
         return null;
     }
 
     /**
-     * Returns the amount of experience (XP) this block gives when mined.
+     * Calculates the experience to drop based on block properties.
      *
-     * @return the XP amount, or 0 if none
+     * @param player the player breaking the block
+     * @param fortuneLevel the fortune enchantment level
+     * @param silkTouch whether silk touch is used
+     * @return amount of XP to drop
      */
     public int getExpToDrop(Player player, int fortuneLevel, boolean silkTouch) {
-        return 0;
+        if (silkTouch) return 0;
+        if (properties.minExp == 0 && properties.maxExp == 0) return 0;
+
+        return ThreadLocalRandom.current().nextInt(properties.minExp, properties.maxExp + 1);
     }
 
     /**
-     * Checks whether this block has the specified block tag.
+     * Checks if this block possesses a specific tag.
      *
-     * @param id the identifier of the block tag to check
-     * @return {@code true} if this block has the tag, otherwise {@code false}
+     * @param id the tag identifier
+     * @return true if tagged
      */
     public boolean hasTag(Identifier id) {
         if (!(Registries.TAGS.get(id.toString()) instanceof BlockTag tag)) {
@@ -230,11 +242,10 @@ public class CustomBlock implements Cloneable {
     }
 
     /**
-     * Checks whether the given Bukkit block is a custom block managed by AbyssalLib,
-     * and returns the corresponding {@link CustomBlock} instance if it is.
+     * Retrieves the CustomBlock instance associated with a Bukkit Block.
      *
-     * @param block the Bukkit block to check
-     * @return the associated custom {@link CustomBlock}, or {@code null} if not a custom block
+     * @param block the bukkit block
+     * @return the custom block, or null
      */
     public static CustomBlock from(Block block) {
         if (block == null) return null;
@@ -242,43 +253,38 @@ public class CustomBlock implements Cloneable {
     }
 
     /**
-     * Returns the item representation of the given custom block if item generation is enabled.
+     * Retrieves the CustomBlock instance at a specific location.
+     *
+     * @param loc the location
+     * @return the custom block, or null
+     */
+    public static CustomBlock from(Location loc) {
+        if (loc == null) return null;
+        return BlockManager.get(loc);
+    }
+
+    /**
+     * Gets the Item associated with a CustomBlock type.
      *
      * @param block the custom block
-     * @return the corresponding {@link Item}, or {@code null} if item generation is disabled
+     * @return the item, or null
      */
     public static Item asItem(CustomBlock block) {
         if (!block.generateItem()) return null;
         return Registries.ITEMS.get(block.getId().toString());
     }
 
-    /**
-     * Indicates whether this block is equal to another object.
-     *
-     * @param o the object to compare
-     * @return {@code true} if equal, otherwise {@code false}
-     */
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CustomBlock block)) return false;
         return Objects.equals(id, block.id) && Objects.equals(location, block.location);
     }
 
-    /**
-     * Returns the hash code of this block.
-     *
-     * @return the hash code value
-     */
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
     }
 
-    /**
-     * Clones this block
-     *
-     * @return The cloned block
-     */
     @Override
     public CustomBlock clone() {
         try {
@@ -288,28 +294,45 @@ public class CustomBlock implements Cloneable {
         }
     }
 
+    /**
+     * Called when the block is loaded from disk.
+     */
     public void onLoad() {}
+
+    /**
+     * Called when the block is unloaded (chunk unload or server stop).
+     */
     public void onUnLoad() {}
 
     /**
-     * Called when the block is placed.
+     * Called when a player interacts with the block.
      *
-     * @param player the player placing the block
-     * @param loc the location at which the block is being placed
-     * @param stack the {@link ItemStack} used to place the block
-     * @return {@link ActionResult} to cancel vanilla event or allow it
+     * @param event the interaction event
+     * @return ActionResult to control the outcome
+     */
+    public ActionResult onInteract(BlockInteractionEvent event) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block is placed by a player.
+     *
+     * @param player the player
+     * @param loc the location
+     * @param stack the item stack used
+     * @return ActionResult
      */
     public ActionResult onPlaced(Player player, Location loc, ItemStack stack) {
         return ActionResult.PASS;
     }
 
     /**
-     * Called when the block is broken.
+     * Called when the block is broken by a player.
      *
-     * @param player the player who broke the block
-     * @param loc the location at which the block was broken
-     * @param tool the {@link ItemStack} used to break the block
-     * @return {@link ActionResult} to cancel vanilla event or allow it
+     * @param player the player
+     * @param loc the location
+     * @param tool the tool used
+     * @return ActionResult
      */
     public ActionResult onBreak(Player player, Location loc, ItemStack tool) {
         return ActionResult.PASS;
@@ -318,39 +341,154 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block is destroyed by an explosion.
      *
-     * @param eCause the source entity of the explosion, or {@code null}
-     * @param blockCause the source block of the explosion, or {@code null}
-     * @return {@link ActionResult} to cancel vanilla event or allow it
+     * @param eCause the entity that caused the explosion, if any
+     * @param blockCause the block that caused the explosion, if any
+     * @return ActionResult
      */
     public ActionResult onDestroyedByExplosion(@Nullable Entity eCause, @Nullable Block blockCause) {
         return ActionResult.PASS;
     }
 
     /**
-     * Called when an entity lands on this block.
+     * Called when an entity lands on the block (fall damage calculation).
      *
-     * @param entity the entity landing on the block
+     * @param entity the entity
      */
     public void onLanded(Entity entity) {}
 
     /**
-     * Called when an entity steps on this block.
+     * Called when an entity steps onto the block.
      *
-     * @param entity the entity stepping on the block
+     * @param entity the entity
      */
     public void onSteppedOn(LivingEntity entity) {}
 
+    /**
+     * Called when the block receives a redstone update.
+     *
+     * @param oldCurrent previous signal strength
+     * @param newCurrent new signal strength
+     * @return the adjusted signal strength
+     */
     public int onRedstone(int oldCurrent, int newCurrent) {
         return oldCurrent;
     }
 
     /**
-     * Called when this block is hit by a projectile.
+     * Called when a projectile hits the block.
      *
-     * @param projectile the entity projectile that hit the block
-     * @return Whether to cancel event
+     * @param projectile the projectile
+     * @return ActionResult
      */
     public ActionResult onProjectileHit(Projectile projectile) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when a neighbor block changes or a physics update occurs.
+     *
+     * @param source the block causing the update
+     * @return ActionResult
+     */
+    public ActionResult onNeighborUpdate(Block source) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block is moved by a piston.
+     * @param direction the direction of movement
+     * @return ActionResult
+     */
+    public ActionResult onPistonMove(BlockFace direction) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block is fertilized with Bone Meal.
+     *
+     * @param player the player using bone meal
+     * @return ActionResult
+     */
+    public ActionResult onBoneMeal(Player player) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block fades (e.g. ice melting).
+     *
+     * @param event the event details
+     * @return ActionResult
+     */
+    public ActionResult onFade(Block block, BlockState newState) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block forms (e.g. snow forming).
+     *
+     * @param event the event details
+     * @return ActionResult
+     */
+    public ActionResult onForm(Block block, BlockState newState) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block grows (e.g. crops).
+     *
+     * @param event the event details
+     * @return ActionResult
+     */
+    public ActionResult onGrow(Block block, BlockState newState) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block ignites.
+     *
+     * @param event the event details
+     * @return ActionResult
+     */
+    public ActionResult onIgnite(BlockIgniteEvent.IgniteCause cause, Entity ignitingEntity, Block ignitingBlock) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when the block spreads (e.g. fire, mushrooms).
+     *
+     * @param event the event details
+     * @return ActionResult
+     */
+    public ActionResult onSpread(Block block, Block source, BlockState newState) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when leaves decay.
+     *
+     * @return ActionResult
+     */
+    public ActionResult onLeavesDecay() {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when a sponge absorbs water.
+     *
+     * @param spongedBlocks the blocks that the Sponge should clear, containing their cleared block state (e.g having Material type AIR)
+     * @return ActionResult
+     */
+    public ActionResult onSpongeAbsorb(List<BlockState> spongedBlocks) {
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Called when a sign is changed.
+     *
+     * @param event the event details
+     * @return ActionResult
+     */
+    public ActionResult onSignChange(Player player, Side side) {
         return ActionResult.PASS;
     }
 }

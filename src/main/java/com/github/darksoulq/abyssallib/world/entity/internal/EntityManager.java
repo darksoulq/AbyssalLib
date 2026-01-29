@@ -4,9 +4,9 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.common.database.sql.Database;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.event.custom.entity.EntitySpawnEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.entity.Entity;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.SpawnCategory;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -23,7 +23,7 @@ import java.util.*;
 public class EntityManager {
     public static final Random RAND = new Random();
 
-    private static final Map<UUID, Entity<? extends LivingEntity>> ENTITIES = new HashMap<>();
+    private static final Map<UUID, CustomEntity<? extends LivingEntity>> ENTITIES = new HashMap<>();
     private static final Map<World, EnumMap<SpawnCategory, Integer>> CATEGORY_COUNTS = new HashMap<>();
     private static final Map<World, Map<Long, Integer>> REGION_DENSITY = new HashMap<>();
     private static final Map<World, List<Chunk>> CHUNK_CACHE = new HashMap<>();
@@ -41,13 +41,13 @@ public class EntityManager {
                 .primaryKey("entity_uuid")
                 .execute();
 
-            List<Entity<? extends LivingEntity>> loaded = DATABASE.executor().table("entities").select(rs -> {
+            List<CustomEntity<? extends LivingEntity>> loaded = DATABASE.executor().table("entities").select(rs -> {
                 try {
                     UUID uuid = UUID.fromString(rs.getString("entity_uuid"));
                     Identifier id = Identifier.of(rs.getString("entity_id"));
-                    Entity<? extends LivingEntity> proto = Registries.ENTITIES.get(id.toString());
+                    CustomEntity<? extends LivingEntity> proto = Registries.ENTITIES.get(id.toString());
                     if (proto == null) return null;
-                    Entity<? extends LivingEntity> e = proto.clone();
+                    CustomEntity<? extends LivingEntity> e = proto.clone();
                     e.uuid = uuid;
                     return e;
                 } catch (Exception ex) {
@@ -70,7 +70,7 @@ public class EntityManager {
         }
     }
 
-    public static void add(Entity<? extends LivingEntity> entity) {
+    public static void add(CustomEntity<? extends LivingEntity> entity) {
         ENTITIES.put(entity.uuid, entity);
 
         entity.getBaseEntity().ifPresent(ent -> {
@@ -89,12 +89,12 @@ public class EntityManager {
             .executeAsync();
     }
 
-    public static Entity<? extends LivingEntity> get(UUID uuid) {
+    public static CustomEntity<? extends LivingEntity> get(UUID uuid) {
         return ENTITIES.get(uuid);
     }
 
     public static void remove(UUID uuid) {
-        Entity<? extends LivingEntity> e = ENTITIES.remove(uuid);
+        CustomEntity<? extends LivingEntity> e = ENTITIES.remove(uuid);
         if (e != null) {
             e.getBaseEntity().ifPresent(ent -> {
                 World w = ent.getWorld();
@@ -114,7 +114,7 @@ public class EntityManager {
     }
 
     public static void restoreEntities() {
-        for (Map.Entry<UUID, Entity<? extends LivingEntity>> entry : ENTITIES.entrySet()) {
+        for (Map.Entry<UUID, CustomEntity<? extends LivingEntity>> entry : ENTITIES.entrySet()) {
             if (Bukkit.getEntity(entry.getKey()) != null) {
                 entry.getValue().onLoad();
                 entry.getValue().applyGoals();
@@ -151,7 +151,7 @@ public class EntityManager {
     private static class DespawnTask extends BukkitRunnable {
         @Override
         public void run() {
-            for (Entity<? extends LivingEntity> e : new ArrayList<>(ENTITIES.values())) {
+            for (CustomEntity<? extends LivingEntity> e : new ArrayList<>(ENTITIES.values())) {
                 e.getBaseEntity().ifPresent(ent -> {
                     if (!shouldDespawn(ent)) return;
                     e.onUnload();
@@ -189,13 +189,13 @@ public class EntityManager {
             for (Chunk chunk : chunks) {
                 if (current >= cap) break;
 
-                List<Entity<? extends LivingEntity>> pool = NaturalSpawnRegistry.get(category);
+                List<CustomEntity<? extends LivingEntity>> pool = NaturalSpawnRegistry.get(category);
                 if (pool.isEmpty()) continue;
 
-                Entity<? extends LivingEntity> proto = weightedRandom(pool);
+                CustomEntity<? extends LivingEntity> proto = weightedRandom(pool);
                 if (proto == null) continue;
 
-                Entity.SpawnSettings s = proto.getSpawnSettings();
+                CustomEntity.SpawnSettings s = proto.getSpawnSettings();
                 if (s == null) continue;
 
                 Location base = randomLocation(chunk, s, players);
@@ -219,12 +219,12 @@ public class EntityManager {
                     );
 
                     Location onGround = randomLocation(chunk, s, players);
-                    if (s.placement == Entity.SpawnPlacement.ON_GROUND && onGround != null) {
+                    if (s.placement == CustomEntity.SpawnPlacement.ON_GROUND && onGround != null) {
                         off.setY(onGround.getY());
                     }
 
                     if (!isValidSpawn(s, world, off, players)) continue;
-                    proto.clone().spawn(off, EntitySpawnEvent.SpawnReason.NATURAL);
+                    proto.clone().spawn(off, CustomEntitySpawnEvent.SpawnReason.NATURAL);
                     REGION_DENSITY.computeIfAbsent(world, x -> new HashMap<>())
                         .merge(region, 1, Integer::sum);
                     current++;
@@ -245,7 +245,7 @@ public class EntityManager {
         return Math.max(1, base * chunks / 289);
     }
 
-    private static Location randomLocation(Chunk chunk, Entity.SpawnSettings s, List<Location> players) {
+    private static Location randomLocation(Chunk chunk, CustomEntity.SpawnSettings s, List<Location> players) {
         World world = chunk.getWorld();
         for (int attempt = 0; attempt < 10; attempt++) {
             int x = (chunk.getX() << 4) + RAND.nextInt(16);
@@ -257,7 +257,7 @@ public class EntityManager {
                 case WORLD_SURFACE, WORLD_SURFACE_WG -> world.getHighestBlockYAt(x, z, HeightMap.WORLD_SURFACE);
             };
 
-            if (s.placement == Entity.SpawnPlacement.ON_GROUND) {
+            if (s.placement == CustomEntity.SpawnPlacement.ON_GROUND) {
                 while (y > s.minY && !world.getBlockAt(x, y - 1, z).getType().isSolid()) {
                     y--;
                 }
@@ -271,7 +271,7 @@ public class EntityManager {
         return null;
     }
 
-    private static boolean isValidSpawn(Entity.SpawnSettings s, World world, Location loc, List<Location> players) {
+    private static boolean isValidSpawn(CustomEntity.SpawnSettings s, World world, Location loc, List<Location> players) {
         Block block = loc.getBlock();
         Block below = block.getRelative(0, -1, 0);
         int light = block.getLightLevel();
@@ -324,7 +324,7 @@ public class EntityManager {
         return min + RAND.nextInt(max - min + 1);
     }
 
-    private static Entity<? extends LivingEntity> weightedRandom(List<Entity<? extends LivingEntity>> list) {
+    private static CustomEntity<? extends LivingEntity> weightedRandom(List<CustomEntity<? extends LivingEntity>> list) {
         int total = list.stream()
             .mapToInt(e -> e.getSpawnSettings() != null ? e.getSpawnSettings().weight : 0)
             .sum();
@@ -332,7 +332,7 @@ public class EntityManager {
         int roll = RAND.nextInt(total);
         int cur = 0;
 
-        for (Entity<? extends LivingEntity> e : list) {
+        for (CustomEntity<? extends LivingEntity> e : list) {
             if (e.getSpawnSettings() == null) continue;
             cur += e.getSpawnSettings().weight;
             if (roll < cur) return e;

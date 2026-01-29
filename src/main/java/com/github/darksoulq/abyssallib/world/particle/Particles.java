@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.particle;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.color.ColorProvider;
 import com.github.darksoulq.abyssallib.world.particle.style.MotionVector;
 import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
 import org.bukkit.Bukkit;
@@ -23,6 +24,7 @@ public class Particles {
     private final Generator generator;
     private final ParticleRenderer renderer;
     private final List<Transformer> transformers;
+    private final ColorProvider colorProvider;
     private final long interval;
     private final long duration;
     private final boolean smoothen;
@@ -39,6 +41,7 @@ public class Particles {
         this.generator = b.generator;
         this.renderer = b.renderer;
         this.transformers = b.transformers;
+        this.colorProvider = b.colorProvider;
         this.interval = b.interval;
         this.duration = b.duration;
         this.smoothen = b.smoothen;
@@ -48,14 +51,13 @@ public class Particles {
 
     public void start() {
         stop();
-        Location startLoc = origin.get();
-        if (startLoc == null) return;
+        if (origin.get() == null) return;
 
         running.set(true);
         currentTick.set(0);
         processing.set(false);
-        renderer.start(startLoc);
-        task = Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), this::tick, 0L, interval);
+        renderer.start(origin.get());
+        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), this::tick, 0L, interval);
     }
 
     private void tick() {
@@ -70,53 +72,51 @@ public class Particles {
             return;
         }
 
-        Location center = origin.get();
-        if (center == null || center.getWorld() == null) return;
+        if (!processing.compareAndSet(false, true)) return;
 
-        Location centerSnapshot = center.clone();
-        List<Player> viewersSnapshot = (viewers != null)
-            ? new ArrayList<>(viewers.get())
-            : null;
-
-        if (!processing.compareAndSet(false, true)) {
-            return;
-        }
-        Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
-            try {
-                if (!running.get()) return;
-                List<Vector> finalPoints = calculateVectors(tick);
-
-                Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> {
-                    if (running.get()) {
-                        renderer.render(centerSnapshot, finalPoints, viewersSnapshot);
-                    }
-                    processing.set(false);
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
+        try {
+            Location center = origin.get();
+            if (center == null) {
                 processing.set(false);
+                return;
             }
-        });
+
+            List<Vector> points = calculateVectors(tick);
+            List<Player> playerList = viewers != null ? viewers.get() : null;
+
+            Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> {
+                if (running.get()) {
+                    renderer.render(center, points, playerList);
+                }
+                processing.set(false);
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            processing.set(false);
+        }
 
         currentTick.addAndGet(interval);
     }
 
     private List<Vector> calculateVectors(long tick) {
         List<Vector> points = generator.generate(tick);
-        List<Vector> finalPoints = new ArrayList<>(points.size());
+        if (points.isEmpty()) return points;
 
-        List<Vector> nextPoints = null;
-        if (smoothen) {
-            nextPoints = generator.generate(tick + interval);
-        }
+        List<Vector> finalPoints = new ArrayList<>(points.size());
+        List<Vector> nextPoints = smoothen ? generator.generate(tick + interval) : null;
+        double progress = duration > 0 ? (double) tick / duration : (tick % 100) / 100.0;
 
         for (int i = 0; i < points.size(); i++) {
-            Vector v = points.get(i);
-            Vector temp = v.clone();
+            Vector v = points.get(i).clone();
 
             for (Transformer t : transformers) {
-                temp = t.transform(temp, tick);
+                v = t.transform(v, tick);
+            }
+
+            if (colorProvider != null) {
+                Color c = colorProvider.get(v, progress);
+                v = new Pixel(v.getX(), v.getY(), v.getZ(), c);
             }
 
             if (smoothen && nextPoints != null && i < nextPoints.size()) {
@@ -124,12 +124,11 @@ public class Particles {
                 for (Transformer t : transformers) {
                     nextV = t.transform(nextV, tick + interval);
                 }
-
-                Vector velocity = nextV.subtract(temp);
+                Vector velocity = nextV.subtract(v);
                 Color c = (v instanceof Pixel p) ? p.getColor() : Color.WHITE;
-                temp = new MotionVector(temp, velocity, c);
+                v = new MotionVector(v, velocity, c);
             }
-            finalPoints.add(temp);
+            finalPoints.add(v);
         }
         return finalPoints;
     }
@@ -140,7 +139,7 @@ public class Particles {
             task.cancel();
             task = null;
         }
-        renderer.stop();
+        Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), renderer::stop);
     }
 
     public static Builder builder() { return new Builder(); }
@@ -150,6 +149,7 @@ public class Particles {
         private Generator generator;
         private ParticleRenderer renderer;
         private final List<Transformer> transformers = new ArrayList<>();
+        private ColorProvider colorProvider;
         private long interval = 1;
         private long duration = -1;
         private boolean smoothen;
@@ -162,8 +162,11 @@ public class Particles {
         public Builder render(ParticleRenderer r) { this.renderer = r; return this; }
         public Builder transform(Transformer t) { this.transformers.add(t); return this; }
 
-        public Builder rotate(double xRad, double yRad, double zRad) {
-            return transform((v, tick) -> v.rotateAroundX(xRad).rotateAroundY(yRad).rotateAroundZ(zRad));
+        public Builder color(Color color) { this.colorProvider = ColorProvider.fixed(color); return this; }
+        public Builder color(ColorProvider provider) { this.colorProvider = provider; return this; }
+
+        public Builder rotate(double x, double y, double z) {
+            return transform((v, tick) -> v.rotateAroundX(x).rotateAroundY(y).rotateAroundZ(z));
         }
         public Builder scale(double s) {
             return transform((v, tick) -> v.multiply(s));
@@ -181,7 +184,7 @@ public class Particles {
         public Builder stopIf(BooleanSupplier s) { this.cancelIf = s; return this; }
 
         public Particles build() {
-            if (origin == null || generator == null || renderer == null) throw new IllegalStateException("Missing origin, generator, or renderer");
+            if (origin == null || generator == null || renderer == null) throw new IllegalStateException("Missing required components");
             return new Particles(this);
         }
     }

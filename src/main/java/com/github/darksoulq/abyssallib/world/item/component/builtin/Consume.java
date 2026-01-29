@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Consumable;
@@ -14,9 +15,15 @@ public class Consume extends DataComponent<Consumable> implements Vanilla {
             Consume::new,
             Consume::getValue
     );
+    public static final DataComponentType<Consume> TYPE = DataComponentType.valued(CODEC, Consume::new);
 
     public Consume(Consumable props) {
-        super(Identifier.of(DataComponentTypes.CONSUMABLE.key().asString()), props, CODEC);
+        super(props);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

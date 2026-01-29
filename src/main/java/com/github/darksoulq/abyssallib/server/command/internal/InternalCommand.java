@@ -1,13 +1,15 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.color.ColorProvider;
+import com.github.darksoulq.abyssallib.common.util.Easings;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.command.Command;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.DefaultConditions;
-import com.github.darksoulq.abyssallib.server.event.custom.entity.EntitySpawnEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
@@ -17,10 +19,15 @@ import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.dialog.DialogContent;
 import com.github.darksoulq.abyssallib.world.dialog.Dialogs;
 import com.github.darksoulq.abyssallib.world.dialog.Notice;
-import com.github.darksoulq.abyssallib.world.entity.Entity;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.particle.Particles;
+import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
+import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
+import com.github.darksoulq.abyssallib.world.particle.timeline.Animations;
+import com.github.darksoulq.abyssallib.world.particle.timeline.Timeline;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -38,6 +45,7 @@ import io.papermc.paper.dialog.Dialog;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
@@ -281,12 +289,12 @@ public class InternalCommand {
             return Command.SUCCESS;
         }
 
-        Registries.ENTITIES.get(id.asString()).clone().spawn(loc, EntitySpawnEvent.SpawnReason.PLUGIN);
+        Registries.ENTITIES.get(id.asString()).clone().spawn(loc, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
         return Command.SUCCESS;
     }
     public static CompletableFuture<Suggestions> summonSuggests(final CommandContext<CommandSourceStack> ctx,
                                                               final SuggestionsBuilder builder) {
-        for (Entity<? extends LivingEntity> entity : Registries.ENTITIES.getAll().values()) {
+        for (CustomEntity<? extends LivingEntity> entity : Registries.ENTITIES.getAll().values()) {
             builder.suggest(entity.getId().toString());
         }
 

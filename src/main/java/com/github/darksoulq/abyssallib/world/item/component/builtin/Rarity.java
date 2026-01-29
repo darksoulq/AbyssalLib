@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.item.component.builtin;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemRarity;
@@ -13,9 +14,15 @@ public class Rarity extends DataComponent<ItemRarity> implements Vanilla {
             Rarity::new,
             Rarity::getValue
     );
+    public static final DataComponentType<Rarity> TYPE = DataComponentType.valued(CODEC, Rarity::new);
 
     public Rarity(ItemRarity rarity) {
-        super(Identifier.of(DataComponentTypes.RARITY.key().asString()), rarity, CODEC);
+        super(rarity);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

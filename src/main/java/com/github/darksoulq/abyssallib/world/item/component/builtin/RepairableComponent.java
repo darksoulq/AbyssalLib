@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Repairable;
@@ -14,9 +15,15 @@ public class RepairableComponent extends DataComponent<Repairable> implements Va
             RepairableComponent::new,
             RepairableComponent::getValue
     );
+    public static final DataComponentType<RepairableComponent> TYPE = DataComponentType.valued(CODEC, RepairableComponent::new);
 
     public RepairableComponent(Repairable rep) {
-        super(Identifier.of(DataComponentTypes.REPAIRABLE.key().asString()), rep, CODEC);
+        super(rep);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

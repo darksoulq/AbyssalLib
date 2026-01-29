@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Enchantable;
@@ -15,12 +16,15 @@ public class EnchantableComponent extends DataComponent<Integer> implements Vani
             EnchantableComponent::new,
             EnchantableComponent::getValue
     );
+    public static final DataComponentType<EnchantableComponent> TYPE = DataComponentType.valued(CODEC, EnchantableComponent::new);
 
-    public EnchantableComponent(Enchantable level) {
-        super(Identifier.of(DataComponentTypes.ENCHANTABLE.key().asString()), level.value(), CODEC);
-    }
     public EnchantableComponent(int level) {
-        super(Identifier.of(DataComponentTypes.ENCHANTABLE.key().asString()), level, CODEC);
+        super(level);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

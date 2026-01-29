@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.registry.RegistryAccess;
@@ -17,13 +18,18 @@ public class Instrument extends DataComponent<Key> implements Vanilla {
             v -> new Instrument(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(v)),
             Instrument::getValue
     );
+    public static final DataComponentType<Instrument> TYPE = DataComponentType.valued(CODEC, v -> new Instrument((MusicInstrument) v));
 
     public Instrument(MusicInstrument instrument) {
-        super(Identifier.of(DataComponentTypes.INSTRUMENT.key().asString()),
-                RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getKeyOrThrow(instrument), CODEC);
+        super(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getKeyOrThrow(instrument));
     }
     public Instrument(Key instrument) {
-        super(Identifier.of(DataComponentTypes.INSTRUMENT.key().asString()), instrument, CODEC);
+        super(instrument);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

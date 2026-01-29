@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.FoodProperties;
@@ -15,9 +16,15 @@ public class Food extends DataComponent<FoodProperties> implements Vanilla {
             Food::new,
             Food::getValue
     );
+    public static final DataComponentType<Food> TYPE = DataComponentType.valued(CODEC, Food::new);
 
     public Food(FoodProperties props) {
-        super(Identifier.of(DataComponentTypes.FOOD.key().asString()), props, CODEC);
+        super(props);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

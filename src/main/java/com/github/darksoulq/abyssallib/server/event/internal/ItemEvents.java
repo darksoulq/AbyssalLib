@@ -8,6 +8,7 @@ import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.EntitySpawner;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemTicker;
@@ -148,9 +149,9 @@ public class ItemEvents {
                     event.setCancelled(true);
                     return;
                 }
-                if (item.hasData(EntitySpawner.class)) {
-                    EntitySpawner spawner = item.getData(EntitySpawner.class);
-                    com.github.darksoulq.abyssallib.world.entity.Entity<?> entity =
+                if (item.hasData(EntitySpawner.TYPE)) {
+                    EntitySpawner spawner = item.getData(EntitySpawner.TYPE);
+                    CustomEntity<?> entity =
                         com.github.darksoulq.abyssallib.server.registry.Registries.ENTITIES.get(spawner.getValue().toString());
                     if (entity == null) return;
                     Location loc = block.getLocation().clone().add(0, 1, 0);

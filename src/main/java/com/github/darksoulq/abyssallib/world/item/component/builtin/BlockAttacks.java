@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BlocksAttacks;
@@ -14,9 +15,15 @@ public class BlockAttacks extends DataComponent<BlocksAttacks> implements Vanill
             BlockAttacks::new,
             BlockAttacks::getValue
     );
+    public static final DataComponentType<BlockAttacks> TYPE = DataComponentType.valued(CODEC, BlockAttacks::new);
 
     public BlockAttacks(BlocksAttacks blocks) {
-        super(Identifier.of(DataComponentTypes.BLOCKS_ATTACKS.key().asString()), blocks, CODEC);
+        super(blocks);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

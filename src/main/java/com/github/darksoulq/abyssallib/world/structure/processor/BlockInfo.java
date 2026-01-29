@@ -5,4 +5,5 @@ import org.bukkit.util.Vector;
 
 import javax.annotation.Nullable;
 
-public record BlockInfo(Vector pos, Object block, @Nullable ObjectNode nbt) {}
+public record BlockInfo(Vector pos, Object block, @Nullable ObjectNode combinedData, @Nullable ObjectNode nbt) {
+}

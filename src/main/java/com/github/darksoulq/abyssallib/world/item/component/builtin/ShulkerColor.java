@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.item.component.builtin;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.DyeColor;
@@ -13,9 +14,15 @@ public class ShulkerColor extends DataComponent<DyeColor> implements Vanilla {
             ShulkerColor::new,
             ShulkerColor::getValue
     );
+    public static final DataComponentType<ShulkerColor> TYPE = DataComponentType.valued(CODEC, ShulkerColor::new);
 
     public ShulkerColor(DyeColor color) {
-        super(Identifier.of(DataComponentTypes.SHULKER_COLOR.key().asString()), color, CODEC);
+        super(color);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

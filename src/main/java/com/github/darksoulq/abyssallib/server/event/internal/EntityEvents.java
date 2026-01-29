@@ -5,9 +5,9 @@ import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityDeathEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityLoadEvent;
-import com.github.darksoulq.abyssallib.world.entity.Entity;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntityDeathEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntityLoadEvent;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import org.bukkit.entity.LivingEntity;
 
@@ -16,21 +16,21 @@ public class EntityEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onEntityLoad(EntityAddToWorldEvent event) {
         if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
-        Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
+        CustomEntity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
         if (entity == null) return;
         entity.applyGoals();
         entity.applyAttributes();
         entity.applyComponents();
-        EventBus.post(new EntityLoadEvent(entity));
+        EventBus.post(new CustomEntityLoadEvent(entity));
         entity.onLoad();
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onEntityDeath(org.bukkit.event.entity.EntityDeathEvent event) {
-        Entity<? extends LivingEntity> entity = Entity.resolve(event.getEntity());
+        CustomEntity<? extends LivingEntity> entity = CustomEntity.resolve(event.getEntity());
         if (entity == null) return;
 
-        EntityDeathEvent e = new EntityDeathEvent(entity, event.getEntity().getKiller());
+        CustomEntityDeathEvent e = new CustomEntityDeathEvent(entity, event.getEntity().getKiller());
         EventBus.post(e);
         if (e.isCancelled()) {
             event.setCancelled(true);
@@ -47,7 +47,7 @@ public class EntityEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onEntityUnload(EntityRemoveFromWorldEvent event) {
         if (!(event.getEntity() instanceof LivingEntity lEntity)) return;
-        Entity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
+        CustomEntity<? extends LivingEntity> entity = EntityManager.get(lEntity.getUniqueId());
         if (entity == null) return;
         entity.onUnload();
     }

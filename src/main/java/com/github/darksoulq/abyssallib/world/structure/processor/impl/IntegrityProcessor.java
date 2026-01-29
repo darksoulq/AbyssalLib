@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.structure.processor.impl;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessorType;
@@ -45,6 +46,12 @@ public class IntegrityProcessor extends StructureProcessor {
 
     @Override
     public BlockInfo process(World world, Location origin, BlockInfo current, BlockInfo original) {
+        if (integrity >= 1.0f) return current;
+        return random.nextFloat() <= integrity ? current : null;
+    }
+
+    @Override
+    public BlockInfo process(WorldGenAccess level, Location origin, BlockInfo current, BlockInfo original) {
         if (integrity >= 1.0f) return current;
         return random.nextFloat() <= integrity ? current : null;
     }

@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemArmorTrim;
@@ -16,12 +17,18 @@ public class Trim extends DataComponent<ArmorTrim> implements Vanilla {
             Trim::new,
             Trim::getValue
     );
+    public static final DataComponentType<Trim> TYPE = DataComponentType.valued(CODEC, v -> new Trim((ItemArmorTrim) v));
 
     public Trim(ItemArmorTrim trim) {
-        super(Identifier.of(DataComponentTypes.TRIM.key().asString()), trim.armorTrim(), CODEC);
+        super(trim.armorTrim());
     }
     public Trim(ArmorTrim trim) {
-        super(Identifier.of(DataComponentTypes.TRIM.key().asString()), trim, CODEC);
+        super(trim);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

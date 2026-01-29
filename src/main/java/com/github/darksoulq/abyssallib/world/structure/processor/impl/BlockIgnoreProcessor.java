@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessorType;
@@ -36,7 +37,6 @@ public class BlockIgnoreProcessor extends StructureProcessor {
             return ops.createMap(map);
         }
     };
-
     public static final StructureProcessorType<BlockIgnoreProcessor> TYPE = () -> CODEC;
     
     private final List<String> ignoredIds;
@@ -47,17 +47,26 @@ public class BlockIgnoreProcessor extends StructureProcessor {
 
     @Override
     public BlockInfo process(World world, Location origin, BlockInfo current, BlockInfo original) {
+        if (shouldIgnore(current)) return null;
+        return current;
+    }
+
+    @Override
+    public BlockInfo process(WorldGenAccess level, Location origin, BlockInfo current, BlockInfo original) {
+        if (shouldIgnore(current)) return null;
+        return current;
+    }
+
+    private boolean shouldIgnore(BlockInfo current) {
         String id;
         if (current.block() instanceof CustomBlock cb) {
             id = cb.getId().toString();
         } else if (current.block() instanceof BlockData bd) {
             id = "minecraft:" + bd.getMaterial().name().toLowerCase();
         } else {
-            return current;
+            return false;
         }
-
-        if (ignoredIds.contains(id)) return null;
-        return current;
+        return ignoredIds.contains(id);
     }
 
     @Override

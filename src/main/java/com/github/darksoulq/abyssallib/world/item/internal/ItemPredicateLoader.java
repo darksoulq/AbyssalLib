@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
+import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,14 +43,29 @@ public class ItemPredicateLoader {
         Identifier id = getPredicateId(path);
         if (id == null) return;
 
-        Try.of(() -> {
-                try (InputStream in = Files.newInputStream(path)) {
-                    Object root = YamlOps.INSTANCE.parse(in);
-                    return ItemPredicate.CODEC.decode(YamlOps.INSTANCE, root);
-                }
-            })
-            .onSuccess(predicate -> Registries.PREDICATES.register(id.toString(), predicate))
-            .onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load predicate " + id + " from " + path + ": " + e.getMessage()));
+        ItemPredicate predicate = load(path);
+        if (predicate != null) {
+            Registries.PREDICATES.register(id.toString(), predicate);
+        }
+    }
+
+    public static ItemPredicate load(Path path) {
+        return Try.of(() -> {
+            try (InputStream in = Files.newInputStream(path)) {
+                Object root = YamlOps.INSTANCE.parse(in);
+                return ItemPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+            }
+        }).onFailure(e -> e.printStackTrace()).orElse(null);
+    }
+
+    public static ItemPredicate loadResource(Plugin plugin, String resourcePath) {
+        return Try.of(() -> {
+            try (InputStream in = plugin.getResource(resourcePath)) {
+                if (in == null) return null;
+                Object root = YamlOps.INSTANCE.parse(in);
+                return ItemPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+            }
+        }).onFailure(e -> e.printStackTrace()).orElse(null);
     }
 
     private static Identifier getPredicateId(Path file) {

@@ -9,6 +9,7 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
+import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,43 +74,68 @@ public class TagLoader {
 
                     List<Object> rawList;
                     try (InputStream in = Files.newInputStream(file)) {
-                        Object root = YamlOps.INSTANCE.parse(in);
-                        if (!(root instanceof Map<?, ?> map)) return;
-                        Object v = map.get("values");
-                        if (!(v instanceof List<?> list)) return;
-                        rawList = (List<Object>) list;
+                        rawList = loadRawList(in);
                     } catch (Exception e) {
                         AbyssalLib.LOGGER.warning("Failed to parse tag file " + file + ": " + e.getMessage());
                         return;
                     }
+                    if (rawList == null) return;
 
-                    for (Object rawEntry : rawList) {
-                        if (rawEntry instanceof String s && s.startsWith("#")) {
-                            String refId = s.substring(1);
-                            Tag<?, ?> rawIncluded = Registries.TAGS.get(refId);
-
-                            if (rawIncluded == null) {
-                                AbyssalLib.LOGGER.warning("Tag " + tagId + " references missing tag: " + refId);
-                                continue;
-                            }
-
-                            try {
-                                tag.include((Tag<T, D>) rawIncluded);
-                            } catch (ClassCastException ex) {
-                                AbyssalLib.LOGGER.warning("Tag " + tagId + " tried to include incompatible tag type " + refId);
-                            }
-                            continue;
-                        }
-                        try {
-                            T value = type.codec.decode(YamlOps.INSTANCE, rawEntry);
-                            tag.add(value);
-                        } catch (Exception e) {
-                            AbyssalLib.LOGGER.warning("Error decoding value in tag " + tagId + ": " + e.getMessage());
-                        }
-                    }
+                    processTagEntries(tag, rawList, type, tagId);
                 });
         } catch (IOException e) {
             AbyssalLib.LOGGER.warning("Failed to parse tag values in " + folder + ": " + e.getMessage());
+        }
+    }
+
+    public static <T, D> Tag<T, D> loadResource(Plugin plugin, String resourcePath, TagType<T, D> type, Identifier id) {
+        try (InputStream in = plugin.getResource(resourcePath)) {
+            if (in == null) return null;
+
+            Tag<T, D> tag = type.factory.apply(id);
+            List<Object> rawList = loadRawList(in);
+            if (rawList != null) {
+                processTagEntries(tag, rawList, type, id);
+            }
+            return tag;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static List<Object> loadRawList(InputStream in) {
+        Object root = YamlOps.INSTANCE.parse(in);
+        if (!(root instanceof Map<?, ?> map)) return null;
+        Object v = map.get("values");
+        if (!(v instanceof List<?> list)) return null;
+        return (List<Object>) list;
+    }
+
+    private static <T, D> void processTagEntries(Tag<T, D> tag, List<Object> rawList, TagType<T, D> type, Identifier tagId) {
+        for (Object rawEntry : rawList) {
+            if (rawEntry instanceof String s && s.startsWith("#")) {
+                String refId = s.substring(1);
+                Tag<?, ?> rawIncluded = Registries.TAGS.get(refId);
+
+                if (rawIncluded == null) {
+                    AbyssalLib.LOGGER.warning("Tag " + tagId + " references missing tag: " + refId);
+                    continue;
+                }
+
+                try {
+                    tag.include((Tag<T, D>) rawIncluded);
+                } catch (ClassCastException ex) {
+                    AbyssalLib.LOGGER.warning("Tag " + tagId + " tried to include incompatible tag type " + refId);
+                }
+                continue;
+            }
+            try {
+                T value = type.codec.decode(YamlOps.INSTANCE, rawEntry);
+                tag.add(value);
+            } catch (Exception e) {
+                AbyssalLib.LOGGER.warning("Error decoding value in tag " + tagId + ": " + e.getMessage());
+            }
         }
     }
 

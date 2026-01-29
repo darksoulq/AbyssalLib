@@ -78,7 +78,7 @@ public class RecipeLoader {
         for (File file : files) {
             if (file.isDirectory()) loadFolder(file);
             else if (file.getName().endsWith(".yml") || file.getName().endsWith(".yaml")) {
-                loadFile(file);
+                load(file);
             }
         }
     }
@@ -86,23 +86,27 @@ public class RecipeLoader {
     public static void loadFolder(Plugin plugin, String resourcePath) {
         List<String> files = FileUtils.getFilePathList(plugin, resourcePath);
         for (String file : files) {
-            try (InputStream in = plugin.getResource(file)) {
-                if (in != null) loadFile(in);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to load recipe resource: " + file + " - " + e.getMessage());
-            }
+            loadResource(plugin, file);
         }
     }
 
-    public static void loadFile(File file) {
+    public static void load(File file) {
         try (InputStream in = new FileInputStream(file)) {
-            loadFile(in);
+            load(in);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void loadFile(InputStream in) throws Codec.CodecException {
+    public static void loadResource(Plugin plugin, String resourcePath) {
+        try (InputStream in = plugin.getResource(resourcePath)) {
+            if (in != null) load(in);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to load recipe resource: " + resourcePath + " - " + e.getMessage());
+        }
+    }
+
+    public static void load(InputStream in) throws Codec.CodecException {
         Object root = YamlOps.INSTANCE.parse(in);
         if (root instanceof List<?> list) {
             decode(list);
@@ -119,7 +123,6 @@ public class RecipeLoader {
 
             Map<Object, Object> data = new LinkedHashMap<>(map);
             data.remove("type");
-
 
             RecipeHandler handler = HANDLERS.get(type);
             if (handler != null) {

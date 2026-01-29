@@ -4,26 +4,33 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.OminousBottleAmplifier;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.common.value.qual.IntRange;
 
-public class OminousAmplifier extends DataComponent<OminousBottleAmplifier> implements Vanilla {
+public class OminousAmplifier extends DataComponent<Integer> implements Vanilla {
     public static final Codec<OminousAmplifier> CODEC = Codecs.INT.xmap(
             OminousAmplifier::new,
-            o -> o.value.amplifier()
+            OminousAmplifier::getValue
     );
+    public static final DataComponentType<OminousAmplifier> TYPE = DataComponentType.valued(CODEC, OminousAmplifier::new);
 
     @IntRange(from = 0, to = 4)
     public OminousAmplifier(int amplifier) {
-        super(Identifier.of(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER.key().asString()), OminousBottleAmplifier.amplifier(amplifier), CODEC);
+        super(amplifier);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override
     public void apply(ItemStack stack) {
-        stack.setData(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER, value);
+        stack.setData(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER, OminousBottleAmplifier.amplifier(value));
     }
 
     @Override

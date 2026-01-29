@@ -39,10 +39,14 @@ public class AbyssalLibBlockSerializer {
         return map;
     }
 
-    public static <D> void deserialize(CustomBlock block, Map<D, D> data, DynamicOps<D> ops, BlockData targetData) {
+    public static <D> void deserializeBlockData(Map<D, D> data, DynamicOps<D> ops, BlockData targetData) {
+        if (data == null) return;
         Map<D, D> states = ops.getMap(data.get(ops.createString("states"))).orElse(Collections.emptyMap());
         Adapter.load(ops, states, targetData);
+    }
 
+    public static <D> void deserializeEntity(CustomBlock block, Map<D, D> data, DynamicOps<D> ops) {
+        if (data == null) return;
         D props = data.get(ops.createString("properties"));
         if (props != null) {
             try {

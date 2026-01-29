@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.DyedItemColor;
@@ -15,12 +16,18 @@ public class DyedColor extends DataComponent<Color> implements Vanilla {
             DyedColor::new,
             DyedColor::getValue
     );
+    public static final DataComponentType<DyedColor> TYPE = DataComponentType.valued(CODEC, v -> new DyedColor((DyedItemColor) v));
 
     public DyedColor(DyedItemColor color) {
-        super(Identifier.of(DataComponentTypes.DYED_COLOR.key().asString()), color.color(), CODEC);
+        super(color.color());
     }
     public DyedColor(Color color) {
-        super(Identifier.of(DataComponentTypes.DYED_COLOR.key().asString()), color, CODEC);
+        super(color);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

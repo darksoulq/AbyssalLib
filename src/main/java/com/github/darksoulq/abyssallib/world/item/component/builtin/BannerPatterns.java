@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BannerPatternLayers;
@@ -15,8 +16,15 @@ public class BannerPatterns extends DataComponent<BannerPatternLayers> implement
             BannerPatterns::getValue
     );
 
+    public static final DataComponentType<BannerPatterns> TYPE = DataComponentType.valued(CODEC, BannerPatterns::new);
+
     public BannerPatterns(BannerPatternLayers layers) {
-        super(Identifier.of(DataComponentTypes.BANNER_PATTERNS.key().asString()), layers, CODEC);
+        super(layers);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

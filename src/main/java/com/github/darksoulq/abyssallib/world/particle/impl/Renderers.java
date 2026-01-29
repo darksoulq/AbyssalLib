@@ -1,8 +1,9 @@
 package com.github.darksoulq.abyssallib.world.particle.impl;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.color.ColorProvider;
+import com.github.darksoulq.abyssallib.common.color.gradient.AbstractGradient;
 import com.github.darksoulq.abyssallib.world.particle.ParticleRenderer;
-import com.github.darksoulq.abyssallib.world.particle.style.Gradient;
 import com.github.darksoulq.abyssallib.world.particle.style.MotionVector;
 import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
 import org.bukkit.Color;
@@ -25,7 +26,7 @@ public class Renderers {
         private final Particle particle;
         private final int count;
         private final double speed;
-        private final Object data; 
+        private final Object data;
 
         public Standard(Particle particle, int count, double speed, Object data) {
             this.particle = particle;
@@ -35,60 +36,50 @@ public class Renderers {
         }
 
         @Override
-        public void render(Location center, List<Vector> points, List<Player> players) {
+        public void render(Location center, List<Vector> points, List<Player> viewers) {
             World w = center.getWorld();
             if (w == null) return;
             for (Vector v : points) {
                 Location loc = center.clone().add(v);
                 if (v instanceof MotionVector mv) {
                     Vector vel = mv.getVelocity();
-                    w.spawnParticle(particle, players, null,
-                        loc.getX(), loc.getY(), loc.getZ(),
-                        0,
-                        vel.getX(), vel.getY(), vel.getZ(),
-                        speed == 0 ? 1 : speed,
-                        data,
-                        true
-                    );
+                    w.spawnParticle(particle, viewers, null, loc.getX(), loc.getY(), loc.getZ(), 0, vel.getX(), vel.getY(), vel.getZ(), speed == 0 ? 1 : speed, data, true);
                 } else {
-                    w.spawnParticle(particle, players, null,
-                        loc.getX(), loc.getY(), loc.getZ(),
-                        count, 0, 0, 0, speed, data, false
-                    );
+                    w.spawnParticle(particle, viewers, null, loc.getX(), loc.getY(), loc.getZ(), count, 0, 0, 0, speed, data, false);
                 }
             }
         }
     }
 
     public static class DustRenderer implements ParticleRenderer {
-        private final Gradient gradient;
+        private final ColorProvider provider;
         private final float size;
 
-        public DustRenderer(Gradient gradient, float size) {
-            this.gradient = gradient;
+        public DustRenderer(ColorProvider provider, float size) {
+            this.provider = provider;
             this.size = size;
         }
 
         @Override
         public void render(Location center, List<Vector> points, List<Player> viewers) {
-            if (center.getWorld() == null || points.isEmpty()) return;
+            World w = center.getWorld();
+            if (w == null || points.isEmpty()) return;
 
-            int count = points.size();
-            for (int i = 0; i < count; i++) {
-                Vector offset = points.get(i);
-                Location loc = center.clone().add(offset);
-                double progress = (double) i / (count - 1);
-                if (count == 1) progress = 0;
+            for (int i = 0; i < points.size(); i++) {
+                Vector v = points.get(i);
+                Location loc = center.clone().add(v);
 
-                Particle.DustOptions data = new Particle.DustOptions(gradient.get(progress), size);
+                Color c = Color.WHITE;
+                if (v instanceof Pixel p) {
+                    c = p.getColor();
+                } else if (provider instanceof AbstractGradient gp) {
+                    double progress = (double) i / Math.max(1, (points.size() - i));
+                    c = gp.getAt(progress);
+                } else if (provider != null) {
+                    c = provider.get(v, 0);
+                }
 
-                center.getWorld().spawnParticle(
-                    Particle.DUST,
-                    loc.getX(), loc.getY(), loc.getZ(),
-                    1, 0, 0, 0, 0,
-                    data,
-                    true
-                );
+                w.spawnParticle(Particle.DUST, viewers, null, loc.getX(), loc.getY(), loc.getZ(), 1, 0, 0, 0, 0, new Particle.DustOptions(c, size), true);
             }
         }
     }
@@ -111,17 +102,17 @@ public class Renderers {
             if (w == null) return;
 
             while (pool.size() < points.size()) {
-                ItemDisplay d = w.spawn(center, ItemDisplay.class, entity -> {
-                    entity.setItemStack(item);
-                    entity.setBillboard(billboard);
-                    entity.setInterpolationDuration(1);
-                    entity.setTeleportDuration(1);
-                    entity.setViewRange(1.0f);
+                ItemDisplay d = w.spawn(center, ItemDisplay.class, e -> {
+                    e.setItemStack(item);
+                    e.setBillboard(billboard);
+                    e.setInterpolationDuration(1);
+                    e.setTeleportDuration(1);
+                    e.setViewRange(1.0f);
+                    if (players != null) {
+                        e.setVisibleByDefault(false);
+                        players.forEach(p -> p.showEntity(AbyssalLib.getInstance(), e));
+                    }
                 });
-                if (players != null) {
-                    d.setVisibleByDefault(false);
-                    players.forEach(p -> p.showEntity(AbyssalLib.getInstance(), d));
-                }
                 pool.add(d);
             }
             while (pool.size() > points.size()) {
@@ -130,24 +121,19 @@ public class Renderers {
             }
 
             for (int i = 0; i < points.size(); i++) {
-                Vector offset = points.get(i);
                 ItemDisplay d = pool.get(i);
-
                 if (!d.isValid()) continue;
-                if (d.getLocation().distanceSquared(center) > 0.05) {
-                    d.teleport(center);
-                }
-                Transformation t = d.getTransformation();
-                Vector3f translation = new Vector3f((float) offset.getX(), (float) offset.getY(), (float) offset.getZ());
-                
-                Transformation newT = new Transformation(
-                        translation,
-                        t.getLeftRotation(),
-                        scale,
-                        t.getRightRotation()
-                );
+                Vector offset = points.get(i);
 
-                d.setTransformation(newT);
+                if (d.getLocation().distanceSquared(center) > 1) d.teleport(center);
+
+                Transformation t = d.getTransformation();
+                d.setTransformation(new Transformation(
+                    new Vector3f((float)offset.getX(), (float)offset.getY(), (float)offset.getZ()),
+                    t.getLeftRotation(),
+                    scale,
+                    t.getRightRotation()
+                ));
                 d.setInterpolationDelay(0);
                 d.setInterpolationDuration(1);
             }
@@ -155,47 +141,8 @@ public class Renderers {
 
         @Override
         public void stop() {
-            for (ItemDisplay d : pool) if (d.isValid()) d.remove();
+            pool.forEach(ItemDisplay::remove);
             pool.clear();
-        }
-    }
-
-    public static class ImageRenderer implements ParticleRenderer {
-
-        private final float size;
-        private final Color fallbackColor;
-
-        /**
-         * @param size The size of the dust.
-         * @param fallbackColor Color to use if a point isn't a Pixel (e.g. if you mix shapes).
-         */
-        public ImageRenderer(float size, Color fallbackColor) {
-            this.size = size;
-            this.fallbackColor = fallbackColor;
-        }
-
-        public ImageRenderer(float size) {
-            this(size, Color.WHITE);
-        }
-
-        @Override
-        public void render(Location center, List<Vector> points, List<Player> viewers) {
-            if (center.getWorld() == null || points.isEmpty()) return;
-            for (Vector v : points) {
-                Location loc = center.clone().add(v);
-                Color c = fallbackColor;
-                if (v instanceof Pixel pixel) {
-                    c = pixel.getColor();
-                }
-                Particle.DustOptions data = new Particle.DustOptions(c, size);
-                center.getWorld().spawnParticle(
-                    Particle.DUST,
-                    loc.getX(), loc.getY(), loc.getZ(),
-                    1, 0, 0, 0, 0,
-                    data,
-                    true
-                );
-            }
         }
     }
 }

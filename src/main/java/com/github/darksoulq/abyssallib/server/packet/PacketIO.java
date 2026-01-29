@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.server.packet;
 
+import net.minecraft.network.protocol.BundlePacket;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;

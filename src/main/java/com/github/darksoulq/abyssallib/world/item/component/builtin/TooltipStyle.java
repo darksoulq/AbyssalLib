@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.key.Key;
@@ -14,9 +15,15 @@ public class TooltipStyle extends DataComponent<Key> implements Vanilla {
             TooltipStyle::new,
             TooltipStyle::getValue
     );
+    public static final DataComponentType<TooltipStyle> TYPE = DataComponentType.valued(CODEC, TooltipStyle::new);
 
     public TooltipStyle(Key id) {
-        super(Identifier.of(DataComponentTypes.TOOLTIP_STYLE.key().asString()), id, CODEC);
+        super(id);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

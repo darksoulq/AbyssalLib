@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.LodestoneTracker;
@@ -14,9 +15,15 @@ public class TrackerLodestone extends DataComponent<LodestoneTracker> implements
             TrackerLodestone::new,
             TrackerLodestone::getValue
     );
+    public static final DataComponentType<TrackerLodestone> TYPE = DataComponentType.valued(CODEC, TrackerLodestone::new);
 
     public TrackerLodestone(LodestoneTracker tracker) {
-        super(Identifier.of(DataComponentTypes.LODESTONE_TRACKER.key().asString()), tracker, CODEC);
+        super(tracker);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

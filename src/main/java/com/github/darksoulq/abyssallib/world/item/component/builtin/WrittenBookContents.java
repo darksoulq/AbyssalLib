@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.WrittenBookContent;
@@ -15,9 +16,15 @@ public class WrittenBookContents extends DataComponent<WrittenBookContent> imple
             WrittenBookContents::new,
             WrittenBookContents::getValue
     );
+    public static final DataComponentType<WrittenBookContents> TYPE = DataComponentType.valued(CODEC, WrittenBookContents::new);
 
     public WrittenBookContents(WrittenBookContent contents) {
-        super(Identifier.of(DataComponentTypes.WRITTEN_BOOK_CONTENT.key().asString()), contents, CODEC);
+        super(contents);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

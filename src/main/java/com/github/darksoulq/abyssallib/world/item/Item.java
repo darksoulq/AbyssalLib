@@ -13,8 +13,9 @@ import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
+import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.*;
-import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
@@ -49,9 +50,12 @@ public class Item implements Cloneable {
         stack = ItemStack.of(base);
         Integer size = stack.getData(DataComponentTypes.MAX_STACK_SIZE);
         componentMap = new ComponentMap(this);
-        for (Identifier cId : componentMap.getVanillaIds()) {
-            componentMap.removeData(cId);
+
+        for (DataComponent<?> comp : componentMap.getAllComponents()) {
+            if (!(comp instanceof Vanilla)) return;
+            componentMap.removeData(comp.getType());
         }
+
         if (size != null) setData(new MaxStackSize(size));
         setData(new ItemName(Component.translatable("item." + id.getNamespace() + "." + id.getPath())));
         setData(new ItemModel(id.asNamespacedKey()));
@@ -68,35 +72,20 @@ public class Item implements Cloneable {
             .hideTooltip(tooltip.hide)
             .hiddenComponents(tooltip.hiddenComponents).build()));
         if (tooltip.style != null) setData(new TooltipStyle(tooltip.style.asNamespacedKey()));
-        else unsetData(TooltipStyle.class);
+        else unsetData(TooltipStyle.TYPE);
     }
 
     public void setData(DataComponent<?> component) {
         componentMap.setData(component);
     }
-    public DataComponent<?> getData(Identifier id) {
-        return componentMap.getData(id);
+    public <C extends DataComponent<?>> C getData(DataComponentType<C> type) {
+        return  componentMap.getData(type);
     }
-    public DataComponent<?> getData(DataComponentType type) {
-        return componentMap.getData(type);
-    }
-    public <T extends DataComponent<?>> T getData(Class<T> clazz) {
-        return componentMap.getData(clazz);
-    }
-    public boolean hasData(Identifier id) {
-        return componentMap.hasData(id);
-    }
-    public boolean hasData(DataComponentType type) {
+    public boolean hasData(DataComponentType<?> type) {
         return componentMap.hasData(type);
     }
-    public void unsetData(Identifier id) {
-        componentMap.removeData(id);
-    }
-    public void unsetData(Class<? extends DataComponent> clazz) {
+    public void unsetData(DataComponentType<?> clazz) {
         componentMap.removeData(clazz);
-    }
-    public <T extends DataComponent<?>> boolean hasData(Class<T> clazz) {
-        return componentMap.hasData(clazz);
     }
     public boolean hasTag(Identifier id) {
         if (!(Registries.TAGS.get(id.toString()) instanceof ItemTag tag)) {
@@ -172,8 +161,8 @@ public class Item implements Cloneable {
     public static Item resolve(ItemStack stack) {
         if (stack == null || stack.getType().isAir()) return null;
         Item base = new Item(stack);
-        if (!base.hasData(CustomMarker.class)) return null;
-        Identifier id = (Identifier) base.getData(CustomMarker.class).value;
+        if (!base.hasData(CustomMarker.TYPE)) return null;
+        Identifier id = (Identifier) base.getData(CustomMarker.TYPE).getValue();
         if (id == null) return null;
         Item item = Registries.ITEMS.get(id.toString());
         if (item == null) return null;
@@ -183,8 +172,8 @@ public class Item implements Cloneable {
         return clone;
     }
     public static CustomBlock asBlock(Item item) {
-        if (!item.hasData(Identifier.of("abyssallib:block_item"))) return null;
-        Identifier blockId = (Identifier) item.getData(Identifier.of("abyssallib:block_item")).value;
+        if (!item.hasData(BlockItem.TYPE)) return null;
+        Identifier blockId = (Identifier) item.getData(BlockItem.TYPE).getValue();
         return Registries.BLOCKS.get(blockId.toString()).clone();
     }
 
@@ -218,13 +207,13 @@ public class Item implements Cloneable {
     public static class Tooltip {
         private boolean hide;
         public List<Component> lines = new ArrayList<>();
-        public Set<DataComponentType> hiddenComponents = new HashSet<>();
+        public Set<io.papermc.paper.datacomponent.DataComponentType> hiddenComponents = new HashSet<>();
         private Identifier style = null;
 
         public void setVisible(boolean v) {
             this.hide = !v;
         }
-        public void withHidden(DataComponentType type) {
+        public void withHidden(io.papermc.paper.datacomponent.DataComponentType type) {
             this.hiddenComponents.add(type);
         }
         public void addLine(Component component) {

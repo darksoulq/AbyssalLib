@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.DeathProtection;
@@ -17,12 +18,15 @@ public class DeathProtect extends DataComponent<List<ConsumeEffect>> implements 
             DeathProtect::new,
             DeathProtect::getValue
     );
+    public static final DataComponentType<DeathProtect> TYPE = DataComponentType.valued(CODEC, DeathProtect::new);
 
-    public DeathProtect(DeathProtection protection) {
-        super(Identifier.of(DataComponentTypes.DEATH_PROTECTION.key().asString()), protection.deathEffects(), CODEC);
-    }
     public DeathProtect(List<ConsumeEffect> effects) {
-        super(Identifier.of(DataComponentTypes.DEATH_PROTECTION.key().asString()), effects, CODEC);
+        super(effects);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

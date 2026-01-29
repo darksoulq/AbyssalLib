@@ -24,23 +24,59 @@ import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import com.github.darksoulq.abyssallib.world.util.BlockPersistentData;
 import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BlockEvents {
-    // Structure Block start
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (event.getClickedBlock() == null) return;
+
+        CustomBlock block = CustomBlock.from(event.getClickedBlock());
+        if (block == null) return;
+
+        BlockInteractionEvent interactionEvent = new BlockInteractionEvent(
+            event.getPlayer(),
+            block,
+            event.getBlockFace(),
+            event.getInteractionPoint(),
+            event.getAction(),
+            event.getItem()
+        );
+        EventBus.post(interactionEvent);
+
+        if (interactionEvent.isCancelled()) {
+            event.setCancelled(true);
+            return;
+        }
+
+        ActionResult result = block.onInteract(interactionEvent);
+        if (result == ActionResult.CANCEL) {
+            event.setCancelled(true);
+        }
+    }
+
     @SubscribeEvent
     public void onInteractStructure(BlockInteractionEvent e) {
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -51,7 +87,6 @@ public class BlockEvents {
             TaskUtil.delayedTask(AbyssalLib.getInstance(), 2, () ->  new StructureBlockMenu(sbe).open(e.getPlayer()));
         }
     }
-    // End
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onChunkLoad(ChunkLoadEvent event) {
@@ -75,29 +110,45 @@ public class BlockEvents {
     }
 
     @SubscribeEvent(ignoreCancelled = false)
+    public void onBlockDamage(BlockDamageEvent event) {
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block == null) return;
+
+        if (block.properties.hardness < 0) {
+            event.setCancelled(true);
+        }
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack handItem = event.getItemInHand();
         Item heldItem = Item.resolve(handItem);
         Location loc = event.getBlock().getLocation();
         if (heldItem == null) return;
-        if (!heldItem.hasData(BlockItem.class)) {
+        if (!heldItem.hasData(BlockItem.TYPE)) {
             event.setCancelled(true);
             return;
         }
-        Identifier blockId = heldItem.getData(BlockItem.class).value;
-        CustomBlock block = Registries.BLOCKS.get(blockId.toString()).clone();
+        Identifier blockId = heldItem.getData(BlockItem.TYPE).getValue();
+        CustomBlock block = Registries.BLOCKS.get(blockId.toString());
         if (block == null) return;
-        block.place(event.getBlock(), false);
-        BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(
-                event.getPlayer(),
-                block,
-                handItem
-        ));
-        ActionResult result = block.onPlaced(event.getPlayer(), loc,
-                handItem);
-        if (!result.equals(ActionResult.CANCEL) && !placeEvent.isCancelled()) return;
-        BlockManager.remove(loc, block);
-        loc.getBlock().setType(Material.AIR);
+
+        CustomBlock instance = block.clone();
+        instance.place(event.getBlock(), false);
+        BlockPlacedEvent placeEvent = EventBus.post(new BlockPlacedEvent(event.getPlayer(), instance, handItem));
+
+        if (placeEvent.isCancelled()) {
+            event.setCancelled(true);
+            BlockManager.remove(loc);
+            return;
+        }
+
+        ActionResult result = instance.onPlaced(event.getPlayer(), loc, handItem);
+        if (result == ActionResult.CANCEL) {
+            event.setCancelled(true);
+            BlockManager.remove(loc);
+            loc.getBlock().setType(Material.AIR);
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -132,7 +183,96 @@ public class BlockEvents {
             event.setExpToDrop(block.getExpToDrop(player, fortuneLevel, silkTouch));
         }
 
-        BlockManager.remove(loc, block);
+        BlockManager.remove(loc);
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onBlockFertilize(BlockFertilizeEvent event) {
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block == null) return;
+
+        if (block.onBoneMeal(event.getPlayer()) == ActionResult.CANCEL) {
+            event.setCancelled(true);
+        }
+    }
+
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        handlePiston(event, event.getBlocks(), event.getDirection());
+    }
+
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        handlePiston(event, event.getBlocks(), event.getDirection());
+    }
+
+    private void handlePiston(BlockEvent event, List<Block> blocks, BlockFace direction) {
+        if (event instanceof Cancellable cancellable && cancellable.isCancelled()) return;
+
+        for (Block b : blocks) {
+            CustomBlock cb = CustomBlock.from(b);
+            if (cb != null) {
+                if (cb.getEntity() != null) {
+                    if (event instanceof Cancellable c) c.setCancelled(true);
+                    return;
+                }
+
+                if (cb.onPistonMove(direction) == ActionResult.CANCEL) {
+                    if (event instanceof Cancellable c) c.setCancelled(true);
+                    return;
+                }
+
+                BlockProperties.PistonReaction reaction = cb.properties.pistonReaction;
+                switch (reaction) {
+                    case BLOCK -> {
+                        if (event instanceof Cancellable c) c.setCancelled(true);
+                        return;
+                    }
+                    case DESTROY -> {
+                        BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, cb, 0));
+                        dropBlockLoot(cb.getLocation(), cb, new ItemStack(Material.AIR), breakEvent, false, 0);
+                        BlockManager.remove(cb.getLocation());
+                        b.setType(Material.AIR);
+                    }
+                    case MOVE -> {
+                        if (event instanceof Cancellable c) c.setCancelled(false);
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPistonExtendMonitor(BlockPistonExtendEvent event) {
+        updateMovedBlocks(event.getBlocks(), event.getDirection());
+    }
+
+    @SubscribeEvent(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPistonRetractMonitor(BlockPistonRetractEvent event) {
+        updateMovedBlocks(event.getBlocks(), event.getDirection());
+    }
+
+    private void updateMovedBlocks(List<Block> blocks, BlockFace direction) {
+        List<CustomBlock> movingBlocks = new ArrayList<>();
+
+        for (Block b : blocks) {
+            CustomBlock cb = CustomBlock.from(b);
+            if (cb != null && cb.properties.pistonReaction == BlockProperties.PistonReaction.MOVE) {
+                movingBlocks.add(cb);
+            }
+        }
+
+        if (movingBlocks.isEmpty()) return;
+
+        for (CustomBlock cb : movingBlocks) {
+            BlockManager.remove(cb.getLocation());
+        }
+
+        for (CustomBlock cb : movingBlocks) {
+            Location newLoc = cb.getLocation().add(direction.getModX(), direction.getModY(), direction.getModZ());
+            cb.setLocation(newLoc);
+            BlockManager.register(cb);
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -162,10 +302,18 @@ public class BlockEvents {
     }
 
     @SubscribeEvent(ignoreCancelled = false)
+    public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
     public void onBlockExplode(BlockExplodeEvent event) {
-        Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
+        Iterator<Block> it = event.blockList().iterator();
         while (it.hasNext()) {
-            org.bukkit.block.Block bukkitBlock = it.next();
+            Block bukkitBlock = it.next();
             CustomBlock block = CustomBlock.from(bukkitBlock);
             if (block == null) continue;
 
@@ -178,18 +326,17 @@ public class BlockEvents {
                     it.remove();
                     return;
                 }
-                dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR),
-                        breakEvent, false, 0);
-                BlockManager.remove(block.getLocation(), block);
+                dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR), breakEvent, false, 0);
+                BlockManager.remove(block);
             }
         }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onEntityExplode(EntityExplodeEvent event) {
-        Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
+        Iterator<Block> it = event.blockList().iterator();
         while (it.hasNext()) {
-            org.bukkit.block.Block bukkitBlock = it.next();
+            Block bukkitBlock = it.next();
             CustomBlock block = CustomBlock.from(bukkitBlock);
             if (block == null) continue;
 
@@ -202,9 +349,8 @@ public class BlockEvents {
                     it.remove();
                     return;
                 }
-                dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR),
-                        breakEvent, false, 0);
-                BlockManager.remove(block.getLocation(), block);
+                dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR), breakEvent, false, 0);
+                BlockManager.remove(block);
             }
         }
     }
@@ -232,75 +378,122 @@ public class BlockEvents {
     public void onBlockPhysics(BlockPhysicsEvent event) {
         CustomBlock block = CustomBlock.from(event.getBlock());
         if (block == null) return;
-        if (block.allowPhysics) return;
-        event.setCancelled(true);
-    }
 
-    @SubscribeEvent(ignoreCancelled = false)
-    public void onPistonExtend(BlockPistonExtendEvent event) {
-        for (org.bukkit.block.Block bukkitBlock : event.getBlocks()) {
-            CustomBlock block = CustomBlock.from(bukkitBlock);
-            if (block != null) {
-                event.setCancelled(true);
-                return;
-            }
+        if (!block.properties.allowPhysics) {
+            event.setCancelled(true);
+            return;
         }
-    }
 
-    @SubscribeEvent(ignoreCancelled = false)
-    public void onPistonRetract(BlockPistonRetractEvent event) {
-        for (org.bukkit.block.Block bukkitBlock : event.getBlocks()) {
-            CustomBlock block = CustomBlock.from(bukkitBlock);
-            if (block != null) {
-                event.setCancelled(true);
-                return;
-            }
+        ActionResult result = block.onNeighborUpdate(event.getSourceBlock());
+        if (result == ActionResult.CANCEL) {
+            event.setCancelled(true);
         }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockBurn(BlockBurnEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (!block.properties.isFlammable) {
+                event.setCancelled(true);
+            } else {
+                if (block.onIgnite(BlockIgniteEvent.IgniteCause.SPREAD, null, event.getIgnitingBlock()) == ActionResult.CANCEL) {
+                    event.setCancelled(true);
+                    return;
+                }
+                BlockManager.remove(block.getLocation());
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockFade(BlockFadeEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onFade(event.getBlock(), event.getNewState()) == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            } else {
+                BlockManager.remove(block.getLocation());
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockForm(BlockFormEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onForm(event.getBlock(), event.getNewState()) == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            } else {
+                BlockManager.remove(block.getLocation());
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockGrow(BlockGrowEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onGrow(event.getBlock(), event.getNewState()) == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockIgnite(BlockIgniteEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (!block.properties.isFlammable) {
+                event.setCancelled(true);
+            } else {
+                if (block.onIgnite(event.getCause(), event.getIgnitingEntity(), event.getIgnitingBlock()) == ActionResult.CANCEL) {
+                    event.setCancelled(true);
+                }
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockSpread(BlockSpreadEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onSpread(event.getBlock(), event.getSource(), event.getNewState()) == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onLeavesDecay(LeavesDecayEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onLeavesDecay() == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            } else {
+                BlockManager.remove(block.getLocation());
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onSpongeAbsorb(SpongeAbsorbEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onSpongeAbsorb(event.getBlocks()) == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onSignChange(SignChangeEvent event) {
-        if (CustomBlock.from(event.getBlock()) != null) event.setCancelled(true);
+        CustomBlock block = CustomBlock.from(event.getBlock());
+        if (block != null) {
+            if (block.onSignChange(event.getPlayer(), event.getSide()) == ActionResult.CANCEL) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -333,9 +526,12 @@ public class BlockEvents {
         }
 
         if (breakEvent.getBaseDrops()) {
-            LootTable lootTable = block.getLootTable();
+            LootTable lootTable = block.getDrops();
             if (lootTable != null) {
-                LootContext context = new LootContext(fortuneLevel);
+                LootContext context = LootContext.builder(loc)
+                    .tool(tool)
+                    .luck(fortuneLevel)
+                    .build();
                 List<ItemStack> drops = lootTable.generate(context);
                 for (ItemStack drop : drops) {
                     world.dropItemNaturally(loc, drop);
@@ -360,7 +556,6 @@ public class BlockEvents {
         }
     }
 
-    // Vanilla Blocks
     @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockBreakPDC(BlockBreakEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());

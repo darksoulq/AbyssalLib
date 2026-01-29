@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Tool;
@@ -14,9 +15,15 @@ public class ToolComponent extends DataComponent<Tool> implements Vanilla {
             ToolComponent::new,
             ToolComponent::getValue
     );
+    public static final DataComponentType<ToolComponent> TYPE = DataComponentType.valued(CODEC, ToolComponent::new);
 
     public ToolComponent(Tool tool) {
-        super(Identifier.of(DataComponentTypes.TOOL.key().asString()), tool, CODEC);
+        super(tool);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

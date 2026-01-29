@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.world.particle.timeline;
 
+import com.github.darksoulq.abyssallib.common.util.Easing;
 import com.github.darksoulq.abyssallib.world.particle.Transformer;
 import org.bukkit.util.Vector;
 

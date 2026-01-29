@@ -8,9 +8,11 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
+import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -32,36 +34,48 @@ public class StructureLoader {
         try (Stream<Path> stream = Files.walk(STRUCTURES_FOLDER)) {
             stream.filter(Files::isRegularFile)
                 .filter(path -> path.toString().endsWith(".json"))
-                .forEach(StructureLoader::load);
+                .forEach(StructureLoader::loadFileAndRegister);
         } catch (IOException e) {
             AbyssalLib.LOGGER.severe("Failed to walk structures folder: " + e.getMessage());
         }
     }
 
-    private static void load(Path path) {
+    private static void loadFileAndRegister(Path path) {
         Identifier id = getStructureId(path);
         if (id == null) return;
 
-        Try.of(() -> {
-            JsonNode root = MAPPER.readTree(path.toFile());
-            return Structure.deserialize(root);
-        })
-        .onSuccess(structure -> {
+        Structure structure = load(path);
+        if (structure != null) {
             if (Registries.STRUCTURES.contains(id.toString())) {
                 AbyssalLib.LOGGER.warning("Duplicate structure ID '" + id + "' found in file " + path + ". Skipping registration.");
             } else {
-                Registries.STRUCTURES.remove(id.toString());
                 Registries.STRUCTURES.register(id.toString(), structure);
             }
-        })
-        .onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load structure " + id + " from " + path + ": " + e.getMessage()));
+        }
+    }
+
+    public static Structure load(Path path) {
+        return Try.of(() -> {
+            JsonNode root = MAPPER.readTree(path.toFile());
+            return Structure.deserialize(root);
+        }).onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load structure from " + path + ": " + e.getMessage())).orElse(null);
+    }
+
+    public static Structure loadResource(Plugin plugin, String resourcePath) {
+        return Try.of(() -> {
+            try (InputStream in = plugin.getResource(resourcePath)) {
+                if (in == null) return null;
+                JsonNode root = MAPPER.readTree(in);
+                return Structure.deserialize(root);
+            }
+        }).onFailure(e -> e.printStackTrace()).orElse(null);
     }
 
     public static boolean save(Identifier id, Structure structure) {
         Path namespaceFolder = STRUCTURES_FOLDER.resolve(id.getNamespace());
         try {
             if (!Files.exists(namespaceFolder)) Files.createDirectories(namespaceFolder);
-            
+
             Path file = namespaceFolder.resolve(id.getPath() + ".json");
             ObjectNode root = structure.serialize();
             MAPPER.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), root);

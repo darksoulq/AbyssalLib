@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
@@ -15,9 +16,15 @@ public class ResolvingProfile extends DataComponent<ResolvableProfile> implement
             ResolvingProfile::new,
             ResolvingProfile::getValue
     );
+    public static final DataComponentType<ResolvingProfile> TYPE = DataComponentType.valued(CODEC, ResolvingProfile::new);
 
     public ResolvingProfile(ResolvableProfile profile) {
-        super(Identifier.of(DataComponentTypes.PROFILE.key().asString()), profile, CODEC);
+        super(profile);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

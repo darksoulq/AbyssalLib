@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemAdventurePredicate;
@@ -14,9 +15,15 @@ public class CanPlaceOn extends DataComponent<ItemAdventurePredicate> implements
             CanPlaceOn::new,
             CanPlaceOn::getValue
     );
+    public static final DataComponentType<CanPlaceOn> TYPE = DataComponentType.valued(CODEC, CanPlaceOn::new);
 
     public CanPlaceOn(ItemAdventurePredicate blocks) {
-        super(Identifier.of(DataComponentTypes.CAN_PLACE_ON.key().asString()), blocks, CODEC);
+        super(blocks);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.block.internal.structure;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.color.ColorProvider;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
@@ -11,6 +12,7 @@ import com.github.darksoulq.abyssallib.world.block.property.Property;
 import com.github.darksoulq.abyssallib.world.particle.Generator;
 import com.github.darksoulq.abyssallib.world.particle.Particles;
 import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
+import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
 import com.github.darksoulq.abyssallib.world.structure.internal.StructureLoader;
 import org.bukkit.Color;
@@ -55,24 +57,38 @@ public class StructureBlockEntity extends BlockEntity {
         Location origin = getBlock().getLocation().clone().add(offsetX.get(), offsetY.get(), offsetZ.get());
         Vector size = new Vector(sizeX.get(), sizeY.get(), sizeZ.get());
 
-        Generator boxGenerator = tick -> {
-            List<Vector> points = new ArrayList<>();
-            double x = size.getX();
-            double y = size.getY();
-            double z = size.getZ();
-            double step = 0.5;
+        List<Vector> points = new ArrayList<>();
+        double x = size.getX();
+        double y = size.getY();
+        double z = size.getZ();
+        double step = 0.2;
 
-            for (double i = 0; i <= x; i += step) { points.add(new Vector(i, 0, 0)); points.add(new Vector(i, y, 0)); points.add(new Vector(i, 0, z)); points.add(new Vector(i, y, z)); }
-            for (double i = 0; i <= y; i += step) { points.add(new Vector(0, i, 0)); points.add(new Vector(x, i, 0)); points.add(new Vector(0, i, z)); points.add(new Vector(x, i, z)); }
-            for (double i = 0; i <= z; i += step) { points.add(new Vector(0, 0, i)); points.add(new Vector(0, y, i)); points.add(new Vector(x, 0, i)); points.add(new Vector(x, y, i)); }
-            return points;
-        };
+        for (double i = 0; i <= x; i += step) {
+            points.add(new Pixel(i, 0, 0, Color.RED));
+            points.add(new Pixel(i, y, 0, Color.RED));
+            points.add(new Pixel(i, 0, z, Color.RED));
+            points.add(new Pixel(i, y, z, Color.RED));
+        }
+        for (double i = 0; i <= y; i += step) {
+            points.add(new Pixel(0, i, 0, Color.GREEN));
+            points.add(new Pixel(x, i, 0, Color.GREEN));
+            points.add(new Pixel(0, i, z, Color.GREEN));
+            points.add(new Pixel(x, i, z, Color.GREEN));
+        }
+        for (double i = 0; i <= z; i += step) {
+            points.add(new Pixel(0, 0, i, Color.BLUE));
+            points.add(new Pixel(0, y, i, Color.BLUE));
+            points.add(new Pixel(x, 0, i, Color.BLUE));
+            points.add(new Pixel(x, y, i, Color.BLUE));
+        }
+
+        Generator boxGenerator = tick -> points;
 
         particles = Particles.builder()
             .origin(origin)
             .shape(boxGenerator)
-            .render(new Renderers.ImageRenderer(0.5f, Color.WHITE))
-            .interval(10)
+            .render(new Renderers.DustRenderer(ColorProvider.fixed(Color.WHITE), 0.5f))
+            .interval(5)
             .build();
 
         particles.start();

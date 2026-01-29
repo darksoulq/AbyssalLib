@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.world.entity.internal;
 
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.entity.Entity;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.SpawnCategory;
 import org.bukkit.entity.LivingEntity;
 
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class NaturalSpawnRegistry {
-    private static final Map<SpawnCategory, List<Entity<? extends LivingEntity>>> REGISTRY = new EnumMap<>(SpawnCategory.class);
+    private static final Map<SpawnCategory, List<CustomEntity<? extends LivingEntity>>> REGISTRY = new EnumMap<>(SpawnCategory.class);
 
     static {
         for (SpawnCategory category : SpawnCategory.values()) {
@@ -25,12 +25,12 @@ public final class NaturalSpawnRegistry {
         });
     }
 
-    public static void register(Entity<? extends LivingEntity> entity) {
+    public static void register(CustomEntity<? extends LivingEntity> entity) {
         if (entity.getSpawnSettings() == null) return;
         REGISTRY.get(entity.getCategory()).add(entity);
     }
 
-    public static List<Entity<? extends LivingEntity>> get(SpawnCategory category) {
+    public static List<CustomEntity<? extends LivingEntity>> get(SpawnCategory category) {
         return REGISTRY.get(category);
     }
 }

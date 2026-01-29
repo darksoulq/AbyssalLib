@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemAttributeModifiers;
@@ -14,9 +15,15 @@ public class ItemAttributeModifier extends DataComponent<ItemAttributeModifiers>
             ItemAttributeModifier::new,
             ItemAttributeModifier::getValue
     );
+    public static final DataComponentType<ItemAttributeModifier> TYPE = DataComponentType.valued(CODEC, ItemAttributeModifier::new);
 
     public ItemAttributeModifier(ItemAttributeModifiers modifiers) {
-        super(Identifier.of(DataComponentTypes.ATTRIBUTE_MODIFIERS.key().asString()), modifiers, CODEC);
+        super(modifiers);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

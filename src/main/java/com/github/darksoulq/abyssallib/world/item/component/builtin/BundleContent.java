@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BundleContents;
@@ -16,12 +17,18 @@ public class BundleContent extends DataComponent<List<ItemStack>> implements Van
             BundleContent::new,
             BundleContent::getValue
     );
+    public static final DataComponentType<BundleContent> TYPE = DataComponentType.valued(CODEC, v -> new BundleContent((BundleContents) v));
 
     public BundleContent(BundleContents contents) {
-        super(Identifier.of(DataComponentTypes.BUNDLE_CONTENTS.key().asString()), contents.contents(), CODEC);
+        super(contents.contents());
     }
     public BundleContent(List<ItemStack> contents) {
-        super(Identifier.of(DataComponentTypes.BUNDLE_CONTENTS.key().asString()), contents, CODEC);
+        super(contents);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

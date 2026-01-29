@@ -56,7 +56,7 @@ public final class EnergyNetwork {
     }
 
     public static void register(EnergyNode node) {
-        EnergyNodeAddEvent event = new EnergyNodeAddEvent(node, !Bukkit.isPrimaryThread());
+        EnergyNodeAddEvent event = new EnergyNodeAddEvent(node, node.getUnit(), !Bukkit.isPrimaryThread());
         EventBus.post(event);
         if (event.isCancelled()) return;
         NODES.add(node);
@@ -64,7 +64,7 @@ public final class EnergyNetwork {
     }
 
     public static void unregister(EnergyNode node) {
-        EnergyNodeRemoveEvent event = new EnergyNodeRemoveEvent(node, !Bukkit.isPrimaryThread());
+        EnergyNodeRemoveEvent event = new EnergyNodeRemoveEvent(node, node.getUnit(), !Bukkit.isPrimaryThread());
         EventBus.post(event);
         if (event.isCancelled()) return;
         NODES.remove(node);
@@ -93,11 +93,13 @@ public final class EnergyNetwork {
             for (EnergyNode target : source.getConnections()) {
                 if (target.getEnergy() >= target.getCapacity()) continue;
 
-                double space = target.getCapacity() - target.getEnergy();
-                double toTransfer = Math.min(available, space);
+                double spaceTarget = target.getCapacity() - target.getEnergy();
+                double spaceInSourceUnit = target.getUnit().convert(spaceTarget, source.getUnit());
+
+                double toTransfer = Math.min(available, spaceInSourceUnit);
                 if (toTransfer <= 0) continue;
 
-                EnergyNetworkTransferEvent event = new EnergyNetworkTransferEvent(source, target, toTransfer, !Bukkit.isPrimaryThread());
+                EnergyNetworkTransferEvent event = new EnergyNetworkTransferEvent(source, target, source.getUnit(), toTransfer, !Bukkit.isPrimaryThread());
                 EventBus.post(event);
                 if (event.isCancelled()) continue;
 
@@ -105,12 +107,18 @@ public final class EnergyNetwork {
                 if (toTransfer <= 0) continue;
 
                 double extracted = source.extract(toTransfer);
-                double inserted = target.insert(extracted);
-                if (extracted > inserted) source.insert(extracted - inserted);
+                double convertedInsert = source.getUnit().convert(extracted, target.getUnit());
+                double inserted = target.insert(convertedInsert);
+
+                if (inserted < convertedInsert) {
+                    double refund = target.getUnit().convert(convertedInsert - inserted, source.getUnit());
+                    source.insert(refund);
+                    available -= (extracted - refund);
+                } else {
+                    available -= extracted;
+                }
 
                 markActive(target);
-
-                available -= inserted;
                 if (available <= 0) break;
             }
             markActive(source);
@@ -123,7 +131,7 @@ public final class EnergyNetwork {
         for (EnergyNode node : NODES) {
             try {
                 String id = node.getClass().getName() + "@" + node.hashCode();
-                JsonNode json = node.serialize(JsonOps.INSTANCE);
+                JsonNode json = EnergyNode.CODEC.encode(JsonOps.INSTANCE, node);
                 batch.add(id, json.toString());
             } catch (Exception e) {
                 e.printStackTrace();
@@ -142,7 +150,7 @@ public final class EnergyNetwork {
             try {
                 String jsonStr = rs.getString("json");
                 JsonNode nodeJson = JSON_MAPPER.readTree(jsonStr);
-                return EnergyNode.deserialize(JsonOps.INSTANCE, nodeJson);
+                return EnergyNode.CODEC.decode(JsonOps.INSTANCE, nodeJson);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;

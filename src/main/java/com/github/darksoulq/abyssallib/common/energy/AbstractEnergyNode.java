@@ -8,13 +8,24 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public abstract class AbstractEnergyNode implements EnergyNode {
     private final Set<EnergyNode> connections = new CopyOnWriteArraySet<>();
+    private final EnergyUnit unit;
     private double energy;
     private double capacity;
 
-    public AbstractEnergyNode(double capacity, double initial) {
+    public AbstractEnergyNode(double capacity, double initial, EnergyUnit unit) {
         this.capacity = Math.max(0, capacity);
         this.energy = Math.max(0, Math.min(initial, capacity));
+        this.unit = unit;
         EnergyNetwork.register(this);
+    }
+
+    public AbstractEnergyNode(double capacity, double initial) {
+        this(capacity, initial, EnergyUnit.PE);
+    }
+
+    @Override
+    public EnergyUnit getUnit() {
+        return unit;
     }
 
     @Override
@@ -29,7 +40,7 @@ public abstract class AbstractEnergyNode implements EnergyNode {
         double toInsert = Math.min(amount, capacity - energy);
         if (toInsert <= 0) return 0;
         energy += toInsert;
-        if (toInsert > 0) EventBus.post(new EnergyNodeChangeEvent(this, old, energy, !org.bukkit.Bukkit.isPrimaryThread()));
+        if (toInsert > 0) EventBus.post(new EnergyNodeChangeEvent(this, unit, old, energy, !org.bukkit.Bukkit.isPrimaryThread()));
         return toInsert;
     }
 
@@ -39,7 +50,7 @@ public abstract class AbstractEnergyNode implements EnergyNode {
         double old = energy;
         double toExtract = Math.min(amount, energy);
         energy -= toExtract;
-        if (toExtract > 0) EventBus.post(new EnergyNodeChangeEvent(this, old, energy, !org.bukkit.Bukkit.isPrimaryThread()));
+        if (toExtract > 0) EventBus.post(new EnergyNodeChangeEvent(this, unit, old, energy, !org.bukkit.Bukkit.isPrimaryThread()));
         return toExtract;
     }
 
@@ -55,8 +66,7 @@ public abstract class AbstractEnergyNode implements EnergyNode {
         if (energy > capacity) {
             double prev = energy;
             energy = capacity;
-            EventBus.post(new EnergyNodeChangeEvent(this, prev, energy, !org.bukkit.Bukkit.isPrimaryThread()));
+            EventBus.post(new EnergyNodeChangeEvent(this, unit, prev, energy, !org.bukkit.Bukkit.isPrimaryThread()));
         }
-        if (old != capacity) EventBus.post(new EnergyNodeChangeEvent(this, old, capacity, !org.bukkit.Bukkit.isPrimaryThread()));
     }
 }

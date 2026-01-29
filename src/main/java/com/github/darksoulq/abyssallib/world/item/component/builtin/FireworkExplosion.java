@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.FireworkEffect;
@@ -15,9 +16,15 @@ public class FireworkExplosion extends DataComponent<FireworkEffect> implements 
             FireworkExplosion::new,
             FireworkExplosion::getValue
     );
+    public static final DataComponentType<FireworkExplosion> TYPE = DataComponentType.valued(CODEC, FireworkExplosion::new);
 
     public FireworkExplosion(FireworkEffect effect) {
-        super(Identifier.of(DataComponentTypes.FIREWORK_EXPLOSION.key().asString()), effect, CODEC);
+        super(effect);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

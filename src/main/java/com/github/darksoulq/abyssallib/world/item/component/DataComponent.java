@@ -1,26 +1,17 @@
 package com.github.darksoulq.abyssallib.world.item.component;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 
 import java.util.Objects;
 
 public abstract class DataComponent<T> {
-    private final Identifier id;
-    public final Codec<DataComponent<T>> codec;
-    public final T value;
+    protected final T value;
 
-    public DataComponent(Identifier id, T defaultValue, Codec<? extends DataComponent<T>> codec) {
-        this.id = id;
-        @SuppressWarnings("unchecked")
-        Codec<DataComponent<T>> safeCodec = (Codec<DataComponent<T>>) codec;
-        this.codec = safeCodec;
-        this.value = defaultValue;
+    public DataComponent(T value) {
+        this.value = value;
     }
 
-    public Identifier getId() {
-        return id;
-    }
+    public abstract DataComponentType<?> getType();
 
     public T getValue() {
         return value;
@@ -30,16 +21,18 @@ public abstract class DataComponent<T> {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-
-        DataComponent<?> other = (DataComponent<?>) obj;
-        return Objects.equals(id, other.id) && Objects.equals(value, other.value);
+        DataComponent<?> that = (DataComponent<?>) obj;
+        return Objects.equals(getType(), that.getType()) && Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + (value != null ? value.hashCode() : 0);
-        return result;
+        return Objects.hash(getType(), value);
     }
 
+    @Override
+    public String toString() {
+        String id = Registries.DATA_COMPONENT_TYPES.getId(getType());
+        return "DataComponent[" + (id != null ? id : getType().getClass().getSimpleName()) + "]{value=" + value + "}";
+    }
 }

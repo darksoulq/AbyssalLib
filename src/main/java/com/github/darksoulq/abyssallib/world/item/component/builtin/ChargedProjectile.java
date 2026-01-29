@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ChargedProjectiles;
@@ -16,12 +17,18 @@ public class ChargedProjectile extends DataComponent<List<ItemStack>> implements
             ChargedProjectile::new,
             ChargedProjectile::getValue
     );
+    public static final DataComponentType<ChargedProjectile> TYPE = DataComponentType.valued(CODEC, v -> new ChargedProjectile((ChargedProjectiles) v));
 
     public ChargedProjectile(ChargedProjectiles projectiles) {
-        super(Identifier.of(DataComponentTypes.CHARGED_PROJECTILES.key().asString()), projectiles.projectiles(), CODEC);
+        super(projectiles.projectiles());
     }
     public ChargedProjectile(List<ItemStack> projectiles) {
-        super(Identifier.of(DataComponentTypes.CHARGED_PROJECTILES.key().asString()), projectiles, CODEC);
+        super(projectiles);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

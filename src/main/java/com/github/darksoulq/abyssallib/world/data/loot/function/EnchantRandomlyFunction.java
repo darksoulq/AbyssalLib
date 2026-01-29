@@ -1,0 +1,84 @@
+package com.github.darksoulq.abyssallib.world.data.loot.function;
+
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
+import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
+import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
+import io.papermc.paper.datacomponent.DataComponentType;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemEnchantments;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class EnchantRandomlyFunction extends LootFunction {
+    public static final Codec<EnchantRandomlyFunction> CODEC = new Codec<>() {
+        @Override
+        public <D> EnchantRandomlyFunction decode(DynamicOps<D> ops, D input) throws CodecException {
+            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
+            List<String> enchantments = new ArrayList<>();
+            if (map.containsKey(ops.createString("enchantments"))) {
+                enchantments = Codecs.STRING.list().decode(ops, map.get(ops.createString("enchantments")));
+            }
+            return new EnchantRandomlyFunction(enchantments);
+        }
+
+        @Override
+        public <D> D encode(DynamicOps<D> ops, EnchantRandomlyFunction value) throws CodecException {
+            Map<D, D> map = new HashMap<>();
+            map.put(ops.createString("enchantments"), Codecs.STRING.list().encode(ops, value.enchantments));
+            return ops.createMap(map);
+        }
+    };
+
+    public static final LootFunctionType<EnchantRandomlyFunction> TYPE = () -> CODEC;
+
+    private final List<String> enchantments;
+
+    public EnchantRandomlyFunction(List<String> enchantments) {
+        this.enchantments = enchantments;
+    }
+
+    @Override
+    public ItemStack apply(ItemStack stack, LootContext context) {
+        Enchantment enchantment;
+        if (enchantments.isEmpty()) {
+            List<Enchantment> all = new ArrayList<>();
+            for (Enchantment e : Registry.ENCHANTMENT) {
+                if (e.canEnchantItem(stack)) all.add(e);
+            }
+            if (all.isEmpty()) return stack;
+            enchantment = all.get(context.random().nextInt(all.size()));
+        } else {
+            String key = enchantments.get(context.random().nextInt(enchantments.size()));
+            enchantment = Registry.ENCHANTMENT.get(NamespacedKey.fromString(key));
+        }
+
+        if (enchantment == null) return stack;
+
+        int level = context.random().nextInt(enchantment.getMaxLevel()) + 1;
+        
+        DataComponentType.Valued<ItemEnchantments> type = stack.getType() == Material.ENCHANTED_BOOK ? DataComponentTypes.STORED_ENCHANTMENTS : DataComponentTypes.ENCHANTMENTS;
+        ItemEnchantments current = stack.getData(type);
+        if (current == null) current = ItemEnchantments.itemEnchantments().build();
+        ItemEnchantments.Builder builder = ItemEnchantments.itemEnchantments();
+        builder.addAll(current.enchantments());
+        
+        stack.setData(type, builder.add(enchantment, level).build());
+        return stack;
+    }
+
+    @Override
+    public LootFunctionType<?> getType() {
+        return TYPE;
+    }
+}

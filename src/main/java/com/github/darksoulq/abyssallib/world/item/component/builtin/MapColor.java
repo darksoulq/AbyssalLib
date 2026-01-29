@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.MapItemColor;
@@ -15,12 +16,18 @@ public class MapColor extends DataComponent<Color> implements Vanilla {
             MapColor::new,
             MapColor::getValue
     );
+    public static final DataComponentType<MapColor> TYPE = DataComponentType.valued(CODEC, v -> new MapColor((MapItemColor) v));
 
     public MapColor(MapItemColor color) {
-        super(Identifier.of(DataComponentTypes.MAP_COLOR.key().asString()), color.color(), CODEC);
+        super(color.color());
     }
     public MapColor(Color color) {
-        super(Identifier.of(DataComponentTypes.MAP_COLOR.key().asString()), color, CODEC);
+        super(color);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

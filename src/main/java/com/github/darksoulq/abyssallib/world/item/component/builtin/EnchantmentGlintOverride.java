@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
@@ -14,9 +15,15 @@ public class EnchantmentGlintOverride extends DataComponent<Boolean> implements 
             EnchantmentGlintOverride::new,
             EnchantmentGlintOverride::getValue
     );
+    public static final DataComponentType<EnchantmentGlintOverride> TYPE = DataComponentType.valued(CODEC, EnchantmentGlintOverride::new);
 
     public EnchantmentGlintOverride(boolean value) {
-        super(Identifier.of(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE.key().asString()), value, CODEC);
+        super(value);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override

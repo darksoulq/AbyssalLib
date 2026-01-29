@@ -24,8 +24,11 @@ import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.data.loot.LootDefaults;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
+import com.github.darksoulq.abyssallib.world.gen.feature.Features;
+import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifiers;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
@@ -65,6 +68,11 @@ public final class AbyssalLib extends JavaPlugin {
         registerBlockDataAdapters();
         TagLoader.register(TagLoader.TagType.ITEM);
         TagLoader.register(TagLoader.TagType.BLOCK);
+
+        PlacementModifiers.PLACEMENT_MODIFIERS.apply();
+        Features.FEATURES.apply();
+        LootDefaults.LOOT_FUNCTION_TYPES.apply();
+        LootDefaults.LOOT_CONDITION_TYPES.apply();
 
         CONFIG = new PluginConfig();
         CONFIG.cfg.save();

@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.structure.processor;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -41,6 +42,9 @@ public abstract class StructureProcessor {
 
     @Nullable
     public abstract BlockInfo process(World world, Location origin, BlockInfo current, BlockInfo original);
+
+    @Nullable
+    public abstract BlockInfo process(WorldGenAccess level, Location origin, BlockInfo current, BlockInfo original);
 
     public abstract StructureProcessorType<?> getType();
 }

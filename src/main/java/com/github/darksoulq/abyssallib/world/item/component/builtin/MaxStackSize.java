@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
@@ -13,9 +14,15 @@ public class MaxStackSize extends DataComponent<Integer> implements Vanilla {
             MaxStackSize::new,
             MaxStackSize::getValue
     );
+    public static final DataComponentType<MaxStackSize> TYPE = DataComponentType.valued(CODEC, MaxStackSize::new);
 
     public MaxStackSize(int value) {
-        super(Identifier.of(DataComponentTypes.MAX_STACK_SIZE.key().asString()), value, CODEC);
+        super(value);
+    }
+
+    @Override
+    public DataComponentType<?> getType() {
+        return TYPE;
     }
 
     @Override
