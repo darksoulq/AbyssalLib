@@ -14,7 +14,6 @@ public class Items {
     public static final Holder<Item> CLOSE = ITEMS.register("close", (id) -> new Item(id, Material.STICK));
     public static final Holder<Item> CHECKMARK = ITEMS.register("checkmark", (id) -> new Item(id, Material.STICK));
 
-    // Structure Block
     public static final Holder<Item> BOUNDING_TOGGLE = ITEMS.register("bounding_toggle", (id) -> new Item(id, Material.STICK));
     public static final Holder<Item> NAME_STRUCTURE = ITEMS.register("name_structure", (id) -> new Item(id, Material.STICK));
     public static final Holder<Item> INTEGRITY = ITEMS.register("integrity", (id) -> new Item(id, Material.STICK));
