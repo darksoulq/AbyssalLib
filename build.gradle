@@ -46,6 +46,9 @@ repositories {
     maven {
         url = uri("https://maven.devs.beer/")
     }
+    maven {
+        url = 'https://repo.extendedclip.com/releases/'
+    }
 }
 
 dependencies {
@@ -60,6 +63,7 @@ dependencies {
     compileOnly('com.magmaguy:ResourcePackManager:1.7.1')
     compileOnly("com.nexomc:nexo:1.12.0-dev")
     compileOnly("dev.lone:api-itemsadder:4.0.10")
+    compileOnly 'me.clip:placeholderapi:2.11.7'
 }
 
 tasks.withType(JavaCompile).configureEach {

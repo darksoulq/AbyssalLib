@@ -13,6 +13,7 @@ import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySp
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
+import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.util.PermissionConstants;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
@@ -138,6 +139,12 @@ public class InternalCommand {
                         );
                     }
                     ctx.getSource().getSender().sendRichMessage("<red>Reload complete</red>");
+                    return 0;
+                })
+            )
+            .then(Commands.literal("translations")
+                .executes(ctx -> {
+                    ServerTranslator.reload();
                     return 0;
                 })
             )

@@ -5,7 +5,10 @@ import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
+import com.github.darksoulq.abyssallib.server.translation.internal.PacketTranslator;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
@@ -44,6 +47,7 @@ public class ServerEvents {
                 @Override
                 public void run() {
                     MapLoader.load();
+                    ServerTranslator.init();
                     LootLoader.load();
                     CommandBus.register(AbyssalLib.PLUGIN_ID, new InternalCommand());
                     BlockManager.load();
@@ -62,6 +66,12 @@ public class ServerEvents {
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         }
+    }
+
+    @SubscribeEvent
+    public void onPacketSend(PacketSendEvent event) {
+        if (event.getPlayer() == null) return;
+        PacketTranslator.process(event.getPacket(), event.getPlayer());
     }
 
     @SubscribeEvent
