@@ -8,7 +8,7 @@ import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
-import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
+import com.github.darksoulq.abyssallib.world.gen.nms.NMSWorldGenAccess;
 import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import com.github.darksoulq.abyssallib.world.structure.processor.impl.IntegrityProcessor;
@@ -16,9 +16,9 @@ import com.github.darksoulq.abyssallib.world.structure.serializer.AbyssalLibBloc
 import com.github.darksoulq.abyssallib.world.structure.serializer.MinecraftBlockSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.plugin.Plugin;
@@ -151,26 +151,70 @@ public class Structure {
 
         if (blockObject == null) return;
 
-        BlockInfo original = new BlockInfo(new Vector(sb.x, sb.y, sb.z), blockObject, entry.stateData, sb.nbt);
-        BlockInfo current = new BlockInfo(transformedPos, blockObject, entry.stateData, sb.nbt);
+        ObjectNode nbt = sb.nbt;
+        ObjectNode combinedData = entry.stateData;
+        BlockInfo original = new BlockInfo(new Vector(sb.x, sb.y, sb.z), blockObject, combinedData, nbt);
+        BlockInfo current = new BlockInfo(transformedPos, blockObject, combinedData, nbt);
 
         for (StructureProcessor processor : processors) {
             if (worldOrLevel instanceof WorldGenAccess level) {
                 current = processor.process(level, origin, current, original);
-            } else if (worldOrLevel instanceof World world) {
-                current = processor.process(world, origin, current, original);
+            } else {
+                current = processor.process((org.bukkit.World) worldOrLevel, origin, current, original);
             }
             if (current == null) return;
         }
 
-        if (worldOrLevel instanceof WorldGenAccess level) {
-            WorldGenUtils.placeBlock(level, target, current, rotation, mirror);
-        } else if (worldOrLevel instanceof World world) {
-            WorldGenUtils.placeBlock(world, target, current, rotation, mirror);
+        try {
+            blockObject = current.block();
+            nbt = current.nbt();
+            combinedData = current.combinedData();
+
+            ObjectNode fullData = combinedData != null ? combinedData.deepCopy() : FACTORY.objectNode();
+            if (nbt != null) {
+                nbt.fields().forEachRemaining(f -> fullData.set(f.getKey(), f.getValue()));
+            }
+            Map<JsonNode, JsonNode> mapData = JsonOps.INSTANCE.getMap(fullData).orElse(Collections.emptyMap());
+
+            if (blockObject instanceof CustomBlock cb) {
+                BlockData bd = cb.getMaterial().createBlockData();
+                AbyssalLibBlockSerializer.deserializeBlockData(mapData, JsonOps.INSTANCE, bd);
+                if (mirror != Mirror.NONE) bd.mirror(mirror);
+                if (rotation != StructureRotation.NONE) bd.rotate(rotation);
+
+                if (worldOrLevel instanceof NMSWorldGenAccess level) {
+                    level.setBlock(target.getBlockX(), target.getBlockY(), target.getBlockZ(), cb, bd);
+                } else {
+                    if (target.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
+                    target.getBlock().setBlockData(bd, false);
+                    cb.place(target.getBlock(), false);
+                }
+
+                AbyssalLibBlockSerializer.deserializeEntity(cb, mapData, JsonOps.INSTANCE);
+                cb.onLoad();
+
+            } else if (blockObject instanceof BlockData bd) {
+                MinecraftBlockSerializer.deserialize(bd, mapData, JsonOps.INSTANCE);
+                if (mirror != Mirror.NONE) bd.mirror(mirror);
+                if (rotation != StructureRotation.NONE) bd.rotate(rotation);
+
+                if (worldOrLevel instanceof NMSWorldGenAccess level) {
+                    level.setBlock(target.getBlockX(), target.getBlockY(), target.getBlockZ(), bd);
+                } else {
+                    if (target.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
+                    target.getBlock().setBlockData(bd, false);
+
+                    if (nbt != null) {
+                        JsonOps.INSTANCE.getMap(nbt).ifPresent(nbtMap -> MinecraftBlockSerializer.deserializeTile(target.getBlock(), nbtMap, JsonOps.INSTANCE));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
+    public Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
         double x = pos.getX();
         double z = pos.getZ();
 

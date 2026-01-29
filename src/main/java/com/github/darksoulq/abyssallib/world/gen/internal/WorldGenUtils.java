@@ -9,9 +9,9 @@ import com.github.darksoulq.abyssallib.world.gen.nms.NMSWorldGenAccess;
 import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.serializer.AbyssalLibBlockSerializer;
 import com.github.darksoulq.abyssallib.world.structure.serializer.MinecraftBlockSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.structure.Mirror;
@@ -44,43 +44,6 @@ public class WorldGenUtils {
     }
 
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info, StructureRotation rotation, Mirror mirror) {
-        processPlacement(location, info, rotation, mirror, (loc, blockObject) -> {
-            if (level instanceof NMSWorldGenAccess nmsLevel) {
-                if (blockObject instanceof CustomBlock cb) {
-                    BlockData bd = cb.getMaterial().createBlockData();
-                    nmsLevel.setBlock(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), cb, bd);
-                } else if (blockObject instanceof BlockData bd) {
-                    nmsLevel.setBlock(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), bd);
-                }
-            } else {
-                if (blockObject instanceof CustomBlock cb) {
-                    BlockData bd = cb.getMaterial().createBlockData();
-                    if (loc.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                    level.setBlock(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), bd);
-                    cb.place(loc.getBlock(), false);
-                } else if (blockObject instanceof BlockData bd) {
-                    if (loc.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                    level.setBlock(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), bd);
-                }
-            }
-        });
-    }
-
-    public static void placeBlock(World world, Location location, BlockInfo info, StructureRotation rotation, Mirror mirror) {
-        processPlacement(location, info, rotation, mirror, (loc, blockObject) -> {
-            if (blockObject instanceof CustomBlock cb) {
-                BlockData bd = cb.getMaterial().createBlockData();
-                if (loc.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                world.setBlockData(loc, bd);
-                cb.place(loc.getBlock(), false);
-            } else if (blockObject instanceof BlockData bd) {
-                if (loc.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                world.setBlockData(loc, bd);
-            }
-        });
-    }
-
-    private static void processPlacement(Location location, BlockInfo info, StructureRotation rotation, Mirror mirror, PlacementCallback callback) {
         Object blockObject = info.block();
         ObjectNode combinedData = info.combinedData();
         ObjectNode nbt = info.nbt();
@@ -96,7 +59,17 @@ public class WorldGenUtils {
                 }
 
                 applyTransform(bd, mirror, rotation);
-                callback.place(location, clone);
+
+                if (level instanceof NMSWorldGenAccess nmsLevel) {
+                    nmsLevel.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone, bd);
+                } else if (level != null) {
+                    if (location.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
+                    level.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), bd);
+                    clone.place(location.getBlock(), false);
+                } else {
+                    location.getBlock().setBlockData(bd, false);
+                    clone.place(location.getBlock(), false);
+                }
 
                 if (combinedData != null) {
                     Map<JsonNode, JsonNode> mapData = JsonOps.INSTANCE.getMap(combinedData).orElse(Collections.emptyMap());
@@ -112,7 +85,15 @@ public class WorldGenUtils {
                 }
 
                 applyTransform(clone, mirror, rotation);
-                callback.place(location, clone);
+
+                if (level instanceof NMSWorldGenAccess nmsLevel) {
+                    nmsLevel.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone);
+                } else if (level != null) {
+                    if (location.getBlock().getType() == Material.WATER && clone instanceof Waterlogged wl) wl.setWaterlogged(true);
+                    level.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone);
+                } else {
+                    location.getBlock().setBlockData(clone, false);
+                }
 
                 if (nbt != null) {
                     Map<JsonNode, JsonNode> nbtMap = JsonOps.INSTANCE.getMap(nbt).orElse(null);
@@ -127,10 +108,5 @@ public class WorldGenUtils {
     private static void applyTransform(BlockData bd, Mirror mirror, StructureRotation rotation) {
         if (mirror != Mirror.NONE) bd.mirror(mirror);
         if (rotation != StructureRotation.NONE) bd.rotate(rotation);
-    }
-
-    @FunctionalInterface
-    private interface PlacementCallback {
-        void place(Location loc, Object blockObject);
     }
 }

@@ -2,8 +2,6 @@ package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
-import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
-import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.potion.PotionMix;
@@ -19,11 +17,9 @@ import org.bukkit.World;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.recipe.CookingBookCategory;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
+import org.bukkit.util.Vector;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class Codecs {
     public static final Codec<Object> PASSTHROUGH = new Codec<>() {
@@ -109,6 +105,46 @@ public class Codecs {
     };
 
     // Extra
+    public static final Codec<Vector> VECTOR_I = new Codec<Vector>() {
+        @Override
+        public <D> org.bukkit.util.Vector decode(DynamicOps<D> ops, D input) throws CodecException {
+            List<D> vector = ops.getList(input).orElseThrow();
+            if (vector.size() != 3) throw new CodecException("Vector list size should be 3");
+            int x = ops.getIntValue(vector.getFirst()).orElseThrow();
+            int y = ops.getIntValue(vector.get(1)).orElseThrow();
+            int z = ops.getIntValue(vector.getLast()).orElseThrow();
+            return new Vector(x, y, z);
+        }
+
+        @Override
+        public <D> D encode(DynamicOps<D> ops, Vector value) throws CodecException {
+            List<D> vector = new LinkedList<>();
+            vector.add(ops.createFloat(value.getBlockX()));
+            vector.add(ops.createInt(value.getBlockY()));
+            vector.add(ops.createInt(value.getBlockZ()));
+            return ops.createList(vector);
+        }
+    };
+    public static final Codec<Vector> VECTOR_F = new Codec<Vector>() {
+        @Override
+        public <D> org.bukkit.util.Vector decode(DynamicOps<D> ops, D input) throws CodecException {
+            List<D> vector = ops.getList(input).orElseThrow();
+            if (vector.size() != 3) throw new CodecException("Vector list size should be 3");
+            double x = ops.getDoubleValue(vector.getFirst()).orElseThrow();
+            double y = ops.getDoubleValue(vector.get(1)).orElseThrow();
+            double z = ops.getDoubleValue(vector.getLast()).orElseThrow();
+            return new Vector(x, y, z);
+        }
+
+        @Override
+        public <D> D encode(DynamicOps<D> ops, Vector value) throws CodecException {
+            List<D> vector = new LinkedList<>();
+            vector.add(ops.createDouble(value.getX()));
+            vector.add(ops.createDouble(value.getY()));
+            vector.add(ops.createDouble(value.getZ()));
+            return ops.createList(vector);
+        }
+    };
     public static final Codec<UUID> UUID = Codecs.STRING.xmap(
             java.util.UUID::fromString,
             java.util.UUID::toString

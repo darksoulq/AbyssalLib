@@ -46,6 +46,11 @@ public class StructureBlockEntity extends BlockEntity {
         super(block);
     }
 
+    @Override
+    public void onLoad() {
+        super.onLoad();
+    }
+
     public void updateParticles() {
         if (particles != null) particles.stop();
         if (mode.get() == StructureMode.LOAD) {

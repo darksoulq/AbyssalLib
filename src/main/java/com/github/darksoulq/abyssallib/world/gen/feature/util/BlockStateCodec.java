@@ -15,6 +15,7 @@ import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.util.Vector;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,14 @@ public class BlockStateCodec {
         @Override
         public <D> BlockInfo decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
+
             String id = Codecs.STRING.decode(ops, map.get(ops.createString("id")));
+
+            Vector pos = new Vector(0, 0, 0);
+            D posObj = map.get(ops.createString("pos"));
+            if (posObj != null) {
+                pos = Codecs.VECTOR_I.decode(ops, posObj);
+            }
 
             Object blockObject;
             if (id.startsWith("minecraft:")) {
@@ -37,56 +45,82 @@ public class BlockStateCodec {
                 blockObject = base.clone();
             }
 
-            if (!(ops instanceof JsonOps)) {
-                throw new CodecException("BlockStateCodec requires JsonOps");
-            }
-
-            JsonNode rootNode = (JsonNode) input;
             ObjectNode combinedData = null;
             ObjectNode nbt = null;
 
-            if (rootNode.has("states") || rootNode.has("properties")) {
-                combinedData = (ObjectNode) rootNode.deepCopy();
-                combinedData.remove("id");
-                combinedData.remove("nbt");
+            if (ops instanceof JsonOps && input instanceof JsonNode jsonInput) {
+                if (jsonInput.has("states") || jsonInput.has("properties")) {
+                    combinedData = (ObjectNode) jsonInput.deepCopy();
+                    combinedData.remove("id");
+                    combinedData.remove("pos");
+                    combinedData.remove("nbt");
+                }
+
+                if (jsonInput.has("nbt")) {
+                    nbt = (ObjectNode) jsonInput.get("nbt");
+                }
             }
 
-            if (rootNode.has("nbt")) {
-                nbt = (ObjectNode) rootNode.get("nbt");
+            if (blockObject instanceof BlockData bd) {
+                D states = map.get(ops.createString("states"));
+                if (states != null) {
+                    Map<D, D> statesMap = ops.getMap(states).orElse(Collections.emptyMap());
+                    MinecraftBlockSerializer.deserialize(bd, statesMap, ops);
+                }
+            } else if (blockObject instanceof CustomBlock cb) {
+                if (combinedData != null && combinedData.has("states")) {
+                    D states = map.get(ops.createString("states"));
+                    if (states != null) {
+                        Map<D, D> statesMap = ops.getMap(states).orElse(Collections.emptyMap());
+                        BlockData tempData = cb.getMaterial().createBlockData();
+                        MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
+                    }
+                }
             }
 
-            return new BlockInfo(new Vector(0,0,0), blockObject, combinedData, nbt);
+            return new BlockInfo(pos, blockObject, combinedData, nbt);
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public <D> D encode(DynamicOps<D> ops, BlockInfo value) throws CodecException {
             Map<D, D> map = new HashMap<>();
             String id;
-            Map<D, D> combined = new HashMap<>();
+            Map<D, D> nbtMap = new HashMap<>();
+
+            if (value.nbt() != null) {
+                @SuppressWarnings("unchecked")
+                Map<D, D> existing = (Map<D, D>) ops.getMap((D) value.nbt()).orElse(null);
+                if (existing != null) nbtMap.putAll(existing);
+            }
 
             if (value.block() instanceof CustomBlock cb) {
                 id = cb.getId().toString();
                 Map<D, D> serialized = AbyssalLibBlockSerializer.serialize(cb, ops);
-                combined.putAll(serialized);
+
+                if (serialized.containsKey(ops.createString("states"))) {
+                    map.put(ops.createString("states"), serialized.get(ops.createString("states")));
+                }
+
+                if (serialized.containsKey(ops.createString("properties"))) {
+                    nbtMap.put(ops.createString("properties"), serialized.get(ops.createString("properties")));
+                }
             } else {
                 BlockData bd = (BlockData) value.block();
                 id = "minecraft:" + bd.getMaterial().name().toLowerCase();
+
                 Map<D, D> states = MinecraftBlockSerializer.serialize(bd, ops);
-                combined.put(ops.createString("states"), ops.createMap(states));
+                if (!states.isEmpty()) {
+                    map.put(ops.createString("states"), ops.createMap(states));
+                }
             }
 
             map.put(ops.createString("id"), Codecs.STRING.encode(ops, id));
+            map.put(ops.createString("pos"), Codecs.VECTOR_I.encode(ops, value.pos()));
 
-            D states = combined.get(ops.createString("states"));
-            if (states != null) map.put(ops.createString("states"), states);
-
-            D properties = combined.get(ops.createString("properties"));
-            if (properties != null) map.put(ops.createString("properties"), properties);
-
-            if (value.nbt() != null) {
-                map.put(ops.createString("nbt"), (D) value.nbt());
+            if (!nbtMap.isEmpty()) {
+                map.put(ops.createString("nbt"), ops.createMap(nbtMap));
             }
+
             return ops.createMap(map);
         }
     };

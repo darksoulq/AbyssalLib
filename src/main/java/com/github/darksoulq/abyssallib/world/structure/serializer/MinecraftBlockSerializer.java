@@ -49,7 +49,7 @@ public class MinecraftBlockSerializer {
             SignSide side = sign.getSide(Side.FRONT);
             for (int i = 0; i < 4; i++) {
                 Component line = side.line(i);
-                if (line == null || line.equals(Component.empty())) {
+                if (line.equals(Component.empty())) {
                     lines.add(Try.of(() -> Codecs.TEXT_COMPONENT.encode(ops, Component.empty())).orElseThrow(e -> new RuntimeException(e.getMessage())));
                 } else {
                     lines.add(Try.of(() -> Codecs.TEXT_COMPONENT.encode(ops, line)).orElseThrow(e -> new RuntimeException(e.getMessage())));
