@@ -133,7 +133,8 @@ public class Structure {
     private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror) {
         if (sb.stateIndex < 0 || sb.stateIndex >= palette.size()) return;
 
-        Vector transformedPos = transform(new Vector(sb.x, sb.y, sb.z), mirror, rotation);
+        Vector relativePos = new Vector(sb.x, sb.y, sb.z);
+        Vector transformedPos = transform(relativePos, mirror, rotation);
         Location target = origin.clone().add(transformedPos);
         PaletteEntry entry = palette.get(sb.stateIndex);
 
@@ -153,7 +154,7 @@ public class Structure {
 
         ObjectNode nbt = sb.nbt;
         ObjectNode combinedData = entry.stateData;
-        BlockInfo original = new BlockInfo(new Vector(sb.x, sb.y, sb.z), blockObject, combinedData, nbt);
+        BlockInfo original = new BlockInfo(relativePos, blockObject, combinedData, nbt);
         BlockInfo current = new BlockInfo(transformedPos, blockObject, combinedData, nbt);
 
         for (StructureProcessor processor : processors) {
@@ -214,13 +215,13 @@ public class Structure {
         }
     }
 
-    public Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
+    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
         double x = pos.getX();
         double z = pos.getZ();
 
         switch (mirror) {
-            case LEFT_RIGHT -> z = size.getZ() - 1 - z;
-            case FRONT_BACK -> x = size.getX() - 1 - x;
+            case LEFT_RIGHT -> z = -z;
+            case FRONT_BACK -> x = -x;
         }
 
         double newX = x;
@@ -228,16 +229,16 @@ public class Structure {
 
         switch (rotation) {
             case CLOCKWISE_90 -> {
-                newX = size.getZ() - 1 - z;
+                newX = -z;
                 newZ = x;
             }
             case CLOCKWISE_180 -> {
-                newX = size.getX() - 1 - x;
-                newZ = size.getZ() - 1 - z;
+                newX = -x;
+                newZ = -z;
             }
             case COUNTERCLOCKWISE_90 -> {
                 newX = z;
-                newZ = size.getX() - 1 - x;
+                newZ = -x;
             }
         }
         return new Vector(newX, pos.getY(), newZ);

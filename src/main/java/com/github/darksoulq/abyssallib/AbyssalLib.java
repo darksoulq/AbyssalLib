@@ -114,15 +114,46 @@ public final class AbyssalLib extends JavaPlugin {
         createItemDef("invisible", ns);
         createItemDef("forward", ns);
         createItemDef("backward", ns);
+        createItemDef("close", ns);
+        createItemDef("checkmark", ns);
+
+        createItemDef("bounding_toggle", ns);
+        createItemDef("name_structure", ns);
+        createItemDef("integrity", ns);
+        createItemDef("load_structure", ns);
+        createItemDef("mirror", ns);
+        createItemDef("rotate", ns);
+        createItemDef("save", ns);
+        createItemDef("size_x", ns);
+        createItemDef("size_y", ns);
+        createItemDef("size_z", ns);
+        createItemDef("x", ns);
+        createItemDef("y", ns);
+        createItemDef("z", ns);
 
         Lang lang = ns.lang("en_us", false);
         lang.put("item.abyssallib.invisible", "");
         lang.put("item.abyssallib.forward", "Forward");
+        lang.put("item.abyssallib.close", "Close");
+        lang.put("item.abyssallib.checkmark", "Checkmark");
+
+        lang.put("item.abyssallib.bounding_toggle", "Toggle Bounding Box");
+        lang.put("item.abyssallib.name_structure", "Name Structure");
+        lang.put("item.abyssallib.integrity", "Integrity");
+        lang.put("item.abyssallib.load_structure", "Load Structure");
+        lang.put("item.abyssallib.mirror", "Mirror");
+        lang.put("item.abyssallib.rotate", "Rotate");
+        lang.put("item.abyssallib.save", "Save");
+        lang.put("item.abyssallib.size_x", "Size X");
+        lang.put("item.abyssallib.size_y", "Size Y");
+        lang.put("item.abyssallib.size_z", "Size Z");
+        lang.put("item.abyssallib.x", "X");
+        lang.put("item.abyssallib.y", "Y");
+        lang.put("item.abyssallib.z", "Z");
+
         lang.put("item.abyssallib.backward", "Backward");
         lang.put("item.abyssallib.structure_block", "Structure Block");
-        lang.put("item.abyssallib.jigsaw", "Jigsaw");
         lang.put("block.abyssallib.structure_block", "Structure Block");
-        lang.put("block.abyssallib.jigsaw", "Jigsaw");
         lang.put("plugin.abyssallib", "AbyssalLib");
 
         rp.register(false);

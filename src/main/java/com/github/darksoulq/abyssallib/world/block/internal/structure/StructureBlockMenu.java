@@ -1,23 +1,32 @@
 package com.github.darksoulq.abyssallib.world.block.internal.structure;
 
+import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
+import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.world.block.property.Property;
 import com.github.darksoulq.abyssallib.world.gui.Gui;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
+import com.github.darksoulq.abyssallib.world.gui.GuiView;
 import com.github.darksoulq.abyssallib.world.gui.SlotPosition;
 import com.github.darksoulq.abyssallib.world.gui.impl.GuiButton;
+import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
+import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.Items;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemName;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.Lore;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Material;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 public class StructureBlockMenu {
 
@@ -28,7 +37,10 @@ public class StructureBlockMenu {
     }
 
     public void open(Player player) {
-        Gui.Builder builder = Gui.builder(MenuType.GENERIC_9X6, Component.text("Structure Block"));
+        Gui.Builder builder = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><width>Structure Block",
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
+            Placeholder.parsed("texture", GuiTextures.STRUCTURE_BLOCK_MENU.toMiniMessageString()),
+            Placeholder.parsed("width", TextOffset.getOffsetMinimessage(-170))));
         Gui gui = builder.build();
         refresh(gui, player);
         GuiManager.open(player, gui);
@@ -37,17 +49,22 @@ public class StructureBlockMenu {
     private void refresh(Gui gui, Player player) {
         gui.getElements().clear();
         StructureMode mode = tile.mode.get();
+        Item modeItem = mode == StructureMode.LOAD ? Items.LOAD_STRUCTURE.get() : Items.SAVE.get();
 
-        gui.getElements().put(SlotPosition.top(0), makeButton(Material.STRUCTURE_BLOCK, "Mode: " + mode.name(),
+        gui.getElements().put(SlotPosition.top(0), makeButton(modeItem,
+            Component.text("Mode: ", NamedTextColor.GRAY).append(Component.text(mode.name(), NamedTextColor.YELLOW)),
             (v, c) -> {
                 StructureMode[] modes = StructureMode.values();
                 int nextIndex = (tile.mode.get().ordinal() + 1) % modes.length;
                 tile.mode.set(modes[nextIndex]);
                 tile.updateParticles();
                 refresh(gui, player);
-            }, "Click to cycle mode"));
+            },
+            Component.text("Click to cycle mode", NamedTextColor.GRAY)
+        ));
 
-        gui.getElements().put(SlotPosition.top(4), makeButton(Material.NAME_TAG, "Name: " + tile.structureName.get(),
+        gui.getElements().put(SlotPosition.top(4), makeButton(Items.NAME_STRUCTURE.get(),
+            Component.text("Name: ", NamedTextColor.GRAY).append(Component.text(tile.structureName.get(), NamedTextColor.GREEN)),
             (v, c) -> {
                 v.close(player);
                 ChatInputHandler.await(player, (input) -> {
@@ -55,11 +72,13 @@ public class StructureBlockMenu {
                     tile.structureName.set(clean);
                     new StructureBlockMenu(tile).open(player);
                 }, Component.text("Enter structure name (namespace:id):", NamedTextColor.GREEN));
-            }, "Click to rename"));
+            },
+            Component.text("Click to rename", NamedTextColor.GRAY)
+        ));
 
-        gui.getElements().put(SlotPosition.top(21), makeIntButton(Material.RED_STAINED_GLASS_PANE, "Pos X", tile.offsetX, gui, player));
-        gui.getElements().put(SlotPosition.top(22), makeIntButton(Material.GREEN_STAINED_GLASS_PANE, "Pos Y", tile.offsetY, gui, player));
-        gui.getElements().put(SlotPosition.top(23), makeIntButton(Material.BLUE_STAINED_GLASS_PANE, "Pos Z", tile.offsetZ, gui, player));
+        gui.getElements().put(SlotPosition.top(21), makeIntButton(Items.X.get(), "Pos X", tile.offsetX, gui, player));
+        gui.getElements().put(SlotPosition.top(22), makeIntButton(Items.Y.get(), "Pos Y", tile.offsetY, gui, player));
+        gui.getElements().put(SlotPosition.top(23), makeIntButton(Items.Z.get(), "Pos Z", tile.offsetZ, gui, player));
 
         if (mode == StructureMode.SAVE) {
             setupSaveMode(gui, player);
@@ -69,79 +88,106 @@ public class StructureBlockMenu {
     }
 
     private void setupSaveMode(Gui gui, Player player) {
-        gui.getElements().put(SlotPosition.top(30), makeIntButton(Material.RED_CONCRETE, "Size X", tile.sizeX, gui, player, 1, 48));
-        gui.getElements().put(SlotPosition.top(31), makeIntButton(Material.GREEN_CONCRETE, "Size Y", tile.sizeY, gui, player, 1, 48));
-        gui.getElements().put(SlotPosition.top(32), makeIntButton(Material.BLUE_CONCRETE, "Size Z", tile.sizeZ, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(30), makeIntButton(Items.SIZE_X.get(), "Size X", tile.sizeX, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(31), makeIntButton(Items.SIZE_Y.get(), "Size Y", tile.sizeY, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(32), makeIntButton(Items.SIZE_Z.get(), "Size Z", tile.sizeZ, gui, player, 1, 48));
 
-        gui.getElements().put(SlotPosition.top(49), makeButton(Material.STRUCTURE_VOID, "SAVE",
+        gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK.get(),
+            Component.text("SAVE", NamedTextColor.GREEN, TextDecoration.BOLD),
             (v, c) -> {
                 if (tile.save()) player.sendMessage(Component.text("Structure saved successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure save failed.", NamedTextColor.RED));
-            }, "Click to save structure"));
-        gui.getElements().put(SlotPosition.top(45), makeButton(Material.ENDER_EYE, "Show Bounding Box: " + (tile.showBoundingBox.get() ? "ON" : "OFF"),
+            },
+            Component.text("Click to save structure", NamedTextColor.GRAY)
+        ));
+
+        boolean showBox = tile.showBoundingBox.get();
+        gui.getElements().put(SlotPosition.top(45), makeButton(Items.BOUNDING_TOGGLE.get(),
+            Component.text("Bounding Box: ", NamedTextColor.GRAY).append(Component.text(showBox ? "ON" : "OFF", showBox ? NamedTextColor.GREEN : NamedTextColor.RED)),
             (v, c) -> {
-                tile.showBoundingBox.set(!tile.showBoundingBox.get());
+                tile.showBoundingBox.set(!showBox);
                 tile.updateParticles();
                 refresh(gui, player);
-            }, "Click to toggle"));
+            },
+            Component.text("Click to toggle visibility", NamedTextColor.GRAY)
+        ));
     }
 
     private void setupLoadMode(Gui gui, Player player) {
         if (tile.particles != null) tile.particles.stop();
 
-        gui.getElements().put(SlotPosition.top(30), makeButton(Material.COMPARATOR, "Rotation: " + tile.rotation.get().name(),
+        gui.getElements().put(SlotPosition.top(30), makeButton(Items.ROTATE.get(),
+            Component.text("Rotation: ", NamedTextColor.GRAY).append(Component.text(tile.rotation.get().name(), NamedTextColor.YELLOW)),
             (v, c) -> {
                 StructureRotation[] rots = StructureRotation.values();
                 int next = (tile.rotation.get().ordinal() + 1) % rots.length;
                 tile.rotation.set(rots[next]);
                 refresh(gui, player);
-            }, "Click to cycle"));
+            },
+            Component.text("Click to cycle rotation", NamedTextColor.GRAY)
+        ));
 
-        gui.getElements().put(SlotPosition.top(31), makeButton(Material.REPEATER, "Mirror: " + tile.mirror.get().name(),
+        gui.getElements().put(SlotPosition.top(31), makeButton(Items.MIRROR.get(),
+            Component.text("Mirror: ", NamedTextColor.GRAY).append(Component.text(tile.mirror.get().name(), NamedTextColor.YELLOW)),
             (v, c) -> {
                 Mirror[] mirrors = Mirror.values();
                 int next = (tile.mirror.get().ordinal() + 1) % mirrors.length;
                 tile.mirror.set(mirrors[next]);
                 refresh(gui, player);
-            }, "Click to cycle"));
+            },
+            Component.text("Click to cycle mirror", NamedTextColor.GRAY)
+        ));
 
-        gui.getElements().put(SlotPosition.top(32), makeButton(Material.ANVIL, "Integrity: " + String.format("%.1f", tile.integrity.get()),
+        gui.getElements().put(SlotPosition.top(32), makeButton(Items.INTEGRITY.get(),
+            Component.text("Integrity: ", NamedTextColor.GRAY).append(Component.text(String.format("%.1f", tile.integrity.get()), NamedTextColor.AQUA)),
             (v, c) -> {
                 float val = tile.integrity.get() + (c.isLeftClick() ? 0.1f : -0.1f);
                 tile.integrity.set(Math.max(0.0f, Math.min(1.0f, val)));
                 refresh(gui, player);
-            }, "L: +0.1, R: -0.1"));
+            },
+            TextUtil.parse("<white><icon_left> <gray>+0.1 | <white><icon_right> <gray>-0.1",
+                Placeholder.parsed("icon_left", GuiTextures.MOUSE_LEFT.toMiniMessageString()),
+                Placeholder.parsed("icon_right", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
+        ));
 
-        gui.getElements().put(SlotPosition.top(49), makeButton(Material.STRUCTURE_VOID, "LOAD",
+        gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK.get(),
+            Component.text("LOAD", NamedTextColor.GREEN, TextDecoration.BOLD),
             (v, c) -> {
                 if (tile.load()) player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure load failed. Check name.", NamedTextColor.RED));
-            }, "Click to load structure"));
+            },
+            Component.text("Click to load structure", NamedTextColor.GRAY)
+        ));
     }
 
-    private GuiButton makeIntButton(Material mat, String name, Property<Integer> prop, Gui gui, Player player) {
-        return makeIntButton(mat, name, prop, gui, player, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    private GuiButton makeIntButton(Item item, String name, Property<Integer> prop, Gui gui, Player player) {
+        return makeIntButton(item, name, prop, gui, player, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
-    private GuiButton makeIntButton(Material mat, String name, Property<Integer> prop, Gui gui, Player player, int min, int max) {
-        return makeButton(mat, name + ": " + prop.get(), (v, c) -> {
-            int change = c.isShiftClick() ? 10 : 1;
-            if (!c.isLeftClick()) change = -change;
-            int newVal = prop.get() + change;
-            prop.set(Math.max(min, Math.min(max, newVal)));
-            tile.updateParticles();
-            refresh(gui, player);
-        }, "L: +1, R: -1", "Shift: +/- 10");
+    private GuiButton makeIntButton(Item item, String nameStr, Property<Integer> prop, Gui gui, Player player, int min, int max) {
+        Component name = Component.text(nameStr + ": ", NamedTextColor.GRAY).append(Component.text(prop.get(), NamedTextColor.AQUA));
+        return makeButton(item, name, (v, c) -> {
+                int change = c.isShiftClick() ? 10 : 1;
+                if (!c.isLeftClick()) change = -change;
+                int newVal = prop.get() + change;
+                prop.set(Math.max(min, Math.min(max, newVal)));
+                tile.updateParticles();
+                refresh(gui, player);
+            },
+            TextUtil.parse("<white><icon_left> <gray>+1 | <white><icon_right> <gray>-1",
+                Placeholder.parsed("icon_left", GuiTextures.MOUSE_LEFT.toMiniMessageString()),
+                Placeholder.parsed("icon_right", GuiTextures.MOUSE_RIGHT.toMiniMessageString())),
+            TextUtil.parse("<white>Shift + Click <gray>+/- 10")
+        );
     }
 
-    private GuiButton makeButton(Material mat, String name, java.util.function.BiConsumer<com.github.darksoulq.abyssallib.world.gui.GuiView, ClickType> action, String... lore) {
-        ItemStack stack = new ItemStack(mat);
-        ItemMeta meta = stack.getItemMeta();
-        meta.displayName(Component.text(name, NamedTextColor.WHITE));
-        if (lore.length > 0) {
-            meta.lore(Arrays.stream(lore).map(l -> Component.text(l, NamedTextColor.GRAY)).toList());
-        }
-        stack.setItemMeta(meta);
-        return GuiButton.of(stack, action);
+    private GuiButton makeButton(Item item, Component name, BiConsumer<GuiView, ClickType> action, Component... lore) {
+        Item clone = item.clone();
+        clone.setData(new ItemName(name.decoration(TextDecoration.ITALIC, false)));
+        List<Component> cleanLore = Arrays.stream(lore)
+            .map(c -> c.decoration(TextDecoration.ITALIC, false))
+            .toList();
+        clone.setData(new Lore(cleanLore));
+        return GuiButton.of(clone.getStack(), action);
     }
 }
