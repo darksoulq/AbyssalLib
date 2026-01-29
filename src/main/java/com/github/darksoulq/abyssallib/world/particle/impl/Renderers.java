@@ -52,11 +52,9 @@ public class Renderers {
     }
 
     public static class DustRenderer implements ParticleRenderer {
-        private final ColorProvider provider;
         private final float size;
 
-        public DustRenderer(ColorProvider provider, float size) {
-            this.provider = provider;
+        public DustRenderer(float size) {
             this.size = size;
         }
 
@@ -65,18 +63,12 @@ public class Renderers {
             World w = center.getWorld();
             if (w == null || points.isEmpty()) return;
 
-            for (int i = 0; i < points.size(); i++) {
-                Vector v = points.get(i);
+            for (Vector v : points) {
                 Location loc = center.clone().add(v);
 
                 Color c = Color.WHITE;
                 if (v instanceof Pixel p) {
                     c = p.getColor();
-                } else if (provider instanceof AbstractGradient gp) {
-                    double progress = (double) i / Math.max(1, (points.size() - i));
-                    c = gp.getAt(progress);
-                } else if (provider != null) {
-                    c = provider.get(v, 0);
                 }
 
                 w.spawnParticle(Particle.DUST, viewers, null, loc.getX(), loc.getY(), loc.getZ(), 1, 0, 0, 0, 0, new Particle.DustOptions(c, size), true);
