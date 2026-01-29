@@ -10,7 +10,8 @@ public class HookConstants {
     public enum Plugin {
         RSPM("ResourcePackManager"),
         NEXO("Nexo"),
-        IA("ItemsAdder");
+        IA("ItemsAdder"),
+        PLACEHOLDER_API("PlaceholderAPI");
 
         public final String pluginName;
         Plugin(String name) {

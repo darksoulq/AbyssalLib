@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.common.util;
 
 import net.kyori.adventure.key.Key;
-import net.minecraft.resources.ResourceLocation;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,15 +129,6 @@ public class Identifier {
      */
     public @NotNull Key asKey() {
         return Key.key(namespace, path);
-    }
-    /**
-     * Gets the Identifier as a {@link ResourceLocation}
-     * Ignores the {@code key}
-     *
-     * @return the ResourceLocation
-     */
-    public @NotNull ResourceLocation asResourceLocation() {
-        return ResourceLocation.fromNamespaceAndPath(namespace, path);
     }
 
     /**
