@@ -92,7 +92,7 @@ public class StructureBlockEntity extends BlockEntity {
         particles = Particles.builder()
             .origin(origin)
             .shape(boxGenerator)
-            .render(new Renderers.DustRenderer(ColorProvider.fixed(Color.WHITE), 0.5f))
+            .render(new Renderers.DustRenderer(0.5f))
             .interval(5)
             .build();
 
