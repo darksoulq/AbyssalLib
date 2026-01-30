@@ -18,12 +18,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * A world generation feature that generates clusters of ore veins.
+ * <p>
+ * This feature uses the standard Minecraft ore generation algorithm, creating a
+ * "worm" or "blob" of blocks between two points. It supports multiple replacement
+ * targets, allowing an ore cluster to behave differently when hitting different materials.
+ */
 public class OreFeature extends Feature<OreFeature.Config> {
 
+    /**
+     * Constructs a new OreFeature with the associated configuration codec.
+     */
     public OreFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement logic for the ore cluster.
+     * <p>
+     * The algorithm defines a linear path based on the config size, calculates
+     * spheres of varying diameters along that path, and fills the intersection
+     * of those spheres with the world grid.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
+     * @return {@code true} if the feature was triggered (always true for this implementation).
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Random random = context.random();
@@ -81,8 +101,28 @@ public class OreFeature extends Feature<OreFeature.Config> {
         return true;
     }
 
+    /**
+     * A record representing a specific replacement rule for the ore feature.
+     *
+     * @param target A list of block IDs that should be replaced if encountered.
+     * @param state  The {@link BlockInfo} to place when a target is matched.
+     */
     public record Target(List<String> target, BlockInfo state) {
+
+        /**
+         * The codec for serializing and deserializing a {@link Target} rule.
+         */
         public static final Codec<Target> CODEC = new Codec<>() {
+
+            /**
+             * Decodes a target rule from a map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Target} instance.
+             * @throws CodecException If the map structure is invalid.
+             */
             @Override
             public <D> Target decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -91,6 +131,15 @@ public class OreFeature extends Feature<OreFeature.Config> {
                 return new Target(target, state);
             }
 
+            /**
+             * Encodes a target rule into a map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The target instance.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Target value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
@@ -101,8 +150,28 @@ public class OreFeature extends Feature<OreFeature.Config> {
         };
     }
 
+    /**
+     * Configuration record for {@link OreFeature}.
+     *
+     * @param targets A {@link List} of {@link Target} rules defining what to replace and with what.
+     * @param size    The relative size/volume of the ore vein.
+     */
     public record Config(List<Target> targets, int size) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing the {@link Config}.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If required fields are missing.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -111,6 +180,15 @@ public class OreFeature extends Feature<OreFeature.Config> {
                 return new Config(targets, size);
             }
 
+            /**
+             * Encodes the configuration into a map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

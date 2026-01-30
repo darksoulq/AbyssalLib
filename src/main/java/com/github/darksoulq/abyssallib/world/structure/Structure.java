@@ -30,15 +30,38 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Represents a saved structure that can be captured from or placed into the world.
+ * <p>
+ * Structures consist of a palette of unique block states and a list of block positions
+ * referencing that palette. This implementation handles both standard Minecraft blocks
+ * and AbyssalLib's {@link CustomBlock} system, including tile entity data.
+ */
 public class Structure {
+    /** The current data version for serialization compatibility. */
     private static final int DATA_VERSION = 1;
+    /** Factory for creating JSON nodes during serialization. */
     private static final JsonNodeFactory FACTORY = JsonNodeFactory.instance;
 
+    /** The unique collection of block states used in this structure. */
     private final List<PaletteEntry> palette = new ArrayList<>();
+    /** The individual blocks making up the structure. */
     private final List<StructureBlock> blocks = new ArrayList<>();
+    /** Pipeline of processors applied during the placement phase. */
     private final List<StructureProcessor> processors = new ArrayList<>();
+    /** The bounding box dimensions of the structure. */
     private Vector size;
 
+    /**
+     * Captures a region of the world into this structure instance.
+     * <p>
+     * It scans the area defined by two corners, serializing block types, states,
+     * and tile data (inventories, signs, etc.) relative to a provided origin point.
+     *
+     * @param corner1 The first corner of the region.
+     * @param corner2 The second corner of the region.
+     * @param origin  The location used as the (0,0,0) reference for saved blocks.
+     */
     public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin) {
         palette.clear();
         blocks.clear();
@@ -102,6 +125,17 @@ public class Structure {
         }
     }
 
+    /**
+     * Pastes the structure into the world asynchronously using a task timer.
+     *
+     * @param plugin        The plugin instance to own the task.
+     * @param origin        The location to place the structure origin.
+     * @param rotation      The rotation to apply.
+     * @param mirror        The mirror transformation to apply.
+     * @param integrity     Placement probability (0.0 to 1.0).
+     * @param blocksPerTick The number of blocks to place per server tick to mitigate lag.
+     * @return A future that completes when the structure is fully placed.
+     */
     public CompletableFuture<Void> placeAsync(@NotNull Plugin plugin, @NotNull Location origin,
                                               @NotNull StructureRotation rotation, @NotNull Mirror mirror,
                                               float integrity, int blocksPerTick) {
@@ -111,6 +145,14 @@ public class Structure {
         return future;
     }
 
+    /**
+     * Pastes the structure into the world instantly.
+     *
+     * @param origin    The location for the structure origin.
+     * @param rotation  The rotation to apply.
+     * @param mirror    The mirror transformation.
+     * @param integrity Placement probability.
+     */
     public void place(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
         Vector center = calculateCenter();
@@ -120,6 +162,15 @@ public class Structure {
         }
     }
 
+    /**
+     * Pastes the structure using a world generation accessor for safe chunk generation.
+     *
+     * @param level     The generation accessor.
+     * @param origin    The placement origin.
+     * @param rotation  The rotation to apply.
+     * @param mirror    The mirror transformation.
+     * @param integrity Placement probability.
+     */
     public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
         Vector center = calculateCenter();
@@ -129,6 +180,11 @@ public class Structure {
         }
     }
 
+    /**
+     * Calculates the horizontal center of the structure for rotation math.
+     *
+     * @return A vector representing the horizontal pivot point.
+     */
     private Vector calculateCenter() {
         if (blocks.isEmpty()) return new Vector(0, 0, 0);
         int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
@@ -143,10 +199,25 @@ public class Structure {
         return new Vector((minX + maxX) / 2.0, 0, (minZ + maxZ) / 2.0);
     }
 
+    /**
+     * Registers a processor to the structure's placement pipeline.
+     *
+     * @param processor The {@link StructureProcessor} to add.
+     */
     public void addProcessor(StructureProcessor processor) {
         processors.add(processor);
     }
 
+    /**
+     * Internal logic for placing a single structure block into the world.
+     *
+     * @param worldOrLevel The world or generator accessor.
+     * @param origin       The placement origin.
+     * @param sb           The structure block data.
+     * @param rotation     The applied rotation.
+     * @param mirror       The applied mirror.
+     * @param center       The rotation center pivot.
+     */
     private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror, Vector center) {
         if (sb.stateIndex < 0 || sb.stateIndex >= palette.size()) return;
 
@@ -232,6 +303,15 @@ public class Structure {
         }
     }
 
+    /**
+     * Applies geometric transformations to a position vector.
+     *
+     * @param pos      The initial relative position.
+     * @param mirror   The mirroring mode.
+     * @param rotation The rotation mode.
+     * @param center   The pivot center for rotation.
+     * @return The transformed position vector.
+     */
     private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation, Vector center) {
         double x = pos.getX() - center.getX();
         double z = pos.getZ() - center.getZ();
@@ -262,6 +342,11 @@ public class Structure {
         return new Vector(Math.round(newX + center.getX()), pos.getY(), Math.round(newZ + center.getZ()));
     }
 
+    /**
+     * Serializes the structure into a JSON object.
+     *
+     * @return The {@link ObjectNode} representing the structure data.
+     */
     public ObjectNode serialize() {
         ObjectNode root = FACTORY.objectNode();
         root.put("DataVersion", DATA_VERSION);
@@ -294,6 +379,12 @@ public class Structure {
         return root;
     }
 
+    /**
+     * Deserializes a structure from a JSON object.
+     *
+     * @param root The structure data.
+     * @return A new {@link Structure} instance.
+     */
     public static Structure deserialize(JsonNode root) {
         Structure structure = new Structure();
 
@@ -334,6 +425,9 @@ public class Structure {
         return structure;
     }
 
+    /**
+     * Task runnable for throttled structure placement over multiple server ticks.
+     */
     private class Paster extends BukkitRunnable {
         private final Location origin;
         private final StructureRotation rotation;
@@ -343,6 +437,17 @@ public class Structure {
         private final Iterator<StructureBlock> iterator;
         private final Vector center;
 
+        /**
+         * Constructs the paster task.
+         *
+         * @param origin    Placement origin.
+         * @param rotation  Placement rotation.
+         * @param mirror    Placement mirror.
+         * @param integrity Placement probability.
+         * @param limit     Blocks to place per tick.
+         * @param future    Completable future to notify of completion.
+         * @param center    Transformation pivot.
+         */
         public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future, Vector center) {
             this.origin = origin;
             this.rotation = rotation;
@@ -357,6 +462,9 @@ public class Structure {
             }
         }
 
+        /**
+         * Runs the placement loop for a single server tick.
+         */
         @Override
         public void run() {
             int count = 0;
@@ -372,6 +480,12 @@ public class Structure {
         }
     }
 
+    /**
+     * Represents a unique block state in the structure palette.
+     *
+     * @param id        The namespaced block ID.
+     * @param stateData The visual property data (rotation, etc.).
+     */
     private record PaletteEntry(String id, ObjectNode stateData) {
         @Override
         public boolean equals(Object o) {
@@ -383,5 +497,14 @@ public class Structure {
         @Override public int hashCode() { return Objects.hash(id, stateData); }
     }
 
+    /**
+     * Represents an individual block within the structure volume.
+     *
+     * @param x          X-offset from origin.
+     * @param y          Y-offset from origin.
+     * @param z          Z-offset from origin.
+     * @param stateIndex The index of the block state in the palette.
+     * @param nbt        Optional tile entity/property data.
+     */
     private record StructureBlock(int x, int y, int z, int stateIndex, @Nullable ObjectNode nbt) {}
 }

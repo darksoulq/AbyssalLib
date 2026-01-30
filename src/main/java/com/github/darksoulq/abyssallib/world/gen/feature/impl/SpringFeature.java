@@ -17,12 +17,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A world generation feature that creates single-block fluid springs (water, lava, etc.).
+ * <p>
+ * This feature validates the surrounding environment to ensure the spring is enclosed
+ * by exactly five solid/valid neighbors and has no more than one open neighbor. This
+ * logic typically generates springs in cave walls or cliffsides.
+ */
 public class SpringFeature extends Feature<SpringFeature.Config> {
 
+    /**
+     * Constructs a new SpringFeature with the associated configuration codec.
+     */
     public SpringFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement logic for the spring.
+     * <p>
+     * The method checks the six cardinal directions surrounding the origin. It calculates
+     * the number of "solid" neighbors (based on the provided valid blocks list) and
+     * "open" neighbors (air or cave air). The fluid is placed only if the origin is air
+     * and the enclosure requirements are met.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, and configuration.
+     * @return {@code true} if the spring was successfully placed; {@code false} otherwise.
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Location pos = context.origin();
@@ -55,8 +76,29 @@ public class SpringFeature extends Feature<SpringFeature.Config> {
         return false;
     }
 
+    /**
+     * Configuration record for {@link SpringFeature}.
+     *
+     * @param fluid               The {@link BlockInfo} representing the fluid state to place.
+     * @param requiresBlockBelow  Whether the spring must have a solid block directly beneath it.
+     * @param validBlocks         A {@link List} of block identifiers considered "solid" for enclosure checks.
+     */
     public record Config(BlockInfo fluid, boolean requiresBlockBelow, List<String> validBlocks) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing the {@link Config}.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If required fields are missing or invalid.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -69,6 +111,15 @@ public class SpringFeature extends Feature<SpringFeature.Config> {
                 return new Config(fluid, req, valid);
             }
 
+            /**
+             * Encodes the configuration into a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance to encode.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

@@ -13,22 +13,27 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * A wrapper around {@link YamlConfiguration} that provides
- * typed access to configuration values with default values
- * and support for inline comments.
+ * A wrapper for Bukkit's {@link YamlConfiguration} that provides a fluent API,
+ * support for {@link Codec} serialization, and manual comment injection.
+ * <p>
+ * This class allows for easy management of configuration files located within
+ * a plugin's data folder.
  */
 public class Config {
 
+    /** The physical file on the disk. */
     private final File file;
+    /** The underlying Bukkit YAML configuration instance. */
     private final YamlConfiguration yaml;
+    /** A map storing comments associated with specific configuration paths. */
     private final Map<String, List<String>> comments = new HashMap<>();
 
     /**
-     * Constructs a configuration file under a plugin-specific subfolder.
+     * Constructs a new Config instance located in a subfolder.
      *
-     * @param pluginId  the plugin identifier (used as a folder name)
-     * @param name      the configuration file name (without .yml)
-     * @param subfolder optional subfolder inside the pluginId folder
+     * @param pluginId  The ID/name of the plugin (used for the root folder).
+     * @param name      The name of the YAML file (without extension).
+     * @param subfolder The subfolder within the plugin's config directory.
      */
     public Config(String pluginId, String name, String subfolder) {
         this.file = Path.of("config", pluginId, subfolder, name + ".yml").toFile();
@@ -36,10 +41,10 @@ public class Config {
     }
 
     /**
-     * Constructs a configuration file under the main plugin folder.
+     * Constructs a new Config instance in the plugin's root config folder.
      *
-     * @param pluginId the plugin identifier (used as a folder name)
-     * @param name     the configuration file name (without .yml)
+     * @param pluginId The ID/name of the plugin.
+     * @param name     The name of the YAML file (without extension).
      */
     public Config(String pluginId, String name) {
         this.file = Path.of("config", pluginId, name + ".yml").toFile();
@@ -47,26 +52,27 @@ public class Config {
     }
 
     /**
-     * Retrieves a typed value at the given path, initializing it with a default if not present.
+     * Defines a configuration value with a default fallback.
      *
-     * @param path         the configuration path
-     * @param defaultValue the default value if the path is missing
-     * @param <T>          the value type
-     * @return a {@link Value} wrapper for accessing and modifying the configuration
+     * @param <T>          The type of the value.
+     * @param path         The YAML path (e.g., "settings.enabled").
+     * @param defaultValue The value to use and save if the path does not exist.
+     * @return A {@link Value} object to interact with this configuration node.
      */
     public <T> Value<T> value(String path, T defaultValue) {
         Value<T> val = new Value<>(path, defaultValue, null);
         if (!yaml.contains(path)) val.set(defaultValue);
         return val;
     }
+
     /**
-     * Retrieves a typed value at the given path, initializing it with a default if not present and using the given codec for serialization.
+     * Defines a configuration value that requires a {@link Codec} for serialization.
      *
-     * @param path         the configuration path
-     * @param defaultValue the default value if the path is missing
-     * @param codec the codec to use for this value
-     * @param <T>          the value type
-     * @return a {@link Value} wrapper for accessing and modifying the configuration
+     * @param <T>          The type of the value.
+     * @param path         The YAML path.
+     * @param defaultValue The default value fallback.
+     * @param codec        The codec used to encode/decode the value.
+     * @return A {@link Value} object.
      */
     public <T> Value<T> value(String path, T defaultValue, Codec<T> codec) {
         Value<T> val = new Value<>(path, defaultValue, codec);
@@ -75,18 +81,19 @@ public class Config {
     }
 
     /**
-     * Adds one or more comment lines to a configuration path.
-     * Comments are written above the path during {@link #save()}.
+     * Associates one or more comment lines with a configuration path.
      *
-     * @param path         the configuration path
-     * @param commentLines the comment lines to add
+     * @param path         The configuration path to comment.
+     * @param commentLines The lines of text to add as comments.
      */
     public void addComment(String path, String... commentLines) {
         comments.put(path, Arrays.asList(commentLines));
     }
 
     /**
-     * Saves the configuration file to disk and writes registered comments.
+     * Saves the current configuration state to the disk and injects defined comments.
+     *
+     * @throws RuntimeException If an {@link IOException} occurs during saving.
      */
     public void save() {
         try {
@@ -98,7 +105,9 @@ public class Config {
     }
 
     /**
-     * Reloads the configuration file from disk, preserving default values.
+     * Reloads the configuration from the disk.
+     *
+     * @throws RuntimeException If the file is invalid or inaccessible.
      */
     public void reload() {
         yaml.options().copyDefaults(true);
@@ -110,9 +119,10 @@ public class Config {
     }
 
     /**
-     * Writes registered comments above configuration paths in the YAML file.
+     * Internal method to manually parse the saved file and inject comments above keys.
+     * This compensates for standard Bukkit YAML not supporting per-key comments in older versions.
      *
-     * @throws IOException if writing fails
+     * @throws IOException If the file cannot be read or written.
      */
     private void writeComments() throws IOException {
         List<String> lines = Files.readAllLines(file.toPath());
@@ -160,10 +170,10 @@ public class Config {
     }
 
     /**
-     * Counts the leading spaces in a string.
+     * Counts the number of leading spaces in a string to determine YAML indentation.
      *
-     * @param line the line to analyze
-     * @return the number of leading spaces
+     * @param line The string to check.
+     * @return The number of spaces.
      */
     private int countLeadingSpaces(String line) {
         int count = 0;
@@ -172,22 +182,26 @@ public class Config {
     }
 
     /**
-     * Represents a typed configuration value at a specific path.
-     * Supports default values, reading, writing, and adding comments.
+     * Represents a specific value within the configuration.
+     * Provides methods to get and set data with optional {@link Codec} support.
      *
-     * @param <T> the value type
+     * @param <T> The type of the value.
      */
     public class Value<T> {
 
+        /** The configuration path for this value. */
         private final String path;
+        /** The default value to return if none is found. */
         private final T defaultValue;
+        /** The optional codec used for complex object mapping. */
         private final Codec<T> codec;
 
         /**
-         * Creates a new typed value wrapper.
+         * Constructs a new Config Value.
          *
-         * @param path         the configuration path
-         * @param defaultValue the default value if missing
+         * @param path         The YAML path.
+         * @param defaultValue The fallback value.
+         * @param codec        The codec (can be null for primitives).
          */
         public Value(String path, T defaultValue, Codec<T> codec) {
             this.path = path;
@@ -196,9 +210,10 @@ public class Config {
         }
 
         /**
-         * Gets the current value from the configuration, converting sections and lists recursively.
+         * Retrieves the value from the configuration.
          *
-         * @return the current value
+         * @return The stored value, or the default if not present.
+         * @throws RuntimeException If a {@link Codec.CodecException} occurs during decoding.
          */
         @SuppressWarnings("unchecked")
         public T get() {
@@ -210,9 +225,11 @@ public class Config {
         }
 
         /**
-         * Sets the value in the configuration.
+         * Sets the value in the configuration. If a codec is present, it will be used
+         * to encode the value into a YAML-compatible format.
          *
-         * @param value the value to set
+         * @param value The value to store.
+         * @throws RuntimeException If a {@link Codec.CodecException} occurs during encoding.
          */
         public void set(T value) {
             if (codec != null) {
@@ -227,10 +244,10 @@ public class Config {
         }
 
         /**
-         * Registers one or more comments for this value.
+         * Adds a comment to this specific value's path.
          *
-         * @param comments the comment lines
-         * @return this {@link Value} for chaining
+         * @param comments The lines of the comment.
+         * @return This {@link Value} instance for chaining.
          */
         public Value<T> withComment(String... comments) {
             addComment(path, comments);
@@ -238,10 +255,12 @@ public class Config {
         }
 
         /**
-         * Recursively converts configuration sections and lists to maps and lists of raw objects.
+         * Recursively processes configuration objects to ensure they are compatible
+         * with the codec system and Java collection types.
          *
-         * @param obj the object to convert
-         * @return the converted raw object
+         * @param obj The raw object from the YAML configuration.
+         * @return The processed object (Map, List, or decoded object).
+         * @throws Codec.CodecException If decoding fails.
          */
         private Object readRaw(Object obj) throws Codec.CodecException {
             if (obj instanceof ConfigurationSection section) {
@@ -258,7 +277,7 @@ public class Config {
                 return newList;
             } else {
                 if (codec != null) {
-                    codec.decode(YamlOps.INSTANCE, obj);
+                    return codec.decode(YamlOps.INSTANCE, obj);
                 }
                 return obj;
             }

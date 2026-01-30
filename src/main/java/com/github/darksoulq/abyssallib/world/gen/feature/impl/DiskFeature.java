@@ -16,12 +16,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A world generation feature that generates a disk-shaped volume of blocks.
+ * <p>
+ * This feature is typically used to generate circular patches of materials like sand,
+ * gravel, or clay in riverbeds or on the surface. It replaces specific target
+ * blocks within a cylindrical radius and a vertical half-height range.
+ */
 public class DiskFeature extends Feature<DiskFeature.Config> {
 
+    /**
+     * Constructs a new DiskFeature with the associated configuration codec.
+     */
     public DiskFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement logic for the disk feature.
+     * <p>
+     * The algorithm iterates through a cubic volume defined by the radius and half-height.
+     * It uses the Euclidean distance formula (x² + z²) to constrain placement within a
+     * circular disk. Blocks are only placed if the existing block at the location
+     * matches the criteria defined in the configuration's target list.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
+     * @return {@code true} if at least one block was successfully placed; {@code false} otherwise.
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         boolean placed = false;
@@ -45,8 +66,30 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
         return placed;
     }
 
+    /**
+     * Configuration record for {@link DiskFeature}.
+     *
+     * @param toPlace    The {@link BlockInfo} representing the block state to be generated.
+     * @param radius     The horizontal radius of the disk.
+     * @param halfHeight The vertical distance to extend above and below the origin (total height = 2h + 1).
+     * @param targets    A {@link List} of block identifiers that are allowed to be replaced by this feature.
+     */
     public record Config(BlockInfo toPlace, int radius, int halfHeight, List<String> targets) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing {@link Config}.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a serialized map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If required fields are missing or invalid.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -61,6 +104,15 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
                 return new Config(block, r, h, targets);
             }
 
+            /**
+             * Encodes the configuration into a serialized map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance to encode.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

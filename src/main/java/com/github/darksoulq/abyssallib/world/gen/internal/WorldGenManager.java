@@ -54,7 +54,7 @@ public class WorldGenManager implements Listener {
         
         world.getPopulators().add(populator);
         POPULATORS.put(world.getName(), populator);
-        AbyssalLib.LOGGER.info("Injected WorldGen into world: " + world.getName());
+        AbyssalLib.LOGGER.info("Added Custom Populator into world: " + world.getName());
     }
 
     @EventHandler

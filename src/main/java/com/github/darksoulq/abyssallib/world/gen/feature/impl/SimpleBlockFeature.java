@@ -16,12 +16,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A world generation feature that places a single block at the origin location.
+ * <p>
+ * This feature provides a simple mechanism for single-block placement, with the
+ * ability to restrict placement to specific replaceable block types.
+ */
 public class SimpleBlockFeature extends Feature<SimpleBlockFeature.Config> {
 
+    /**
+     * Constructs a new SimpleBlockFeature with the associated configuration codec.
+     */
     public SimpleBlockFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement of the single block.
+     * <p>
+     * The method first checks if the "replace" list is non-empty. If so, it validates
+     * that the block at the origin location is allowed to be replaced. If validation
+     * passes, the configured block state is placed.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, and configuration.
+     * @return {@code true} if the block was successfully placed; {@code false} if replacement validation failed.
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Location origin = context.origin();
@@ -36,8 +55,28 @@ public class SimpleBlockFeature extends Feature<SimpleBlockFeature.Config> {
         return true;
     }
 
+    /**
+     * Configuration record for {@link SimpleBlockFeature}.
+     *
+     * @param toPlace The {@link BlockInfo} representing the block state to be placed.
+     * @param replace A {@link List} of block identifiers that are valid to be replaced.
+     */
     public record Config(BlockInfo toPlace, List<String> replace) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing the {@link Config}.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If the "block" field is missing or invalid.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -49,6 +88,15 @@ public class SimpleBlockFeature extends Feature<SimpleBlockFeature.Config> {
                 return new Config(block, replace);
             }
 
+            /**
+             * Encodes the configuration into a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance to encode.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

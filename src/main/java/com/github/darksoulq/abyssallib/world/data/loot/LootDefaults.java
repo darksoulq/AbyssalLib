@@ -25,6 +25,5 @@ public class LootDefaults {
     public static final Holder<LootConditionType<?>> LOCATION_CHECK = LOOT_CONDITION_TYPES.register("location_check", id -> LocationCheckCondition.TYPE);
     public static final Holder<LootConditionType<?>> RANDOM_CHANCE = LOOT_CONDITION_TYPES.register("random_chance", id -> RandomChanceCondition.TYPE);
     public static final Holder<LootConditionType<?>> RANDOM_CHANCE_WITH_LOOTING = LOOT_CONDITION_TYPES.register("random_chance_with_looting", id -> RandomChanceWithLootingCondition.TYPE);
-    public static final Holder<LootConditionType<?>> SURVIVES_EXPLOSION = LOOT_CONDITION_TYPES.register("survives_explosion", id -> SurvivesExplosionCondition.TYPE);
     public static final Holder<LootConditionType<?>> MATCH_TOOL = LOOT_CONDITION_TYPES.register("match_tool", id -> MatchToolCondition.TYPE);
 }

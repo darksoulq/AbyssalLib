@@ -9,190 +9,163 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Optional;
 
 /**
- * A wrapper for {@link CompoundTag} that provides convenient
- * methods to store and retrieve common data types.
+ * A utility wrapper for Minecraft's {@link CompoundTag} (NBT) system.
+ * <p>
+ * This class provides a simplified API for interacting with structured data,
+ * handling the conversion between Bukkit {@link ItemStack}s and NMS internal
+ * {@link DataComponents#CUSTOM_DATA}.
  */
 public class CTag {
-    /**
-     * The underlying {@link CompoundTag}.
-     */
+    /** The underlying NMS CompoundTag being wrapped. */
     private final CompoundTag baseTag;
 
     /**
-     * Constructs a new, empty {@code CTag}.
+     * Constructs a new, empty CTag.
      */
     public CTag() {
         baseTag = new CompoundTag();
     }
+
     /**
-     * Constructs a new {@code CTag} wrapping the given {@link CompoundTag}.
+     * Wraps an existing NMS {@link CompoundTag}.
      *
-     * @param base the tag to wrap
+     * @param base The tag to wrap.
      */
     public CTag(CompoundTag base) {
         baseTag = base;
     }
 
     /**
-     * Sets a {@link String} value for the given key.
-     *
-     * @param key   the key
-     * @param value the value
+     * Maps a String value to the specified key.
+     * @param key   The NBT key.
+     * @param value The value to store.
      */
     public void set(String key, String value) {
         baseTag.putString(key, value);
     }
+
     /**
-     * Sets an {@code int} value for the given key.
-     *
-     * @param key   the key
-     * @param value the value
+     * Maps an integer value to the specified key.
+     * @param key   The NBT key.
+     * @param value The value to store.
      */
     public void set(String key, int value) {
         baseTag.putInt(key, value);
     }
+
     /**
-     * Sets an {@code int[]} value for the given key.
-     *
-     * @param key   the key
-     * @param value the array value
+     * Maps an integer array to the specified key.
+     * @param key   The NBT key.
+     * @param value The array to store.
      */
     public void set(String key, int[] value) {
         baseTag.putIntArray(key, value);
     }
+
     /**
-     * Sets a {@code boolean} value for the given key.
-     *
-     * @param key   the key
-     * @param value the value
+     * Maps a boolean value to the specified key.
+     * @param key   The NBT key.
+     * @param value The value to store.
      */
     public void set(String key, boolean value) {
         baseTag.putBoolean(key, value);
     }
+
     /**
-     * Sets a {@code float} value for the given key.
-     *
-     * @param key   the key
-     * @param value the value
+     * Maps a float value to the specified key.
+     * @param key   The NBT key.
+     * @param value The value to store.
      */
     public void set(String key, float value) {
         baseTag.putFloat(key, value);
     }
+
     /**
-     * Sets a {@code byte} value for the given key.
-     *
-     * @param key   the key
-     * @param value the value
+     * Maps a byte value to the specified key.
+     * @param key   The NBT key.
+     * @param value The value to store.
      */
     public void set(String key, byte value) {
         baseTag.putByte(key, value);
     }
+
     /**
-     * Sets a {@code byte[]} value for the given key.
-     *
-     * @param key   the key
-     * @param value the array value
+     * Maps a byte array to the specified key.
+     * @param key   The NBT key.
+     * @param value The array to store.
      */
     public void set(String key, byte[] value) {
         baseTag.putByteArray(key, value);
     }
 
     /**
-     * Sets a {@code CTag} value for the given key
-     * @param key the key
-     * @param compound the value
+     * Nests another CTag under the specified key.
+     * @param key      The NBT key.
+     * @param compound The CTag instance to nest.
      */
     public void set(String key, CTag compound) {
         baseTag.put(key, compound.baseTag);
     }
 
     /**
-     * Checks whether the given key exists in this tag.
-     *
-     * @param key the key
-     * @return {@code true} if the key is present, otherwise {@code false}
+     * Checks if the tag contains a specific key.
+     * @param key The key to look for.
+     * @return {@code true} if the key exists.
      */
     public boolean has(String key) {
         return baseTag.contains(key);
     }
 
-    /**
-     * Gets the {@link String} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the value, or empty if not present
-     */
+    /** @return An Optional containing the String value if found. @param key The NBT key. */
     public Optional<String> getString(String key) {
         return baseTag.getString(key);
     }
-    /**
-     * Gets the {@code int} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the value, or empty if not present
-     */
+
+    /** @return An Optional containing the Integer value if found. @param key The NBT key. */
     public Optional<Integer> getInt(String key) {
         return baseTag.getInt(key);
     }
-    /**
-     * Gets the {@code int[]} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the array, or empty if not present
-     */
+
+    /** @return An Optional containing the Integer array if found. @param key The NBT key. */
     public Optional<int[]> getIntArray(String key) {
         return baseTag.getIntArray(key);
     }
-    /**
-     * Gets the {@code boolean} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the value, or empty if not present
-     */
+
+    /** @return An Optional containing the Boolean value if found. @param key The NBT key. */
     public Optional<Boolean> getBoolean(String key) {
         return baseTag.getBoolean(key);
     }
-    /**
-     * Gets the {@code float} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the value, or empty if not present
-     */
+
+    /** @return An Optional containing the Float value if found. @param key The NBT key. */
     public Optional<Float> getFloat(String key) {
         return baseTag.getFloat(key);
     }
-    /**
-     * Gets the {@code byte} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the value, or empty if not present
-     */
+
+    /** @return An Optional containing the Byte value if found. @param key The NBT key. */
     public Optional<Byte> getByte(String key) {
         return baseTag.getByte(key);
     }
-    /**
-     * Gets the {@code byte[]} value stored for the given key, if present.
-     *
-     * @param key the key
-     * @return an {@link Optional} containing the array, or empty if not present
-     */
+
+    /** @return An Optional containing the Byte array if found. @param key The NBT key. */
     public Optional<byte[]> getByteArray(String key) {
         return baseTag.getByteArray(key);
     }
 
     /**
-     * Gets the {@code CTag} value stored for the given key, if present
-     * @param key the key
-     * @return an {@link Optional} containing the CTag, or empty if not present
+     * Retrieves a nested CTag.
+     *
+     * @param key The NBT key.
+     * @return An Optional containing the nested CTag if it exists.
      */
     public Optional<CTag> getCompound(String key) {
-        CTag tag = null;
         Optional<CompoundTag> compound = baseTag.getCompound(key);
         if (compound.isEmpty()) return Optional.empty();
-        tag = new CTag(compound.get());
-        return Optional.of(tag);
+        return Optional.of(new CTag(compound.get()));
     }
 
+    /**
+     * Removes all keys from the underlying tag.
+     */
     public void clear() {
         for (String key : baseTag.keySet()) {
             baseTag.remove(key);
@@ -200,14 +173,23 @@ public class CTag {
     }
 
     /**
-     * Returns the underlying {@link CompoundTag}.
+     * Exposes the underlying NMS tag.
      *
-     * @return the wrapped tag
+     * @return The raw {@link CompoundTag}.
      */
     public CompoundTag toVanilla() {
         return baseTag;
     }
 
+    /**
+     * Extracts custom data from a Bukkit {@link ItemStack}.
+     * <p>
+     * It specifically looks for a nested "CustomData" tag within the item's
+     * {@link DataComponents#CUSTOM_DATA} component.
+     *
+     * @param stack The item to read from.
+     * @return A CTag containing the persistent data.
+     */
     public static CTag getCTag(ItemStack stack) {
         net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CustomData dta = nms.get(DataComponents.CUSTOM_DATA);
@@ -222,6 +204,16 @@ public class CTag {
             return new CTag(tag.getCompound("CustomData").get());
         }
     }
+
+    /**
+     * Writes a CTag's data to a Bukkit {@link ItemStack}.
+     * <p>
+     * This method converts the item to NMS, modifies the CUSTOM_DATA component,
+     * and applies the changes back to the Bukkit item via its ItemMeta.
+     *
+     * @param container The data to write.
+     * @param stack     The item to modify.
+     */
     public static void setCTag(CTag container, ItemStack stack) {
         net.minecraft.world.item.ItemStack nms = CraftItemStack.asNMSCopy(stack);
         CustomData data = nms.get(DataComponents.CUSTOM_DATA);

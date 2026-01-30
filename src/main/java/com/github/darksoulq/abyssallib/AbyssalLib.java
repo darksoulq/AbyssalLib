@@ -26,6 +26,7 @@ import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.loot.LootDefaults;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
+import com.github.darksoulq.abyssallib.world.data.tag.TagType;
 import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.gen.feature.Features;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifiers;
@@ -66,8 +67,8 @@ public final class AbyssalLib extends JavaPlugin {
         Blocks.BLOCKS.apply();
         Items.ITEMS.apply();
         registerBlockDataAdapters();
-        TagLoader.register(TagLoader.TagType.ITEM);
-        TagLoader.register(TagLoader.TagType.BLOCK);
+        TagLoader.register(TagType.ITEM);
+        TagLoader.register(TagType.BLOCK);
 
         PlacementModifiers.PLACEMENT_MODIFIERS.apply();
         Features.FEATURES.apply();

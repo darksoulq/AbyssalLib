@@ -7,19 +7,29 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * Represents a resource identifier in the format {@code namespace:path} or {@code key:namespace:path}.
+ * Represents a unique identifier used to categorize and locate resources or data.
+ * <p>
+ * This class supports two formats:
+ * <ul>
+ * <li><b>Namespaced:</b> {@code namespace:path} (Standard Minecraft/Bukkit format)</li>
+ * <li><b>Keyed:</b> {@code key:namespace:path} (Extended format for specific sub-categorization)</li>
+ * </ul>
+ * All components are restricted to lowercase alphanumeric characters, dots, underscores, and hyphens.
  */
 public class Identifier {
+    /** The optional primary category key. */
     private final String key;
+    /** The namespace (usually the plugin or mod ID). */
     private final String namespace;
+    /** The path representing the specific resource. */
     private final String path;
 
     /**
-     * Constructs a new Identifier.
+     * Private constructor for internal instantiation.
      *
-     * @param key the key of the Identifier
-     * @param namespace the namespace of the Identifier
-     * @param path the path of the Identifier
+     * @param key       The primary key (may be null).
+     * @param namespace The resource namespace.
+     * @param path      The resource path.
      */
     private Identifier(String key, String namespace, String path) {
         this.key = key;
@@ -28,11 +38,11 @@ public class Identifier {
     }
 
     /**
-     * Constructs a new Identifier from the given string
-     * The string can be in the format {@code namespace:path} or {@code key:namespace:path}
+     * Parses a string into an Identifier.
      *
-     * @param value the string value
-     * @return new Identifier from the string
+     * @param value The raw string to parse (format 'ns:path' or 'key:ns:path').
+     * @return A new Identifier instance.
+     * @throws IllegalArgumentException If the format is invalid or contains illegal characters.
      */
     public static @NotNull Identifier of(@NotNull String value) {
         String[] parts = value.split(":", 3);
@@ -43,17 +53,18 @@ public class Identifier {
             return new Identifier(parts[0], parts[1], parts[2]);
         } else {
             throw new IllegalArgumentException(
-                    "Identifier must be in format 'namespace:path' or 'key:namespace:path'"
+                "Identifier must be in format 'namespace:path' or 'key:namespace:path'"
             );
         }
     }
 
     /**
-     * Constructs a new Identifier with the provided namespace and path
+     * Creates a standard 2-part Namespaced Identifier.
      *
-     * @param namespace the namespace
-     * @param path the path
-     * @return new Identifier from the namespace and path
+     * @param namespace The namespace string.
+     * @param path      The path string.
+     * @return A new Identifier instance.
+     * @throws IllegalArgumentException If namespace or path contain invalid characters.
      */
     public static @NotNull Identifier of(@NotNull String namespace, @NotNull String path) {
         if (!isValid(namespace) || !isValid(path)) {
@@ -63,12 +74,13 @@ public class Identifier {
     }
 
     /**
-     * Constructs a new Identifier with the provided key, namespace and path
+     * Creates an extended 3-part Keyed Identifier.
      *
-     * @param key the key
-     * @param namespace the namespace
-     * @param path the path
-     * @return new Identifier from the key, namespace and path
+     * @param key       The primary key category.
+     * @param namespace The namespace string.
+     * @param path      The path string.
+     * @return A new Identifier instance.
+     * @throws IllegalArgumentException If any component contains invalid characters.
      */
     public static @NotNull Identifier of(@NotNull String key, @NotNull String namespace, @NotNull String path) {
         if (!isValid(key) || !isValid(namespace) || !isValid(path)) {
@@ -78,34 +90,30 @@ public class Identifier {
     }
 
     /**
-     * Gets the key of the Identifier (or null if it doesn't exist).
-     *
-     * @return The key.
+     * @return The primary key component, or null if this is a standard 2-part Identifier.
      */
     public String getKey() {
         return this.key;
     }
+
     /**
-     * Gets the namespace of the Identifier.
-     *
-     * @return The namespace.
+     * @return The namespace component.
      */
     public String getNamespace() {
         return this.namespace;
     }
+
     /**
-     * Gets the path of the Identifier.
-     *
-     * @return The path.
+     * @return The path component.
      */
     public String getPath() {
         return this.path;
     }
 
     /**
-     * Gets string representation of the identifier ({@code namespace:path} or {@code key:namespace:path}
+     * Converts the identifier to its string representation.
      *
-     * @return The string representation.
+     * @return String in format {@code key:ns:path} or {@code ns:path}.
      */
     @Override
     public @NotNull String toString() {
@@ -113,49 +121,54 @@ public class Identifier {
     }
 
     /**
-     * Gets the Identifier as a {@link NamespacedKey}
-     * Ignores the {@code key}
+     * Converts this Identifier to a Bukkit {@link NamespacedKey}.
+     * <p>
+     * Note: This only uses the {@code namespace} and {@code path} components.
      *
-     * @return the NamespacedKey
+     * @return A new NamespacedKey.
      */
     public @NotNull NamespacedKey asNamespacedKey() {
         return new NamespacedKey(namespace, path);
     }
+
     /**
-     * Gets the Identifier as a {@link Key}
-     * Ignores the {@code key}
+     * Converts this Identifier to an Adventure {@link Key}.
+     * <p>
+     * Note: This only uses the {@code namespace} and {@code path} components.
      *
-     * @return the Key
+     * @return A new Adventure Key.
      */
     public @NotNull Key asKey() {
         return Key.key(namespace, path);
     }
 
     /**
-     * Checks if the given string is a valid identifier.
+     * Validates an individual identifier component.
      *
-     * @param input the string
-     * @return Whether it's a valid identifier or not
+     * @param input The string component to validate.
+     * @return True if the string matches {@code [a-z0-9._-]}.
      */
     public static boolean isValid(String input) {
         return input != null && input.matches("[a-z0-9._-]+");
     }
+
     /**
-     * Checks if the given string is a valid 2-part identifier {@code namespace:path}.
+     * Validates if a string is a valid 2-part Identifier (ns:path).
      *
-     * @param input the string
-     * @return Whether it's a valid 2-part identifier or not
+     * @param input The raw string to check.
+     * @return True if valid.
      */
     public static boolean isValid2Part(String input) {
         if (input == null) return false;
         String[] parts = input.split(":", 2);
         return parts.length == 2 && isValid(parts[0]) && isValid(parts[1]);
     }
+
     /**
-     * Checks if the given string is a valid 3-part identifier {@code key:namespace:path}.
+     * Validates if a string is a valid 3-part Identifier (key:ns:path).
      *
-     * @param input the string
-     * @return Whether it's a valid 3-part identifier or not
+     * @param input The raw string to check.
+     * @return True if valid.
      */
     public static boolean isValid3Part(String input) {
         if (input == null) return false;
@@ -163,15 +176,26 @@ public class Identifier {
         return parts.length == 3 && isValid(parts[0]) && isValid(parts[1]) && isValid(parts[2]);
     }
 
+    /**
+     * Compares this Identifier to another object for equality.
+     *
+     * @param o The object to compare.
+     * @return True if all components (key, namespace, path) match.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Identifier other)) return false;
         return Objects.equals(this.key, other.key)
-                && this.namespace.equals(other.namespace)
-                && this.path.equals(other.path);
+            && this.namespace.equals(other.namespace)
+            && this.path.equals(other.path);
     }
 
+    /**
+     * Generates a hash code for this Identifier.
+     *
+     * @return Hash code based on key, namespace, and path.
+     */
     @Override
     public int hashCode() {
         return Objects.hash(key, namespace, path);

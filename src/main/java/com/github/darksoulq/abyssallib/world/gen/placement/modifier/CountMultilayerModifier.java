@@ -17,8 +17,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/**
+ * A placement modifier that distributes feature attempts across multiple vertical layers within a column.
+ * <p>
+ * Unlike standard count modifiers that pick a single height, this modifier scans the entire
+ * vertical column at a given X/Z coordinate to find all valid surfaces (air blocks with a
+ * valid supporting block below). It then randomly selects from these identified locations.
+ */
 public class CountMultilayerModifier extends PlacementModifier {
+
+    /**
+     * The codec used for serializing and deserializing the multilayer count modifier.
+     */
     public static final Codec<CountMultilayerModifier> CODEC = new Codec<>() {
+        /**
+         * Decodes the modifier from a serialized map.
+         *
+         * @param ops   The dynamic operations logic.
+         * @param input The serialized input.
+         * @param <D>   The data format type.
+         * @return A new instance of {@link CountMultilayerModifier}.
+         * @throws CodecException If the "count" field is missing.
+         */
         @Override
         public <D> CountMultilayerModifier decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -30,6 +50,15 @@ public class CountMultilayerModifier extends PlacementModifier {
             return new CountMultilayerModifier(count, valid);
         }
 
+        /**
+         * Encodes the modifier into a serialized map.
+         *
+         * @param ops   The dynamic operations logic.
+         * @param value The modifier instance to encode.
+         * @param <D>   The data format type.
+         * @return The encoded data object.
+         * @throws CodecException If serialization fails.
+         */
         @Override
         public <D> D encode(DynamicOps<D> ops, CountMultilayerModifier value) throws CodecException {
             Map<D, D> map = new HashMap<>();
@@ -39,16 +68,40 @@ public class CountMultilayerModifier extends PlacementModifier {
         }
     };
 
+    /**
+     * The registered type definition for the multilayer count placement modifier.
+     */
     public static final PlacementModifierType<CountMultilayerModifier> TYPE = () -> CODEC;
 
+    /** The number of placement attempts to make per column. */
     private final int count;
+
+    /** The list of block identifiers that are considered valid supporting surfaces. */
     private final List<String> validBlocks;
 
+    /**
+     * Constructs a new CountMultilayerModifier.
+     *
+     * @param count       The number of attempts to select from the discovered valid layers.
+     * @param validBlocks A list of valid surface block identifiers.
+     */
     public CountMultilayerModifier(int count, List<String> validBlocks) {
         this.count = count;
         this.validBlocks = validBlocks;
     }
 
+    /**
+     * Scans the vertical column of each input position and produces a stream of selected surface positions.
+     * <p>
+     * For every incoming X/Z coordinate, this method performs a full vertical scan from the
+     * world's minimum height to its maximum height. It identifies air blocks situated
+     * immediately above valid "ground" blocks. If any such layers are found, it randomly
+     * selects a number of them equal to the configured count.
+     *
+     * @param context   The current {@link PlacementContext}.
+     * @param positions The incoming stream of potential placement vectors.
+     * @return A flattened stream of vectors representing the selected vertical layers.
+     */
     @Override
     public Stream<Vector> getPositions(PlacementContext context, Stream<Vector> positions) {
         return positions.flatMap(pos -> {
@@ -77,6 +130,11 @@ public class CountMultilayerModifier extends PlacementModifier {
         });
     }
 
+    /**
+     * Retrieves the specific type definition for this modifier.
+     *
+     * @return The {@link PlacementModifierType} associated with {@link CountMultilayerModifier}.
+     */
     @Override
     public PlacementModifierType<?> getType() {
         return TYPE;

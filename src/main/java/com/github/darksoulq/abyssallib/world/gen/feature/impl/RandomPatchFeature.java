@@ -18,12 +18,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * A world generation feature that scatters a specific block state in a randomized patch.
+ * <p>
+ * This feature is modeled after vanilla decoration logic (like flowers or grass). It makes
+ * a set number of attempts to place a block within a defined horizontal and vertical
+ * spread, ensuring placement only occurs on valid ground materials.
+ */
 public class RandomPatchFeature extends Feature<RandomPatchFeature.Config> {
 
+    /**
+     * Constructs a new RandomPatchFeature with the associated configuration codec.
+     */
     public RandomPatchFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement logic for the random patch.
+     * <p>
+     * The algorithm iterates through the number of configured tries. In each try, it
+     * calculates a random coordinate offset, validates that the target block is air,
+     * and checks if the block below satisfies the "placeOn" condition or is generally solid.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
+     * @return {@code true} if at least one block was successfully placed in the patch; {@code false} otherwise.
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Random random = context.random();
@@ -59,8 +79,31 @@ public class RandomPatchFeature extends Feature<RandomPatchFeature.Config> {
         return placed > 0;
     }
 
+    /**
+     * Configuration record for {@link RandomPatchFeature}.
+     *
+     * @param toPlace  The {@link BlockInfo} representing the block state to be scattered.
+     * @param tries    The number of placement attempts per feature execution.
+     * @param xzSpread The maximum horizontal distance from the origin.
+     * @param ySpread  The maximum vertical distance from the origin.
+     * @param placeOn  A list of block identifiers that are valid surfaces for placement.
+     */
     public record Config(BlockInfo toPlace, int tries, int xzSpread, int ySpread, List<String> placeOn) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing the {@link Config}.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If required fields like "block" or "tries" are missing.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -75,6 +118,15 @@ public class RandomPatchFeature extends Feature<RandomPatchFeature.Config> {
                 return new Config(block, tries, xz, y, placeOn);
             }
 
+            /**
+             * Encodes the configuration into a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance to encode.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization of the block state fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

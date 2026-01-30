@@ -22,10 +22,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * Utility class responsible for loading, parsing, and registering world generation features from JSON files.
+ * This loader follows the standard Minecraft worldgen hierarchy:
+ * <ul>
+ * <li><b>Feature:</b> The base generation logic (e.g., Ore, Tree, Lake).</li>
+ * <li><b>ConfiguredFeature:</b> A Feature paired with specific parameters (e.g., Iron Ore with size 9).</li>
+ * <li><b>PlacedFeature:</b> A ConfiguredFeature paired with {@link PlacementModifier}s (e.g., 20 attempts per chunk).</li>
+ * </ul>
+ */
 public class WorldGenLoader {
+    /** The Jackson mapper for JSON tree parsing. */
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** The target directory for custom worldgen feature files. */
     private static final File FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "worldgen/features");
 
+    /**
+     * Initializes the loading process by scanning the {@code worldgen/features} directory.
+     * <p>
+     * Valid {@code .json} files are parsed and their features are registered to the
+     * {@link WorldGenManager} for the specified worlds.
+     * </p>
+     */
     public static void load() {
         if (!FOLDER.exists()) {
             FOLDER.mkdirs();
@@ -41,6 +60,11 @@ public class WorldGenLoader {
         }
     }
 
+    /**
+     * Internal helper to load a specific file and register its contents to the target worlds.
+     *
+     * @param path The {@link Path} to the JSON configuration file.
+     */
     private static void loadFileAndRegister(Path path) {
         try {
             JsonNode root = MAPPER.readTree(path.toFile());
@@ -58,6 +82,12 @@ public class WorldGenLoader {
         }
     }
 
+    /**
+     * Decodes a {@link PlacedFeature} from a file on disk.
+     *
+     * @param path The file system path.
+     * @return The resulting {@link PlacedFeature}, or {@code null} if loading fails.
+     */
     public static PlacedFeature load(Path path) {
         try {
             JsonNode root = MAPPER.readTree(path.toFile());
@@ -68,6 +98,13 @@ public class WorldGenLoader {
         }
     }
 
+    /**
+     * Decodes a {@link PlacedFeature} from a plugin's internal resource folder.
+     *
+     * @param plugin       The plugin providing the resource.
+     * @param resourcePath The internal path (e.g., "features/my_feature.json").
+     * @return The resulting {@link PlacedFeature}, or {@code null} if not found.
+     */
     public static PlacedFeature loadResource(Plugin plugin, String resourcePath) {
         try (InputStream in = plugin.getResource(resourcePath)) {
             if (in == null) return null;
@@ -79,6 +116,18 @@ public class WorldGenLoader {
         }
     }
 
+    /**
+     * Core parsing logic that converts a {@link JsonNode} into a {@link PlacedFeature}.
+     * <p>
+     * This method resolves the feature type from the {@link Registries#FEATURES},
+     * decodes the {@link FeatureConfig}, and builds the {@link ConfiguredFeature}
+     * before applying the list of {@link PlacementModifier}s.
+     * </p>
+     *
+     * @param root The root JSON object.
+     * @return A fully constructed {@link PlacedFeature}.
+     * @throws Exception If the configuration is invalid or the feature type is unknown.
+     */
     private static PlacedFeature loadFromNode(JsonNode root) throws Exception {
         String featureTypeId = root.get("type").asText();
         Feature<?> feature = Registries.FEATURES.get(featureTypeId);

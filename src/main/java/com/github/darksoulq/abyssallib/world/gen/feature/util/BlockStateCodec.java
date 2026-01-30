@@ -19,9 +19,34 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A utility class containing serialization logic for block states within the world generation system.
+ * <p>
+ * This codec facilitates the conversion between {@link BlockInfo} objects and their
+ * serialized representations. It handles namespaced identifiers, relative positions,
+ * block properties (states), and TileEntity NBT data.
+ */
 public class BlockStateCodec {
 
+    /**
+     * A polymorphic codec for {@link BlockInfo}.
+     * <p>
+     * Handles both vanilla "minecraft:" IDs and AbyssalLib custom block IDs. During
+     * decoding, it reconstructs block objects, applies property states, and attaches
+     * NBT data. During encoding, it flattens these objects into a map structure.
+     */
     public static final Codec<BlockInfo> CODEC = new Codec<>() {
+
+        /**
+         * Decodes a {@link BlockInfo} instance from a serialized map.
+         *
+         * @param ops   The {@link DynamicOps} logic being used.
+         * @param input The serialized data object.
+         * @param <D>   The data type (e.g., JsonNode).
+         * @return A fully reconstructed {@link BlockInfo} instance.
+         * @throws CodecException If the ID is invalid, the block type is unknown, or
+         * the data format is unexpected.
+         */
         @Override
         public <D> BlockInfo decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -81,6 +106,15 @@ public class BlockStateCodec {
             return new BlockInfo(pos, blockObject, combinedData, nbt);
         }
 
+        /**
+         * Encodes a {@link BlockInfo} instance into a serialized representation.
+         *
+         * @param ops   The {@link DynamicOps} logic being used.
+         * @param value The {@link BlockInfo} instance to serialize.
+         * @param <D>   The data type (e.g., JsonNode).
+         * @return The serialized data object.
+         * @throws CodecException If serialization of internal components fails.
+         */
         @Override
         public <D> D encode(DynamicOps<D> ops, BlockInfo value) throws CodecException {
             Map<D, D> map = new HashMap<>();

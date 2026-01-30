@@ -6,19 +6,25 @@ import org.bukkit.util.Vector;
 
 import java.util.function.Supplier;
 
+/**
+ * A utility class for creating billboarding and orientation {@link Transformer}s.
+ * <p>
+ * Billboarding allows particle shapes (which are typically generated on a flat plane)
+ * to be rotated so that they "face" a specific target, such as a player's camera
+ * or a specific world coordinate.
+ */
 public class Billboarding {
+
     /**
-     * Rotates the shape so its local "up" direction (positive Y axis)
-     * faces the target location.
-     *
+     * Creates a static transformer that rotates a shape's local "up" (0, 1, 0)
+     * to face a specific target location.
      * <p>
-     * The rotation is static: it is computed once from the supplied locations
-     * and does not change over time.
-     * </p>
+     * The rotation is calculated once when this method is called and remains
+     * constant regardless of subsequent movements of the origin or target.
      *
-     * @param origin the origin location of the shape
-     * @param target the target location to face
-     * @return a {@link Transformer}
+     * @param origin The starting {@link Location} of the particle effect.
+     * @param target The {@link Location} the shape should be oriented towards.
+     * @return A {@link Transformer} that applies the static rotation.
      */
     public static Transformer face(Location origin, Location target) {
         Vector direction = target.clone().subtract(origin).toVector().normalize();
@@ -30,17 +36,15 @@ public class Billboarding {
     }
 
     /**
-     * Creates a dynamic billboarding transformer that continuously faces
-     * a moving target.
-     *
+     * Creates a dynamic transformer that continuously re-orients a shape
+     * to face a moving target.
      * <p>
-     * This variant recalculates the facing direction every tick and is suitable
-     * for players or entities that move.
-     * </p>
+     * This is ideal for effects that must always face a specific {@link org.bukkit.entity.Player}
+     * as they move around the effect.
      *
-     * @param originSupplier supplier providing the current origin location
-     * @param targetSupplier supplier providing the current target location
-     * @return a {@link Transformer}
+     * @param originSupplier A {@link Supplier} providing the current origin {@link Location}.
+     * @param targetSupplier A {@link Supplier} providing the current target {@link Location}.
+     * @return A dynamic {@link Transformer} that recalculates orientation every tick.
      */
     public static Transformer faceDynamic(Supplier<Location> originSupplier, Supplier<Location> targetSupplier) {
         return (v, tick) -> {
@@ -61,6 +65,16 @@ public class Billboarding {
         };
     }
 
+    /**
+     * Rotates a vector around a given axis by a specific angle using Rodrigues' rotation formula.
+     * <p>
+     * Formula: $v_{rot} = v \cos \theta + (e \times v) \sin \theta + e(e \cdot v)(1 - \cos \theta)$
+     *
+     * @param v     The original {@link Vector} coordinate.
+     * @param axis  The unit {@link Vector} representing the axis of rotation.
+     * @param angle The angle of rotation in radians.
+     * @return The rotated {@link Vector}.
+     */
     private static Vector rotateAroundAxis(Vector v, Vector axis, double angle) {
         if (Double.isNaN(axis.getX())) return v;
 
@@ -69,7 +83,7 @@ public class Billboarding {
         double dot = v.dot(axis);
 
         return v.clone().multiply(cos)
-                .add(axis.clone().crossProduct(v).multiply(sin))
-                .add(axis.clone().multiply(dot * (1 - cos)));
+            .add(axis.clone().crossProduct(v).multiply(sin))
+            .add(axis.clone().multiply(dot * (1 - cos)));
     }
 }

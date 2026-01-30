@@ -8,12 +8,27 @@ import org.bukkit.inventory.ItemStack;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * An abstract representation of a single choice within a loot pool.
+ * <p>
+ * Entries can represent items, empty slots, or recursive loot tables.
+ */
 public abstract class LootEntry {
+    /** The relative probability weight of this entry. */
     protected final int weight;
+    /** The quality modifier applied when luck is involved. */
     protected final int quality;
+    /** Conditions that must be met for this specific entry to be valid. */
     protected final List<LootCondition> conditions;
+    /** Functions applied to the generated item (e.g., setting amount or enchantments). */
     protected final List<LootFunction> functions;
 
+    /**
+     * @param weight     Entry weight.
+     * @param quality    Entry quality.
+     * @param conditions Activation conditions.
+     * @param functions  Item modifiers.
+     */
     public LootEntry(int weight, int quality, List<LootCondition> conditions, List<LootFunction> functions) {
         this.weight = weight;
         this.quality = quality;
@@ -21,6 +36,12 @@ public abstract class LootEntry {
         this.functions = functions;
     }
 
+    /**
+     * Tests if this entry can be selected in the given context.
+     *
+     * @param context The current {@link LootContext}.
+     * @return {@code true} if all conditions pass.
+     */
     public boolean test(LootContext context) {
         for (LootCondition condition : conditions) {
             if (!condition.test(context)) return false;
@@ -28,8 +49,21 @@ public abstract class LootEntry {
         return true;
     }
 
+    /**
+     * Generates the actual content of the entry and passes it to the sink.
+     *
+     * @param context   The current {@link LootContext}.
+     * @param generator The {@link Consumer} for generated stacks.
+     */
     public abstract void expand(LootContext context, Consumer<ItemStack> generator);
 
+    /**
+     * Applies the assigned functions to a generated item stack.
+     *
+     * @param stack   The original {@link ItemStack}.
+     * @param context The current {@link LootContext}.
+     * @return The modified {@link ItemStack}.
+     */
     protected ItemStack applyFunctions(ItemStack stack, LootContext context) {
         ItemStack result = stack;
         for (LootFunction function : functions) {
@@ -38,6 +72,7 @@ public abstract class LootEntry {
         return result;
     }
 
+    /** Polymorphic codec for handling various {@link LootEntry} implementations. */
     public static final Codec<LootEntry> CODEC = new Codec<>() {
         @Override
         public <D> LootEntry decode(DynamicOps<D> ops, D input) throws CodecException {
@@ -45,12 +80,12 @@ public abstract class LootEntry {
             String type = ops.getStringValue(map.get(ops.createString("type"))).orElse("item");
             int weight = Codecs.INT.orElse(1).decode(ops, map.get(ops.createString("weight")));
             int quality = Codecs.INT.orElse(0).decode(ops, map.get(ops.createString("quality")));
-            
+
             List<LootCondition> conditions = new ArrayList<>();
             if (map.containsKey(ops.createString("conditions"))) {
                 conditions = LootCondition.CODEC.list().decode(ops, map.get(ops.createString("conditions")));
             }
-            
+
             List<LootFunction> functions = new ArrayList<>();
             if (map.containsKey(ops.createString("functions"))) {
                 functions = LootFunction.CODEC.list().decode(ops, map.get(ops.createString("functions")));
@@ -59,7 +94,7 @@ public abstract class LootEntry {
             if (type.equals("empty")) {
                 return new EmptyEntry(weight, quality, conditions, functions);
             } else {
-                ItemStack stack = Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("name"))); 
+                ItemStack stack = Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("name")));
                 return new ItemEntry(stack, weight, quality, conditions, functions);
             }
         }
@@ -71,7 +106,7 @@ public abstract class LootEntry {
             map.put(ops.createString("quality"), Codecs.INT.encode(ops, value.quality));
             map.put(ops.createString("conditions"), LootCondition.CODEC.list().encode(ops, value.conditions));
             map.put(ops.createString("functions"), LootFunction.CODEC.list().encode(ops, value.functions));
-            
+
             if (value instanceof EmptyEntry) {
                 map.put(ops.createString("type"), ops.createString("empty"));
             } else if (value instanceof ItemEntry itemEntry) {
@@ -82,6 +117,7 @@ public abstract class LootEntry {
         }
     };
 
+    /** A loot entry that generates a specific item stack. */
     public static class ItemEntry extends LootEntry {
         private final ItemStack stack;
 
@@ -96,6 +132,7 @@ public abstract class LootEntry {
         }
     }
 
+    /** A loot entry that represents a "no drop" chance. */
     public static class EmptyEntry extends LootEntry {
         public EmptyEntry(int weight, int quality, List<LootCondition> conditions, List<LootFunction> functions) {
             super(weight, quality, conditions, functions);

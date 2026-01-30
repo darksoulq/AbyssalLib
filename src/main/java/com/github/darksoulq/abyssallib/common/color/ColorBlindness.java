@@ -2,16 +2,54 @@ package com.github.darksoulq.abyssallib.common.color;
 
 import org.bukkit.Color;
 
+/**
+ * An enumeration representing various types of color vision deficiencies (CVD).
+ * <p>
+ * This class provides a mathematical simulation of how different colors are perceived
+ * by individuals with specific types of color blindness. The simulation process involves:
+ * <ol>
+ * <li>Linearizing the sRGB input (Gamma expansion).</li>
+ * <li>Applying a transformation matrix based on the deficiency type.</li>
+ * <li>De-linearizing the result back to sRGB (Gamma compression).</li>
+ * </ol>
+ */
 public enum ColorBlindness {
+    /** Standard human vision with no color deficiency. */
     NORMAL,
+
+    /** * Red-blindness; the inability to perceive red light.
+     * Resulting vision consists primarily of blues and yellows.
+     */
     PROTANOPIA,
+
+    /** * Green-blindness; the inability to perceive green light.
+     * This is the most common form of color blindness.
+     */
     DEUTERANOPIA,
+
+    /** * Blue-blindness; the inability to perceive blue light.
+     * A rare condition where colors are mostly seen as reds and greens.
+     */
     TRITANOPIA,
+
+    /** * Total color blindness; the inability to perceive any color.
+     * Vision is restricted to shades of gray (luminance only).
+     */
     ACHROMATOPSIA;
 
+    /**
+     * Simulates the current color vision deficiency on a given Color.
+     * <p>
+     * The method performs gamma correction before and after the color space
+     * transformation to ensure accuracy in the linear RGB space.
+     * </p>
+     *
+     * @param c The original {@link Color} to be transformed.
+     * @return A new {@link Color} representing how the input would be perceived.
+     */
     public Color simulate(Color c) {
         if (this == NORMAL) return c;
-        
+
         double r = c.getRed() / 255.0;
         double g = c.getGreen() / 255.0;
         double b = c.getBlue() / 255.0;
@@ -55,6 +93,13 @@ public enum ColorBlindness {
         );
     }
 
+    /**
+     * Clamps an integer value between 0 and 255 to ensure it remains within
+     * the valid range for RGB components.
+     *
+     * @param v The value to clamp.
+     * @return An integer between 0 and 255 inclusive.
+     */
     private static int clamp(int v) {
         return Math.max(0, Math.min(255, v));
     }

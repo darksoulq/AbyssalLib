@@ -16,7 +16,7 @@ java {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
     withSourcesJar()
-//    withJavadocJar()
+    withJavadocJar()
 }
 
 kotlin {
@@ -92,15 +92,16 @@ javadoc {
     options.version = true
     options.links('https://docs.oracle.com/en/java/javase/21/docs/api/')
 
-    exclude '**/internal/**'
     exclude '**/PacketInterceptor.java'
+    exclude '**/PacketTranslator.java'
     exclude '**/InternalCommand.java'
-    exclude '**/ConfigParser.java'
-    exclude '**/util/**'
     exclude '**/BlockManager.java'
+    exclude '**/MultiblockManager.java'
+    exclude '**/EntityManager.java'
     exclude '**/MapLoader.java'
     exclude '**/AbyssalLib.java'
     exclude '**/Bootstrap.java'
+    exclude '**/Loader.java'
 }
 
 tasks.runServer {
@@ -109,5 +110,5 @@ tasks.runServer {
 
 artifacts {
     archives sourcesJar
-//    archives javadocJar
+    archives javadocJar
 }

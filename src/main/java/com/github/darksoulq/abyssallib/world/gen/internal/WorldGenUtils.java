@@ -21,8 +21,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Internal utility class for managing block placement and validation during world generation.
+ * <p>
+ * This class provides methods to safely place serialized block information, handling
+ * complex transformations such as rotation and mirroring for both vanilla and AbyssalLib
+ * {@link CustomBlock}s.
+ */
 public class WorldGenUtils {
 
+    /**
+     * Validates if a block at a specific location matches a list of allowed identifiers.
+     * <p>
+     * Supports both vanilla IDs (e.g., "minecraft:stone") and {@link CustomBlock} IDs.
+     *
+     * @param level    The world generation accessor.
+     * @param loc      The {@link Location} to check.
+     * @param validIds A {@link List} of namespaced identifiers. If null or empty, returns true.
+     * @return {@code true} if the block matches an allowed ID or the list is empty.
+     */
     public static boolean isValidBlock(WorldGenAccess level, Location loc, List<String> validIds) {
         if (validIds == null || validIds.isEmpty()) return true;
 
@@ -39,10 +56,30 @@ public class WorldGenUtils {
         return false;
     }
 
+    /**
+     * Places a block based on {@link BlockInfo} with default orientation.
+     *
+     * @param level    The world generation accessor.
+     * @param location The {@link Location} to place the block.
+     * @param info     The {@link BlockInfo} containing block data and NBT.
+     */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info) {
         placeBlock(level, location, info, StructureRotation.NONE, Mirror.NONE);
     }
 
+    /**
+     * Places a block with specific transformations applied.
+     * <p>
+     * This method handles the logic for {@link CustomBlock} cloning, {@link BlockData}
+     * deserialization, and NBT application. It automatically detects if
+     * {@link NMSWorldGenAccess} is being used for optimized placement.
+     *
+     * @param level    The world generation accessor.
+     * @param location The {@link Location} to place the block.
+     * @param info     The {@link BlockInfo} structure.
+     * @param rotation The {@link StructureRotation} to apply.
+     * @param mirror   The {@link Mirror} transformation to apply.
+     */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info, StructureRotation rotation, Mirror mirror) {
         Object blockObject = info.block();
         ObjectNode combinedData = info.combinedData();
@@ -105,6 +142,13 @@ public class WorldGenUtils {
         }
     }
 
+    /**
+     * Internal helper to apply mirror and rotation to block data.
+     *
+     * @param bd       The {@link BlockData} to transform.
+     * @param mirror   The {@link Mirror} type.
+     * @param rotation The {@link StructureRotation} type.
+     */
     private static void applyTransform(BlockData bd, Mirror mirror, StructureRotation rotation) {
         if (mirror != Mirror.NONE) bd.mirror(mirror);
         if (rotation != StructureRotation.NONE) bd.rotate(rotation);

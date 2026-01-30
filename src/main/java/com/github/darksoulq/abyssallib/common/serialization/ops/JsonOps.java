@@ -7,58 +7,83 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import java.util.*;
 
 /**
- * {@link DynamicOps} implementation for {@link JsonNode}.
- * <p>
- * Provides methods to encode and decode primitive types, lists, and maps into JSON using Jackson.
- * Supports optional extraction of primitive values and structured objects.
- * <p>
- * This is a singleton implementation; use {@link #INSTANCE}.
+ * An implementation of {@link DynamicOps} for Jackson's {@link JsonNode} tree model.
+ * This class allows {@link com.github.darksoulq.abyssallib.common.serialization.Codec}s
+ * to serialize and deserialize Java objects to and from JSON structures.
  */
 public class JsonOps extends DynamicOps<JsonNode> {
 
-    /** Singleton instance of {@link JsonOps}. */
+    /** Singleton instance of JsonOps to avoid unnecessary allocations. */
     public static final JsonOps INSTANCE = new JsonOps();
 
-    /** Private constructor to enforce singleton usage. */
+    /** Private constructor for singleton pattern. */
     private JsonOps() {}
 
-    /** {@inheritDoc} Encodes a string as a {@link TextNode}. */
+    /**
+     * Creates a {@link TextNode} from a String.
+     * @param value The string value.
+     * @return A JSON text node.
+     */
     @Override
     public JsonNode createString(String value) {
         return TextNode.valueOf(value);
     }
 
-    /** {@inheritDoc} Encodes an int as an {@link IntNode}. */
+    /**
+     * Creates an {@link IntNode} from an integer.
+     * @param value The int value.
+     * @return A JSON integer node.
+     */
     @Override
     public JsonNode createInt(int value) {
         return IntNode.valueOf(value);
     }
 
-    /** {@inheritDoc} Encodes a long as a {@link LongNode}. */
+    /**
+     * Creates a {@link LongNode} from a long.
+     * @param value The long value.
+     * @return A JSON long node.
+     */
     @Override
     public JsonNode createLong(long value) {
         return LongNode.valueOf(value);
     }
 
-    /** {@inheritDoc} Encodes a float as a {@link FloatNode}. */
+    /**
+     * Creates a {@link FloatNode} from a float.
+     * @param value The float value.
+     * @return A JSON float node.
+     */
     @Override
     public JsonNode createFloat(float value) {
         return FloatNode.valueOf(value);
     }
 
-    /** {@inheritDoc} Encodes a double as a {@link DoubleNode}. */
+    /**
+     * Creates a {@link DoubleNode} from a double.
+     * @param value The double value.
+     * @return A JSON double node.
+     */
     @Override
     public JsonNode createDouble(double value) {
         return DoubleNode.valueOf(value);
     }
 
-    /** {@inheritDoc} Encodes a boolean as a {@link BooleanNode}. */
+    /**
+     * Creates a {@link BooleanNode} from a boolean.
+     * @param value The boolean value.
+     * @return A JSON boolean node.
+     */
     @Override
     public JsonNode createBoolean(boolean value) {
         return BooleanNode.valueOf(value);
     }
 
-    /** {@inheritDoc} Encodes a list of {@link JsonNode}s as an {@link ArrayNode}. */
+    /**
+     * Creates an {@link ArrayNode} from a list of JSON nodes.
+     * @param elements The list of nodes to include.
+     * @return A JSON array node.
+     */
     @Override
     public JsonNode createList(List<JsonNode> elements) {
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
@@ -66,7 +91,12 @@ public class JsonOps extends DynamicOps<JsonNode> {
         return array;
     }
 
-    /** {@inheritDoc} Encodes a map of {@link JsonNode}s as an {@link ObjectNode}, using the key's text representation. */
+    /**
+     * Creates an {@link ObjectNode} from a map of JSON nodes.
+     * Keys are converted to strings via {@link JsonNode#asText()}.
+     * @param map The map of key-value nodes.
+     * @return A JSON object node.
+     */
     @Override
     public JsonNode createMap(Map<JsonNode, JsonNode> map) {
         ObjectNode obj = JsonNodeFactory.instance.objectNode();
@@ -76,43 +106,71 @@ public class JsonOps extends DynamicOps<JsonNode> {
         return obj;
     }
 
-    /** {@inheritDoc} Extracts a string value from a {@link TextNode}, if present. */
+    /**
+     * Extracts a String from a JSON node if it is textual.
+     * @param input The JSON node.
+     * @return An Optional containing the string, or empty.
+     */
     @Override
     public Optional<String> getStringValue(JsonNode input) {
         return input.isTextual() ? Optional.of(input.asText()) : Optional.empty();
     }
 
-    /** {@inheritDoc} Extracts an int value from an {@link IntNode}, if present. */
+    /**
+     * Extracts an Integer from a JSON node if it is a number.
+     * @param input The JSON node.
+     * @return An Optional containing the integer, or empty.
+     */
     @Override
     public Optional<Integer> getIntValue(JsonNode input) {
         return input.isNumber() ? Optional.of(input.asInt()) : Optional.empty();
     }
 
-    /** {@inheritDoc} Extracts a long value from a {@link LongNode}, if present. */
+    /**
+     * Extracts a Long from a JSON node if it is a number.
+     * @param input The JSON node.
+     * @return An Optional containing the long, or empty.
+     */
     @Override
     public Optional<Long> getLongValue(JsonNode input) {
         return input.isNumber() ? Optional.of(input.asLong()) : Optional.empty();
     }
 
-    /** {@inheritDoc} Extracts a float value from a {@link FloatNode}, if present. */
+    /**
+     * Extracts a Float from a JSON node if it is a number.
+     * @param input The JSON node.
+     * @return An Optional containing the float, or empty.
+     */
     @Override
     public Optional<Float> getFloatValue(JsonNode input) {
         return input.isNumber() ? Optional.of(input.floatValue()) : Optional.empty();
     }
 
-    /** {@inheritDoc} Extracts a double value from a {@link DoubleNode}, if present. */
+    /**
+     * Extracts a Double from a JSON node if it is a number.
+     * @param input The JSON node.
+     * @return An Optional containing the double, or empty.
+     */
     @Override
     public Optional<Double> getDoubleValue(JsonNode input) {
         return input.isNumber() ? Optional.of(input.doubleValue()) : Optional.empty();
     }
 
-    /** {@inheritDoc} Extracts a boolean value from a {@link BooleanNode}, if present. */
+    /**
+     * Extracts a Boolean from a JSON node if it is a boolean.
+     * @param input The JSON node.
+     * @return An Optional containing the boolean, or empty.
+     */
     @Override
     public Optional<Boolean> getBooleanValue(JsonNode input) {
         return input.isBoolean() ? Optional.of(input.asBoolean()) : Optional.empty();
     }
 
-    /** {@inheritDoc} Extracts a list of {@link JsonNode}s from an {@link ArrayNode}, if present. */
+    /**
+     * Converts a JSON array node into a List of nodes.
+     * @param input The JSON node.
+     * @return An Optional containing the list, or empty if not an array.
+     */
     @Override
     public Optional<List<JsonNode>> getList(JsonNode input) {
         if (!input.isArray()) return Optional.empty();
@@ -121,7 +179,12 @@ public class JsonOps extends DynamicOps<JsonNode> {
         return Optional.of(list);
     }
 
-    /** {@inheritDoc} Extracts a map of {@link JsonNode}s from an {@link ObjectNode}, if present. */
+    /**
+     * Converts a JSON object node into a Map of nodes.
+     * Keys are wrapped in {@link TextNode}s.
+     * @param input The JSON node.
+     * @return An Optional containing the map, or empty if not an object.
+     */
     @Override
     public Optional<Map<JsonNode, JsonNode>> getMap(JsonNode input) {
         if (!input.isObject()) return Optional.empty();
@@ -130,7 +193,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
         return Optional.of(map);
     }
 
-    /** {@inheritDoc} Returns a {@link NullNode} representing empty JSON. */
+    /**
+     * Returns the representation of a null value in JSON.
+     * @return {@link NullNode#instance}.
+     */
     @Override
     public JsonNode empty() {
         return NullNode.instance;

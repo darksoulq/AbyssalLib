@@ -16,12 +16,33 @@ import org.bukkit.util.noise.SimplexOctaveGenerator;
 
 import java.util.*;
 
+/**
+ * A world generation feature that creates multi-layered geode structures.
+ * <p>
+ * The geode is generated using a distance-based algorithm distorted by simplex noise
+ * to create an organic shape. It consists of an outer shell, a middle layer, an
+ * inner layer, and a hollow or fluid-filled interior containing potential crystals.
+ */
 public class GeodeFeature extends Feature<GeodeFeature.Config> {
 
+    /**
+     * Constructs a new GeodeFeature with the associated configuration codec.
+     */
     public GeodeFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement logic for a geode.
+     * <p>
+     * The process validates the origin, calculates a randomized radius, and iterates
+     * through a cubic volume. For each point, it calculates a noise-distorted distance
+     * from the center to determine which layer (outer, middle, inner, or hollow)
+     * should be placed. Finally, it attempts to seed crystals on the inner surface.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
+     * @return {@code true} if the geode was successfully placed; {@code false} otherwise.
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Location origin = context.origin();
@@ -89,6 +110,25 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
         return true;
     }
 
+    /**
+     * Configuration record for {@link GeodeFeature}.
+     *
+     * @param outerLayer      Block used for the outermost shell.
+     * @param middleLayer     Block used for the middle shell.
+     * @param innerLayer      Block used for the innermost shell.
+     * @param fillBlock       Block used to fill the hollow center (e.g., Water or Air).
+     * @param innerBlock      Block used for the hollow air/interior space.
+     * @param crystals        List of potential crystal {@link BlockInfo}s to place inside.
+     * @param replaceable     List of block IDs that the geode can overwrite.
+     * @param invalidBlocks   List of block IDs that prevent the geode from starting at a location.
+     * @param outerRadius     The base radius of the entire structure.
+     * @param radiusRange     Random variance added to the base radius.
+     * @param layerThickness  Thickness of the combined shells.
+     * @param fillChance      Probability of a center block being replaced by {@code fillBlock}.
+     * @param crystalChance   Probability of a crystal growing on a valid inner surface.
+     * @param noiseScale      Scale of the simplex noise distortion.
+     * @param noiseMultiplier Strength of the noise distortion.
+     */
     public record Config(
         BlockInfo outerLayer,
         BlockInfo middleLayer,
@@ -106,7 +146,21 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
         double noiseScale,
         double noiseMultiplier
     ) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing the geode configuration.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a complex map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If required fields are missing or invalid.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -125,14 +179,23 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
                 int range = Codecs.INT.decode(ops, map.get(ops.createString("radius_range")));
                 int th = Codecs.INT.decode(ops, map.get(ops.createString("layer_thickness")));
 
-                double fc = Codecs.FLOAT.decode(ops, map.get(ops.createString("fill_chance")));
-                double cc = Codecs.FLOAT.decode(ops, map.get(ops.createString("crystal_chance")));
-                double ns = Codecs.FLOAT.decode(ops, map.get(ops.createString("noise_scale")));
-                double nm = Codecs.FLOAT.decode(ops, map.get(ops.createString("noise_multiplier")));
+                double fc = Codecs.DOUBLE.decode(ops, map.get(ops.createString("fill_chance")));
+                double cc = Codecs.DOUBLE.decode(ops, map.get(ops.createString("crystal_chance")));
+                double ns = Codecs.DOUBLE.decode(ops, map.get(ops.createString("noise_scale")));
+                double nm = Codecs.DOUBLE.decode(ops, map.get(ops.createString("noise_multiplier")));
 
                 return new Config(outer, middle, inner, fill, inside, crystals, replaceable, invalid, r, range, th, fc, cc, ns, nm);
             }
 
+            /**
+             * Encodes the configuration into a serialized map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

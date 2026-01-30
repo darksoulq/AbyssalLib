@@ -15,8 +15,18 @@ import org.bukkit.inventory.ItemStack;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * A highly configurable {@link Predicate} for matching {@link ItemStack}s.
+ * <p>
+ * This class supports checking for specific Minecraft {@link Material}s, the presence
+ * or absence of {@link DataComponent}s, specific values within components, and
+ * recursive nested predicates using boolean logic (Conditions).
+ */
 public class ItemPredicate implements Predicate<ItemStack> {
 
+    /**
+     * Internal codec for decoding individual data component entries within a predicate.
+     */
     private static final Codec<DataComponent<?>> COMPONENT_ENTRY_CODEC = new Codec<>() {
         @Override
         public <D> DataComponent<?> decode(DynamicOps<D> ops, D input) throws CodecException {
@@ -43,6 +53,12 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
     };
 
+    /**
+     * The primary codec for serializing and deserializing {@link ItemPredicate} instances.
+     * <p>
+     * Can decode from a simple string (looking up registered predicates) or a complex
+     * map object defining custom filter logic.
+     */
     public static final Codec<ItemPredicate> CODEC = new Codec<>() {
         @Override
         public <D> ItemPredicate decode(DynamicOps<D> ops, D input) throws CodecException {
@@ -106,12 +122,26 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
     };
 
+    /** Conditions defining what component identifiers MUST NOT be present on the item. */
     private final List<Condition<Identifier>> without;
+    /** Conditions defining what component identifiers MUST be present on the item. */
     private final List<Condition<Identifier>> with;
+    /** Conditions defining specific components and values that MUST match on the item. */
     private final List<Condition<DataComponent<?>>> valued;
+    /** Conditions defining nested sub-predicates that MUST evaluate to true. */
     private final List<Condition<ItemPredicate>> predicates;
+    /** The specific material type to match, or null for any material. */
     private final Material material;
 
+    /**
+     * Internal constructor for building a predicate.
+     *
+     * @param without    List of exclusion conditions.
+     * @param with       List of inclusion conditions.
+     * @param valued     List of component value conditions.
+     * @param predicates List of sub-predicate conditions.
+     * @param material   The required {@link Material}.
+     */
     public ItemPredicate(List<Condition<Identifier>> without,
                          List<Condition<Identifier>> with,
                          List<Condition<DataComponent<?>>> valued,
@@ -124,6 +154,9 @@ public class ItemPredicate implements Predicate<ItemStack> {
         this.material = material;
     }
 
+    /**
+     * @return A new builder instance for creating an ItemPredicate.
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -144,6 +177,12 @@ public class ItemPredicate implements Predicate<ItemStack> {
         return Objects.hash(without, with, valued, predicates, material);
     }
 
+    /**
+     * Evaluates whether the provided {@link ItemStack} satisfies all conditions of this predicate.
+     *
+     * @param stack The item stack to test.
+     * @return {@code true} if the stack matches all filters; {@code false} otherwise.
+     */
     @Override
     public boolean test(ItemStack stack) {
         Item item = Item.resolve(stack);
@@ -184,6 +223,9 @@ public class ItemPredicate implements Predicate<ItemStack> {
         return true;
     }
 
+    /**
+     * A fluent builder for constructing complex {@link ItemPredicate} instances.
+     */
     public static class Builder {
         private final List<Condition<Identifier>> without = new ArrayList<>();
         private final List<Condition<Identifier>> with = new ArrayList<>();
@@ -191,56 +233,117 @@ public class ItemPredicate implements Predicate<ItemStack> {
         private final List<Condition<ItemPredicate>> predicates = new ArrayList<>();
         private Material material = null;
 
+        /**
+         * Sets the required material type.
+         * @param material The {@link Material}.
+         * @return This builder.
+         */
         public Builder material(Material material) {
             this.material = material;
             return this;
         }
 
+        /**
+         * Adds a condition that must fail (the item must NOT have these components).
+         * @param condition The exclusion condition.
+         * @return This builder.
+         */
         public Builder without(Condition<Identifier> condition) {
             this.without.add(condition);
             return this;
         }
 
+        /**
+         * Adds a condition that must succeed (the item must have these components).
+         * @param condition The inclusion condition.
+         * @return This builder.
+         */
         public Builder with(Condition<Identifier> condition) {
             this.with.add(condition);
             return this;
         }
 
+        /**
+         * Adds a condition that checks specific component values.
+         * @param condition The value-matching condition.
+         * @return This builder.
+         */
         public Builder value(Condition<DataComponent<?>> condition) {
             this.valued.add(condition);
             return this;
         }
 
+        /**
+         * Adds a sub-predicate condition for nested logic.
+         * @param condition The sub-predicate condition.
+         * @return This builder.
+         */
         public Builder check(Condition<ItemPredicate> condition) {
             this.predicates.add(condition);
             return this;
         }
 
+        /**
+         * Adds an exclusion for a specific component ID.
+         * @param identifier The component ID.
+         * @return This builder.
+         */
         public Builder without(Identifier identifier) {
             return without(Condition.one(identifier));
         }
 
+        /**
+         * Adds a requirement for a specific component ID.
+         * @param identifier The component ID.
+         * @return This builder.
+         */
         public Builder with(Identifier identifier) {
             return with(Condition.one(identifier));
         }
 
+        /**
+         * Adds a requirement for a component with a specific value.
+         * @param component The component instance with value.
+         * @param <T> The value type.
+         * @return This builder.
+         */
         @SuppressWarnings("unchecked")
         public <T> Builder value(DataComponent<T> component) {
             return value((Condition<DataComponent<?>>) (Condition<?>) Condition.one(component));
         }
 
+        /**
+         * Adds a requirement for a specific sub-predicate to pass.
+         * @param predicate The predicate.
+         * @return This builder.
+         */
         public Builder check(ItemPredicate predicate) {
             return check(Condition.one(predicate));
         }
 
+        /**
+         * Adds a condition requiring ANY of the provided identifiers to be present.
+         * @param identifiers Varargs of identifiers.
+         * @return This builder.
+         */
         public Builder withAny(Identifier... identifiers) {
             return with(Condition.anyOf(Arrays.stream(identifiers).map(Condition::one).toList()));
         }
 
+        /**
+         * Adds a condition requiring ANY of the provided identifiers to be present.
+         * @param identifiers Collection of identifiers.
+         * @return This builder.
+         */
         public Builder withAny(Collection<Identifier> identifiers) {
             return with(Condition.anyOf(identifiers.stream().map(Condition::one).toList()));
         }
 
+        /**
+         * Adds a condition requiring ANY of the provided component values to match.
+         * @param components Varargs of data components.
+         * @return This builder.
+         */
         @SuppressWarnings("unchecked")
         public Builder valueAny(DataComponent<?>... components) {
             List<Condition<DataComponent<?>>> list = new ArrayList<>();
@@ -250,10 +353,19 @@ public class ItemPredicate implements Predicate<ItemStack> {
             return value(Condition.anyOf(list));
         }
 
+        /**
+         * Adds a condition requiring ANY of the provided sub-predicates to pass.
+         * @param predicates Varargs of predicates.
+         * @return This builder.
+         */
         public Builder checkAny(ItemPredicate... predicates) {
             return check(Condition.anyOf(Arrays.stream(predicates).map(Condition::one).toList()));
         }
 
+        /**
+         * Builds the {@link ItemPredicate} instance.
+         * @return The resulting predicate.
+         */
         public ItemPredicate build() {
             return new ItemPredicate(without, with, valued, predicates, material);
         }

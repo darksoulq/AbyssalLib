@@ -17,10 +17,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+/**
+ * Manages the loading, saving, and registration of structure files.
+ * <p>
+ * This class scans the {@code structures/} directory and automatically registers
+ * valid JSON files into the {@link Registries#STRUCTURES} registry. It uses
+ * namespaced subfolders to determine the {@link Identifier} for each structure.
+ */
 public class StructureLoader {
+    /** The root directory where structure JSON files are stored. */
     private static final Path STRUCTURES_FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "structures").toPath();
+    /** Jackson ObjectMapper for JSON processing. */
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    /**
+     * Initializes the structure folder and performs a recursive scan for JSON files.
+     * <p>
+     * Found files are processed through {@link #loadFileAndRegister(Path)}.
+     */
     public static void load() {
         if (!Files.exists(STRUCTURES_FOLDER)) {
             try {
@@ -40,6 +54,11 @@ public class StructureLoader {
         }
     }
 
+    /**
+     * Internal helper to derive an ID from a file path and register the structure.
+     *
+     * @param path The path to the JSON structure file.
+     */
     private static void loadFileAndRegister(Path path) {
         Identifier id = getStructureId(path);
         if (id == null) return;
@@ -54,6 +73,12 @@ public class StructureLoader {
         }
     }
 
+    /**
+     * Loads a structure from a specific file path on the disk.
+     *
+     * @param path The path to the file.
+     * @return The deserialized {@link Structure}, or {@code null} if loading fails.
+     */
     public static Structure load(Path path) {
         return Try.of(() -> {
             JsonNode root = MAPPER.readTree(path.toFile());
@@ -61,6 +86,13 @@ public class StructureLoader {
         }).onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load structure from " + path + ": " + e.getMessage())).orElse(null);
     }
 
+    /**
+     * Loads a structure embedded within a plugin's JAR resources.
+     *
+     * @param plugin       The plugin owning the resource.
+     * @param resourcePath The internal path within the JAR (e.g., "assets/myplugin/structures/house.json").
+     * @return The deserialized {@link Structure}, or {@code null} if not found or invalid.
+     */
     public static Structure loadResource(Plugin plugin, String resourcePath) {
         return Try.of(() -> {
             try (InputStream in = plugin.getResource(resourcePath)) {
@@ -68,9 +100,18 @@ public class StructureLoader {
                 JsonNode root = MAPPER.readTree(in);
                 return Structure.deserialize(root);
             }
-        }).onFailure(e -> e.printStackTrace()).orElse(null);
+        }).onFailure(Throwable::printStackTrace).orElse(null);
     }
 
+    /**
+     * Serializes and saves a structure to the disk using the specified identifier.
+     * <p>
+     * The file will be saved at {@code structures/<namespace>/<path>.json}.
+     *
+     * @param id        The {@link Identifier} defining the namespace and file name.
+     * @param structure The {@link Structure} instance to save.
+     * @return {@code true} if the save was successful; {@code false} otherwise.
+     */
     public static boolean save(Identifier id, Structure structure) {
         Path namespaceFolder = STRUCTURES_FOLDER.resolve(id.getNamespace());
         try {
@@ -86,6 +127,15 @@ public class StructureLoader {
         }
     }
 
+    /**
+     * Determines the structure's namespaced ID based on its relative path within the root folder.
+     * <p>
+     * For a file at {@code structures/abyssallib/dungeon/room1.json}, the resulting
+     * ID will be {@code abyssallib:dungeon/room1}.
+     *
+     * @param file The absolute path to the file.
+     * @return An {@link Identifier}, or {@code null} if the file is not in a valid subfolder.
+     */
     private static Identifier getStructureId(Path file) {
         Path relative = STRUCTURES_FOLDER.relativize(file);
         if (relative.getNameCount() < 2) {

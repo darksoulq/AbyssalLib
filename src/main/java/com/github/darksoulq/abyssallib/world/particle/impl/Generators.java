@@ -12,8 +12,22 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A utility class containing static factory methods for creating {@link Generator} instances.
+ * <p>
+ * This class includes generators for 2D/3D shapes, text-to-particle conversion,
+ * image-to-particle conversion, and dynamic path animations.
+ */
 public final class Generators {
 
+    /**
+     * Creates a generator that replicates a {@link BufferedImage} using particles.
+     *
+     * @param image   The source image to convert.
+     * @param size    The maximum world-space size the image should occupy.
+     * @param density The pixel skip rate (1 = every pixel, 2 = every other pixel).
+     * @return A {@link Generator} representing the image.
+     */
     public static Generator fromImage(BufferedImage image, double size, int density) {
         List<Vector> points = new ArrayList<>();
         int width = image.getWidth();
@@ -27,13 +41,24 @@ public final class Generators {
                 int argb = image.getRGB(x, y);
                 if ((argb >> 24 & 0xFF) == 0) continue;
 
-                org.bukkit.Color c = org.bukkit.Color.fromRGB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF);
+                Color c = Color.fromRGB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF);
                 points.add(new Pixel(x * scale - offsetX, (height - y) * scale - offsetY, 0, c));
             }
         }
         return tick -> points;
     }
 
+    /**
+     * Converts a string of text into a particle-based layout with custom coloring.
+     *
+     * @param text     The text to display.
+     * @param fontName The name of the font to use.
+     * @param style    The font style (e.g., {@link Font#BOLD}).
+     * @param color    The {@link ColorProvider} for the text color.
+     * @param fontSize The size of the font in the internal buffer.
+     * @param size     The world-space width/height of the rendered text.
+     * @return A {@link Generator} representing the text.
+     */
     public static Generator text(String text, String fontName, @MagicConstant(flags = {Font.PLAIN,Font.BOLD,Font.ITALIC}) int style, ColorProvider color, int fontSize, double size) {
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
@@ -67,15 +92,36 @@ public final class Generators {
         };
     }
 
+    /**
+     * Converts a string of text into white particles.
+     *
+     * @param text     The text.
+     * @param fontName The font.
+     * @param style    The font style.
+     * @param fontSize The font size.
+     * @param size     The world size.
+     * @return A {@link Generator} for plain text.
+     */
     public static Generator text(String text, String fontName, @MagicConstant(flags = {Font.PLAIN,Font.BOLD,Font.ITALIC}) int style, int fontSize, double size) {
         return text(text, fontName, style, ColorProvider.fixed(Color.WHITE), fontSize, size);
     }
 
+    /**
+     * @return A generator producing a single point at (0,0,0).
+     */
     public static Generator point() {
         List<Vector> p = List.of(new Vector());
         return tick -> p;
     }
 
+    /**
+     * Generates a line of particles between two points.
+     *
+     * @param start The starting {@link Vector}.
+     * @param end   The ending {@link Vector}.
+     * @param step  The distance between each particle.
+     * @return A {@link Generator} for a line.
+     */
     public static Generator line(Vector start, Vector end, double step) {
         List<Vector> points = new ArrayList<>();
         Vector dir = end.clone().subtract(start);
@@ -87,6 +133,13 @@ public final class Generators {
         return tick -> points;
     }
 
+    /**
+     * Generates a flat circle on the XZ plane.
+     *
+     * @param radius The radius of the circle.
+     * @param points The number of particles in the circumference.
+     * @return A {@link Generator} for a circle.
+     */
     public static Generator circle(double radius, int points) {
         List<Vector> base = new ArrayList<>(points);
         double inc = Math.PI * 2 / points;
@@ -96,6 +149,13 @@ public final class Generators {
         return tick -> base;
     }
 
+    /**
+     * Generates a flat square outline on the XZ plane.
+     *
+     * @param size          The side length of the square.
+     * @param pointsPerSide The number of particles per edge.
+     * @return A {@link Generator} for a square.
+     */
     public static Generator square(double size, int pointsPerSide) {
         List<Vector> list = new ArrayList<>();
         double half = size / 2.0;
@@ -111,6 +171,13 @@ public final class Generators {
         return tick -> list;
     }
 
+    /**
+     * Generates a 3D sphere using a Fibonacci spiral distribution.
+     *
+     * @param radius The radius of the sphere.
+     * @param points The total number of particles.
+     * @return A {@link Generator} for a sphere.
+     */
     public static Generator sphere(double radius, int points) {
         List<Vector> base = new ArrayList<>(points);
         double phi = Math.PI * (3. - Math.sqrt(5.));
@@ -123,6 +190,13 @@ public final class Generators {
         return tick -> base;
     }
 
+    /**
+     * Generates the wireframe of a cube.
+     *
+     * @param size       The edge length.
+     * @param resolution The number of particles per edge.
+     * @return A {@link Generator} for a cube.
+     */
     public static Generator cube(double size, int resolution) {
         List<Vector> list = new ArrayList<>();
         double half = size / 2.0;
@@ -141,6 +215,14 @@ public final class Generators {
         return tick -> list;
     }
 
+    /**
+     * Generates a pyramid shape.
+     *
+     * @param size       The base width.
+     * @param height     The height.
+     * @param resolution The particle density per layer.
+     * @return A {@link Generator} for a pyramid.
+     */
     public static Generator pyramid(double size, double height, int resolution) {
         List<Vector> list = new ArrayList<>();
         for (int y = 0; y <= resolution; y++) {
@@ -158,6 +240,14 @@ public final class Generators {
         return tick -> list;
     }
 
+    /**
+     * Generates a circle that rotates around the Y axis over time.
+     *
+     * @param radius The radius.
+     * @param points The particle count.
+     * @param speed  The rotation speed.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator rotatingCircle(double radius, int points, double speed) {
         List<Vector> base = new ArrayList<>(points);
         double inc = Math.PI * 2 / points;
@@ -172,6 +262,14 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a circular orbit animation.
+     *
+     * @param radius The orbit radius.
+     * @param points The particle count.
+     * @param speed  The orbital speed.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator orbit(double radius, int points, double speed) {
         List<Vector> base = new ArrayList<>(points);
         double step = Math.PI * 2 / points;
@@ -189,6 +287,14 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a circle that "draws" itself over a duration.
+     *
+     * @param radius      The radius.
+     * @param totalPoints The final particle count.
+     * @param duration    Ticks to complete the drawing.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator drawingCircle(double radius, int totalPoints, long duration) {
         List<Vector> base = new ArrayList<>(totalPoints);
         double step = Math.PI * 2 / totalPoints;
@@ -206,6 +312,14 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a cube that "grows" from bottom to top over a duration.
+     *
+     * @param size       The cube size.
+     * @param resolution The particle density.
+     * @param duration   Ticks to reach full height.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator growingCube(double size, int resolution, long duration) {
         List<Vector> base = new ArrayList<>();
         double half = size / 2.0;
@@ -234,6 +348,16 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a moving sine wave.
+     *
+     * @param length    The total wave length.
+     * @param points    The number of particles.
+     * @param amplitude The height of the peaks.
+     * @param frequency The wave frequency.
+     * @param speed     The wave speed (phase shift).
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator sineWave(double length, int points, double amplitude, double frequency, double speed) {
         List<Vector> base = new ArrayList<>(points);
         double step = length / (points - 1);
@@ -252,6 +376,15 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a circle that pulses (changes radius) over time.
+     *
+     * @param baseRadius     The median radius.
+     * @param pulseAmplitude The maximum change from median.
+     * @param speed          The pulse speed.
+     * @param points         The number of particles.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator pulsingCircle(double baseRadius, double pulseAmplitude, double speed, int points) {
         List<Vector> base = new ArrayList<>(points);
         double step = Math.PI * 2 / points;
@@ -269,6 +402,16 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a 3D helix (spiral) shape.
+     *
+     * @param radius The radius of the helix.
+     * @param height The total height.
+     * @param turns  The number of complete rotations.
+     * @param points The total number of particles.
+     * @param speed  The rotation speed.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator helix(double radius, double height, int turns, int points, double speed) {
         List<Vector> base = new ArrayList<>(points);
         double yStep = height / points;
@@ -284,6 +427,15 @@ public final class Generators {
         };
     }
 
+    /**
+     * Generates a cone-like spiral starting from a point.
+     *
+     * @param maxRadius The final radius at the top.
+     * @param height    The total height.
+     * @param points    The total number of particles.
+     * @param speed     The rotation speed.
+     * @return A dynamic {@link Generator}.
+     */
     public static Generator spiral(double maxRadius, double height, int points, double speed) {
         List<Vector> base = new ArrayList<>(points);
         for (int i = 0; i < points; i++) {

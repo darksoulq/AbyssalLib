@@ -19,12 +19,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * A world generation feature that creates patches of specific ground blocks and overlaying vegetation.
+ * <p>
+ * This feature searches for valid surfaces within a horizontal radius and replaces the top layers
+ * of the terrain with a specified ground block. It then optionally places vegetation on top.
+ * The feature is designed to follow terrain height fluctuations within a specified depth range.
+ */
 public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Config> {
 
+    /**
+     * Constructs a new VegetationPatchFeature with the associated configuration codec.
+     */
     public VegetationPatchFeature() {
         super(Config.CODEC);
     }
 
+    /**
+     * Executes the placement logic for the vegetation patch.
+     * <p>
+     * The algorithm iterates through an elliptical area. For each X/Z coordinate, it performs
+     * a vertical search to locate a surface block that matches the replaceable criteria.
+     * If found, it replaces the surface and subsequent blocks down to the configured depth
+     * with the "ground" block, and rolls a random chance to place "vegetation" on the surface.
+     *
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
+     * @return {@code true} if at least one block was successfully modified; {@code false} otherwise.
+     */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Location origin = context.origin();
@@ -83,8 +104,39 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
         return placed;
     }
 
-    public record Config(List<String> replaceable, BlockInfo ground, BlockInfo vegetation, int radius, int depth, float vegetationChance) implements FeatureConfig {
+    /**
+     * Configuration record for {@link VegetationPatchFeature}.
+     *
+     * @param replaceable      A {@link List} of block identifiers that the patch can replace.
+     * @param ground           The {@link BlockInfo} representing the block state used for the patch's ground.
+     * @param vegetation       The {@link BlockInfo} representing the vegetation state placed on top.
+     * @param radius           The base horizontal radius of the elliptical patch.
+     * @param depth            The vertical thickness of the replaced ground blocks.
+     * @param vegetationChance The probability (0.0 to 1.0) of vegetation spawning on a surface block.
+     */
+    public record Config(
+        List<String> replaceable,
+        BlockInfo ground,
+        BlockInfo vegetation,
+        int radius,
+        int depth,
+        float vegetationChance
+    ) implements FeatureConfig {
+
+        /**
+         * The codec for serializing and deserializing the {@link Config}.
+         */
         public static final Codec<Config> CODEC = new Codec<>() {
+
+            /**
+             * Decodes the configuration from a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new {@link Config} instance.
+             * @throws CodecException If required fields are missing or invalid.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -97,6 +149,15 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
                 return new Config(rep, g, v, r, d, c);
             }
 
+            /**
+             * Encodes the configuration into a map structure.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance to encode.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();

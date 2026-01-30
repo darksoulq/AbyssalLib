@@ -20,16 +20,53 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Handles serialization and deserialization of Bukkit BlockData and TileStates.
+ * <p>
+ * This serializer bridges the gap between live world blocks and AbyssalLib's
+ * dynamic data format, specifically handling inventories via Base64 and
+ * sign text via Adventure components.
+ */
 public class MinecraftBlockSerializer {
 
+    /**
+     * Serializes standard block state properties.
+     *
+     * @param data The {@link BlockData} containing properties like rotation or age.
+     * @param ops  The {@link DynamicOps} instance for data conversion.
+     * @param <D>  The data format type.
+     * @return A map of serialized block properties.
+     */
     public static <D> Map<D, D> serialize(BlockData data, DynamicOps<D> ops) {
         return Adapter.save(ops, data);
     }
 
+    /**
+     * Loads serialized properties back into a BlockData instance.
+     *
+     * @param data The target {@link BlockData} to update.
+     * @param map  The map containing serialized properties.
+     * @param ops  The {@link DynamicOps} instance for data conversion.
+     * @param <D>  The data format type.
+     */
     public static <D> void deserialize(BlockData data, Map<D, D> map, DynamicOps<D> ops) {
         Adapter.load(ops, map, data);
     }
 
+    /**
+     * Serializes a block's Tile Entity data (TileState).
+     * <p>
+     * Currently supports:
+     * <ul>
+     * <li><b>Containers:</b> Inventories (Base64) and Custom Names.</li>
+     * <li><b>Signs:</b> Front-side text lines as Adventure components.</li>
+     * </ul>
+     *
+     * @param block The world {@link Block} to check for tile data.
+     * @param ops   The {@link DynamicOps} instance for data conversion.
+     * @param <D>   The data format type.
+     * @return A map containing tile-specific data, or null if no tile data exists.
+     */
     public static <D> Map<D, D> serializeTile(Block block, DynamicOps<D> ops) {
         BlockState state = block.getState();
         if (!(state instanceof TileState)) return null;
@@ -61,6 +98,14 @@ public class MinecraftBlockSerializer {
         return tileMap.isEmpty() ? null : tileMap;
     }
 
+    /**
+     * Applies serialized tile data back to a block in the world.
+     *
+     * @param block The target world {@link Block}.
+     * @param data  The map containing serialized tile information.
+     * @param ops   The {@link DynamicOps} instance for data conversion.
+     * @param <D>   The data format type.
+     */
     public static <D> void deserializeTile(Block block, Map<D, D> data, DynamicOps<D> ops) {
         if (data == null || data.isEmpty()) return;
         BlockState state = block.getState();
@@ -86,6 +131,12 @@ public class MinecraftBlockSerializer {
         state.update(true, false);
     }
 
+    /**
+     * Converts an inventory's contents to a Base64 encoded string.
+     *
+     * @param inventory The {@link Inventory} to serialize.
+     * @return A Base64 string representing the item contents.
+     */
     private static String toBase64(Inventory inventory) {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -99,6 +150,13 @@ public class MinecraftBlockSerializer {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    /**
+     * Reconstructs an inventory from a Base64 encoded string.
+     *
+     * @param data      The Base64 string.
+     * @param inventory The target {@link Inventory} to populate.
+     * @throws Exception If deserialization or reading fails.
+     */
     private static void fromBase64(String data, Inventory inventory) throws Exception {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
         org.bukkit.util.io.BukkitObjectInputStream dataInput = new org.bukkit.util.io.BukkitObjectInputStream(inputStream);

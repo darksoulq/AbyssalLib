@@ -2,32 +2,70 @@ package com.github.darksoulq.abyssallib.common.color;
 
 import org.bukkit.Color;
 
+/**
+ * A specialized utility class for converting between various color spaces.
+ * <p>
+ * This class provides low-level mathematical conversions for:
+ * <ul>
+ * <li><b>RGB / Hex:</b> Standard web and computer colors.</li>
+ * <li><b>HSB:</b> Hue, Saturation, and Brightness.</li>
+ * <li><b>CMYK:</b> Cyan, Magenta, Yellow, and Key (Black) for print modeling.</li>
+ * <li><b>CIE XYZ:</b> The device-independent color space foundation.</li>
+ * <li><b>CIE Lab:</b> A perceptually uniform color space.</li>
+ * <li><b>OkLab:</b> A modern perceptually uniform space designed for better gradients.</li>
+ * <li><b>LCH:</b> Cylindrical representation of Lab (Lightness, Chroma, Hue).</li>
+ * </ul>
+ */
 public final class ColorConverter {
 
+    /**
+     * Parses a hexadecimal string into a Bukkit {@link Color}.
+     *
+     * @param hex The hexadecimal string (e.g., "#FFFFFF").
+     * @return The resulting Color object.
+     */
     public static Color fromHex(String hex) {
-        if (hex.startsWith("#")) hex = hex.substring(1);
-        if (hex.length() == 3) {
-            char r = hex.charAt(0);
-            char g = hex.charAt(1);
-            char b = hex.charAt(2);
-            hex = "" + r + r + g + g + b + b;
-        }
-        return Color.fromRGB(Integer.parseInt(hex, 16));
+        return ColorUtils.hex(hex);
     }
 
+    /**
+     * Converts a Color into a hexadecimal string representation.
+     *
+     * @param color The {@link Color} to convert.
+     * @return A string formatted as "#RRGGBB".
+     */
     public static String toHex(Color color) {
         return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
     }
 
+    /**
+     * Extracts HSB components from a Color.
+     *
+     * @param color The {@link Color} to convert.
+     * @return A float array containing [Hue, Saturation, Brightness].
+     */
     public static float[] toHSB(Color color) {
         return java.awt.Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     }
 
+    /**
+     * Creates a Color from HSB components.
+     *
+     * @param h Hue (0.0 to 1.0).
+     * @param s Saturation (0.0 to 1.0).
+     * @param b Brightness (0.0 to 1.0).
+     * @return The resulting {@link Color}.
+     */
     public static Color fromHSB(float h, float s, float b) {
-        int rgb = java.awt.Color.HSBtoRGB(h, s, b);
-        return Color.fromRGB(rgb & 0xFFFFFF);
+        return ColorUtils.hsb(h, s, b);
     }
 
+    /**
+     * Converts a Color into CMYK components.
+     *
+     * @param color The {@link Color} to convert.
+     * @return A float array containing [C, M, Y, K] values (0.0 to 1.0).
+     */
     public static float[] toCMYK(Color color) {
         float r = color.getRed() / 255f;
         float g = color.getGreen() / 255f;
@@ -40,6 +78,15 @@ public final class ColorConverter {
         return new float[]{c, m, y, k};
     }
 
+    /**
+     * Creates a Color from CMYK components.
+     *
+     * @param c Cyan (0.0 to 1.0).
+     * @param m Magenta (0.0 to 1.0).
+     * @param y Yellow (0.0 to 1.0).
+     * @param k Key/Black (0.0 to 1.0).
+     * @return The resulting {@link Color}.
+     */
     public static Color fromCMYK(float c, float m, float y, float k) {
         int r = (int) (255 * (1 - c) * (1 - k));
         int g = (int) (255 * (1 - m) * (1 - k));
@@ -47,6 +94,13 @@ public final class ColorConverter {
         return Color.fromRGB(clamp(r), clamp(g), clamp(b));
     }
 
+    /**
+     * Converts a Color to CIE XYZ space.
+     * Uses sRGB D65 constants and performs linearization (gamma expansion).
+     *
+     * @param c The {@link Color} to convert.
+     * @return A double array containing [X, Y, Z].
+     */
     public static double[] toXYZ(Color c) {
         double r = pivotRGB(c.getRed() / 255.0);
         double g = pivotRGB(c.getGreen() / 255.0);
@@ -58,6 +112,14 @@ public final class ColorConverter {
         };
     }
 
+    /**
+     * Converts CIE XYZ coordinates back into a Color.
+     *
+     * @param x Coordinate X.
+     * @param y Coordinate Y.
+     * @param z Coordinate Z.
+     * @return The resulting {@link Color}.
+     */
     public static Color fromXYZ(double x, double y, double z) {
         double r = x * 3.2406 + y * -1.5372 + z * -0.4986;
         double g = x * -0.9689 + y * 1.8758 + z * 0.0415;
@@ -65,24 +127,48 @@ public final class ColorConverter {
         return Color.fromRGB(unpivotRGB(r), unpivotRGB(g), unpivotRGB(b));
     }
 
+    /**
+     * Converts a Color to CIE Lab space.
+     * This space is designed to be perceptually uniform, where a change in value
+     * corresponds to a similar change in human perception.
+     *
+     * @param c The {@link Color} to convert.
+     * @return A double array containing [L, a, b].
+     */
     public static double[] toLab(Color c) {
         double[] xyz = toXYZ(c);
         double x = pivotXYZ(xyz[0] / 0.95047);
-        double y = pivotXYZ(xyz[1] / 1.00000);
+        double y = pivotXYZ(xyz[1]);
         double z = pivotXYZ(xyz[2] / 1.08883);
         return new double[]{116 * y - 16, 500 * (x - y), 200 * (y - z)};
     }
 
+    /**
+     * Creates a Color from CIE Lab coordinates.
+     *
+     * @param l Lightness (0.0 to 100.0).
+     * @param a The green-red axis.
+     * @param b The blue-yellow axis.
+     * @return The resulting {@link Color}.
+     */
     public static Color fromLab(double l, double a, double b) {
         double y = (l + 16) / 116.0;
         double x = a / 500.0 + y;
         double z = y - b / 200.0;
         x = unpivotXYZ(x) * 0.95047;
-        y = unpivotXYZ(y) * 1.00000;
+        y = unpivotXYZ(y);
         z = unpivotXYZ(z) * 1.08883;
         return fromXYZ(x, y, z);
     }
 
+    /**
+     * Converts a Color to the OkLab space.
+     * OkLab is a modern perceptually uniform space that improves upon CIELAB,
+     * specifically for better hue preservation and uniform lightness.
+     *
+     * @param c The {@link Color} to convert.
+     * @return A double array containing [L, a, b] in OkLab format.
+     */
     public static double[] toOkLab(Color c) {
         double r = c.getRed() / 255.0;
         double g = c.getGreen() / 255.0;
@@ -103,6 +189,14 @@ public final class ColorConverter {
         };
     }
 
+    /**
+     * Creates a Color from OkLab coordinates.
+     *
+     * @param L Lightness.
+     * @param a The a-axis (green to red).
+     * @param b The b-axis (blue to yellow).
+     * @return The resulting {@link Color}.
+     */
     public static Color fromOkLab(double L, double a, double b) {
         double l_ = L + 0.3963377774f * a + 0.2158037573f * b;
         double m_ = L - 0.1055613458f * a - 0.0638541728f * b;
@@ -119,6 +213,13 @@ public final class ColorConverter {
         return Color.fromRGB(clamp((int)(r * 255)), clamp((int)(g * 255)), clamp((int)(blue * 255)));
     }
 
+    /**
+     * Converts a Color to LCH (Lightness, Chroma, Hue) coordinates.
+     * This is a cylindrical representation of the Lab space.
+     *
+     * @param c The {@link Color} to convert.
+     * @return A double array containing [Lightness, Chroma, Hue in degrees].
+     */
     public static double[] toLch(Color c) {
         double[] lab = toLab(c);
         double l = lab[0];
@@ -129,6 +230,14 @@ public final class ColorConverter {
         return new double[]{l, chroma, h};
     }
 
+    /**
+     * Creates a Color from LCH coordinates.
+     *
+     * @param l Lightness.
+     * @param c Chroma.
+     * @param h Hue (in degrees, 0.0 to 360.0).
+     * @return The resulting {@link Color}.
+     */
     public static Color fromLch(double l, double c, double h) {
         double hRad = Math.toRadians(h);
         double a = c * Math.cos(hRad);
@@ -136,23 +245,53 @@ public final class ColorConverter {
         return fromLab(l, a, b);
     }
 
+    /**
+     * Linearizes sRGB components (gamma expansion).
+     *
+     * @param n The normalized RGB component.
+     * @return The linearized value.
+     */
     private static double pivotRGB(double n) {
         return (n > 0.04045) ? Math.pow((n + 0.055) / 1.055, 2.4) : n / 12.92;
     }
 
+    /**
+     * De-linearizes RGB components (gamma compression) and clamps to byte range.
+     *
+     * @param n The linearized RGB component.
+     * @return The integer component (0-255).
+     */
     private static int unpivotRGB(double n) {
         double v = (n > 0.0031308) ? 1.055 * Math.pow(n, 1 / 2.4) - 0.055 : 12.92 * n;
         return clamp((int) (v * 255));
     }
 
+    /**
+     * Helper for converting XYZ to Lab.
+     *
+     * @param n Component ratio.
+     * @return Pivoted value.
+     */
     private static double pivotXYZ(double n) {
         return (n > 0.008856) ? Math.pow(n, 1.0/3.0) : (7.787 * n) + (16.0 / 116.0);
     }
 
+    /**
+     * Helper for converting Lab back to XYZ.
+     *
+     * @param n Component.
+     * @return Unpivoted value.
+     */
     private static double unpivotXYZ(double n) {
         return (n * n * n > 0.008856) ? n * n * n : (n - 16.0 / 116.0) / 7.787;
     }
 
+    /**
+     * Clamps an integer between 0 and 255.
+     *
+     * @param v The value to clamp.
+     * @return The clamped value.
+     */
     private static int clamp(int v) {
         return Math.max(0, Math.min(255, v));
     }

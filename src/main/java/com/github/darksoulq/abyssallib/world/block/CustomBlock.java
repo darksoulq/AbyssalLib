@@ -78,7 +78,7 @@ public class CustomBlock implements Cloneable {
     /**
      * Constructs a new CustomBlock with the given identifier and base material.
      *
-     * @param id the unique identifier
+     * @param id       the unique identifier
      * @param material the base vanilla material
      */
     public CustomBlock(Identifier id, Material material) {
@@ -177,7 +177,7 @@ public class CustomBlock implements Cloneable {
     /**
      * Places the block at the specified Bukkit block location.
      *
-     * @param block the target block
+     * @param block   the target block
      * @param loading true if this is being loaded from disk, false if newly placed
      */
     public void place(Block block, boolean loading) {
@@ -213,9 +213,9 @@ public class CustomBlock implements Cloneable {
     /**
      * Calculates the experience to drop based on block properties.
      *
-     * @param player the player breaking the block
+     * @param player       the player breaking the block
      * @param fortuneLevel the fortune enchantment level
-     * @param silkTouch whether silk touch is used
+     * @param silkTouch    whether silk touch is used
      * @return amount of XP to drop
      */
     public int getExpToDrop(Player player, int fortuneLevel, boolean silkTouch) {
@@ -274,17 +274,33 @@ public class CustomBlock implements Cloneable {
         return Registries.ITEMS.get(block.getId().toString());
     }
 
+    /**
+     * Compares this block to another object.
+     *
+     * @param o the other object
+     * @return true if equal
+     */
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CustomBlock block)) return false;
         return Objects.equals(id, block.id) && Objects.equals(location, block.location);
     }
 
+    /**
+     * Generates a hash code for this block.
+     *
+     * @return the hash code
+     */
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
     }
 
+    /**
+     * Clones this custom block instance.
+     *
+     * @return a clone of the block
+     */
     @Override
     public CustomBlock clone() {
         try {
@@ -318,8 +334,8 @@ public class CustomBlock implements Cloneable {
      * Called when the block is placed by a player.
      *
      * @param player the player
-     * @param loc the location
-     * @param stack the item stack used
+     * @param loc    the location
+     * @param stack  the item stack used
      * @return ActionResult
      */
     public ActionResult onPlaced(Player player, Location loc, ItemStack stack) {
@@ -330,8 +346,8 @@ public class CustomBlock implements Cloneable {
      * Called when the block is broken by a player.
      *
      * @param player the player
-     * @param loc the location
-     * @param tool the tool used
+     * @param loc    the location
+     * @param tool   the tool used
      * @return ActionResult
      */
     public ActionResult onBreak(Player player, Location loc, ItemStack tool) {
@@ -341,7 +357,7 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block is destroyed by an explosion.
      *
-     * @param eCause the entity that caused the explosion, if any
+     * @param eCause     the entity that caused the explosion, if any
      * @param blockCause the block that caused the explosion, if any
      * @return ActionResult
      */
@@ -396,6 +412,7 @@ public class CustomBlock implements Cloneable {
 
     /**
      * Called when the block is moved by a piston.
+     *
      * @param direction the direction of movement
      * @return ActionResult
      */
@@ -416,7 +433,8 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block fades (e.g. ice melting).
      *
-     * @param event the event details
+     * @param block    the block instance
+     * @param newState the state being transitioned to
      * @return ActionResult
      */
     public ActionResult onFade(Block block, BlockState newState) {
@@ -426,7 +444,8 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block forms (e.g. snow forming).
      *
-     * @param event the event details
+     * @param block    the block instance
+     * @param newState the state being transitioned to
      * @return ActionResult
      */
     public ActionResult onForm(Block block, BlockState newState) {
@@ -436,7 +455,8 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block grows (e.g. crops).
      *
-     * @param event the event details
+     * @param block    the block instance
+     * @param newState the state being transitioned to
      * @return ActionResult
      */
     public ActionResult onGrow(Block block, BlockState newState) {
@@ -446,7 +466,9 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block ignites.
      *
-     * @param event the event details
+     * @param cause           the reason for ignition
+     * @param ignitingEntity  the entity causing ignition
+     * @param ignitingBlock   the block causing ignition
      * @return ActionResult
      */
     public ActionResult onIgnite(BlockIgniteEvent.IgniteCause cause, Entity ignitingEntity, Block ignitingBlock) {
@@ -456,7 +478,9 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block spreads (e.g. fire, mushrooms).
      *
-     * @param event the event details
+     * @param block    the block instance
+     * @param source   the source of the spread
+     * @param newState the state being transitioned to
      * @return ActionResult
      */
     public ActionResult onSpread(Block block, Block source, BlockState newState) {
@@ -475,7 +499,7 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when a sponge absorbs water.
      *
-     * @param spongedBlocks the blocks that the Sponge should clear, containing their cleared block state (e.g having Material type AIR)
+     * @param spongedBlocks the list of affected block states
      * @return ActionResult
      */
     public ActionResult onSpongeAbsorb(List<BlockState> spongedBlocks) {
@@ -485,7 +509,8 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when a sign is changed.
      *
-     * @param event the event details
+     * @param player the player changing the sign
+     * @param side   the side of the sign affected
      * @return ActionResult
      */
     public ActionResult onSignChange(Player player, Side side) {

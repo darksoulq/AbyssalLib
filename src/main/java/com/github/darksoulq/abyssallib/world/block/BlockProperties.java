@@ -77,6 +77,19 @@ public class BlockProperties {
      */
     public final PistonReaction pistonReaction;
 
+    /**
+     * Private constructor for creating immutable block properties.
+     *
+     * @param hardness         the break speed multiplier
+     * @param resistance       the explosion resistance
+     * @param requireSilkTouch if silk touch is needed for self-drops
+     * @param allowFortune     if fortune increases drop count
+     * @param isFlammable      if the block catches fire
+     * @param allowPhysics     if physics updates are accepted
+     * @param minExp           minimum experience reward
+     * @param maxExp           maximum experience reward
+     * @param pistonReaction   piston interaction behavior
+     */
     private BlockProperties(
         float hardness,
         float resistance,
@@ -111,14 +124,23 @@ public class BlockProperties {
      * Builder for constructing {@link BlockProperties} instances.
      */
     public static class Builder {
+        /** The default hardness value. */
         private float hardness = 1.0f;
+        /** The default resistance value. */
         private float resistance = 1.0f;
+        /** The default silk touch requirement. */
         private boolean requireSilkTouch = false;
+        /** The default fortune allowance. */
         private boolean allowFortune = false;
+        /** The default flammability state. */
         private boolean isFlammable = false;
+        /** The default physics allowance. */
         private boolean allowPhysics = false;
+        /** The default minimum experience. */
         private int minExp = 0;
+        /** The default maximum experience. */
         private int maxExp = 0;
+        /** The default piston reaction. */
         private PistonReaction pistonReaction = PistonReaction.MOVE;
 
         /**
