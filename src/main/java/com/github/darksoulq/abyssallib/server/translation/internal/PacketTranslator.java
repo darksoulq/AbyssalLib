@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.translation.internal;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
@@ -12,78 +13,82 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class PacketTranslator {
 
-    public static void process(Packet<?> packet, Player player) {
+    public static Packet<?> process(Packet<?> packet, Player player) {
         try {
-            if (packet instanceof ClientboundSystemChatPacket p) handleChat(p, player);
-            else if (packet instanceof ClientboundSetTitleTextPacket p) handleTitle(p, player);
-            else if (packet instanceof ClientboundSetSubtitleTextPacket p) handleSubtitle(p, player);
-            else if (packet instanceof ClientboundSetActionBarTextPacket p) handleActionBar(p, player);
-            else if (packet instanceof ClientboundOpenScreenPacket p) handleOpenScreen(p, player);
-            else if (packet instanceof ClientboundTabListPacket p) handleTabList(p, player);
-            else if (packet instanceof ClientboundContainerSetSlotPacket p) handleSlot(p, player);
-            else if (packet instanceof ClientboundContainerSetContentPacket p) handleContent(p, player);
-            else if (packet instanceof ClientboundSetEntityDataPacket p) handleEntityData(p, player);
+            if (packet instanceof ClientboundSystemChatPacket p) return handleChat(p, player);
+            if (packet instanceof ClientboundSetTitleTextPacket p) return handleTitle(p, player);
+            if (packet instanceof ClientboundSetSubtitleTextPacket p) return handleSubtitle(p, player);
+            if (packet instanceof ClientboundSetActionBarTextPacket p) return handleActionBar(p, player);
+            if (packet instanceof ClientboundOpenScreenPacket p) return handleOpenScreen(p, player);
+            if (packet instanceof ClientboundTabListPacket p) return handleTabList(p, player);
+            if (packet instanceof ClientboundContainerSetSlotPacket p) return handleSlot(p, player);
+            if (packet instanceof ClientboundContainerSetContentPacket p) return handleContent(p, player);
+            if (packet instanceof ClientboundSetEntityDataPacket p) return handleEntityData(p, player);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return packet;
     }
 
-    private static void handleChat(ClientboundSystemChatPacket packet, Player player) throws Exception {
-        modify(packet, "content", val -> translate(val, player));
+    private static Packet<?> handleChat(ClientboundSystemChatPacket packet, Player player) {
+        return new ClientboundSystemChatPacket((net.minecraft.network.chat.Component) translate(packet.content(), player), packet.overlay());
     }
 
-    private static void handleTitle(ClientboundSetTitleTextPacket packet, Player player) throws Exception {
-        modify(packet, "text", val -> translate(val, player));
+    private static Packet<?> handleTitle(ClientboundSetTitleTextPacket packet, Player player) {
+        return new ClientboundSetTitleTextPacket((net.minecraft.network.chat.Component) translate(packet.text(), player));
     }
 
-    private static void handleSubtitle(ClientboundSetSubtitleTextPacket packet, Player player) throws Exception {
-        modify(packet, "text", val -> translate(val, player));
+    private static Packet<?> handleSubtitle(ClientboundSetSubtitleTextPacket packet, Player player) {
+        return new ClientboundSetSubtitleTextPacket((net.minecraft.network.chat.Component) translate(packet.text(), player));
     }
 
-    private static void handleActionBar(ClientboundSetActionBarTextPacket packet, Player player) throws Exception {
-        modify(packet, "text", val -> translate(val, player));
+    private static Packet<?> handleActionBar(ClientboundSetActionBarTextPacket packet, Player player) {
+        return new ClientboundSetActionBarTextPacket((net.minecraft.network.chat.Component) translate(packet.text(), player));
     }
 
-    private static void handleOpenScreen(ClientboundOpenScreenPacket packet, Player player) throws Exception {
-        modify(packet, "title", val -> translate(val, player));
+    private static Packet<?> handleOpenScreen(ClientboundOpenScreenPacket packet, Player player) {
+        return new ClientboundOpenScreenPacket(packet.getContainerId(), packet.getType(), (net.minecraft.network.chat.Component) translate(packet.getTitle(), player));
     }
 
-    private static void handleTabList(ClientboundTabListPacket packet, Player player) throws Exception {
-        modify(packet, "header", val -> translate(val, player));
-        modify(packet, "footer", val -> translate(val, player));
+    private static Packet<?> handleTabList(ClientboundTabListPacket packet, Player player) {
+        net.minecraft.network.chat.Component header = packet.header();
+        net.minecraft.network.chat.Component footer = packet.footer();
+        return new ClientboundTabListPacket(
+            (net.minecraft.network.chat.Component) translate(header, player),
+            (net.minecraft.network.chat.Component) translate(footer, player)
+        );
     }
 
-    private static void handleSlot(ClientboundContainerSetSlotPacket packet, Player player) throws Exception {
+    private static Packet<?> handleSlot(ClientboundContainerSetSlotPacket packet, Player player) {
         ItemStack original = packet.getItem();
-        if (original.isEmpty()) return;
+        if (original.isEmpty()) return packet;
 
         ItemStack copy = original.copy();
         translateItem(copy, player);
 
-        setField(packet, "itemStack", copy);
+        return new ClientboundContainerSetSlotPacket(packet.getContainerId(), packet.getStateId(), packet.getSlot(), copy);
     }
 
-    private static void handleContent(ClientboundContainerSetContentPacket packet, Player player) throws Exception {
+    private static Packet<?> handleContent(ClientboundContainerSetContentPacket packet, Player player) {
         List<ItemStack> originalItems = packet.items();
-        List<ItemStack> translatedItems = new ArrayList<>(originalItems.size());
+        NonNullList<ItemStack> translatedItems = NonNullList.withSize(originalItems.size(), ItemStack.EMPTY);
         boolean changed = false;
 
-        for (ItemStack stack : originalItems) {
+        for (int i = 0; i < originalItems.size(); i++) {
+            ItemStack stack = originalItems.get(i);
             if (stack.isEmpty()) {
-                translatedItems.add(stack);
+                translatedItems.set(i, stack);
                 continue;
             }
             ItemStack copy = stack.copy();
             translateItem(copy, player);
-            translatedItems.add(copy);
+            translatedItems.set(i, copy);
             changed = true;
         }
 
@@ -95,17 +100,17 @@ public class PacketTranslator {
             changed = true;
         }
 
-        if (changed) {
-            setField(packet, "items", translatedItems);
-            setField(packet, "carriedItem", translatedCarried);
-        }
+        if (!changed) return packet;
+
+        return new ClientboundContainerSetContentPacket(packet.containerId(), packet.stateId(), translatedItems, translatedCarried);
     }
 
     @SuppressWarnings("unchecked")
-    private static void handleEntityData(ClientboundSetEntityDataPacket packet, Player player) throws Exception {
+    private static Packet<?> handleEntityData(ClientboundSetEntityDataPacket packet, Player player) {
         List<SynchedEntityData.DataValue<?>> packed = packet.packedItems();
+        if (packed == null) return packet;
 
-        List<SynchedEntityData.DataValue<?>> newValues = new ArrayList<>();
+        List<SynchedEntityData.DataValue<?>> newValues = new ArrayList<>(packed.size());
         boolean modified = false;
 
         for (SynchedEntityData.DataValue<?> entry : packed) {
@@ -124,9 +129,9 @@ public class PacketTranslator {
             }
         }
 
-        if (modified) {
-            setField(packet, "packedItems", newValues);
-        }
+        if (!modified) return packet;
+
+        return new ClientboundSetEntityDataPacket(packet.id(), newValues);
     }
 
     private static void translateItem(ItemStack stack, Player player) {
@@ -161,20 +166,5 @@ public class PacketTranslator {
         Component adventure = PaperAdventure.asAdventure(vanilla);
         Component translated = ServerTranslator.translate(adventure, player);
         return PaperAdventure.asVanilla(translated);
-    }
-
-    private static void modify(Packet<?> packet, String fieldName, Function<Object, Object> transformer) throws Exception {
-        Field field = packet.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        Object value = field.get(packet);
-        if (value != null) {
-            field.set(packet, transformer.apply(value));
-        }
-    }
-
-    private static void setField(Object target, String name, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(name);
-        field.setAccessible(true);
-        field.set(target, value);
     }
 }

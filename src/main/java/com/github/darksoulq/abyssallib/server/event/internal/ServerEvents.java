@@ -24,6 +24,7 @@ import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenLoader;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import com.github.darksoulq.abyssallib.world.structure.internal.StructureLoader;
+import net.minecraft.network.protocol.Packet;
 import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.entity.Entity;
@@ -71,7 +72,12 @@ public class ServerEvents {
     @SubscribeEvent
     public void onPacketSend(PacketSendEvent event) {
         if (event.getPlayer() == null) return;
-        PacketTranslator.process(event.getPacket(), event.getPlayer());
+        Packet<?> original = event.getPacket();
+        Packet<?> translated = PacketTranslator.process(original, event.getPlayer());
+
+        if (original != translated) {
+            event.setPacket(translated);
+        }
     }
 
     @SubscribeEvent

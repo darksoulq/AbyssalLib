@@ -106,35 +106,52 @@ public class Structure {
                                               @NotNull StructureRotation rotation, @NotNull Mirror mirror,
                                               float integrity, int blocksPerTick) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).runTaskTimer(plugin, 0L, 1L);
+        Vector center = calculateCenter();
+        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future, center).runTaskTimer(plugin, 0L, 1L);
         return future;
     }
 
     public void place(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
+        Vector center = calculateCenter();
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-            placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+            placeBlock(origin.getWorld(), origin, sb, rotation, mirror, center);
         }
     }
 
     public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
+        Vector center = calculateCenter();
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-            placeBlock(level, origin, sb, rotation, mirror);
+            placeBlock(level, origin, sb, rotation, mirror, center);
         }
+    }
+
+    private Vector calculateCenter() {
+        if (blocks.isEmpty()) return new Vector(0, 0, 0);
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+
+        for (StructureBlock b : blocks) {
+            if (b.x < minX) minX = b.x;
+            if (b.x > maxX) maxX = b.x;
+            if (b.z < minZ) minZ = b.z;
+            if (b.z > maxZ) maxZ = b.z;
+        }
+        return new Vector((minX + maxX) / 2.0, 0, (minZ + maxZ) / 2.0);
     }
 
     public void addProcessor(StructureProcessor processor) {
         processors.add(processor);
     }
 
-    private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror) {
+    private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror, Vector center) {
         if (sb.stateIndex < 0 || sb.stateIndex >= palette.size()) return;
 
         Vector relativePos = new Vector(sb.x, sb.y, sb.z);
-        Vector transformedPos = transform(relativePos, mirror, rotation);
+        Vector transformedPos = transform(relativePos, mirror, rotation, center);
         Location target = origin.clone().add(transformedPos);
         PaletteEntry entry = palette.get(sb.stateIndex);
 
@@ -215,9 +232,9 @@ public class Structure {
         }
     }
 
-    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
-        double x = pos.getX();
-        double z = pos.getZ();
+    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation, Vector center) {
+        double x = pos.getX() - center.getX();
+        double z = pos.getZ() - center.getZ();
 
         switch (mirror) {
             case LEFT_RIGHT -> z = -z;
@@ -241,7 +258,8 @@ public class Structure {
                 newZ = -x;
             }
         }
-        return new Vector(newX, pos.getY(), newZ);
+
+        return new Vector(Math.round(newX + center.getX()), pos.getY(), Math.round(newZ + center.getZ()));
     }
 
     public ObjectNode serialize() {
@@ -323,13 +341,15 @@ public class Structure {
         private final int limit;
         private final CompletableFuture<Void> future;
         private final Iterator<StructureBlock> iterator;
+        private final Vector center;
 
-        public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future) {
+        public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future, Vector center) {
             this.origin = origin;
             this.rotation = rotation;
             this.mirror = mirror;
             this.limit = limit;
             this.future = future;
+            this.center = center;
             this.iterator = blocks.iterator();
 
             if (integrity < 1.0f) {
@@ -342,7 +362,7 @@ public class Structure {
             int count = 0;
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
-                placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+                placeBlock(origin.getWorld(), origin, sb, rotation, mirror, center);
                 count++;
             }
             if (!iterator.hasNext()) {
