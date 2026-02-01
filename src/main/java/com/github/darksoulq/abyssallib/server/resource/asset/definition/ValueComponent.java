@@ -35,12 +35,12 @@ public interface ValueComponent {
 
             json.put("modifiers", modifiers);
             if (min != null) {
-                Map<String, Integer> size = new HashMap<>();
                 if (max != null) {
+                    Map<String, Integer> size = new HashMap<>();
                     size.put("min", min);
                     size.put("max", max);
-                }
-                json.put("size", max == null ? min : size);
+                    json.put("size", size);
+                } else json.put("size", min);
             }
             return json;
         }
@@ -101,12 +101,12 @@ public interface ValueComponent {
                 json.put("attribute", attributes.size() > 1 ? attributes.stream().map(a -> a.key().toString()).toList() : attributes.getFirst().key().toString());
                 json.put("id", id.toString());
                 if (min != null) {
-                    Map<String, Integer> amount = new HashMap<>();
                     if (max != null) {
+                        Map<String, Integer> amount = new HashMap<>();
                         amount.put("min", min);
                         amount.put("max", max);
-                    }
-                    json.put("amount", max == null ? min : amount);
+                        json.put("amount", amount);
+                    } else json.put("amount", min);
                 }
                 if (operation != null) json.put("operation", operation.toString().toLowerCase());
                 if (slot != null) json.put("slot", slot.toString().toLowerCase());
@@ -168,12 +168,12 @@ public interface ValueComponent {
                 Map<String, Object> json = new HashMap<>();
                 json.put("test", contains.toJson());
                 if (min != null) {
-                    Map<String, Integer> amount = new HashMap<>();
                     if (max != null) {
+                        Map<String, Integer> amount = new HashMap<>();
                         amount.put("min", min);
                         amount.put("max", max);
-                    }
-                    json.put("count", max == null ? min : amount);
+                        json.put("count", amount);
+                    } else json.put("count", min);
                 }
                 return json;
             }
@@ -322,6 +322,71 @@ public interface ValueComponent {
                 Map<String, Object> json = new LinkedHashMap<>();
                 values.forEach((k, v) -> json.put(k, v.toJson()));
                 return json;
+            }
+        }
+    }
+    class Damage implements ValueComponent {
+        private final Integer minDmg, maxDmg, minDur, maxDur;
+
+        private Damage(Integer minDmg, Integer maxDmg, Integer minDur, Integer maxDur) {
+            this.minDmg = minDmg;
+            this.maxDmg = maxDmg;
+            this.minDur = minDur;
+            this.maxDur = maxDur;
+        }
+
+        @Override
+        public String id() {
+            return "minecraft:damage";
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String, Object> json = new HashMap<>();
+            if (minDmg != null) {
+                if (maxDmg != null) {
+                    Map<String, Object> damage = new HashMap<>();
+                    damage.put("min", minDmg);
+                    damage.put("max", maxDmg);
+                    json.put("damage", damage);
+                } else json.put("damage", minDmg);
+            }
+            if (minDur != null) {
+                if (maxDur != null) {
+                    Map<String, Object> durability = new HashMap<>();
+                    durability.put("min", minDur);
+                    durability.put("max", maxDur);
+                    json.put("damage", durability);
+                } else json.put("damage", minDur);
+            }
+            return json;
+        }
+
+        public static class Builder {
+            private Integer minDmg, maxDmg, minDur, maxDur;
+
+            public Builder damage(int damage) {
+                this.minDmg = damage;
+                return this;
+            }
+            public Builder damage(int min, int max) {
+                this.minDmg = min;
+                this.maxDmg = max;
+                return this;
+            }
+
+            public Builder durability(int durability) {
+                this.minDur = durability;
+                return this;
+            }
+            public Builder durability(int min, int max) {
+                this.minDur = min;
+                this.maxDmg = max;
+                return this;
+            }
+
+            public Damage build() {
+                return new Damage(minDmg, maxDmg, minDur, maxDur);
             }
         }
     }
