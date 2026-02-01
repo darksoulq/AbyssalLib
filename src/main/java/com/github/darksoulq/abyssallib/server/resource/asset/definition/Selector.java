@@ -564,13 +564,16 @@ public interface Selector {
             json.put("property", property.id());
             switch (property) {
                 case CustomModelData customModelData -> json.put("index", customModelData.index);
+                case Component component -> {
+                    json.put("predicate", component.component.id());
+                    json.put("value", component.component.toJson());
+                }
                 case KeybindDown keybindDown -> json.put("keybind", keybindDown.keybind.type);
                 case HasComponent hasComponent -> {
                     json.put("component", hasComponent.component.id());
                     json.put("ignore_default", hasComponent.ignoreDefault);
                 }
-                default -> {
-                }
+                default -> {}
             }
             json.put("on_true", onTrue.toJson());
             json.put("on_false", onFalse.toJson());
@@ -609,6 +612,18 @@ public interface Selector {
             @Override
             public String id() {
                 return "minecraft:custom_model_data";
+            }
+        }
+        public static class Component implements Property {
+            private final ValueComponent component;
+
+            public Component(ValueComponent component) {
+                this.component = component;
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:component";
             }
         }
         public static class Damaged implements Property {

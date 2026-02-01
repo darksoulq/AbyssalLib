@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.translation.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.stream.Stream;
  */
 public class LanguageLoader {
     /** The directory path where external language files are stored. */
-    private static final Path LANG_FOLDER = AbyssalLib.getInstance().getDataFolder().toPath().resolve("lang");
+    public static final Path LANG_FOLDER = AbyssalLib.getInstance().getDataFolder().toPath().resolve("lang");
 
     /**
      * Orchestrates the loading process for a translator.
@@ -35,15 +36,7 @@ public class LanguageLoader {
      * @param translator The {@link CustomTranslator} instance to populate.
      */
     public static void load(CustomTranslator translator) {
-        if (!Files.exists(LANG_FOLDER)) {
-            try {
-                Files.createDirectories(LANG_FOLDER);
-                loadResource(AbyssalLib.getInstance(), "lang/en_us.properties", translator);
-            } catch (IOException e) {
-                AbyssalLib.getInstance().getLogger().severe("Failed to create lang folder: " + e.getMessage());
-                return;
-            }
-        }
+        FileUtils.createDirectories(LANG_FOLDER.toFile());
 
         translator.unregisterAll();
 

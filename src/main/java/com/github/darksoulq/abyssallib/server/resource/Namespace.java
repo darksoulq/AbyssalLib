@@ -300,7 +300,7 @@ public class Namespace {
      * @return Registered item definition
      */
     public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector) {
-        return itemDefinition(name, selector, true, false);
+        return itemDefinition(name, selector, true, false, 1.0);
     }
     /**
      * Registers a programmatic item definition asset.
@@ -311,7 +311,18 @@ public class Namespace {
      * @return Registered item definition
      */
     public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap) {
-        return itemDefinition(name, selector, handAnimationOnSwap, false);
+        return itemDefinition(name, selector, handAnimationOnSwap, false, 1.0);
+    }
+    /**
+     * Registers a programmatic item definition asset.
+     *
+     * @param name                 Item name (e.g. {@code custom_sword})
+     * @param selector             Item model selector
+     * @param swapAnimationScale   How fast the item moves up and down in gui when swapping items
+     * @return Registered item definition
+     */
+    public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, double swapAnimationScale) {
+        return itemDefinition(name, selector, true, false, swapAnimationScale);
     }
     /**
      * Registers a programmatic item definition asset.
@@ -320,10 +331,11 @@ public class Namespace {
      * @param selector             Item model selector
      * @param handAnimationOnSwap  Whether to play hand animation on item swap
      * @param oversizedInGui Whether the model should be oversized or not
+     * @param swapAnimationScale   How fast the item moves up and down in gui when swapping items
      * @return Registered item definition
      */
-    public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap, boolean oversizedInGui) {
-        ItemDefinition def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap, oversizedInGui);
+    public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap, boolean oversizedInGui, double swapAnimationScale) {
+        ItemDefinition def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap, oversizedInGui, swapAnimationScale);
         assets.add(def);
         return def;
     }

@@ -30,20 +30,14 @@ public class ItemDefinition implements Asset {
         this.id = id;
         this.rawData = data;
     }
-
-    public ItemDefinition(String namespace, String id, Selector selector) {
-        this(namespace, id, selector, true, false);
-    }
-    public ItemDefinition(String namespace, String id, Selector selector, boolean handAnimationOnSwap) {
-        this(namespace, id, selector, handAnimationOnSwap, false);
-    }
-    public ItemDefinition(String namespace, String id, Selector selector, boolean handAnimationOnSwap, boolean oversizedInGui) {
+    public ItemDefinition(String namespace, String id, Selector selector, boolean handAnimationOnSwap, boolean oversizedInGui, double swapAnimationScale) {
         this.namespace = namespace;
         this.id = id;
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("model", selector.toJson());
         root.put("hand_animation_on_swap", handAnimationOnSwap);
         root.put("oversized_in_gui", oversizedInGui);
+        root.put("swap_animation_scale", swapAnimationScale);
         this.rawData = new GsonBuilder().setPrettyPrinting().create()
                 .toJson(root).getBytes(StandardCharsets.UTF_8);
     }

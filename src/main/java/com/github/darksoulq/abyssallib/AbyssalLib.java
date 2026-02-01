@@ -21,6 +21,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
+import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
 import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
@@ -41,6 +42,8 @@ import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
@@ -58,6 +61,7 @@ public final class AbyssalLib extends JavaPlugin {
         INSTANCE = this;
         LOGGER = getLogger();
         HookConstants.load();
+        if (!new File(LanguageLoader.LANG_FOLDER.toFile(), "en_us.properties").exists()) saveResource("lang/en_us.properties", false);
 
         ItemBridge.setup();
         BlockBridge.setup();
@@ -131,31 +135,6 @@ public final class AbyssalLib extends JavaPlugin {
         createItemDef("x", ns);
         createItemDef("y", ns);
         createItemDef("z", ns);
-
-        Lang lang = ns.lang("en_us", false);
-        lang.put("item.abyssallib.invisible", "");
-        lang.put("item.abyssallib.forward", "Forward");
-        lang.put("item.abyssallib.close", "Close");
-        lang.put("item.abyssallib.checkmark", "Checkmark");
-
-        lang.put("item.abyssallib.bounding_toggle", "Toggle Bounding Box");
-        lang.put("item.abyssallib.name_structure", "Name Structure");
-        lang.put("item.abyssallib.integrity", "Integrity");
-        lang.put("item.abyssallib.load_structure", "Load Structure");
-        lang.put("item.abyssallib.mirror", "Mirror");
-        lang.put("item.abyssallib.rotate", "Rotate");
-        lang.put("item.abyssallib.save", "Save");
-        lang.put("item.abyssallib.size_x", "Size X");
-        lang.put("item.abyssallib.size_y", "Size Y");
-        lang.put("item.abyssallib.size_z", "Size Z");
-        lang.put("item.abyssallib.x", "X");
-        lang.put("item.abyssallib.y", "Y");
-        lang.put("item.abyssallib.z", "Z");
-
-        lang.put("item.abyssallib.backward", "Backward");
-        lang.put("item.abyssallib.structure_block", "Structure Block");
-        lang.put("block.abyssallib.structure_block", "Structure Block");
-        lang.put("plugin.abyssallib", "AbyssalLib");
 
         rp.register(false);
     }
