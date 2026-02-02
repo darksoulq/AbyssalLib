@@ -280,9 +280,9 @@ public class Model implements Asset {
     }
 
     public static class Display {
-        private float[] rotation = new float[]{0, 0, 0};
-        private float[] translation = new float[]{0, 0, 0};
-        private float[] scale = new float[]{1, 1, 1};
+        private float[] rotation;
+        private float[] translation;
+        private float[] scale;
 
         public Display rotation(float x, float y, float z) {
             this.rotation = new float[]{x, y, z};
@@ -301,9 +301,9 @@ public class Model implements Asset {
 
         public JsonObject toJson() {
             JsonObject obj = new JsonObject();
-            obj.add("rotation", toArray(rotation));
-            obj.add("translation", toArray(translation));
-            obj.add("scale", toArray(scale));
+            if (rotation != null) obj.add("rotation", toArray(rotation));
+            if (translation != null)obj.add("translation", toArray(translation));
+            if (scale != null) obj.add("scale", toArray(scale));
             return obj;
         }
 
