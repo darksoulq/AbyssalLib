@@ -62,9 +62,7 @@ public class Namespace {
      * @return Registered texture asset
      */
     public @NotNull Texture texture(@NotNull String path, byte @Nullable [] data) {
-        Texture t = (data == null)
-                ? new Texture(plugin, namespace, path)
-                : new Texture(namespace, path, data);
+        Texture t = data == null ? new Texture(plugin, namespace, path) : new Texture(namespace, path, data);
         assets.add(t);
         return t;
     }
@@ -77,7 +75,7 @@ public class Namespace {
      * @return Registered McMeta asset
      */
     public McMeta mcmeta(String path, boolean autoLoad) {
-        McMeta m = new McMeta(plugin, namespace, path, autoLoad);
+        McMeta m = autoLoad ? new McMeta(plugin, namespace, path) : new McMeta(namespace, path);
         assets.add(m);
         return m;
     }

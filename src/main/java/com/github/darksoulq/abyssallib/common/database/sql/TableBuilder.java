@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.database.sql;
 
 import com.github.darksoulq.abyssallib.common.database.AbstractTableBuilder;
+
 import java.sql.Connection;
 
 /**

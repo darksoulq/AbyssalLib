@@ -28,15 +28,15 @@ public interface ValueComponent {
 
         @Override
         public Map<String, Object> toJson() {
-            Map<String, Object> json = new HashMap<>();
-            Map<String, Object> modifiers = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
+            Map<String, Object> modifiers = new LinkedHashMap<>();
             if (!contains.isEmpty()) modifiers.put("contains", contains.stream().map(Contains::toJson).toList());
             if (!counts.isEmpty()) modifiers.put("count", counts.stream().map(Count::toJson).toList());
 
             json.put("modifiers", modifiers);
             if (min != null) {
                 if (max != null) {
-                    Map<String, Integer> size = new HashMap<>();
+                    Map<String, Integer> size = new LinkedHashMap<>();
                     size.put("min", min);
                     size.put("max", max);
                     json.put("size", size);
@@ -97,12 +97,12 @@ public interface ValueComponent {
             }
 
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("attribute", attributes.size() > 1 ? attributes.stream().map(a -> a.key().toString()).toList() : attributes.getFirst().key().toString());
                 json.put("id", id.toString());
                 if (min != null) {
                     if (max != null) {
-                        Map<String, Integer> amount = new HashMap<>();
+                        Map<String, Integer> amount = new LinkedHashMap<>();
                         amount.put("min", min);
                         amount.put("max", max);
                         json.put("amount", amount);
@@ -165,11 +165,11 @@ public interface ValueComponent {
         }
         public record Count(Contains contains, Integer min, Integer max) {
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("test", contains.toJson());
                 if (min != null) {
                     if (max != null) {
-                        Map<String, Integer> amount = new HashMap<>();
+                        Map<String, Integer> amount = new LinkedHashMap<>();
                         amount.put("min", min);
                         amount.put("max", max);
                         json.put("count", amount);
@@ -211,7 +211,7 @@ public interface ValueComponent {
     }
     class CustomData implements ValueComponent {
         private final String value;
-        private final Map<String, CustomDataValue> values = new HashMap<>();
+        private final Map<String, CustomDataValue> values = new LinkedHashMap<>();
 
         public CustomData(Map<String, CustomDataValue> values) {
             this.values.putAll(values);
@@ -228,7 +228,7 @@ public interface ValueComponent {
 
         @Override
         public Object toJson() {
-            Map<String, Object> json = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
             if (value != null) return value;
             else {
                 values.forEach((k, v) -> {
@@ -265,7 +265,7 @@ public interface ValueComponent {
             }
 
             public static class StructBuilder {
-                private final Map<String, CustomDataValue> values = new HashMap<>();
+                private final Map<String, CustomDataValue> values = new LinkedHashMap<>();
 
                 public StructBuilder put(String key, CustomDataValue value) {
                     values.put(key, value);
@@ -342,10 +342,10 @@ public interface ValueComponent {
 
         @Override
         public Object toJson() {
-            Map<String, Object> json = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
             if (minDmg != null) {
                 if (maxDmg != null) {
-                    Map<String, Object> damage = new HashMap<>();
+                    Map<String, Object> damage = new LinkedHashMap<>();
                     damage.put("min", minDmg);
                     damage.put("max", maxDmg);
                     json.put("damage", damage);
@@ -353,7 +353,7 @@ public interface ValueComponent {
             }
             if (minDur != null) {
                 if (maxDur != null) {
-                    Map<String, Object> durability = new HashMap<>();
+                    Map<String, Object> durability = new LinkedHashMap<>();
                     durability.put("min", minDur);
                     durability.put("max", maxDur);
                     json.put("damage", durability);

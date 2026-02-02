@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.common.energy;
 
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNodeChangeEvent;
+
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 

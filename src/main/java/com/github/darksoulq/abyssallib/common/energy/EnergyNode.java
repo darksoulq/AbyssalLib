@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.common.energy;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+
 import java.util.Map;
 import java.util.Set;
 

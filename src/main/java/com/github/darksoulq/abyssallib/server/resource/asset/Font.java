@@ -10,7 +10,6 @@ import org.apache.fontbox.ttf.TTFParser;
 import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.RandomAccessReadBufferedFile;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -25,7 +24,6 @@ import java.util.zip.ZipInputStream;
  * Represents a Minecraft font resource supporting bitmap, space, TTF, and Unihex providers,
  * with full Unicode occupation tracking.
  */
-@ApiStatus.Experimental
 public class Font implements Asset {
 
     /** Namespace of this font (e.g., plugin or resource pack namespace). */
@@ -187,7 +185,7 @@ public class Font implements Asset {
         int textureWidth = size[0];
         int textureHeight = size[1];
 
-        List<LinkedList<Glyph>> result = new ArrayList<>();
+        List<LinkedList<Glyph>> result = new LinkedList<>();
         int cols = textureWidth / spriteW;
         int rows = textureHeight / spriteH;
 

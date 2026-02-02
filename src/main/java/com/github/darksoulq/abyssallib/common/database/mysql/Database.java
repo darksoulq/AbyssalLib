@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.database.mysql;
 
 import com.github.darksoulq.abyssallib.common.database.AbstractDatabase;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

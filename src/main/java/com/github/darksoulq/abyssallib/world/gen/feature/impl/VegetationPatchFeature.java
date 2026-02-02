@@ -11,9 +11,7 @@ import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

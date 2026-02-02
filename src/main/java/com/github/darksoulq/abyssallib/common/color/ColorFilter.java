@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.color;
 
 import org.bukkit.Color;
+
 import java.util.function.UnaryOperator;
 
 /**

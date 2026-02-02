@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
 
@@ -23,7 +20,7 @@ public class BlockState implements Asset {
     private byte[] rawData;
 
     private final Map<String, List<Variant>> variants = new LinkedHashMap<>();
-    private final List<Multipart> multiparts = new ArrayList<>();
+    private final List<Multipart> multiparts = new LinkedList<>();
 
     public BlockState(@NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;

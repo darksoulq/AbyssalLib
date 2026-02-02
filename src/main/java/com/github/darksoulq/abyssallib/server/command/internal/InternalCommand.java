@@ -1,14 +1,15 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.color.ColorProvider;
-import com.github.darksoulq.abyssallib.common.util.Easings;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.command.Command;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.DefaultConditions;
+import com.github.darksoulq.abyssallib.server.command.argument.IdentifierArgument;
+import com.github.darksoulq.abyssallib.server.command.argument.RegistryEntryArgument;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
@@ -24,11 +25,6 @@ import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
-import com.github.darksoulq.abyssallib.world.particle.Particles;
-import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
-import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
-import com.github.darksoulq.abyssallib.world.particle.timeline.Animations;
-import com.github.darksoulq.abyssallib.world.particle.timeline.Timeline;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -46,9 +42,7 @@ import io.papermc.paper.dialog.Dialog;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -68,9 +62,8 @@ public class InternalCommand {
     @Command(name = "abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
-            .requires(DefaultConditions.hasPerm(PermissionConstants.Items.GIVE)
-            ).then(Commands.argument("namespace_id", ArgumentTypes.namespacedKey())
-                .suggests(InternalCommand::giveSuggests)
+            .requires(DefaultConditions.hasPerm(PermissionConstants.Items.GIVE))
+            .then(Commands.argument("item", RegistryEntryArgument.registryEntry(Registries.ITEMS))
                 .executes(InternalCommand::giveOneExecutor)
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                     .executes(InternalCommand::giveMultiExecutor)
@@ -80,7 +73,7 @@ public class InternalCommand {
             .requires(DefaultConditions.hasPerm(PermissionConstants.Attributes.GET))
             .then(Commands.literal("get")
                 .then(Commands.argument("selector", ArgumentTypes.entity())
-                    .then(Commands.argument("type", ArgumentTypes.namespacedKey())
+                    .then(Commands.argument("type", IdentifierArgument.identifier())
                         .suggests(InternalCommand::attributeTypeSuggests)
                         .executes(InternalCommand::attributeGetExecutor)
                     )
@@ -89,7 +82,7 @@ public class InternalCommand {
         ).then(Commands.literal("summon")
             .requires(DefaultConditions.hasPerm(PermissionConstants.Entity.SUMMON))
             .then(Commands.argument("location", ArgumentTypes.finePosition(false))
-                .then(Commands.argument("namespace_id", ArgumentTypes.namespacedKey())
+                .then(Commands.argument("entity", RegistryEntryArgument.registryEntry(Registries.ENTITIES))
                     .executes(ctx -> {
                         try {
                             return summonExecutor(ctx);
@@ -97,7 +90,6 @@ public class InternalCommand {
                             throw new RuntimeException(e);
                         }
                     })
-                    .suggests(InternalCommand::summonSuggests)
                 )
             )
         ).then(Commands.literal("statistics")
@@ -121,7 +113,7 @@ public class InternalCommand {
             )
         ).then(Commands.literal("reload")
             .requires(DefaultConditions.hasPerm(PermissionConstants.Other.RELOAD))
-            .then(Commands.literal("commmands")
+            .then(Commands.literal("commands")
                 .executes(ctx -> {
                     CommandBus.reloadAll();
                     return com.mojang.brigadier.Command.SINGLE_SUCCESS;
@@ -145,6 +137,7 @@ public class InternalCommand {
             .then(Commands.literal("translations")
                 .executes(ctx -> {
                     ServerTranslator.reload();
+                    reply(ctx, "<green>Translations reloaded</green>");
                     return 0;
                 })
             )
@@ -153,7 +146,7 @@ public class InternalCommand {
                 .requires(DefaultConditions.hasPerm(PermissionConstants.Content.ITEMS_VIEW))
                 .executes(ctx -> {
                     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-                        ctx.getSource().getSender().sendRichMessage("<red>Only players can run this command</red>");
+                        reply(ctx, "<red>Only players can run this command</red>");
                         return 0;
                     }
                     ItemMenu.open(player);
@@ -170,7 +163,7 @@ public class InternalCommand {
                     })
                     .executes(ctx -> {
                         if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-                            ctx.getSource().getSender().sendRichMessage("<red>Only players can run this command</red>");
+                            reply(ctx, "<red>Only players can run this command</red>");
                             return 0;
                         }
                         String ns = ctx.getArgument("plugin", String.class);
@@ -202,6 +195,7 @@ public class InternalCommand {
                 .build());
         }
     }
+
     public static void refreshInternalPacks() {
         for (String id : new HashSet<>(UUID_MAP.keySet())) {
             if (id.startsWith("external_")) continue;
@@ -222,14 +216,7 @@ public class InternalCommand {
         Player player = getPlayer(ctx);
         if (player == null) return Command.SUCCESS;
 
-        NamespacedKey id = ctx.getArgument("namespace_id", NamespacedKey.class);
-        Item item = Registries.ITEMS.get(id.asString());
-
-        if (item == null) {
-            reply(ctx, "<red>Not an item</red>");
-            return 0;
-        }
-
+        Item item = ctx.getArgument("item", Item.class);
         player.getInventory().addItem(item.getStack().asQuantity(amount));
         return Command.SUCCESS;
     }
@@ -241,17 +228,9 @@ public class InternalCommand {
     private static int giveMultiExecutor(CommandContext<CommandSourceStack> ctx) {
         return giveItem(ctx, ctx.getArgument("amount", int.class));
     }
-    public static CompletableFuture<Suggestions> giveSuggests(final CommandContext<CommandSourceStack> ctx,
-                                                              final SuggestionsBuilder builder) {
-        for (Item item: Registries.ITEMS.getAll().values()) {
-            if (item.getId().getPath().equals("plugin_icon")) continue;
-            builder.suggest(item.getId().toString());
-        }
-        return builder.buildFuture();
-    }
 
     public static int attributeGetExecutor(CommandContext<CommandSourceStack> ctx) {
-        NamespacedKey key = ctx.getArgument("type", NamespacedKey.class);
+        Identifier key = ctx.getArgument("type", Identifier.class);
         EntitySelectorArgumentResolver selector = ctx.getArgument("selector", EntitySelectorArgumentResolver.class);
 
         Try.of(() -> selector.resolve(ctx.getSource()))
@@ -261,13 +240,14 @@ public class InternalCommand {
                     data.load();
                     Map<String, String> attribMap = data.getAllAttributes();
                     if (attribMap.containsKey(key.toString())) {
-                        ctx.getSource().getSender().sendMessage(key.toString() + ": " + attribMap.get(key.toString()));
+                        ctx.getSource().getSender().sendMessage(key + ": " + attribMap.get(key.toString()));
                     }
                 }
             })
             .orElseThrow(RuntimeException::new);
         return Command.SUCCESS;
     }
+
     public static CompletableFuture<Suggestions> attributeTypeSuggests(final CommandContext<CommandSourceStack> ctx,
                                                                        final SuggestionsBuilder builder) {
         EntitySelectorArgumentResolver selector = ctx.getArgument("selector", EntitySelectorArgumentResolver.class);
@@ -284,28 +264,17 @@ public class InternalCommand {
             .orElseThrow(RuntimeException::new);
     }
 
+    @SuppressWarnings("unchecked")
     public int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
         FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
         org.bukkit.entity.Entity sender = isEntity(ctx.getSource());
         if (sender == null) return Command.SUCCESS;
         Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
-        NamespacedKey id = ctx.getArgument("namespace_id", NamespacedKey.class);
 
-        if (!Registries.ENTITIES.contains(id.asString())) {
-            sender.sendPlainMessage("Not an entity");
-            return Command.SUCCESS;
-        }
+        CustomEntity<? extends LivingEntity> entity = ctx.getArgument("entity", CustomEntity.class);
+        entity.clone().spawn(loc, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
 
-        Registries.ENTITIES.get(id.asString()).clone().spawn(loc, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
         return Command.SUCCESS;
-    }
-    public static CompletableFuture<Suggestions> summonSuggests(final CommandContext<CommandSourceStack> ctx,
-                                                              final SuggestionsBuilder builder) {
-        for (CustomEntity<? extends LivingEntity> entity : Registries.ENTITIES.getAll().values()) {
-            builder.suggest(entity.getId().toString());
-        }
-
-        return builder.buildFuture();
     }
 
     private static int sendStats(CommandContext<CommandSourceStack> ctx, Player target) {
@@ -317,10 +286,8 @@ public class InternalCommand {
 
         String msg = stats.get().stream()
             .map(stat -> {
-                String key = "<lang:%s.stat.%s>"
-                    .formatted(stat.getId().getNamespace(), stat.getId().getPath());
-                return "<aqua>%s</aqua> <gray>=</gray> <yellow>%s</yellow>"
-                    .formatted(key, stat.getValue());
+                String key = "<lang:%s.stat.%s>".formatted(stat.getId().getNamespace(), stat.getId().getPath());
+                return "<aqua>%s</aqua> <gray>=</gray> <yellow>%s</yellow>".formatted(key, stat.getValue());
             })
             .collect(Collectors.joining("\n"));
 
@@ -337,6 +304,7 @@ public class InternalCommand {
         Player target = resolvePlayer(ctx);
         return target == null ? Command.SUCCESS : sendStats(ctx, target);
     }
+
     public static int getSelfStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
         if (player != null) {
@@ -344,6 +312,7 @@ public class InternalCommand {
         }
         return Command.SUCCESS;
     }
+
     public static int getOtherStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player target = resolvePlayer(ctx);
         Player viewer = getPlayer(ctx);
@@ -358,14 +327,13 @@ public class InternalCommand {
         if (!(sender instanceof org.bukkit.entity.Entity entity)) return null;
         return entity;
     }
+
     private static Dialog createStatDialog(Player player) {
         Notice dialog = Dialogs.notice(TextUtil.parse("Statistics"));
         PlayerStatistics stats = PlayerStatistics.of(player);
         if (stats.get().isEmpty()) dialog.body(DialogContent.text(TextUtil.parse("<gray>No statistics found.</gray>")));
         for (Statistic stat : stats.get()) {
-            String langKey = "<lang:%s.stat.%s>"
-                    .formatted(stat.getId().getNamespace(), stat.getId().getPath());
-
+            String langKey = "<lang:%s.stat.%s>".formatted(stat.getId().getNamespace(), stat.getId().getPath());
             dialog.body(DialogContent.text(TextUtil.parse(TextOffset.getOffsetMinimessage(40) + langKey + " = " + stat.getValue())));
         }
         return dialog.build();
@@ -374,9 +342,11 @@ public class InternalCommand {
     private static void reply(CommandContext<CommandSourceStack> ctx, String message) {
         ctx.getSource().getSender().sendRichMessage(message);
     }
+
     private static Player getPlayer(CommandContext<CommandSourceStack> ctx) {
         return ctx.getSource().getExecutor() instanceof Player p ? p : null;
     }
+
     private static Player resolvePlayer(CommandContext<CommandSourceStack> ctx) {
         PlayerSelectorArgumentResolver resolver = ctx.getArgument("player", PlayerSelectorArgumentResolver.class);
         return Try.of(() -> resolver.resolve(ctx.getSource()).getFirst())

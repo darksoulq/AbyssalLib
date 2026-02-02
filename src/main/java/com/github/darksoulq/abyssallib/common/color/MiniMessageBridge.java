@@ -12,7 +12,6 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * A bridge utility connecting the internal color systems with Adventure's MiniMessage.

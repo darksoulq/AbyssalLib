@@ -1,9 +1,9 @@
 package com.github.darksoulq.abyssallib.server.packet;
 
 import net.minecraft.network.protocol.Packet;
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.Bukkit;
 
 /**
  * Utility for low-level packet transmission to clients.

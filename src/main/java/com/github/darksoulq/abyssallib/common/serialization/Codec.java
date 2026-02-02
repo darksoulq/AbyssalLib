@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.util.Either;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;

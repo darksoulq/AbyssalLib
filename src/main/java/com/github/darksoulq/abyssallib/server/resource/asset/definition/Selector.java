@@ -13,7 +13,7 @@ public interface Selector {
 
     class Model implements Selector {
         private final com.github.darksoulq.abyssallib.server.resource.asset.Model model;
-        private final List<Tint> tints = new ArrayList<>();
+        private final List<Tint> tints = new LinkedList<>();
 
         public Model(com.github.darksoulq.abyssallib.server.resource.asset.Model model, Tint... tints) {
             this.model = model;
@@ -559,7 +559,7 @@ public interface Selector {
 
         @Override
         public Map<String, Object> toJson() {
-            Map<String, Object> json = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", id());
             json.put("property", property.id());
             switch (property) {
@@ -728,7 +728,7 @@ public interface Selector {
         }
     }
     class Composite implements Selector {
-        private final List<Selector> selectors = new ArrayList<>();
+        private final List<Selector> selectors = new LinkedList<>();
 
         public Composite add(Selector selector) {
             selectors.add(selector);
@@ -766,7 +766,7 @@ public interface Selector {
     }
     class RangeDispatch implements Selector {
         private final Property property;
-        private final List<Entry> entries = new ArrayList<>();
+        private final List<Entry> entries = new LinkedList<>();
         private int scale = 0;
         private Selector fallback = null;
 
@@ -943,7 +943,7 @@ public interface Selector {
 
         @Override
         public Map<String, Object> toJson() {
-            Map<String, Object> json = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", id());
             json.put("model", type.toJson());
             json.put("base", base.file());
@@ -970,7 +970,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("color", color.name().toLowerCase());
                 return json;
@@ -991,7 +991,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("texture", texture.file());
                 return json;
@@ -1026,7 +1026,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("texture", texture.file());
                 json.put("openness", openness);
@@ -1062,7 +1062,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("wood_type", type.name().toLowerCase());
                 json.put("texture", texture.file());
@@ -1088,7 +1088,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("kind", kind.name().toLowerCase());
                 if (texture != null) {
@@ -1131,7 +1131,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("texture", texture.file());
                 json.put("openness", openness);
@@ -1156,7 +1156,7 @@ public interface Selector {
 
             @Override
             public Map<String, Object> toJson() {
-                Map<String, Object> json = new HashMap<>();
+                Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("wood_type", type.name().toLowerCase());
                 json.put("texture", texture.file());

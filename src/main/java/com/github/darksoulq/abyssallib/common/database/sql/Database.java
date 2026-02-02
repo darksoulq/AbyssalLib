@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.database.sql;
 
 import com.github.darksoulq.abyssallib.common.database.AbstractDatabase;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;

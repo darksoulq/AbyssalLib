@@ -1,33 +1,30 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
-
-/**
- * Represents the {@code pack.mcmeta} metadata file.
- */
 public class PackMcMeta implements Asset {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-    private int packFormat;
-    private Object description;
-    private Integer minFormat, maxFormat;
     private final byte[] rawData;
 
-    /**
-     * Loads {@code pack.mcmeta} directly from {@code resourcepack/pack.mcmeta} inside the plugin JAR.
-     */
-    public PackMcMeta(@NotNull Plugin plugin) {
-        try (InputStream in = plugin.getResource("resourcepack/pack.mcmeta")) {
-            if (in == null) throw new IllegalStateException("Missing pack.mcmeta in resourcepack folder.");
+    private int packFormat = 34;
+    private Object description = "";
+    private Integer minFormat;
+    private Integer maxFormat;
+
+    public PackMcMeta(Plugin plugin) {
+        String path = "resourcepack/pack.mcmeta";
+        try (InputStream in = plugin.getResource(path)) {
+            if (in == null) throw new RuntimeException("pack.mcmeta not found in plugin: " + path);
             this.rawData = in.readAllBytes();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load pack.mcmeta", e);
@@ -38,36 +35,33 @@ public class PackMcMeta implements Asset {
         this.rawData = data;
     }
 
-    /**
-     * Creates a new programmatically defined {@code pack.mcmeta}.
-     */
     public PackMcMeta() {
         this.rawData = null;
     }
 
-    public PackMcMeta packFormat(int fmt) {
-        this.packFormat = fmt;
+    public PackMcMeta packFormat(int format) {
+        this.packFormat = format;
         return this;
     }
 
-    public PackMcMeta description(@NotNull String desc) {
-        this.description = desc;
+    public PackMcMeta description(String description) {
+        this.description = description;
         return this;
     }
 
-    public PackMcMeta description(@NotNull Component component) {
-        this.description = component;
+    public PackMcMeta description(Component description) {
+        this.description = description;
         return this;
     }
 
-    public PackMcMeta supportedFormats(int minIncl, int maxIncl) {
-        this.minFormat = minIncl;
-        this.maxFormat = maxIncl;
+    public PackMcMeta supportedFormats(int min, int max) {
+        this.minFormat = min;
+        this.maxFormat = max;
         return this;
     }
 
     @Override
-    public void emit(@NotNull Map<String, byte[]> files) {
+    public void emit(Map<String, byte[]> files) {
         if (rawData != null) {
             files.put("pack.mcmeta", rawData);
             return;
@@ -78,11 +72,10 @@ public class PackMcMeta implements Asset {
 
         pack.addProperty("pack_format", packFormat);
 
-        if (description instanceof String s) {
-            pack.addProperty("description", s);
-        } else if (description instanceof Component c) {
-            var jsonElement = GsonComponentSerializer.gson().serializeToTree(c);
-            pack.add("description", jsonElement);
+        if (description instanceof Component c) {
+            pack.add("description", GsonComponentSerializer.gson().serializeToTree(c));
+        } else {
+            pack.addProperty("description", String.valueOf(description));
         }
 
         if (minFormat != null && maxFormat != null) {

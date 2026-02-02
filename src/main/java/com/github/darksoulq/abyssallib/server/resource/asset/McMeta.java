@@ -1,63 +1,40 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.darksoulq.abyssallib.common.util.TextUtil.GSON;
-
 public class McMeta implements Asset {
-    private final String path;
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+
     private final String namespace;
-    private int defaultFrameTime;
+    private final String path;
+
+    private final byte[] rawData;
+
+    private int frametime = 1;
     private Boolean interpolate;
-    private int width = -99;
-    private int height = -99;
+    private Integer width;
+    private Integer height;
     private final List<Object> frames = new ArrayList<>();
-    private byte[] rawData = null;
 
-    public McMeta(Plugin plugin, String namespace, @NotNull String path, boolean autoLoad) {
-        this.path = path;
+    public McMeta(Plugin plugin, String namespace, String path) {
         this.namespace = namespace;
-
-        if (!autoLoad) return;
-
-        String resourcePath = "resourcepack/" + namespace + "/textures/" + path + ".png.mcmeta";
-        try (InputStream in = plugin.getResource(resourcePath)) {
-            if (in == null)
-                throw new IllegalStateException("McMeta not found in plugin JAR at: " + resourcePath);
-
-            JsonObject root = GSON.fromJson(new java.io.InputStreamReader(in), JsonObject.class);
-            JsonObject anim = root.getAsJsonObject("animation");
-            if (anim == null)
-                throw new IllegalStateException("Missing 'animation' object in: " + resourcePath);
-
-            if (anim.has("frametime")) this.defaultFrameTime = anim.get("frametime").getAsInt();
-            if (anim.has("interpolate")) this.interpolate = anim.get("interpolate").getAsBoolean();
-            if (anim.has("width")) this.width = anim.get("width").getAsInt();
-            if (anim.has("height")) this.height = anim.get("height").getAsInt();
-
-            if (anim.has("frames")) {
-                JsonArray arr = anim.getAsJsonArray("frames");
-                for (var el : arr) {
-                    if (el.isJsonPrimitive()) {
-                        frames.add(el.getAsInt());
-                    } else {
-                        Map<String, Object> frameObj = GSON.fromJson(el, Map.class);
-                        frames.add(frameObj);
-                    }
-                }
-            }
+        this.path = path;
+        String file = "resourcepack/" + namespace + "/textures/" + path + ".png.mcmeta";
+        try (InputStream in = plugin.getResource(file)) {
+            if (in == null) throw new RuntimeException("McMeta not found: " + file);
+            this.rawData = in.readAllBytes();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load mcmeta from: " + resourcePath, e);
+            throw new RuntimeException("Failed to load mcmeta: " + file, e);
         }
     }
 
@@ -67,45 +44,72 @@ public class McMeta implements Asset {
         this.rawData = data;
     }
 
-    public McMeta frametime(int t) { this.defaultFrameTime = t; return this; }
-    public McMeta interpolate(boolean b) { this.interpolate = b; return this; }
-    public McMeta width(int w) {
-        this.width = w;
+    public McMeta(String namespace, String path) {
+        this.namespace = namespace;
+        this.path = path;
+        this.rawData = null;
+    }
+
+    public McMeta frametime(int frametime) {
+        this.frametime = frametime;
         return this;
     }
-    public McMeta height(int h) {
-        this.height = h;
+
+    public McMeta interpolate(boolean interpolate) {
+        this.interpolate = interpolate;
         return this;
     }
-    public McMeta frames(int... idxs) {
-        for (int i : idxs) frames.add(i); return this;
+
+    public McMeta size(int width, int height) {
+        this.width = width;
+        this.height = height;
+        return this;
     }
-    @SafeVarargs
-    public final McMeta framesWithTime(Map<String, Object>... data) {
-        Collections.addAll(frames, data);
+
+    public McMeta frame(int index) {
+        this.frames.add(index);
+        return this;
+    }
+
+    public McMeta frame(int index, int time) {
+        JsonObject frame = new JsonObject();
+        frame.addProperty("index", index);
+        frame.addProperty("time", time);
+        this.frames.add(frame);
         return this;
     }
 
     @Override
-    public void emit(@NotNull Map<String, byte[]> files) {
+    public void emit(Map<String, byte[]> files) {
+        String filePath = "assets/" + namespace + "/textures/" + path + ".png.mcmeta";
+
         if (rawData != null) {
-            files.put("assets/" + namespace + "/textures/" + path + ".png.mcmeta", rawData);
+            files.put(filePath, rawData);
+            return;
         }
+
         JsonObject root = new JsonObject();
-        JsonObject anim = new JsonObject();
-        anim.addProperty("frametime", defaultFrameTime);
-        if (width != -99) anim.addProperty("width", width);
-        if (height != -99) anim.addProperty("height", height);
-        if (interpolate != null) anim.addProperty("interpolate", interpolate);
+        JsonObject animation = new JsonObject();
 
-        JsonArray arr = new JsonArray();
-        for (Object f : frames) {
-            if (f instanceof Integer) arr.add((Integer) f);
-            else if (f instanceof Map<?,?>) arr.add(GSON.toJsonTree(f));
+        animation.addProperty("frametime", frametime);
+
+        if (interpolate != null) {
+            animation.addProperty("interpolate", interpolate);
         }
-        if (!frames.isEmpty()) anim.add("frames", arr);
 
-        root.add("animation", anim);
-        files.put("assets/" + namespace + "/textures/" + path + ".png.mcmeta", GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
+        if (width != null) animation.addProperty("width", width);
+        if (height != null) animation.addProperty("height", height);
+
+        if (!frames.isEmpty()) {
+            JsonArray framesArray = new JsonArray();
+            for (Object f : frames) {
+                if (f instanceof Integer i) framesArray.add(i);
+                else if (f instanceof JsonObject j) framesArray.add(j);
+            }
+            animation.add("frames", framesArray);
+        }
+
+        root.add("animation", animation);
+        files.put(filePath, GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
     }
 }

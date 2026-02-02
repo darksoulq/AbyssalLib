@@ -1,7 +1,10 @@
 package com.github.darksoulq.abyssallib.common.color;
 
 import com.github.darksoulq.abyssallib.common.color.gradient.*;
-import com.github.darksoulq.abyssallib.common.color.pattern.*;
+import com.github.darksoulq.abyssallib.common.color.pattern.CheckeredPattern;
+import com.github.darksoulq.abyssallib.common.color.pattern.GridPattern;
+import com.github.darksoulq.abyssallib.common.color.pattern.StripedPattern;
+import com.github.darksoulq.abyssallib.common.color.pattern.VoronoiPattern;
 import org.bukkit.Color;
 import org.bukkit.util.Vector;
 

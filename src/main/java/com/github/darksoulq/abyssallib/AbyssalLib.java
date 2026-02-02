@@ -16,7 +16,6 @@ import com.github.darksoulq.abyssallib.server.event.internal.*;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
-import com.github.darksoulq.abyssallib.server.resource.asset.Lang;
 import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
@@ -42,8 +41,6 @@ import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
