@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.gui;
 
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -55,6 +56,14 @@ public class GuiView {
      */
     public InventoryView getInventoryView() {
         return view;
+    }
+
+    /**
+     * Gets the Player viewing this GUI
+     * @return The player
+     */
+    public Player getPlayer() {
+        return (Player) view.getPlayer();
     }
 
     /**

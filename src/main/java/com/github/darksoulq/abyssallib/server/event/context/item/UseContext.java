@@ -13,21 +13,16 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * This class encapsulates all relevant data when an item is used, including the
  * interacting entity, the block or entity targeted, and the hand/click type used.
+ *
+ * @param source       The entity that initiated the item use.
+ * @param targetBlock  The block that was clicked, or null if the interaction was in the air or on an entity.
+ * @param blockFace    The specific face of the block that was clicked, or null if not applicable.
+ * @param targetEntity The entity that was clicked, or null if the interaction was on a block or in the air.
+ * @param type         The specific type of click (Right-click or Left-click) performed.
+ * @param hand         The hand (Main or Off-hand) that was used to perform the interaction.
  */
-public class UseContext {
-    /** The entity that initiated the item use. */
-    private final LivingEntity source;
-    /** The block that was clicked, or null if the interaction was in the air or on an entity. */
-    private final @Nullable Block targetBlock;
-    /** The specific face of the block that was clicked, or null if not applicable. */
-    private final @Nullable BlockFace blockFace;
-    /** The entity that was clicked, or null if the interaction was on a block or in the air. */
-    private final @Nullable Entity targetEntity;
-    /** The specific type of click (Right-click or Left-click) performed. */
-    private final ClickType type;
-    /** The hand (Main or Off-hand) that was used to perform the interaction. */
-    private final EquipmentSlot hand;
-
+public record UseContext(LivingEntity source, @Nullable Block targetBlock, @Nullable BlockFace blockFace,
+                         @Nullable Entity targetEntity, ClickType type, EquipmentSlot hand) {
     /**
      * Constructs a new UseContext with all interaction details.
      *
@@ -38,21 +33,15 @@ public class UseContext {
      * @param type         The {@link ClickType} used for this interaction.
      * @param hand         The {@link EquipmentSlot} representing the hand used.
      */
-    public UseContext(LivingEntity source, @Nullable Block targetBlock, @Nullable BlockFace blockFace, @Nullable Entity targetEntity, ClickType type, EquipmentSlot hand) {
-        this.source = source;
-        this.targetBlock = targetBlock;
-        this.blockFace = blockFace;
-        this.targetEntity = targetEntity;
-        this.type = type;
-        this.hand = hand;
-    }
+    public UseContext {}
 
     /**
      * Gets the entity that used the item.
      *
      * @return The {@link LivingEntity} source.
      */
-    public LivingEntity getSource() {
+    @Override
+    public LivingEntity source() {
         return source;
     }
 
@@ -61,7 +50,8 @@ public class UseContext {
      *
      * @return The targeted {@link Block}, or {@code null} if no block was targeted.
      */
-    public @Nullable Block getTargetBlock() {
+    @Override
+    public @Nullable Block targetBlock() {
         return targetBlock;
     }
 
@@ -70,7 +60,8 @@ public class UseContext {
      *
      * @return The {@link BlockFace}, or {@code null} if no block was targeted.
      */
-    public @Nullable BlockFace getBlockFace() {
+    @Override
+    public @Nullable BlockFace blockFace() {
         return blockFace;
     }
 
@@ -79,7 +70,8 @@ public class UseContext {
      *
      * @return The targeted {@link Entity}, or {@code null} if no entity was targeted.
      */
-    public @Nullable Entity getTargetEntity() {
+    @Override
+    public @Nullable Entity targetEntity() {
         return targetEntity;
     }
 
@@ -88,7 +80,8 @@ public class UseContext {
      *
      * @return The {@link ClickType} (e.g., RIGHT_CLICK or LEFT_CLICK).
      */
-    public ClickType getType() {
+    @Override
+    public ClickType type() {
         return type;
     }
 
@@ -97,7 +90,8 @@ public class UseContext {
      *
      * @return The {@link EquipmentSlot} (HAND or OFF_HAND).
      */
-    public EquipmentSlot getHand() {
+    @Override
+    public EquipmentSlot hand() {
         return hand;
     }
 }

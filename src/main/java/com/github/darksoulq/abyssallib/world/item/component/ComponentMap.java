@@ -1,16 +1,15 @@
 package com.github.darksoulq.abyssallib.world.item.component;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
+import com.github.darksoulq.abyssallib.common.serialization.ops.NbtOps;
 import com.github.darksoulq.abyssallib.common.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
@@ -21,7 +20,7 @@ import java.util.*;
  * <p>
  * This class bridge the gap between volatile in-memory component states and persistent
  * storage (NBT for items/entities). It handles both standard Minecraft Vanilla components
- * via Paper's API and custom AbyssalLib components via JSON-in-NBT serialization.
+ * via Paper's API and custom AbyssalLib components via direct NBT serialization.
  */
 public class ComponentMap {
     /** The internal storage mapping component types to their active instances. */
@@ -94,7 +93,7 @@ public class ComponentMap {
                         components.put(custom, component);
                     }
                 }
-            } else if (type instanceof io.papermc.paper.datacomponent.DataComponentType.NonValued nv) {
+            } else if (type instanceof io.papermc.paper.datacomponent.DataComponentType.NonValued) {
                 DataComponent<?> component = custom.createFromValue(null);
                 if (component != null) {
                     components.put(custom, component);
@@ -163,16 +162,17 @@ public class ComponentMap {
     /**
      * Serializes all current components back into the source's persistent data (PDC/NBT).
      * <p>
-     * Custom components are encoded into JSON strings and stored under the
+     * Custom components are encoded directly into NBT tags and stored under the
      * {@code CustomComponents} compound tag. Vanilla components are applied
      * directly via {@link Vanilla#apply(ItemStack)}.
      */
     public void applyData() {
         CTag root = item != null ? item.getCTag() : entity.getCTag();
         CompoundTag rootTag = root.toVanilla();
-        CompoundTag tag = rootTag.getCompoundOrEmpty("CustomComponents");
-        CTag data = new CTag(tag);
-        data.clear();
+
+        CompoundTag customTag = rootTag.asCompound()
+            .flatMap(c -> c.getCompound("CustomComponents"))
+            .orElse(new CompoundTag());
 
         for (Map.Entry<DataComponentType<?>, DataComponent<?>> entry : components.entrySet()) {
             if (entry.getValue() instanceof Vanilla v && item != null) {
@@ -180,12 +180,14 @@ public class ComponentMap {
             } else {
                 String id = Registries.DATA_COMPONENT_TYPES.getId(entry.getKey());
                 if (id != null) {
-                    JsonNode json = encodeComponent(entry.getValue(), JsonOps.INSTANCE);
-                    data.set(id, json.toString());
+                    Tag nbt = encodeComponent(entry.getValue(), NbtOps.INSTANCE);
+                    customTag.put(id, nbt);
                 }
             }
         }
-        rootTag.put("CustomComponents", data.toVanilla());
+
+        rootTag.put("CustomComponents", customTag);
+
         if (item != null) item.setCTag(root);
         if (entity != null) entity.setCTag(root);
     }
@@ -208,23 +210,28 @@ public class ComponentMap {
 
         CTag root = item != null ? item.getCTag() : entity.getCTag();
         CompoundTag rootTag = root.toVanilla();
-        CompoundTag tag = rootTag.getCompoundOrEmpty("CustomComponents");
-        if (tag.contains(id)) tag.remove(id);
-        rootTag.put("CustomComponents", tag);
-        if (item != null) item.setCTag(root);
-        if (entity != null) entity.setCTag(root);
+
+        rootTag.asCompound().flatMap(c -> c.getCompound("CustomComponents")).ifPresent(customTag -> {
+            if (customTag.contains(id)) {
+                customTag.remove(id);
+                rootTag.put("CustomComponents", customTag);
+
+                if (item != null) item.setCTag(root);
+                if (entity != null) entity.setCTag(root);
+            }
+        });
     }
 
     /**
      * Encodes a component into a serialized format using the provided DynamicOps.
      *
      * @param <T>       The component's value type.
-     * @param <D>       The target serialization format type (e.g., JsonNode).
+     * @param <D>       The target serialization format type (e.g., Tag).
      * @param component The {@link DataComponent} to encode.
      * @param ops       The {@link DynamicOps} logic to use for encoding.
      * @return The encoded data object.
      */
-    public static  <T, D> D encodeComponent(DataComponent<T> component, DynamicOps<D> ops) {
+    public static <T, D> D encodeComponent(DataComponent<T> component, DynamicOps<D> ops) {
         return Try.of(() -> {
             @SuppressWarnings("unchecked")
             DataComponentType<DataComponent<T>> type = (DataComponentType<DataComponent<T>>) component.getType();
@@ -238,24 +245,24 @@ public class ComponentMap {
      * @param root The root {@link CTag} containing the custom data.
      */
     private void loadCustomComponents(CTag root) {
-        CompoundTag tag = root.toVanilla().getCompoundOrEmpty("CustomComponents");
-        if (tag.isEmpty()) return;
+        CompoundTag rootTag = root.toVanilla();
 
-        for (String id : tag.keySet()) {
-            DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id);
-            if (type == null) continue;
+        rootTag.asCompound().flatMap(c -> c.getCompound("CustomComponents")).ifPresent(customTag -> {
+            for (String id : customTag.keySet()) {
+                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id);
+                if (type == null) continue;
 
-            Optional<String> encoded = tag.getString(id);
-            if (encoded.isEmpty()) continue;
+                Tag nbtData = customTag.get(id);
+                if (nbtData == null) continue;
 
-            Try.of(() -> {
-                JsonNode json = new ObjectMapper().readTree(encoded.get());
-                return type.codec().decode(JsonOps.INSTANCE, json);
-            }).onSuccess(decoded -> {
-                if (decoded != null) components.put(type, decoded);
-            }).onFailure(t ->
-                AbyssalLib.getInstance().getLogger().severe("Failed to load component " + id + ": " + t.getMessage())
-            );
-        }
+                Try.of(() -> type.codec().decode(NbtOps.INSTANCE, nbtData))
+                    .onSuccess(decoded -> {
+                        if (decoded != null) components.put(type, decoded);
+                    })
+                    .onFailure(t ->
+                        AbyssalLib.getInstance().getLogger().severe("Failed to load component " + id + ": " + t.getMessage())
+                    );
+            }
+        });
     }
 }

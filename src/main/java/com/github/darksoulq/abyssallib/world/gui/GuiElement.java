@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.world.gui;
 
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
+import com.github.darksoulq.abyssallib.server.event.context.gui.GuiClickContext;
+import com.github.darksoulq.abyssallib.server.event.context.gui.GuiDragContext;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
@@ -34,9 +36,21 @@ public interface GuiElement {
      * @param cursor  the item currently held on the cursor, if any
      * @param current the item currently in the clicked slot, if any
      * @return the result of the action, determining if the event should be cancelled
+     *
+     * @deprecated Use {@link #onClick(GuiClickContext)}
      */
+    @Deprecated(since = "v2.0.0-mc1.21.11-dev.3", forRemoval = true)
     default ActionResult onClick(GuiView view, int slot, ClickType click, @Nullable ItemStack cursor, @Nullable ItemStack current) {
         return ActionResult.PASS;
+    }
+    /**
+     * Handles a player clicking on this element.
+     *
+     * @param ctx    the context for the InventoryClickEvent
+     * @return the result of the action, determining if the event should be cancelled
+     */
+    default ActionResult onClick(GuiClickContext ctx) {
+        return onClick(ctx.view(), ctx.slot(), ctx.clickType(), ctx.cursor(), ctx.currentItem());
     }
 
     /**
@@ -44,9 +58,22 @@ public interface GuiElement {
      *
      * @param view       the active GUI view
      * @param addedItems a map of slot indices to the item stacks being placed
-     * @return the result of the action
+     * @return the result of the action, determining if the event should be cancelled
+     *
+     * @deprecated use {@link #onDrag(GuiDragContext)}
      */
+    @Deprecated(since = "v2.0.0-mc1.21.11-dev.3", forRemoval = true)
     default ActionResult onDrag(GuiView view, Map<Integer, ItemStack> addedItems) {
         return ActionResult.PASS;
+    }
+
+    /**
+     * Handles items being dragged across slots containing this element.
+     *
+     * @param ctx       the context for the InventoryDragEvent
+     * @return the result of the action, determining if the event should be cancelled
+     */
+    default ActionResult onDrag(GuiDragContext ctx) {
+        return onDrag(ctx.view(), ctx.newItems());
     }
 }

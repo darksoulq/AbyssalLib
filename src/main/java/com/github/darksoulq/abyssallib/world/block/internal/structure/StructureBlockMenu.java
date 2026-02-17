@@ -2,11 +2,11 @@ package com.github.darksoulq.abyssallib.world.block.internal.structure;
 
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
+import com.github.darksoulq.abyssallib.server.event.context.gui.GuiClickContext;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.world.block.property.Property;
 import com.github.darksoulq.abyssallib.world.gui.Gui;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
-import com.github.darksoulq.abyssallib.world.gui.GuiView;
 import com.github.darksoulq.abyssallib.world.gui.SlotPosition;
 import com.github.darksoulq.abyssallib.world.gui.impl.GuiButton;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
@@ -21,12 +21,11 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.MenuType;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class StructureBlockMenu {
 
@@ -53,7 +52,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(0), makeButton(modeItem,
             Component.text("Mode: ", NamedTextColor.GRAY).append(Component.text(mode.name(), NamedTextColor.YELLOW)),
-            (v, c) -> {
+            ctx -> {
                 StructureMode[] modes = StructureMode.values();
                 int nextIndex = (tile.mode.get().ordinal() + 1) % modes.length;
                 tile.mode.set(modes[nextIndex]);
@@ -65,8 +64,8 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(4), makeButton(Items.NAME_STRUCTURE.get(),
             Component.text("Name: ", NamedTextColor.GRAY).append(Component.text(tile.structureName.get(), NamedTextColor.GREEN)),
-            (v, c) -> {
-                v.close(player);
+            ctx -> {
+                ctx.view().close(player);
                 ChatInputHandler.await(player, (input) -> {
                     String clean = input.contains(":") ? input : "default:" + input;
                     tile.structureName.set(clean);
@@ -94,7 +93,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK.get(),
             Component.text("SAVE", NamedTextColor.GREEN, TextDecoration.BOLD),
-            (v, c) -> {
+            ctx -> {
                 if (tile.save()) player.sendMessage(Component.text("Structure saved successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure save failed.", NamedTextColor.RED));
             },
@@ -104,7 +103,7 @@ public class StructureBlockMenu {
         boolean showBox = tile.showBoundingBox.get();
         gui.getElements().put(SlotPosition.top(45), makeButton(Items.BOUNDING_TOGGLE.get(),
             Component.text("Bounding Box: ", NamedTextColor.GRAY).append(Component.text(showBox ? "ON" : "OFF", showBox ? NamedTextColor.GREEN : NamedTextColor.RED)),
-            (v, c) -> {
+            ctx -> {
                 tile.showBoundingBox.set(!showBox);
                 tile.updateParticles();
                 refresh(gui, player);
@@ -118,7 +117,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(30), makeButton(Items.ROTATE.get(),
             Component.text("Rotation: ", NamedTextColor.GRAY).append(Component.text(tile.rotation.get().name(), NamedTextColor.YELLOW)),
-            (v, c) -> {
+            ctx -> {
                 StructureRotation[] rots = StructureRotation.values();
                 int next = (tile.rotation.get().ordinal() + 1) % rots.length;
                 tile.rotation.set(rots[next]);
@@ -129,7 +128,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(31), makeButton(Items.MIRROR.get(),
             Component.text("Mirror: ", NamedTextColor.GRAY).append(Component.text(tile.mirror.get().name(), NamedTextColor.YELLOW)),
-            (v, c) -> {
+            ctx -> {
                 Mirror[] mirrors = Mirror.values();
                 int next = (tile.mirror.get().ordinal() + 1) % mirrors.length;
                 tile.mirror.set(mirrors[next]);
@@ -140,8 +139,8 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(32), makeButton(Items.INTEGRITY.get(),
             Component.text("Integrity: ", NamedTextColor.GRAY).append(Component.text(String.format("%.1f", tile.integrity.get()), NamedTextColor.AQUA)),
-            (v, c) -> {
-                float val = tile.integrity.get() + (c.isLeftClick() ? 0.1f : -0.1f);
+            ctx -> {
+                float val = tile.integrity.get() + (ctx.clickType().isLeftClick() ? 0.1f : -0.1f);
                 tile.integrity.set(Math.max(0.0f, Math.min(1.0f, val)));
                 refresh(gui, player);
             },
@@ -152,7 +151,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK.get(),
             Component.text("LOAD", NamedTextColor.GREEN, TextDecoration.BOLD),
-            (v, c) -> {
+            ctx -> {
                 if (tile.load()) player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure load failed. Check name.", NamedTextColor.RED));
             },
@@ -166,9 +165,9 @@ public class StructureBlockMenu {
 
     private GuiButton makeIntButton(Item item, String nameStr, Property<Integer> prop, Gui gui, Player player, int min, int max) {
         Component name = Component.text(nameStr + ": ", NamedTextColor.GRAY).append(Component.text(prop.get(), NamedTextColor.AQUA));
-        return makeButton(item, name, (v, c) -> {
-                int change = c.isShiftClick() ? 10 : 1;
-                if (!c.isLeftClick()) change = -change;
+        return makeButton(item, name, ctx -> {
+                int change = ctx.clickType().isShiftClick() ? 10 : 1;
+                if (!ctx.clickType().isLeftClick()) change = -change;
                 int newVal = prop.get() + change;
                 prop.set(Math.max(min, Math.min(max, newVal)));
                 tile.updateParticles();
@@ -181,7 +180,7 @@ public class StructureBlockMenu {
         );
     }
 
-    private GuiButton makeButton(Item item, Component name, BiConsumer<GuiView, ClickType> action, Component... lore) {
+    private GuiButton makeButton(Item item, Component name, Consumer<GuiClickContext> action, Component... lore) {
         Item clone = item.clone();
         clone.setData(new ItemName(name.decoration(TextDecoration.ITALIC, false)));
         List<Component> cleanLore = Arrays.stream(lore)

@@ -8,9 +8,11 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.renderer.TranslatableComponentRenderer;
 import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Locale;
 
@@ -88,6 +90,24 @@ public final class ServerTranslator {
         System.arraycopy(extraResolvers, 0, resolvers, 1, extraResolvers.length);
 
         return MiniMessageBridge.parse(raw, resolvers);
+    }
+
+    /**
+     * Loads a specific language file from the file system.
+     *
+     * @param path       The {@link Path} to the .properties file.
+     */
+    public static void loadFile(Path path) {
+        LanguageLoader.loadFile(path, TRANSLATOR);
+    }
+    /**
+     * Loads a language file embedded within a plugin's JAR as a resource.
+     *
+     * @param plugin       The {@link Plugin} instance containing the resource.
+     * @param resourcePath The path to the resource (e.g., "lang/en_us.properties").
+     */
+    public static void loadResource(Plugin plugin, String resourcePath) {
+        LanguageLoader.loadResource(plugin, resourcePath, TRANSLATOR);
     }
 
     /**
