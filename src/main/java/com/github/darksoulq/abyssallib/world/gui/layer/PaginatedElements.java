@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.gui.impl;
+package com.github.darksoulq.abyssallib.world.gui.layer;
 
 import com.github.darksoulq.abyssallib.world.gui.GuiElement;
 import com.github.darksoulq.abyssallib.world.gui.GuiView;

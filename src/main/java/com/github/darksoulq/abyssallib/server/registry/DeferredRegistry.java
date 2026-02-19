@@ -91,7 +91,7 @@ public final class DeferredRegistry<T> {
         RegistryApplyEvent<T> event = new RegistryApplyEvent<>(registry, this);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
-            AbyssalLib.getInstance().getLogger().info("Registry apply cancelled for mod: " + pluginId);
+            AbyssalLib.getInstance().getLogger().info("Registry apply cancelled for plugin: " + pluginId);
             return;
         }
         List<DamageType> damageTypes = new ArrayList<>();

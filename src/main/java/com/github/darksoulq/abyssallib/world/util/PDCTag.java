@@ -1,5 +1,6 @@
-package com.github.darksoulq.abyssallib.common.util;
+package com.github.darksoulq.abyssallib.world.util;
 
+import com.github.darksoulq.abyssallib.common.util.Identifier;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 

@@ -20,6 +20,14 @@ public interface Selector {
             this.tints.addAll(List.of(tints));
         }
 
+        public com.github.darksoulq.abyssallib.server.resource.asset.Model getModel() {
+            return model;
+        }
+
+        public List<Tint> getTints() {
+            return Collections.unmodifiableList(tints);
+        }
+
         @Override
         public String id() {
             return "minecraft:model";
@@ -51,6 +59,7 @@ public interface Selector {
             return Map.of("type", id());
         }
     }
+
     class Select implements Selector {
         private final Property property;
         private Selector fallback = null;
@@ -58,9 +67,19 @@ public interface Selector {
         public Select(Property property) {
             this.property = property;
         }
+
         public Select(Property property, Selector fallback) {
             this.property = property;
             this.fallback = fallback;
+        }
+
+        public Property getProperty() {
+            return property;
+        }
+
+        @Nullable
+        public Selector getFallback() {
+            return fallback;
         }
 
         @Override
@@ -107,6 +126,7 @@ public interface Selector {
 
         public interface Property {
             String id();
+
             List<Case> getCases();
         }
         public interface Case {
@@ -122,10 +142,15 @@ public interface Selector {
                 this.blockStateProperty = blockStateProperty;
             }
 
+            public String getBlockStateProperty() {
+                return blockStateProperty;
+            }
+
             @Override
             public String id() {
                 return "minecraft:block_state";
             }
+
             @Override
             public List<Case> getCases() {
                 return cases;
@@ -139,9 +164,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<String> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<String> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -161,6 +195,7 @@ public interface Selector {
                 this.index = 0;
                 this.cases.addAll(cases);
             }
+
             public CustomModelData(int index, List<Case> cases) {
                 this.index = index;
                 this.cases.addAll(cases);
@@ -174,6 +209,7 @@ public interface Selector {
             public int getIndex() {
                 return index;
             }
+
             @Override
             public List<Case> getCases() {
                 return cases;
@@ -194,8 +230,9 @@ public interface Selector {
                 }
 
                 public List<String> getCases() {
-                    return cases;
+                    return Collections.unmodifiableList(cases);
                 }
+
                 public Selector getModel() {
                     return model;
                 }
@@ -220,6 +257,7 @@ public interface Selector {
             public String id() {
                 return "minecraft:charge_type";
             }
+
             @Override
             public List<Case> getCases() {
                 return cases;
@@ -233,9 +271,18 @@ public interface Selector {
                     this.when.add(type);
                     this.model = model;
                 }
+
                 public Entry(List<Type> types, Selector model) {
                     this.when.addAll(types);
                     this.model = model;
+                }
+
+                public List<Type> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -246,6 +293,7 @@ public interface Selector {
                     return json;
                 }
             }
+
             public enum Type {
                 NONE, ARROW, ROCKET
             }
@@ -275,9 +323,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<String> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<String> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -314,9 +371,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<String> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<String> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -339,6 +405,7 @@ public interface Selector {
             public String id() {
                 return "minecraft:display_context";
             }
+
             public List<Case> getCases() {
                 return cases;
             }
@@ -351,9 +418,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<Display> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<Display> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -364,6 +440,7 @@ public interface Selector {
                     return json;
                 }
             }
+
             public enum Display {
                 FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND,
                 THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND,
@@ -423,9 +500,11 @@ public interface Selector {
             public String getPattern() {
                 return pattern;
             }
+
             public String getLocale() {
                 return locale;
             }
+
             public String getZoneId() {
                 return zoneId;
             }
@@ -434,6 +513,7 @@ public interface Selector {
             public String id() {
                 return "minecraft:local_time";
             }
+
             @Override
             public List<Case> getCases() {
                 return cases;
@@ -447,9 +527,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<String> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<String> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -472,6 +561,7 @@ public interface Selector {
             public String id() {
                 return "minecraft:main_hand";
             }
+
             @Override
             public List<Case> getCases() {
                 return cases;
@@ -485,9 +575,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<Hand> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<Hand> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -498,6 +597,7 @@ public interface Selector {
                     return json;
                 }
             }
+
             public enum Hand {
                 LEFT, RIGHT
             }
@@ -513,6 +613,7 @@ public interface Selector {
             public String id() {
                 return "minecraft:trim_material";
             }
+
             @Override
             public List<Case> getCases() {
                 return cases;
@@ -526,9 +627,18 @@ public interface Selector {
                     this.when.add(when);
                     this.model = model;
                 }
+
                 public Entry(List<String> when, Selector model) {
                     this.when.addAll(when);
                     this.model = model;
+                }
+
+                public List<String> getWhen() {
+                    return Collections.unmodifiableList(when);
+                }
+
+                public Selector getModel() {
+                    return model;
                 }
 
                 @Override
@@ -541,198 +651,180 @@ public interface Selector {
             }
         }
     }
-    class Condition implements Selector {
-        private final Property property;
-        private final Selector onTrue;
-        private final Selector onFalse;
 
-        public Condition(Property property, Selector onTrue, Selector onFalse) {
-            this.property = property;
-            this.onTrue = onTrue;
-            this.onFalse = onFalse;
-        }
+    record Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse) implements Selector {
 
         @Override
-        public String id() {
-            return "minecraft:condition";
-        }
+            public String id() {
+                return "minecraft:condition";
+            }
 
-        @Override
-        public Map<String, Object> toJson() {
-            Map<String, Object> json = new LinkedHashMap<>();
-            json.put("type", id());
-            json.put("property", property.id());
-            switch (property) {
-                case CustomModelData customModelData -> json.put("index", customModelData.index);
-                case Component component -> {
-                    json.put("predicate", component.component.id());
-                    json.put("value", component.component.toJson());
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("property", property.id());
+                switch (property) {
+                    case CustomModelData customModelData -> json.put("index", customModelData.index);
+                    case Component component -> {
+                        json.put("predicate", component.component.id());
+                        json.put("value", component.component.toJson());
+                    }
+                    case KeybindDown keybindDown -> json.put("keybind", keybindDown.keybind.type);
+                    case HasComponent hasComponent -> {
+                        json.put("component", hasComponent.component.id());
+                        json.put("ignore_default", hasComponent.ignoreDefault);
+                    }
+                    default -> {
+                    }
                 }
-                case KeybindDown keybindDown -> json.put("keybind", keybindDown.keybind.type);
-                case HasComponent hasComponent -> {
-                    json.put("component", hasComponent.component.id());
-                    json.put("ignore_default", hasComponent.ignoreDefault);
-                }
-                default -> {}
-            }
-            json.put("on_true", onTrue.toJson());
-            json.put("on_false", onFalse.toJson());
-            return json;
-        }
-
-        public interface Property {
-            String id();
-        }
-
-        public static class Broken implements Property {
-            @Override
-            public String id() {
-                return "minecraft:broken";
-            }
-        }
-        public static class BundleHasSelectedItem implements Property {
-            @Override
-            public String id() {
-                return "minecraft:bundle/has_selected_item";
-            }
-        }
-        public static class Carried implements Property {
-            @Override
-            public String id() {
-                return "minecraft:carried";
-            }
-        }
-        public static class CustomModelData implements Property {
-            private final int index;
-
-            public CustomModelData(int index) {
-                this.index = index;
+                json.put("on_true", onTrue.toJson());
+                json.put("on_false", onFalse.toJson());
+                return json;
             }
 
-            @Override
-            public String id() {
-                return "minecraft:custom_model_data";
-            }
-        }
-        public static class Component implements Property {
-            private final ValueComponent component;
-
-            public Component(ValueComponent component) {
-                this.component = component;
+            public interface Property {
+                String id();
             }
 
-            @Override
-            public String id() {
-                return "minecraft:component";
-            }
-        }
-        public static class Damaged implements Property {
-            @Override
-            public String id() {
-                return "minecraft:damaged";
-            }
-        }
-        public static class ExtendedView implements Property {
-            @Override
-            public String id() {
-                return "minecraft:extended_view";
-            }
-        }
-        public static class FishingRodCast implements Property {
-            @Override
-            public String id() {
-                return "minecraft:fishing_rod/cast";
-            }
-        }
-        public static class HasComponent implements Property {
-            private final ContainedComponent component;
-            private final boolean ignoreDefault;
-
-            public HasComponent(ContainedComponent component, boolean ignoreDefault) {
-                this.component = component;
-                this.ignoreDefault = ignoreDefault;
-            }
-
-            @Override
-            public String id() {
-                return "minecraft:has_component";
-            }
-        }
-        public static class KeybindDown implements Property {
-            private final Keybind keybind;
-
-            public KeybindDown(Keybind keybind) {
-                this.keybind = keybind;
-            }
-
-            @Override
-            public String id() {
-                return "minecraft:keybind_down";
-            }
-
-            public enum Keybind {
-                ADVANCEMENTS("key.advancements"),
-                ATTACK("key.attack"),
-                BACK("key.back"),
-                CHAT("key.chat"),
-                COMMAND("key.command"),
-                DROP("key.drop"),
-                FORWARD("key.forward"),
-                FULLSCREEN("key.fullscreen"),
-                HOTBAR_1("key.hotbar.1"),
-                HOTBAR_2("key.hotbar.2"),
-                HOTBAR_3("key.hotbar.3"),
-                HOTBAR_4("key.hotbar.4"),
-                HOTBAR_5("key.hotbar.5"),
-                HOTBAR_6("key.hotbar.6"),
-                HOTBAR_7("key.hotbar.7"),
-                HOTBAR_8("key.hotbar.8"),
-                HOTBAR_9("key.hotbar.9"),
-                INVENTORY("key.inventory"),
-                JUMP("key.jump"),
-                LEFT("key.left"),
-                LOAD_TOOLBAR_ACTIVATOR("key.loadToolbarActivator"),
-                SCREENSHOT("key.screenshot"),
-                SMOOTH_CAMERA("key.smoothCamera"),
-                SNEAK("key.sneak"),
-                SPECTATOR_OUTLINES("key.spectatorOutlines"),
-                SPRINT("key.sprint"),
-                SWAP_OFFHAND("key.swapOffhand"),
-                TOGGLE_PERSPECTIVE("key.togglePerspective"),
-                USE("key.use");
-
-                public final String type;
-
-                Keybind(String type) {
-                    this.type = type;
+            public static class Broken implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:broken";
                 }
             }
-        }
-        public static class Selected implements Property {
-            @Override
-            public String id() {
-                return "minecraft:selected";
+            public static class BundleHasSelectedItem implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:bundle/has_selected_item";
+                }
+            }
+            public static class Carried implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:carried";
+                }
+            }
+            public record CustomModelData(int index) implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:custom_model_data";
+                }
+            }
+
+            public record Component(ValueComponent component) implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:component";
+                }
+            }
+
+            public static class Damaged implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:damaged";
+                }
+            }
+
+            public static class ExtendedView implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:extended_view";
+                }
+            }
+
+            public static class FishingRodCast implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:fishing_rod/cast";
+                }
+            }
+
+            public record HasComponent(ContainedComponent component, boolean ignoreDefault) implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:has_component";
+                }
+            }
+
+            public record KeybindDown(Condition.KeybindDown.Keybind keybind) implements Property {
+
+                @Override
+                public String id() {
+                    return "minecraft:keybind_down";
+                }
+
+                public enum Keybind {
+                    ADVANCEMENTS("key.advancements"),
+                    ATTACK("key.attack"),
+                    BACK("key.back"),
+                    CHAT("key.chat"),
+                    COMMAND("key.command"),
+                    DROP("key.drop"),
+                    FORWARD("key.forward"),
+                    FULLSCREEN("key.fullscreen"),
+                    HOTBAR_1("key.hotbar.1"),
+                    HOTBAR_2("key.hotbar.2"),
+                    HOTBAR_3("key.hotbar.3"),
+                    HOTBAR_4("key.hotbar.4"),
+                    HOTBAR_5("key.hotbar.5"),
+                    HOTBAR_6("key.hotbar.6"),
+                    HOTBAR_7("key.hotbar.7"),
+                    HOTBAR_8("key.hotbar.8"),
+                    HOTBAR_9("key.hotbar.9"),
+                    INVENTORY("key.inventory"),
+                    JUMP("key.jump"),
+                    LEFT("key.left"),
+                    LOAD_TOOLBAR_ACTIVATOR("key.loadToolbarActivator"),
+                    SCREENSHOT("key.screenshot"),
+                    SMOOTH_CAMERA("key.smoothCamera"),
+                    SNEAK("key.sneak"),
+                    SPECTATOR_OUTLINES("key.spectatorOutlines"),
+                    SPRINT("key.sprint"),
+                    SWAP_OFFHAND("key.swapOffhand"),
+                    TOGGLE_PERSPECTIVE("key.togglePerspective"),
+                    USE("key.use");
+
+                    public final String type;
+
+                    Keybind(String type) {
+                        this.type = type;
+                    }
+                }
+            }
+
+            public static class Selected implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:selected";
+                }
+            }
+
+            public static class UsingItem implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:using_item";
+                }
+            }
+
+            public static class ViewEntity implements Property {
+                @Override
+                public String id() {
+                    return "minecraft:view_entity";
+                }
             }
         }
-        public static class UsingItem implements Property {
-            @Override
-            public String id() {
-                return "minecraft:using_item";
-            }
-        }
-        public static class ViewEntity implements Property {
-            @Override
-            public String id() {
-                return "minecraft:view_entity";
-            }
-        }
-    }
+
     class Composite implements Selector {
         private final List<Selector> selectors = new LinkedList<>();
 
         public Composite add(Selector selector) {
             selectors.add(selector);
             return this;
+        }
+
+        public List<Selector> getSelectors() {
+            return Collections.unmodifiableList(selectors);
         }
 
         @Override
@@ -753,6 +845,7 @@ public interface Selector {
             return json;
         }
     }
+
     class Empty implements Selector {
         @Override
         public String id() {
@@ -764,6 +857,7 @@ public interface Selector {
             return Map.of("type", id());
         }
     }
+
     class RangeDispatch implements Selector {
         private final Property property;
         private final List<Entry> entries = new LinkedList<>();
@@ -773,17 +867,37 @@ public interface Selector {
         public RangeDispatch(Property property) {
             this.property = property;
         }
+
         public RangeDispatch(Property property, int scale) {
             this.property = property;
             this.scale = scale;
         }
+
         public RangeDispatch entry(int threshold, Selector selector) {
             entries.add(new Entry(threshold, selector));
             return this;
         }
+
         public RangeDispatch fallback(Selector selector) {
             this.fallback = selector;
             return this;
+        }
+
+        public Property getProperty() {
+            return property;
+        }
+
+        public List<Entry> getEntries() {
+            return Collections.unmodifiableList(entries);
+        }
+
+        public int getScale() {
+            return scale;
+        }
+
+        @Nullable
+        public Selector getFallback() {
+            return fallback;
         }
 
         @Override
@@ -832,9 +946,10 @@ public interface Selector {
         }
 
         public record Entry(
-                int threshold,
-                Selector selector
-        ) {}
+            int threshold,
+            Selector selector
+        ) {
+        }
 
         public static class BundleFullness implements Property {
             @Override
@@ -842,18 +957,21 @@ public interface Selector {
                 return "minecraft:bundle_fullness";
             }
         }
+
         public static class Cooldown implements Property {
             @Override
             public String id() {
                 return "minecraft:cooldown";
             }
         }
+
         public static class CrossbowPull implements Property {
             @Override
             public String id() {
                 return "minecraft:crossbow_pull";
             }
         }
+
         public record Count(boolean normalize) implements Property {
 
             @Override
@@ -861,12 +979,14 @@ public interface Selector {
                 return "minecraft:count";
             }
         }
+
         public record Damage(boolean normalize) implements Property {
             @Override
             public String id() {
                 return "minecraft:damage";
             }
         }
+
         public record UseDuration(boolean remaining) implements Property {
 
             @Override
@@ -874,6 +994,7 @@ public interface Selector {
                 return "minecraft:use_duration";
             }
         }
+
         public record CustomModelData(int index) implements Property {
 
             @Override
@@ -881,6 +1002,7 @@ public interface Selector {
                 return "minecraft:custom_model_data";
             }
         }
+
         public record UseCycle(int period) implements Property {
 
             @Override
@@ -888,6 +1010,7 @@ public interface Selector {
                 return "minecraft:use_cycle";
             }
         }
+
         public record Compass(RangeDispatch.Compass.Target target, boolean wobble) implements Property {
 
             @Override
@@ -907,6 +1030,7 @@ public interface Selector {
                 }
             }
         }
+
         public record Time(RangeDispatch.Time.Target target, boolean wobble) implements Property {
 
             @Override
@@ -927,20 +1051,14 @@ public interface Selector {
             }
         }
     }
-    class Special implements Selector {
-        private final com.github.darksoulq.abyssallib.server.resource.asset.Model base;
-        private final Type type;
 
-        public Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base, Type type) {
-            this.base = base;
-            this.type = type;
-        }
+    record Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base,
+                   Selector.Special.Type type) implements Selector {
 
         @Override
         public String id() {
             return "minecraft:special";
         }
-
         @Override
         public Map<String, Object> toJson() {
             Map<String, Object> json = new LinkedHashMap<>();
@@ -952,17 +1070,10 @@ public interface Selector {
 
         public interface Type {
             String id();
-
             Map<String, Object> toJson();
         }
 
-        public static class Banner implements Type {
-            private final NamedColor color;
-
-            public Banner(NamedColor color) {
-                this.color = color;
-            }
-
+        public record Banner(NamedColor color) implements Type {
             @Override
             public String id() {
                 return "minecraft:banner";
@@ -977,13 +1088,7 @@ public interface Selector {
             }
         }
 
-        public static class Bed implements Type {
-            private final Texture texture;
-
-            public Bed(Texture texture) {
-                this.texture = texture;
-            }
-
+        public record Bed(Texture texture) implements Type {
             @Override
             public String id() {
                 return "minecraft:bed";
@@ -1010,15 +1115,7 @@ public interface Selector {
             }
         }
 
-        public static class Chest implements Type {
-            private final Texture texture;
-            private final int openness;
-
-            public Chest(Texture texture, int openness) {
-                this.texture = texture;
-                this.openness = openness;
-            }
-
+        public record Chest(Texture texture, int openness) implements Type {
             @Override
             public String id() {
                 return "minecraft:chest";
@@ -1055,6 +1152,14 @@ public interface Selector {
                 this.texture = texture;
             }
 
+            public WoodType getWoodType() {
+                return type;
+            }
+
+            public Texture getTexture() {
+                return texture;
+            }
+
             @Override
             public String id() {
                 return "minecraft:hanging_sign";
@@ -1070,15 +1175,17 @@ public interface Selector {
             }
         }
 
-        public static class Head implements Type {
-            private final HeadType kind;
-            private final Texture texture;
-            private final int animationTime;
-
+        public record Head(HeadType kind, Texture texture, int animationTime) implements Type {
             public Head(HeadType kind, @Nullable Texture texture, int animationTime) {
                 this.kind = kind;
                 this.texture = texture;
                 this.animationTime = animationTime;
+            }
+
+            @Override
+            @Nullable
+            public Texture texture() {
+                return texture;
             }
 
             @Override
@@ -1124,6 +1231,18 @@ public interface Selector {
                 this.orientaion = orientaion;
             }
 
+            public Texture getTexture() {
+                return texture;
+            }
+
+            public int getOpenness() {
+                return openness;
+            }
+
+            public Orientation getOrientation() {
+                return orientaion;
+            }
+
             @Override
             public String id() {
                 return "minecraft:shulker_box";
@@ -1147,6 +1266,14 @@ public interface Selector {
             public StandingSign(WoodType type, Texture texture) {
                 this.type = type;
                 this.texture = texture;
+            }
+
+            public WoodType getWoodType() {
+                return type;
+            }
+
+            public Texture getTexture() {
+                return texture;
             }
 
             @Override

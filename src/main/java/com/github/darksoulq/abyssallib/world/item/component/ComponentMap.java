@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.item.component;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.NbtOps;
-import com.github.darksoulq.abyssallib.common.util.CTag;
+import com.github.darksoulq.abyssallib.world.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;

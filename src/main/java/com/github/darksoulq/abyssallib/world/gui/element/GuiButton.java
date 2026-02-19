@@ -1,12 +1,8 @@
-package com.github.darksoulq.abyssallib.world.gui.impl;
+package com.github.darksoulq.abyssallib.world.gui.element;
 
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.context.gui.GuiClickContext;
-import com.github.darksoulq.abyssallib.server.event.context.gui.GuiDragContext;
-import com.github.darksoulq.abyssallib.world.gui.GuiElement;
-import com.github.darksoulq.abyssallib.world.gui.GuiView;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -17,10 +13,7 @@ import java.util.function.Consumer;
  * when a player interacts with it. It is the primary way to create
  * clickable controls in a GUI. (Item may be null)
  */
-public class GuiButton implements GuiElement {
-
-    /** The item stack used as the button icon. */
-    private final ItemStack item;
+public class GuiButton extends GuiItem {
 
     /** The action to execute upon clicking the button. */
     private final Consumer<GuiClickContext> action;
@@ -32,20 +25,8 @@ public class GuiButton implements GuiElement {
      * @param action the logic to run on click
      */
     public GuiButton(ItemStack item, Consumer<GuiClickContext> action) {
-        this.item = item;
+        super(item);
         this.action = action;
-    }
-
-    /**
-     * Renders the button icon.
-     *
-     * @param view the current GUI view
-     * @param slot the slot index
-     * @return the button item stack
-     */
-    @Override
-    public @Nullable ItemStack render(GuiView view, int slot) {
-        return item;
     }
 
     /**
@@ -57,17 +38,6 @@ public class GuiButton implements GuiElement {
     @Override
     public ActionResult onClick(GuiClickContext ctx) {
         action.accept(ctx);
-        return ActionResult.CANCEL;
-    }
-
-    /**
-     * Prevents items from being dragged onto the button.
-     *
-     * @param ctx the drag context
-     * @return {@link ActionResult#CANCEL}
-     */
-    @Override
-    public ActionResult onDrag(GuiDragContext ctx) {
         return ActionResult.CANCEL;
     }
 

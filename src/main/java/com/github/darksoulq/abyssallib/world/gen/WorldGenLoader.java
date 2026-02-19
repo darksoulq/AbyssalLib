@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.gen.internal;
+package com.github.darksoulq.abyssallib.world.gen;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +9,7 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.gen.feature.ConfiguredFeature;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
+import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenManager;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacedFeature;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import org.bukkit.plugin.Plugin;

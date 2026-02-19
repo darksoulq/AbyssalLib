@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
-import com.github.darksoulq.abyssallib.common.util.CTag;
+import com.github.darksoulq.abyssallib.world.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.common.util.PDCTag;
+import com.github.darksoulq.abyssallib.world.util.PDCTag;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;

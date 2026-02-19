@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.gui.impl;
+package com.github.darksoulq.abyssallib.world.gui.element;
 
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.context.gui.GuiClickContext;

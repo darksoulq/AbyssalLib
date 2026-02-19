@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.world.gui;
 
+import com.github.darksoulq.abyssallib.common.util.StructureArray;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.MenuType;
 
@@ -194,6 +195,119 @@ public class Gui {
         public Builder set(SlotPosition pos, GuiElement element) {
             elements.put(pos, element);
             return this;
+        }
+
+        /**
+         * Assigns an element to multiple slot positions.
+         *
+         * @param positions the collection of positions
+         * @param element   the element to render
+         * @return this builder
+         */
+        public Builder set(Iterable<SlotPosition> positions, GuiElement element) {
+            for (SlotPosition pos : positions) {
+                elements.put(pos, element);
+            }
+            return this;
+        }
+
+        /**
+         * Fills a specific range of slots within a segment with the given element.
+         *
+         * @param segment   the inventory segment
+         * @param startSlot the starting slot index (inclusive)
+         * @param endSlot   the ending slot index (exclusive)
+         * @param element   the element to render
+         * @return this builder
+         */
+        public Builder fill(GuiView.Segment segment, int startSlot, int endSlot, GuiElement element) {
+            for (int i = startSlot; i < endSlot; i++) {
+                elements.put(new SlotPosition(segment, i), element);
+            }
+            return this;
+        }
+
+        /**
+         * Applies a StructureArray of GuiElements to the GUI.
+         *
+         * @param origin         the starting position (top-left) for the structure
+         * @param structure      the structure array containing elements
+         * @param inventoryWidth the maximum width of the inventory segment
+         * @return this builder
+         */
+        public Builder structure(SlotPosition origin, StructureArray<? extends GuiElement> structure, int inventoryWidth) {
+            for (int y = 0; y < structure.height(); y++) {
+                for (int x = 0; x < structure.width(); x++) {
+                    GuiElement element = structure.elementAt(x, y);
+                    if (element != null) {
+                        int offset = y * inventoryWidth + x;
+                        elements.put(new SlotPosition(origin.segment(), origin.index() + offset), element);
+                    }
+                }
+            }
+            return this;
+        }
+
+        /**
+         * Fills a rectangular border using {@link SlotUtil#border}.
+         *
+         * @param segment   the inventory segment
+         * @param startSlot the top-left slot index
+         * @param rows      the height of the rectangle in rows
+         * @param cols      the width of the rectangle in columns
+         * @param maxRows   the maximum number of rows in the inventory
+         * @param maxCols   the maximum number of columns in the inventory
+         * @param element   the element to render
+         * @return this builder
+         */
+        public Builder fillBorder(GuiView.Segment segment, int startSlot, int rows, int cols, int maxRows, int maxCols, GuiElement element) {
+            return set(SlotUtil.border(segment, startSlot, rows, cols, maxRows, maxCols), element);
+        }
+
+        /**
+         * Fills a row using {@link SlotUtil#row}.
+         *
+         * @param segment   the inventory segment
+         * @param startSlot the slot index where the row begins
+         * @param length    the number of slots in the row
+         * @param maxCols   the maximum number of columns in the inventory
+         * @param element   the element to render
+         * @return this builder
+         */
+        public Builder fillRow(GuiView.Segment segment, int startSlot, int length, int maxCols, GuiElement element) {
+            return set(SlotUtil.row(segment, startSlot, length, maxCols), element);
+        }
+
+        /**
+         * Fills a column using {@link SlotUtil#column}.
+         *
+         * @param segment   the inventory segment
+         * @param startSlot the slot index where the column begins
+         * @param step      the vertical increment between slots
+         * @param length    the number of slots in the column
+         * @param maxRows   the maximum number of rows in the inventory
+         * @param maxCols   the maximum number of columns in the inventory
+         * @param element   the element to render
+         * @return this builder
+         */
+        public Builder fillColumn(GuiView.Segment segment, int startSlot, int step, int length, int maxRows, int maxCols, GuiElement element) {
+            return set(SlotUtil.column(segment, startSlot, step, length, maxRows, maxCols), element);
+        }
+
+        /**
+         * Fills a solid grid using {@link SlotUtil#grid}.
+         *
+         * @param segment   the inventory segment
+         * @param startSlot the top-left slot index of the grid
+         * @param rows      the number of rows in the grid
+         * @param cols      the number of columns in the grid
+         * @param maxRows   the maximum number of rows in the inventory
+         * @param maxCols   the maximum number of columns in the inventory
+         * @param element   the element to render
+         * @return this builder
+         */
+        public Builder fillGrid(GuiView.Segment segment, int startSlot, int rows, int cols, int maxRows, int maxCols, GuiElement element) {
+            return set(SlotUtil.grid(segment, startSlot, rows, cols, maxRows, maxCols), element);
         }
 
         /**

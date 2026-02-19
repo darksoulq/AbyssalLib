@@ -25,6 +25,7 @@ import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.ItemCategory;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -154,11 +155,11 @@ public class InternalCommand {
                 })
                 .then(Commands.argument("plugin", StringArgumentType.string())
                     .suggests((ctx, builder) -> {
-                        Set<String> sortedNamespaces = Registries.ITEMS.getAll().keySet().stream()
+                        Registries.ITEMS.getAll().keySet().stream()
                             .map(key -> key.split(":")[0])
+                            .distinct()
                             .sorted()
-                            .collect(Collectors.toCollection(LinkedHashSet::new));
-                        sortedNamespaces.forEach(builder::suggest);
+                            .forEach(builder::suggest);
                         return builder.buildFuture();
                     })
                     .executes(ctx -> {
@@ -167,11 +168,43 @@ public class InternalCommand {
                             return 0;
                         }
                         String ns = ctx.getArgument("plugin", String.class);
-                        Item icon = Registries.ITEMS.get(ns + ":plugin_icon");
-                        if (icon == null) return Command.SUCCESS;
-                        ItemMenu.open(player, ns);
+                        ItemMenu.openPlugin(player, ns);
                         return Command.SUCCESS;
                     })
+                    .then(Commands.argument("category", StringArgumentType.string())
+                        .suggests((ctx, builder) -> {
+                            String ns = ctx.getArgument("plugin", String.class);
+                            boolean hasCustom = false;
+                            for (ItemCategory cat : Registries.ITEM_CATEGORIES.getAll().values()) {
+                                if (cat.getId().getNamespace().equals(ns)) {
+                                    builder.suggest(cat.getId().getPath());
+                                    hasCustom = true;
+                                }
+                            }
+                            if (!hasCustom) {
+                                builder.suggest("all");
+                            }
+                            return builder.buildFuture();
+                        })
+                        .executes(ctx -> {
+                            if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+                                reply(ctx, "<red>Only players can run this command</red>");
+                                return 0;
+                            }
+                            String ns = ctx.getArgument("plugin", String.class);
+                            String catPath = ctx.getArgument("category", String.class);
+
+                            ItemCategory cat = Registries.ITEM_CATEGORIES.get(ns + ":" + catPath);
+                            if (cat != null) {
+                                ItemMenu.openCategory(player, cat);
+                            } else if (catPath.equals("all")) {
+                                ItemMenu.openPlugin(player, ns);
+                            } else {
+                                reply(ctx, "<red>Category not found.</red>");
+                            }
+                            return Command.SUCCESS;
+                        })
+                    )
                 )
             )
         );

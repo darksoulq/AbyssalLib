@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.util.CTag;
+import com.github.darksoulq.abyssallib.world.util.CTag;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;

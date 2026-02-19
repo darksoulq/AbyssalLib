@@ -13,7 +13,7 @@ import com.github.darksoulq.abyssallib.world.particle.Particles;
 import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
 import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
-import com.github.darksoulq.abyssallib.world.structure.internal.StructureLoader;
+import com.github.darksoulq.abyssallib.world.structure.StructureLoader;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.block.structure.Mirror;

@@ -12,28 +12,42 @@ import java.util.Map;
 
 /**
  * Utility for generating invisible font-based glyph offsets to fine-tune horizontal text alignment.
+ * <p>
+ * This class uses a custom font provider to register glyphs with specific advance widths.
+ * By appending these characters to a string, text following them is shifted horizontally
+ * without rendering any visible characters.
  */
 public class TextOffset {
+
+    /**
+     * An array of prime and strategic pixel widths used to calculate any arbitrary offset.
+     */
     private static final int[] widths = {
-            1, 2, 3, 5, 7, 11, 17, 23, 29, 37, 53, 67, 89, 113, 151, 199, 257, 331, 419
+        1, 2, 3, 5, 7, 11, 17, 23, 29, 37, 53, 67, 89, 113, 151, 199, 257, 331, 419
     };
 
-    private static Texture SPLITTER;
-
-    private static Font font;
-
+    /**
+     * Internal mapping of pixel widths to their corresponding positive-shifting glyphs.
+     */
     private static final Map<Integer, Font.TextureGlyph> positiveGlyphs = new HashMap<>();
+
+    /**
+     * Internal mapping of pixel widths to their corresponding negative-shifting glyphs.
+     */
     private static final Map<Integer, Font.TextureGlyph> negativeGlyphs = new HashMap<>();
 
     /**
-     * Initializes the offset font glyphs and lang.
+     * Initializes the offset font provider and registers all necessary glyphs.
+     * <p>
+     * This method registers an "offset" font within the given namespace and creates
+     * texture glyphs that are moved far off-screen (-9000 height) to ensure invisibility.
      *
-     * @param ns The namespace
+     * @param ns The {@link Namespace} context where the font and textures will be registered.
      */
     @ApiStatus.Internal
     public static void init(Namespace ns) {
-        font = ns.font("offset", false);
-        SPLITTER = ns.texture("offset/split");
+        Font font = ns.font("offset", false);
+        Texture SPLITTER = ns.texture("offset/split");
 
         for (int width : widths) {
             positiveGlyphs.put(width, font.glyph(SPLITTER, width, -9000));
@@ -47,18 +61,21 @@ public class TextOffset {
     /**
      * Converts a pixel offset into a sequence of invisible glyphs that shift text left or right.
      *
-     * @param pixelOffset The number of pixels to offset the text (can be negative or positive).
-     * @return A {@link Component} made of offset glyphs, using the correct font namespace.
+     * @param pixelOffset The number of pixels to offset the text (positive for right, negative for left).
+     * @return A {@link Component} containing the invisible offset glyphs in the custom font.
      */
     public static Component getOffset(int pixelOffset) {
         return MiniMessage.miniMessage().deserialize(getOffsetMinimessage(pixelOffset));
     }
 
     /**
-     * Converts a pixel offset into a sequence of invisible glyphs that shift text left or right.
+     * Converts a pixel offset into a MiniMessage string containing invisible glyphs.
+     * <p>
+     * The method uses a greedy algorithm to decompose the target {@code pixelOffset}
+     * into the fewest possible number of predefined glyph widths.
      *
-     * @param pixelOffset The number of pixels to offset the text (can be negative or positive).
-     * @return A Minimessage {@link String} made of offset glyphs, using the correct font namespace.
+     * @param pixelOffset The number of pixels to offset the text.
+     * @return A MiniMessage-formatted {@link String} using the {@code abyssallib:offset} font.
      */
     public static String getOffsetMinimessage(int pixelOffset) {
         if (pixelOffset == 0) return "";

@@ -137,7 +137,6 @@ public class TextUtil {
          * @param adapter   the type adapter
          * @param hierarchy {@code true} if registered as a hierarchy adapter
          */
-        private TypeAdapterRegistration {
-        }
-        }
+        private TypeAdapterRegistration {}
+    }
 }

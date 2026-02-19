@@ -1,11 +1,10 @@
-package com.github.darksoulq.abyssallib.world.data.loot.internal;
+package com.github.darksoulq.abyssallib.world.data.loot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;

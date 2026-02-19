@@ -2,6 +2,8 @@ package com.github.darksoulq.abyssallib.server.data;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import io.papermc.paper.datapack.DatapackRegistrar;
+import io.papermc.paper.plugin.bootstrap.BootstrapContext;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,9 +45,9 @@ public class Datapack {
     private final Plugin plugin;
 
     /**
-     * The namespace or mod ID associated with this datapack.
+     * The namespace or plugin ID associated with this datapack.
      */
-    private final String modid;
+    private final String pluginID;
 
     /**
      * The output path where the compiled datapack ZIP file is written.
@@ -66,7 +68,7 @@ public class Datapack {
      */
     public Datapack(@NotNull Plugin plugin, @NotNull String modid) {
         this.plugin = plugin;
-        this.modid = modid;
+        this.pluginID = modid;
         this.outputFile = plugin.getDataFolder().toPath().resolve("pack").resolve("datapack.zip");
     }
 
@@ -101,14 +103,23 @@ public class Datapack {
     }
 
     /**
-     * Registers the datapack with Paper using {@link AbyssalLib#DATAPACK_REGISTRAR}.
+     * Registers the datapack with Paper using {@link BootstrapContext}.
      * This method should be called during the {@code PluginBootstrap#bootstrap} phase.
      *
      * @param title the display title of the datapack in the UI
      */
-    public void register(@NotNull Component title) {
+    public void register(@NotNull Component title, BootstrapContext ctx) {
         compile();
-        AbyssalLib.DATAPACK_REGISTRAR.register(outputFile, modid, title);
+        ctx.getLifecycleManager().registerEventHandler(LifecycleEvents.DATAPACK_DISCOVERY, event -> {
+            try {
+                event.registrar().discoverPack(outputFile, pluginID, config -> {
+                    config.title(title);
+                    config.autoEnableOnServerStart(true);
+                });
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to register datapack: " + pluginID, e);
+            }
+        });
     }
 
     /**
@@ -160,7 +171,7 @@ public class Datapack {
         return "{\n" +
                 "  \"pack\": {\n" +
                 "    \"pack_format\": 40,\n" +
-                "    \"description\": \"" + modid + " internal Datapack\"\n" +
+                "    \"description\": \"" + pluginID + " internal Datapack\"\n" +
                 "  }\n" +
                 "}";
     }
@@ -192,45 +203,5 @@ public class Datapack {
      */
     public @NotNull Path getOutputFile() {
         return outputFile;
-    }
-
-    /**
-     * Helper class used internally by AbyssalLib to register datapacks with Paper.
-     */
-    @ApiStatus.Internal
-    public static class Registrar {
-
-        /**
-         * The Paper {@link DatapackRegistrar} used to register datapacks.
-         */
-        private final DatapackRegistrar registrar;
-
-        /**
-         * Constructs a new {@code Registrar} instance using the specified {@link DatapackRegistrar}.
-         *
-         * @param registrar the registrar to use for datapack registration
-         */
-        public Registrar(@NotNull DatapackRegistrar registrar) {
-            this.registrar = registrar;
-        }
-
-        /**
-         * Registers a datapack from a given ZIP file.
-         *
-         * @param path  the path to the ZIP file
-         * @param id    the namespace or mod ID for the datapack
-         * @param title the title displayed in the UI
-         * @throws RuntimeException if registration fails due to I/O issues
-         */
-        public void register(@NotNull Path path, @NotNull String id, @NotNull Component title) {
-            try {
-                registrar.discoverPack(path, id, config -> {
-                    config.title(title);
-                    config.autoEnableOnServerStart(true);
-                });
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to register datapack: " + id, e);
-            }
-        }
     }
 }

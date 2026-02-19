@@ -6,11 +6,10 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.unique.*;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
-import com.github.darksoulq.abyssallib.common.util.Metrics;
+import com.github.darksoulq.abyssallib.server.util.Metrics;
 import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
-import com.github.darksoulq.abyssallib.server.data.Datapack;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
@@ -34,7 +33,8 @@ import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
-import com.github.darksoulq.abyssallib.world.item.internal.ItemPredicateLoader;
+import com.github.darksoulq.abyssallib.world.item.ItemPredicateLoader;
+import com.github.darksoulq.abyssallib.world.item.internal.ItemCategories;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemTicker;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
@@ -51,7 +51,6 @@ public final class AbyssalLib extends JavaPlugin {
     public static PackServer PACK_SERVER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
-    public static Datapack.Registrar DATAPACK_REGISTRAR;
 
     @Override
     public void onEnable() {
@@ -75,6 +74,8 @@ public final class AbyssalLib extends JavaPlugin {
         Features.FEATURES.apply();
         LootDefaults.LOOT_FUNCTION_TYPES.apply();
         LootDefaults.LOOT_CONDITION_TYPES.apply();
+
+        ItemCategories.ITEM_CATEGORIES.apply();
 
         CONFIG = new PluginConfig();
         CONFIG.cfg.save();
@@ -107,6 +108,24 @@ public final class AbyssalLib extends JavaPlugin {
             new Metrics(this, 25772);
         }
 
+        createDefaultPack();
+    }
+
+    @Override
+    public void onDisable() {
+        BlockManager.save();
+        MultiblockManager.save();
+        EnergyNetwork.save();
+        if (PACK_SERVER.isEnabled()) {
+            PACK_SERVER.stop();
+        }
+    }
+
+    public static AbyssalLib getInstance() {
+        return INSTANCE;
+    }
+
+    private void createDefaultPack() {
         ResourcePack rp = new ResourcePack(this, PLUGIN_ID);
         Namespace ns = rp.namespace("abyssallib");
         ns.icon();
@@ -117,6 +136,7 @@ public final class AbyssalLib extends JavaPlugin {
         createItemDef("forward", ns);
         createItemDef("backward", ns);
         createItemDef("close", ns);
+        createItemDef("back", ns);
         createItemDef("checkmark", ns);
 
         createItemDef("bounding_toggle", ns);
@@ -135,21 +155,6 @@ public final class AbyssalLib extends JavaPlugin {
 
         rp.register(false);
     }
-
-    @Override
-    public void onDisable() {
-        BlockManager.save();
-        MultiblockManager.save();
-        EnergyNetwork.save();
-        if (PACK_SERVER.isEnabled()) {
-            PACK_SERVER.stop();
-        }
-    }
-
-    public static AbyssalLib getInstance() {
-        return INSTANCE;
-    }
-
     private void createItemDef(String name, Namespace ns) {
         Texture tex = ns.texture("item/" + name);
         Model model = ns.model(name, false);
@@ -159,7 +164,6 @@ public final class AbyssalLib extends JavaPlugin {
         Selector.Model sel = new Selector.Model(model);
         ns.itemDefinition(name, sel, false);
     }
-
     private void registerBlockDataAdapters() {
         Adapter.register("age", new AgeableAdapter());
         Adapter.register("power", new AnaloguePowerableAdapter());

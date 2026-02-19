@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.structure.internal;
+package com.github.darksoulq.abyssallib.world.structure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,7 +7,6 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.structure.Structure;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;

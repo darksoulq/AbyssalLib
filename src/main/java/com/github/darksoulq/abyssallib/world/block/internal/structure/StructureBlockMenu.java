@@ -8,7 +8,7 @@ import com.github.darksoulq.abyssallib.world.block.property.Property;
 import com.github.darksoulq.abyssallib.world.gui.Gui;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.SlotPosition;
-import com.github.darksoulq.abyssallib.world.gui.impl.GuiButton;
+import com.github.darksoulq.abyssallib.world.gui.element.GuiButton;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.Items;

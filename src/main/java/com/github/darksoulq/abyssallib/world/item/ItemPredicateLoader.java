@@ -1,11 +1,10 @@
-package com.github.darksoulq.abyssallib.world.item.internal;
+package com.github.darksoulq.abyssallib.world.item;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;

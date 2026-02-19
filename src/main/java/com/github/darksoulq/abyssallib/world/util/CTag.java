@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.common.util;
+package com.github.darksoulq.abyssallib.world.util;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
