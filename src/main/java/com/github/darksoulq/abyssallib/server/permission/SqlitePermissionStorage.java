@@ -1,11 +1,7 @@
-package com.github.darksoulq.abyssallib.server.permission.internal;
+package com.github.darksoulq.abyssallib.server.permission;
 
 import com.github.darksoulq.abyssallib.common.database.relational.sql.BatchQuery;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
-import com.github.darksoulq.abyssallib.server.permission.Node;
-import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
-import com.github.darksoulq.abyssallib.server.permission.PermissionStorage;
-import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 
 import java.util.HashMap;
