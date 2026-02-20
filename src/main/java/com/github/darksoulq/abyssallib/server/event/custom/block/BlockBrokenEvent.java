@@ -13,9 +13,8 @@ import java.util.List;
 
 /**
  * An event that is called when a custom block is broken by a player.
- * <p>
  * This event is {@link Cancellable}, meaning the block break can be prevented by a plugin.
- * </p>
+ * It provides control over loot drop logic and access to environmental data like fortune levels.
  */
 public class BlockBrokenEvent extends Event implements Cancellable {
 
@@ -25,7 +24,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
     /**
-     * The block that is being broken.
+     * The custom block instance that is being broken.
      */
     private final CustomBlock block;
 
@@ -35,30 +34,34 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     private final Player player;
 
     /**
-     * Whether the api should handle loot drops for the block
+     * Flag indicating whether the API should handle the default loot drops.
      */
     private boolean baseDrops = true;
 
     /**
-     * The drops to use if {@code baseDrops} is false
+     * A custom list of drops to be used if the default drops are disabled.
      */
     private List<ItemStack> newDrops = null;
 
     /**
-     * Fortune level of the item used to break the block
+     * The level of the Fortune enchantment on the tool used to break the block.
      */
     private int fortuneLevel;
 
     /**
-     * Whether the event is cancelled.
+     * The current cancellation state of this event.
      */
     private boolean cancelled = false;
 
     /**
-     * Constructs a new {@code BlockBrokenEvent}.
+     * Constructs a new BlockBrokenEvent with player, block, and enchantment data.
      *
-     * @param player The player breaking the block.
-     * @param block  The custom block being broken.
+     * @param player
+     * The player breaking the block, or null if broken by other means.
+     * @param block
+     * The {@link CustomBlock} instance being broken.
+     * @param fortuneLevel
+     * The level of the Fortune enchantment detected on the item used.
      */
     public BlockBrokenEvent(@Nullable Player player, @NotNull CustomBlock block, int fortuneLevel) {
         this.player = player;
@@ -67,71 +70,80 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     }
 
     /**
-     * Gets the block being broken.
+     * Retrieves the custom block involved in this break event.
      *
-     * @return The custom block involved in this event.
+     * @return
+     * The non-null {@link CustomBlock} involved in the event.
      */
     public @NotNull CustomBlock getBlock() {
         return block;
     }
 
     /**
-     * Gets the player who is breaking the block.
+     * Retrieves the player responsible for breaking the block.
      *
-     * @return The player involved in this event.
+     * @return
+     * The {@link Player} instance, or null.
      */
     public @Nullable Player getPlayer() {
         return player;
     }
 
     /**
-     * Sets whether the api should handle block drops
+     * Sets whether the internal API should proceed with its default loot table logic.
      *
-     * @param shouldDrop should api handle it
+     * @param shouldDrop
+     * True to use default API drops, false to override with custom drops.
      */
     public void setBaseDrops(boolean shouldDrop) {
         baseDrops = shouldDrop;
     }
 
     /**
-     * Gets whether api should handle block drops or not
+     * Checks if the internal API is currently configured to handle block drops.
      *
-     * @return whether api should handle the drops
+     * @return
+     * True if the API handles drops, false otherwise.
      */
     public boolean getBaseDrops() {
         return baseDrops;
     }
 
     /**
-     * Gets the drops to use in case {@code setBaseDrops(false)} has been set
+     * Defines a specific list of items to drop instead of the default API loot.
      *
-     * @param drops the drops to use.
+     * @param drops
+     * The {@link List} of {@link ItemStack} objects to drop.
      */
     public void setDrops(List<ItemStack> drops) {
         newDrops = drops;
     }
 
     /**
-     * Gets the item list to use as new drops.
-     * @return the item stack list
+     * Retrieves the list of custom items to be dropped if base drops are disabled.
+     *
+     * @return
+     * A list of {@link ItemStack} objects, or null if none are set.
      */
     public List<ItemStack> getNewDrops() {
         return newDrops;
     }
 
     /**
-     * The level of fortune on the item that broke the block
+     * Retrieves the detected Fortune level applied to the block break calculation.
      *
-     * @return fortune level.
+     * @return
+     * The integer level of the Fortune enchantment.
      */
     public int getFortuneLevel() {
         return fortuneLevel;
     }
 
     /**
-     * Checks whether the event is currently cancelled.
+     * Checks whether the block break event has been cancelled by a listener.
      *
-     * @return {@code true} if the event is cancelled; {@code false} otherwise.
+     * @return
+     * True if cancelled, false otherwise.
      */
     @Override
     public boolean isCancelled() {
@@ -139,9 +151,10 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     }
 
     /**
-     * Sets the cancellation state of this event.
+     * Sets the cancellation status of the block break.
      *
-     * @param cancel {@code true} to cancel the event, {@code false} to allow it to proceed.
+     * @param cancel
+     * True to prevent the block from breaking, false to allow it.
      */
     @Override
     public void setCancelled(boolean cancel) {
@@ -149,14 +162,23 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     }
 
     /**
-     * Gets the list of handlers listening to this event.
+     * Retrieves the set of handlers listening to this event instance.
      *
-     * @return The handler list.
+     * @return
+     * The {@link HandlerList} for this event.
      */
     @Override
     public @NotNull HandlerList getHandlers() {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    /**
+     * Provides a static method to retrieve the handler list, required by Bukkit.
+     *
+     * @return
+     * The static {@link HandlerList} for this event type.
+     */
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

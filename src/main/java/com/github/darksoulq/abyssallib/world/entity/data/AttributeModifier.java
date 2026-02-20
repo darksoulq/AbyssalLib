@@ -4,24 +4,31 @@ import java.math.BigDecimal;
 
 /**
  * Represents a modifier applied to an attribute's base value.
- * Supports arithmetic operations (add, subtract, multiply, divide)
- * for numeric types including: Integer, Float, Double, Long, Short, Byte, and BigDecimal.
+ * This class supports arithmetic operations including addition, subtraction,
+ * multiplication, and division for a wide variety of numeric types.
  *
- * @param <T> The numeric type of the attribute being modified.
+ * @param <T>
+ * The numeric type of the attribute being modified, extending {@link Number}.
  */
 public class AttributeModifier<T extends Number> {
 
-    /** The modifier value to apply. */
+    /**
+     * The modifier value to apply during calculations.
+     */
     private final T value;
 
-    /** The arithmetic operation to apply. */
+    /**
+     * The arithmetic operation logic to apply to the base value.
+     */
     private final AttributeOperation operation;
 
     /**
-     * Constructs a new attribute modifier with a given value and operation.
+     * Constructs a new attribute modifier with a specific value and operation type.
      *
-     * @param value     The value to apply as a modifier.
-     * @param operation The operation used when applying the modifier.
+     * @param value
+     * The numeric value to apply as a modifier.
+     * @param operation
+     * The {@link AttributeOperation} defining how the value interacts with the base.
      */
     public AttributeModifier(T value, AttributeOperation operation) {
         this.value = value;
@@ -29,24 +36,32 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * @return The raw modifier value.
+     * Retrieves the raw numeric value associated with this modifier.
+     *
+     * @return
+     * The modifier value of type {@code T}.
      */
     public T getValue() {
         return value;
     }
 
     /**
-     * @return The operation that this modifier performs.
+     * Retrieves the specific arithmetic operation performed by this modifier.
+     *
+     * @return
+     * The {@link AttributeOperation} constant representing the operation.
      */
     public AttributeOperation getOperation() {
         return operation;
     }
 
     /**
-     * Applies this modifier to an {@code int} base value.
+     * Applies this modifier to an integer base value.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified integer value.
      */
     public int applyToInt(int base) {
         int mod = value.intValue();
@@ -59,10 +74,12 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * Applies this modifier to a {@code float} base value.
+     * Applies this modifier to a floating-point base value.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified float value.
      */
     public float applyToFloat(float base) {
         float mod = value.floatValue();
@@ -75,10 +92,12 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * Applies this modifier to a {@code double} base value.
+     * Applies this modifier to a double-precision base value.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified double value.
      */
     public double applyToDouble(double base) {
         double mod = value.doubleValue();
@@ -91,10 +110,12 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * Applies this modifier to a {@code long} base value.
+     * Applies this modifier to a long integer base value.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified long value.
      */
     public long applyToLong(long base) {
         long mod = value.longValue();
@@ -107,10 +128,12 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * Applies this modifier to a {@code short} base value.
+     * Applies this modifier to a short integer base value.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified short value.
      */
     public short applyToShort(short base) {
         short mod = value.shortValue();
@@ -123,10 +146,12 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * Applies this modifier to a {@code byte} base value.
+     * Applies this modifier to a byte base value.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified byte value.
      */
     public byte applyToByte(byte base) {
         byte mod = value.byteValue();
@@ -139,10 +164,12 @@ public class AttributeModifier<T extends Number> {
     }
 
     /**
-     * Applies this modifier to a {@code BigDecimal} base value.
+     * Applies this modifier to a {@link BigDecimal} base value for high-precision arithmetic.
      *
-     * @param base The original base value.
-     * @return The modified result.
+     * @param base
+     * The original base value to be modified.
+     * @return
+     * The resulting modified BigDecimal value.
      */
     public BigDecimal applyToBigDecimal(BigDecimal base) {
         BigDecimal mod = (value instanceof BigDecimal b) ? b : new BigDecimal(value.toString());

@@ -1,56 +1,251 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.util.Either;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * A Codec is a bidirectional serializer/deserializer that can translate between
- * a Java object of type {@code T} and a serialized format {@code D} defined by {@link DynamicOps}.
- * @param <T> The Java type that this codec handles.
+ * A bidirectional serializer and deserializer capable of translating between Java objects
+ * and various serialized formats defined by a {@link DynamicOps} provider.
+ *
+ * @param <T> The Java type that this codec is responsible for handling.
  */
 public interface Codec<T> {
+
     /**
-     * Decodes a serialized input into a Java object.
-     * @param <D>   The type of the serialized data.
-     * @param ops   The {@link DynamicOps} instance defining how to read data of type D.
-     * @param input The serialized input to decode.
-     * @return The decoded Java object of type T.
-     * @throws CodecException If the input format is invalid or missing required data.
+     * Decodes a serialized input of a specific data format into a Java object.
+     *
+     * @param <D>   The type of the serialized data (e.g., JsonElement, NBTCompound, ByteBuf).
+     * @param ops   The provider defining how to navigate and read data of type D.
+     * @param input The raw serialized input to be processed.
+     * @return The resulting Java object of type T.
+     * @throws CodecException If the input data is malformed, missing fields, or type-mismatched.
      */
     <D> T decode(DynamicOps<D> ops, D input) throws CodecException;
 
     /**
      * Encodes a Java object into its serialized representation.
-     * @param <D>   The type of the serialized data.
-     * @param ops   The {@link DynamicOps} instance defining how to create data of type D.
-     * @param value The Java object to encode.
-     * @return The serialized representation of the value.
-     * @throws CodecException If the object contains data that cannot be serialized.
+     *
+     * @param <D>   The target type of the serialized data.
+     * @param ops   The provider defining how to construct data of type D.
+     * @param value The Java object instance to be serialized.
+     * @return The serialized data representing the object.
+     * @throws CodecException If the object contains non-serializable states or illegal values.
      */
     <D> D encode(DynamicOps<D> ops, T value) throws CodecException;
 
     /**
-     * An exception thrown when a codec fails to process data.
+     * A specialized checked exception for failures occurring during the serialization
+     * or deserialization process.
      */
     class CodecException extends Exception {
-        /** @param message The detail message. */
-        public CodecException(String message) { super(message); }
         /**
-         * @param message The detail message.
-         * @param cause The underlying cause.
-         * */
-        public CodecException(String message, Throwable cause) { super(message, cause); }
+         * Constructs a new exception with a specific detail message.
+         *
+         * @param message The error description.
+         */
+        public CodecException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs a new exception with a detail message and an underlying cause.
+         *
+         * @param message The error description.
+         * @param cause   The throwable that triggered this exception.
+         */
+        public CodecException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     /**
-     * Creates a simple codec from a pair of functions.
+     * Functional interface for conversions that may fail with a {@link CodecException}.
+     *
+     * @param <T> The input type of the function.
+     * @param <R> The return type of the function.
+     */
+    @FunctionalInterface
+    interface CheckedFunction<T, R> {
+        /**
+         * Applies the conversion logic.
+         *
+         * @param t The input value.
+         * @return The converted value.
+         * @throws CodecException If the conversion fails.
+         */
+        R apply(T t) throws CodecException;
+    }
+
+    /**
+     * Represents the definition of a single field within a structured object.
+     *
+     * @param <T>    The parent object type containing the field.
+     * @param <A>    The type of the field itself.
+     * @param name   The key identifier for this field in the serialized format.
+     * @param codec  The codec used to process the field data.
+     * @param getter A function used to extract the field value from a parent object instance.
+     */
+    record Field<T, A>(String name, Codec<A> codec, Function<T, A> getter) {}
+
+    /**
+     * Internal implementation of a codec that attempts a primary branch and falls
+     * back to a secondary branch on failure.
+     *
+     * @param <T>   The type handled by both codec branches.
+     * @param left  The primary codec to attempt first.
+     * @param right The secondary codec used if the primary fails.
+     */
+    record FallbackCodec<T>(Codec<T> left, Codec<T> right) implements Codec<T> {
+        /**
+         * Decodes data by attempting the left codec first, then the right.
+         *
+         * @param <D>   The data format type.
+         * @param ops   The operation provider.
+         * @param input The input data.
+         * @return The decoded result.
+         * @throws CodecException If both codecs fail.
+         */
+        @Override
+        public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
+            try { return left.decode(ops, input); }
+            catch (Exception ignored) { return right.decode(ops, input); }
+        }
+
+        /**
+         * Encodes data by attempting the left codec first, then the right.
+         *
+         * @param <D>   The data format type.
+         * @param ops   The operation provider.
+         * @param value The value to encode.
+         * @return The encoded data.
+         * @throws CodecException If both codecs fail.
+         */
+        @Override
+        public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
+            try { return left.encode(ops, value); }
+            catch (Exception ignored) { return right.encode(ops, value); }
+        }
+    }
+
+    /**
+     * Internal implementation for handling the {@link Either} type, allowing for
+     * bifurcated data structures.
+     *
+     * @param <A>   The type of the Left branch.
+     * @param <B>   The type of the Right branch.
+     * @param left  Codec for the Left branch.
+     * @param right Codec for the Right branch.
+     */
+    record EitherCodec<A, B>(Codec<A> left, Codec<B> right) implements Codec<Either<A, B>> {
+        /**
+         * Decodes data into an Either container.
+         *
+         * @param <D>   The data format type.
+         * @param ops   The operation provider.
+         * @param input The input data.
+         * @return An Either instance.
+         * @throws CodecException If neither branch can decode the input.
+         */
+        @Override
+        public <D> Either<A, B> decode(DynamicOps<D> ops, D input) throws CodecException {
+            try {
+                return new Either.Left<>(left.decode(ops, input));
+            } catch (Exception ignore) {
+                return new Either.Right<>(right.decode(ops, input));
+            }
+        }
+
+        /**
+         * Encodes an Either container into serialized data.
+         *
+         * @param <D>    The data format type.
+         * @param ops    The operation provider.
+         * @param either The Either container.
+         * @return The serialized data.
+         * @throws CodecException If the active branch cannot be encoded.
+         */
+        @Override
+        @SuppressWarnings("unchecked")
+        public <D> D encode(DynamicOps<D> ops, Either<A, B> either) throws CodecException {
+            if (either instanceof Either.Left<A, B> l) {
+                return left.encode(ops, l.value());
+            } else {
+                return right.encode(ops, ((Either.Right<A, B>) either).value());
+            }
+        }
+    }
+
+    /**
+     * Internal implementation that iterates through a list of codecs until one
+     * successfully processes the data.
+     *
+     * @param <T>    The common type returned by all provided codecs.
+     * @param codecs The list of candidate codecs.
+     */
+    record OneOfCodec<T>(List<Codec<T>> codecs) implements Codec<T> {
+        /**
+         * Constructs a oneOf codec with an immutable copy of the provided list.
+         *
+         * @param codecs The codecs to attempt in order.
+         */
+        public OneOfCodec(List<Codec<T>> codecs) {
+            this.codecs = List.copyOf(codecs);
+        }
+
+        /**
+         * Decodes the input using the first codec in the list that succeeds.
+         *
+         * @param <D>   The data format type.
+         * @param ops   The operation provider.
+         * @param input The input data.
+         * @return The decoded value.
+         * @throws CodecException If all candidate codecs fail.
+         */
+        @Override
+        public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
+            CodecException last = null;
+            for (Codec<T> c : codecs) {
+                try {
+                    return c.decode(ops, input);
+                } catch (Exception e) {
+                    last = new CodecException(e.getMessage(), e);
+                }
+            }
+            throw last != null ? last : new CodecException("No codec in OneOf matched");
+        }
+
+        /**
+         * Encodes the value using the first codec in the list that succeeds.
+         *
+         * @param <D>   The data format type.
+         * @param ops   The operation provider.
+         * @param value The value to encode.
+         * @return The encoded data.
+         * @throws CodecException If all candidate codecs fail.
+         */
+        @Override
+        public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
+            CodecException last = null;
+            for (Codec<T> c : codecs) {
+                try {
+                    return c.encode(ops, value);
+                } catch (Exception e) {
+                    last = new CodecException(e.getMessage(), e);
+                }
+            }
+            throw last != null ? last : new CodecException("No codec in OneOf could encode");
+        }
+    }
+
+    /**
+     * Factory method to create a simple codec from mapping functions.
+     *
      * @param <T>     The target Java type.
-     * @param decoder Function to convert raw objects to T.
-     * @param encoder Function to convert T to raw objects.
-     * @return A new Codec instance.
+     * @param decoder Function to convert raw objects (from DynamicOps) to type T.
+     * @param encoder Function to convert type T to raw objects.
+     * @return A basic Codec implementation.
      */
     static <T> Codec<T> of(Function<Object, T> decoder, Function<T, Object> encoder) {
         return new Codec<>() {
@@ -65,152 +260,13 @@ public interface Codec<T> {
     }
 
     /**
-     * Maps this codec to another type via two conversion functions (Invariant mapping).
-     * @param <R>      The new Java type.
-     * @param forward  Function to convert from T to R.
-     * @param backward Function to convert from R back to T.
-     * @return A codec for type R.
-     */
-    default <R> Codec<R> xmap(CheckedFunction<? super T, ? extends R> forward,
-                              CheckedFunction<? super R, ? extends T> backward) {
-        Codec<T> self = this;
-        return new Codec<>() {
-            @Override
-            public <D> R decode(DynamicOps<D> ops, D input) throws CodecException {
-                return forward.apply(self.decode(ops, input));
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, R value) throws CodecException {
-                return self.encode(ops, backward.apply(value));
-            }
-        };
-    }
-
-    /**
-     * Returns a codec that returns a default value if decoding fails or input is null.
-     * @param defaultValue The value to return on failure.
-     * @return A fallback-capable codec.
-     */
-    default Codec<T> orElse(T defaultValue) {
-        Codec<T> self = this;
-        return new Codec<>() {
-            @Override public <D> T decode(DynamicOps<D> ops, D input) {
-                try {
-                    T result = self.decode(ops, input);
-                    return result != null ? result : defaultValue;
-                } catch (CodecException e) {
-                    return defaultValue;
-                }
-            }
-            @Override public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
-                return self.encode(ops, value != null ? value : defaultValue);
-            }
-        };
-    }
-
-    /** @return A codec for a List of type T. */
-    default Codec<List<T>> list() {
-        return collection(ArrayList::new);
-    }
-
-    /** * Unsafely casts this codec to another type.
-     * @param <U> The type to cast to.
-     * @return The casted codec.
-     */
-    @SuppressWarnings("unchecked")
-    default <U> Codec<U> unchecked() {
-        return (Codec<U>) this;
-    }
-
-    /**
-     * Creates a codec for a specific collection implementation.
-     * Also handles recursive unwrapping for Fallback and OneOf codecs to ensure
-     * lists are handled correctly across all branches.
-     * @param <C>     The collection type.
-     * @param factory Supplier for the collection instance.
-     * @return A collection-aware codec.
-     */
-    default <C extends Collection<T>> Codec<C> collection(Supplier<C> factory) {
-        Codec<T> self = this;
-
-        if (self instanceof FallbackCodec<T>(Codec<T> left, Codec<T> right)) {
-            Codec<List<T>> leftList  = left.list().unchecked();
-            Codec<List<T>> rightList = right.list().unchecked();
-            return new FallbackCodec<>(leftList, rightList).unchecked();
-        }
-
-        if (self instanceof OneOfCodec<T>(List<Codec<T>> codecs)) {
-            List<Codec<List<T>>> listCodecs = new ArrayList<>();
-            for (Codec<T> c : codecs) listCodecs.add(c.list().unchecked());
-            return new OneOfCodec<>(listCodecs).unchecked();
-        }
-
-        return new Codec<>() {
-            @Override
-            public <D> C decode(DynamicOps<D> ops, D input) throws CodecException {
-                List<D> rawList = ops.getList(input)
-                    .orElseThrow(() -> new CodecException("Expected list for collection"));
-                C result = factory.get();
-                for (D elem : rawList) {
-                    result.add(self.decode(ops, elem));
-                }
-                return result;
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, C value) throws CodecException {
-                List<D> result = new ArrayList<>(value.size());
-                for (T elem : value) {
-                    result.add(self.encode(ops, elem));
-                }
-                return ops.createList(result);
-            }
-        };
-    }
-
-    /** @return A codec wrapping type T in an Optional. */
-    default Codec<Optional<T>> optional() {
-        Codec<T> self = this;
-        return new Codec<>() {
-            @Override
-            public <D> Optional<T> decode(DynamicOps<D> ops, D input) throws CodecException {
-                if (input == null || Objects.equals(input, ops.empty()))
-                    return Optional.empty();
-                return Optional.ofNullable(self.decode(ops, input));
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Optional<T> value) throws CodecException {
-                if (value == null || value.isEmpty()) return ops.empty();
-                return self.encode(ops, value.get());
-            }
-        };
-    }
-
-    /** @return A codec that handles null Java values by encoding/decoding as empty/null. */
-    default Codec<T> nullable() {
-        Codec<T> self = this;
-        return new Codec<>() {
-            @Override public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
-                D empty = ops.empty();
-                if (input == null || Objects.equals(input, empty)) return null;
-                return self.decode(ops, input);
-            }
-
-            @Override public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
-                return value == null ? ops.empty() : self.encode(ops, value);
-            }
-        };
-    }
-
-    /**
-     * Creates a codec for a Map.
+     * Creates a codec for a Map structure.
+     *
      * @param <K>        Key type.
      * @param <V>        Value type.
      * @param keyCodec   Codec for keys.
      * @param valueCodec Codec for values.
-     * @return A map codec.
+     * @return A codec handling Map types.
      */
     static <K, V> Codec<Map<K, V>> map(Codec<K> keyCodec, Codec<V> valueCodec) {
         return new Codec<>() {
@@ -240,10 +296,11 @@ public interface Codec<T> {
     }
 
     /**
-     * Creates a codec for an Enum using its name.
+     * Creates a codec for an Enum type using its string name.
+     *
      * @param <E>       Enum type.
-     * @param enumClass The Class of the enum.
-     * @return An enum codec.
+     * @param enumClass The class literal of the enum.
+     * @return A codec for the specified enum.
      */
     static <E extends Enum<E>> Codec<E> enumCodec(Class<E> enumClass) {
         return new Codec<>() {
@@ -256,11 +313,12 @@ public interface Codec<T> {
     }
 
     /**
-     * Combines two codecs. Tries the left one first; if it fails, tries the right.
-     * @param <T>   The target type.
+     * Combines two codecs such that the secondary is used if the primary fails.
+     *
+     * @param <T>   Target type.
      * @param left  Primary codec.
-     * @param right Secondary codec.
-     * @return A fallback codec.
+     * @param right Fallback codec.
+     * @return A fallback-enabled codec.
      */
     static <T> Codec<T> fallback(Codec<? extends T> left, Codec<? extends T> right) {
         return new FallbackCodec<>(
@@ -270,22 +328,24 @@ public interface Codec<T> {
     }
 
     /**
-     * Creates a codec for an {@link Either} type.
-     * @param <A>   Left type.
-     * @param <B>   Right type.
-     * @param left  Left codec.
-     * @param right Right codec.
-     * @return An either codec.
+     * Creates a codec for an {@link Either} container.
+     *
+     * @param <A>   Left branch type.
+     * @param <B>   Right branch type.
+     * @param left  Codec for type A.
+     * @param right Codec for type B.
+     * @return A codec for Either.
      */
     static <A, B> Codec<Either<A, B>> either(Codec<A> left, Codec<B> right) {
         return new EitherCodec<>(left, right);
     }
 
     /**
-     * Attempts multiple codecs in order until one succeeds.
-     * @param <T>     The target type.
-     * @param codecs  The codecs to attempt.
-     * @return A one-of-many codec.
+     * Combines multiple codecs to be tried in sequence.
+     *
+     * @param <T>    Target type.
+     * @param codecs Array of codecs to attempt.
+     * @return A multi-branch codec.
      */
     @SafeVarargs
     static <T> Codec<T> oneOf(Codec<? extends T>... codecs) {
@@ -295,110 +355,168 @@ public interface Codec<T> {
     }
 
     /**
-     * A function that is allowed to throw a CodecException.
-     * @param <T> Input type.
-     * @param <R> Return type.
+     * Transforms this codec to handle a new type R via two-way conversion functions.
+     *
+     * @param <R>      The new target Java type.
+     * @param forward  Conversion function from T to R.
+     * @param backward Conversion function from R to T.
+     * @return A codec for type R.
      */
-    @FunctionalInterface
-    interface CheckedFunction<T, R> {
-        /** @throws Codec.CodecException if the function logic fails. */
-        R apply(T t) throws Codec.CodecException;
-    }
-
-    /**
-     * Represents a single field within a larger object structure.
-     * @param <T> The parent object type.
-     * @param <A> The field's type.
-     */
-    record Field<T, A>(String name, Codec<A> codec, Function<T, A> getter) {}
-
-    /**
-     * Internal implementation of a codec that tries two branches.
-     * @param <T> Target type.
-     */
-    record FallbackCodec<T>(Codec<T> left, Codec<T> right) implements Codec<T> {
-        @Override
-        public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
-            try { return left.decode(ops, input); }
-            catch (Exception ignored) { return right.decode(ops, input); }
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
-            try { return left.encode(ops, value); }
-            catch (Exception ignored) { return right.encode(ops, value); }
-        }
-    }
-
-    /**
-     * Internal implementation for the {@link Either} type.
-     * @param <A> Left type.
-     * @param <B> Right type.
-     */
-    record EitherCodec<A, B>(Codec<A> left, Codec<B> right) implements Codec<Either<A, B>> {
-        @Override
-        public <D> Either<A, B> decode(DynamicOps<D> ops, D input) throws CodecException {
-            try {
-                return new Either.Left<>(left.decode(ops, input));
-            } catch (Exception ignore) {
-                return new Either.Right<>(right.decode(ops, input));
+    default <R> Codec<R> xmap(CheckedFunction<? super T, ? extends R> forward,
+                              CheckedFunction<? super R, ? extends T> backward) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> R decode(DynamicOps<D> ops, D input) throws CodecException {
+                return forward.apply(self.decode(ops, input));
             }
-        }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public <D> D encode(DynamicOps<D> ops, Either<A, B> either) throws CodecException {
-            if (either instanceof Either.Left<A, B> l) {
-                return left.encode(ops, l.value());
-            } else {
-                return right.encode(ops, ((Either.Right<A, B>) either).value());
+            @Override
+            public <D> D encode(DynamicOps<D> ops, R value) throws CodecException {
+                return self.encode(ops, backward.apply(value));
             }
-        }
+        };
     }
 
     /**
-     * Internal implementation that attempts a list of codecs sequentially.
-     * @param <T> Target type.
+     * Wraps this codec with a default value to be used if decoding fails or returns null.
+     *
+     * @param defaultValue The value to return on failure.
+     * @return A codec that provides a default result.
      */
-    record OneOfCodec<T>(List<Codec<T>> codecs) implements Codec<T> {
-        /** @param codecs The immutable list of codecs. */
-        public OneOfCodec(List<Codec<T>> codecs) {
-            this.codecs = List.copyOf(codecs);
-        }
-
-        @Override
-        public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
-            CodecException last = null;
-            for (Codec<T> c : codecs) {
+    default Codec<T> orElse(T defaultValue) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override public <D> T decode(DynamicOps<D> ops, D input) {
                 try {
-                    return c.decode(ops, input);
-                } catch (Exception e) {
-                    last = new CodecException(e.getMessage(), e);
+                    T result = self.decode(ops, input);
+                    return result != null ? result : defaultValue;
+                } catch (CodecException e) {
+                    return defaultValue;
                 }
             }
-            throw last != null ? last : new CodecException("No codec in OneOf matched");
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
-            CodecException last = null;
-            for (Codec<T> c : codecs) {
-                try {
-                    return c.encode(ops, value);
-                } catch (Exception e) {
-                    last = new CodecException(e.getMessage(), e);
-                }
+            @Override public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
+                return self.encode(ops, value != null ? value : defaultValue);
             }
-            throw last != null ? last : new CodecException("No codec in OneOf could encode");
-        }
+        };
     }
 
     /**
-     * Creates a field definition used for building complex object codecs.
-     * * @param <P>    Parent object type.
-     * @param name   The field name in the serialized format.
-     * @param getter Function to extract this field from the parent.
-     * @return A field definition.
+     * Creates a codec for a {@link List} of elements of type T.
+     *
+     * @return A codec for a List of T.
+     */
+    default Codec<List<T>> list() {
+        return collection(ArrayList::new);
+    }
+
+    /**
+     * Performs an unsafe cast of this codec to another type.
+     *
+     * @param <U> Target type.
+     * @return The same codec instance cast to Codec of U.
+     */
+    @SuppressWarnings("unchecked")
+    default <U> Codec<U> unchecked() {
+        return (Codec<U>) this;
+    }
+
+    /**
+     * Creates a codec for a specific collection implementation.
+     * Handles complex logic to propagate list serialization through Fallback and OneOf codecs.
+     *
+     * @param <C>     The specific collection type (e.g., Set, Queue).
+     * @param factory Supplier to create a new collection instance.
+     * @return A collection-specific codec.
+     */
+    default <C extends Collection<T>> Codec<C> collection(Supplier<C> factory) {
+        Codec<T> self = this;
+
+        if (self instanceof FallbackCodec<T> fallback) {
+            Codec<List<T>> leftList = fallback.left().list().unchecked();
+            Codec<List<T>> rightList = fallback.right().list().unchecked();
+            return new FallbackCodec<>(leftList, rightList).unchecked();
+        }
+
+        if (self instanceof OneOfCodec<T> oneOf) {
+            List<Codec<List<T>>> listCodecs = new ArrayList<>();
+            for (Codec<T> c : oneOf.codecs()) listCodecs.add(c.list().unchecked());
+            return new OneOfCodec<>(listCodecs).unchecked();
+        }
+
+        return new Codec<>() {
+            @Override
+            public <D> C decode(DynamicOps<D> ops, D input) throws CodecException {
+                List<D> rawList = ops.getList(input)
+                    .orElseThrow(() -> new CodecException("Expected list for collection"));
+                C result = factory.get();
+                for (D elem : rawList) {
+                    result.add(self.decode(ops, elem));
+                }
+                return result;
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, C value) throws CodecException {
+                List<D> result = new ArrayList<>(value.size());
+                for (T elem : value) {
+                    result.add(self.encode(ops, elem));
+                }
+                return ops.createList(result);
+            }
+        };
+    }
+
+    /**
+     * Wraps the current codec to handle Java {@link Optional} values.
+     *
+     * @return A codec for Optional of T.
+     */
+    default Codec<Optional<T>> optional() {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> Optional<T> decode(DynamicOps<D> ops, D input) throws CodecException {
+                if (input == null || Objects.equals(input, ops.empty()))
+                    return Optional.empty();
+                return Optional.ofNullable(self.decode(ops, input));
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, Optional<T> value) throws CodecException {
+                if (value == null || value.isEmpty()) return ops.empty();
+                return self.encode(ops, value.get());
+            }
+        };
+    }
+
+    /**
+     * Modifies the codec to treat null Java values as empty serialized states.
+     *
+     * @return A null-safe version of this codec.
+     */
+    default Codec<T> nullable() {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override public <D> T decode(DynamicOps<D> ops, D input) throws CodecException {
+                D empty = ops.empty();
+                if (input == null || Objects.equals(input, empty)) return null;
+                return self.decode(ops, input);
+            }
+
+            @Override public <D> D encode(DynamicOps<D> ops, T value) throws CodecException {
+                return value == null ? ops.empty() : self.encode(ops, value);
+            }
+        };
+    }
+
+    /**
+     * Defines this codec as a field within a larger object structure.
+     *
+     * @param <P>    The parent object type.
+     * @param name   The name of the field.
+     * @param getter The function to get the field value from the parent.
+     * @return A Field definition object.
      */
     default <P> Field<P, T> fieldOf(String name, Function<P, T> getter) {
         return new Field<>(name, this, getter);

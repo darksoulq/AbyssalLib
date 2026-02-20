@@ -170,5 +170,11 @@ public class BlockInteractionEvent extends Event implements Cancellable {
         return handlers;
     }
 
+    /**
+     * Provides a static method to retrieve the handler list, required by Bukkit.
+     *
+     * @return
+     * The static {@link HandlerList} for this event type.
+     */
     public static HandlerList getHandlerList() { return handlers; }
 }

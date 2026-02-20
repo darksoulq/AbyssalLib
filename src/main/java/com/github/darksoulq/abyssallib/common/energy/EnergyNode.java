@@ -9,42 +9,66 @@ import java.util.Set;
 
 /**
  * Represents a node capable of storing, receiving, and providing energy.
- * Nodes can be connected to form a distribution network.
+ * Nodes can be connected to form a distribution network for power management.
  */
 public interface EnergyNode {
 
-    /** @return The current energy stored in this node. */
+    /**
+     * Retrieves the current amount of energy currently stored within this node.
+     *
+     * @return The current energy level in the node's local {@link EnergyUnit}.
+     */
     double getEnergy();
 
-    /** @return The maximum energy capacity of this node. */
+    /**
+     * Retrieves the maximum amount of energy this node is capable of holding.
+     *
+     * @return The maximum storage capacity in the node's local {@link EnergyUnit}.
+     */
     double getCapacity();
 
-    /** @return The {@link EnergyUnit} measurement system used by this node. */
+    /**
+     * Retrieves the measurement system and conversion rules used by this specific node.
+     *
+     * @return The {@link EnergyUnit} instance associated with this node.
+     */
     EnergyUnit getUnit();
 
-    /** @return The {@link EnergyNodeType} definition for this node. */
+    /**
+     * Retrieves the type definition that identifies the implementation logic of this node.
+     *
+     * @return The {@link EnergyNodeType} characterizing this instance.
+     */
     EnergyNodeType<?> getType();
 
     /**
-     * Inserts energy into this node.
-     * @param amount The amount to insert in local units.
-     * @return The amount actually accepted.
+     * Attempts to insert a specified amount of energy into the node.
+     *
+     * @param amount The amount of energy to insert, measured in the node's local units.
+     * @return The amount of energy that was actually accepted by the node.
      */
     double insert(double amount);
 
     /**
-     * Extracts energy from this node.
-     * @param amount The amount to extract in local units.
-     * @return The amount actually removed.
+     * Attempts to extract a specified amount of energy from the node.
+     *
+     * @param amount The amount of energy to extract, measured in the node's local units.
+     * @return The amount of energy that was actually removed from the node.
      */
     double extract(double amount);
 
-    /** @return A set of all nodes connected to this one. */
+    /**
+     * Retrieves a set of all other energy nodes currently connected to this instance.
+     *
+     * @return A {@link Set} containing all adjacent {@link EnergyNode} instances.
+     */
     Set<EnergyNode> getConnections();
 
     /**
-     * Establishes a bidirectional connection between this node and another.
-     * @param other The target node.
+     * Establishes a bidirectional link between this node and another node.
+     * Adding a node to this set should ideally trigger the same action in the target node.
+     *
+     * @param other The target node to connect to this instance.
      */
     default void connect(EnergyNode other) {
         getConnections().add(other);
@@ -52,25 +76,48 @@ public interface EnergyNode {
     }
 
     /**
-     * Severs the connection between this node and another.
-     * @param other The target node.
+     * Severs the bidirectional connection between this node and another node.
+     *
+     * @param other The target node to disconnect from this instance.
      */
     default void disconnect(EnergyNode other) {
         getConnections().remove(other);
         other.getConnections().remove(this);
     }
 
-    /** @return True if the node has remaining capacity. */
-    default boolean canReceive() { return getEnergy() < getCapacity(); }
-
-    /** @return True if the node has energy available for extraction. */
-    default boolean canProvide() { return getEnergy() > 0; }
+    /**
+     * Checks if the node is capable of receiving any more energy based on its capacity.
+     *
+     * @return True if the current energy is strictly less than the maximum capacity.
+     */
+    default boolean canReceive() {
+        return getEnergy() < getCapacity();
+    }
 
     /**
-     * A polymorphic {@link Codec} for serializing and deserializing different
-     * implementations of EnergyNode using their registered types.
+     * Checks if the node has any energy available to be extracted.
+     *
+     * @return True if the current energy level is strictly greater than zero.
+     */
+    default boolean canProvide() {
+        return getEnergy() > 0;
+    }
+
+    /**
+     * A polymorphic {@link Codec} implementation used for serializing and deserializing
+     * various EnergyNode implementations by leveraging their registered {@link EnergyNodeType}.
      */
     Codec<EnergyNode> CODEC = new Codec<>() {
+        /**
+         * Decodes an EnergyNode from a serialized format. It identifies the implementation
+         * type via a "type" field and delegates to the type-specific codec.
+         *
+         * @param <D>   The type of the serialized data.
+         * @param ops   The provider for reading data of type D.
+         * @param input The raw serialized data.
+         * @return The reconstructed EnergyNode instance.
+         * @throws CodecException If the type is missing, unknown, or the data is malformed.
+         */
         @Override
         public <D> EnergyNode decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for EnergyNode"));
@@ -83,6 +130,16 @@ public interface EnergyNode {
             return type.codec().decode(ops, input);
         }
 
+        /**
+         * Encodes an EnergyNode into a serialized format. It serializes the node's data
+         * and injects the "type" identifier for future polymorphism.
+         *
+         * @param <D>   The target type of the serialized data.
+         * @param ops   The provider for creating data of type D.
+         * @param value The EnergyNode instance to serialize.
+         * @return The serialized data representation.
+         * @throws CodecException If the node type is unregistered or the codec fails.
+         */
         @Override
         @SuppressWarnings("unchecked")
         public <D> D encode(DynamicOps<D> ops, EnergyNode value) throws CodecException {

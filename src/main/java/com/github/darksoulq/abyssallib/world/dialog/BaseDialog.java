@@ -11,8 +11,11 @@ import java.util.List;
 
 /**
  * An abstract base class providing a fluent builder-style API for creating Minecraft Dialogs.
+ * This class encapsulates the state required to construct Paper-based dialogs, including
+ * input elements, body content, and lifecycle actions.
  *
- * @param <T> The type of the dialog implementation, used for method chaining.
+ * @param <T>
+ * The type of the dialog implementation, used for method chaining.
  */
 @SuppressWarnings("UnstableApiUsage")
 public abstract class BaseDialog<T extends BaseDialog<T>> {
@@ -20,33 +23,43 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * The action to perform after the dialog is interacted with.
      */
-    DialogBase.DialogAfterAction afterAction = DialogBase.DialogAfterAction.CLOSE;
+    protected DialogBase.DialogAfterAction afterAction = DialogBase.DialogAfterAction.CLOSE;
 
     /**
      * An optional title displayed externally to the dialog window.
      */
-    Component externalTitle = null;
+    protected Component externalTitle = null;
 
     /**
      * Whether the user can close this dialog by pressing the Escape key.
      */
-    boolean canCloseWithEscape = true;
+    protected boolean canCloseWithEscape = true;
 
     /**
      * The list of interactive input elements within the dialog.
      */
-    List<DialogInput> inputs = new ArrayList<>();
+    protected List<DialogInput> inputs = new ArrayList<>();
 
     /**
      * The list of static or decorative content elements within the dialog.
      */
-    List<DialogBody> bodies = new ArrayList<>();
+    protected List<DialogBody> bodies = new ArrayList<>();
+
+    /**
+     * Explicit constructor for BaseDialog.
+     * Initializes a new builder with default settings: closing on escape
+     * and a default CLOSE after-action.
+     */
+    protected BaseDialog() {
+    }
 
     /**
      * Sets the behavior of the dialog after an action is performed.
      *
-     * @param afterAction The {@link DialogBase.DialogAfterAction} to apply.
-     * @return This dialog instance for chaining.
+     * @param afterAction
+     * The {@link DialogBase.DialogAfterAction} to apply upon completion.
+     * @return
+     * This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T after(DialogBase.DialogAfterAction afterAction) {
@@ -57,8 +70,10 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Sets an external title for the dialog.
      *
-     * @param title The {@link Component} to display as an external title.
-     * @return This dialog instance for chaining.
+     * @param title
+     * The {@link Component} to display as an external title header.
+     * @return
+     * This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T external(Component title) {
@@ -69,8 +84,10 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Sets whether the dialog should close when the Escape key is pressed.
      *
-     * @param should True if escape should close the dialog.
-     * @return This dialog instance for chaining.
+     * @param should
+     * True if escape should close the dialog, false otherwise.
+     * @return
+     * This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T closeWithEscape(boolean should) {
@@ -79,10 +96,12 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     }
 
     /**
-     * Adds an input element to the dialog.
+     * Adds an input element to the dialog collection.
      *
-     * @param input The {@link DialogInput} to add.
-     * @return This dialog instance for chaining.
+     * @param input
+     * The {@link DialogInput} interactive element to append.
+     * @return
+     * This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T input(DialogInput input) {
@@ -91,10 +110,12 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     }
 
     /**
-     * Adds a body element to the dialog.
+     * Adds a body element to the dialog collection.
      *
-     * @param body The {@link DialogBody} to add.
-     * @return This dialog instance for chaining.
+     * @param body
+     * The {@link DialogBody} content element to append.
+     * @return
+     * This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T body(DialogBody body) {
@@ -103,9 +124,10 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     }
 
     /**
-     * Constructs the final {@link Dialog} object.
+     * Constructs the final {@link Dialog} object from the configured state.
      *
-     * @return A built Dialog ready to be shown to a player.
+     * @return
+     * A built Dialog ready to be shown to a player via the API.
      */
     public abstract Dialog build();
 }
