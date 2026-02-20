@@ -1,7 +1,11 @@
-package com.github.darksoulq.abyssallib.server.permission;
+package com.github.darksoulq.abyssallib.server.permission.internal;
 
-import com.github.darksoulq.abyssallib.common.database.relational.mysql.BatchQuery;
-import com.github.darksoulq.abyssallib.common.database.relational.mysql.Database;
+import com.github.darksoulq.abyssallib.common.database.relational.postgres.BatchQuery;
+import com.github.darksoulq.abyssallib.common.database.relational.postgres.Database;
+import com.github.darksoulq.abyssallib.server.permission.Node;
+import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
+import com.github.darksoulq.abyssallib.server.permission.PermissionStorage;
+import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 
 import java.util.HashMap;
@@ -9,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class MysqlPermissionStorage implements PermissionStorage {
+public class PostgresPermissionStorage implements PermissionStorage {
     private final Database db;
 
-    public MysqlPermissionStorage(Database db) {
+    public PostgresPermissionStorage(Database db) {
         this.db = db;
     }
 
@@ -86,7 +90,11 @@ public class MysqlPermissionStorage implements PermissionStorage {
     @Override
     public void saveGroup(PermissionGroup group) {
         db.transaction(exec -> {
-            exec.table("permission_groups").replace().value("id", group.getId()).value("weight", group.getWeight()).execute();
+            try {
+                exec.executeRaw("INSERT INTO permission_groups (id, weight) VALUES ('" + group.getId() + "', " + group.getWeight() + ") ON CONFLICT (id) DO UPDATE SET weight = EXCLUDED.weight");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             exec.table("permission_group_parents").delete().where("group_id = ?", group.getId()).execute();
             BatchQuery parentBatch = exec.table("permission_group_parents").batch("group_id", "parent_id").insert();
             for (Node parent : group.getParentNodes()) parentBatch.add(group.getId(), parent.getKey());
@@ -101,7 +109,11 @@ public class MysqlPermissionStorage implements PermissionStorage {
     @Override
     public void saveUser(PermissionUser user) {
         db.transaction(exec -> {
-            exec.table("permission_users").replace().value("uuid", user.getUuid().toString()).value("name", user.getName()).execute();
+            try {
+                exec.executeRaw("INSERT INTO permission_users (uuid, name) VALUES ('" + user.getUuid().toString() + "', '" + user.getName() + "') ON CONFLICT (uuid) DO UPDATE SET name = EXCLUDED.name");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             exec.table("permission_user_groups").delete().where("uuid = ?", user.getUuid().toString()).execute();
             BatchQuery groupBatch = exec.table("permission_user_groups").batch("uuid", "group_id").insert();
             for (Node parent : user.getParentNodes()) groupBatch.add(user.getUuid().toString(), parent.getKey());

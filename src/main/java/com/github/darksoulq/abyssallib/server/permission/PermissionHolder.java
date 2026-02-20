@@ -14,12 +14,12 @@ public abstract class PermissionHolder {
     /**
      * Map of permission keys to their respective {@link Node} data.
      */
-    protected final Map<String, Node> permissions = new ConcurrentHashMap<>();
+    public final Map<String, Node> permissions = new ConcurrentHashMap<>();
 
     /**
      * Map of parent group keys to their respective {@link Node} data.
      */
-    protected final Map<String, Node> parents = new ConcurrentHashMap<>();
+    public final Map<String, Node> parents = new ConcurrentHashMap<>();
 
     /**
      * Cached results of permission calculation to avoid redundant processing.

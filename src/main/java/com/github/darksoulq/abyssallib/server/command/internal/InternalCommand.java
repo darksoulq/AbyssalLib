@@ -213,7 +213,7 @@ public class InternalCommand {
                 )
             )
         ).then(Commands.literal("permissions")
-            .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_EDIT))
+            .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_EDIT).or(DefaultConditions.consoleOnly()))
             .then(Commands.literal("gui")
                 .executes(ctx -> {
                     if (!(ctx.getSource().getExecutor() instanceof Player p)) return 0;
@@ -222,7 +222,7 @@ public class InternalCommand {
                 })
             )
             .then(Commands.literal("web")
-                .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_WEB))
+                .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_WEB).or(DefaultConditions.consoleOnly()))
                 .executes(ctx -> {
                     if (AbyssalLib.PERMISSION_WEB_SERVER == null || !AbyssalLib.PERMISSION_WEB_SERVER.isEnabled()) {
                         reply(ctx, "<red>Web server is not enabled in config.</red>");

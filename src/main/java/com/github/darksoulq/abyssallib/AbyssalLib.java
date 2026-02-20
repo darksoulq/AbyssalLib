@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
+import com.github.darksoulq.abyssallib.common.database.DatabaseLoader;
 import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.*;
@@ -13,10 +14,7 @@ import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
 import com.github.darksoulq.abyssallib.server.permission.*;
-import com.github.darksoulq.abyssallib.server.permission.MysqlPermissionStorage;
-import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebServer;
-import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
-import com.github.darksoulq.abyssallib.server.permission.SqlitePermissionStorage;
+import com.github.darksoulq.abyssallib.server.permission.internal.*;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
@@ -47,6 +45,7 @@ import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {
@@ -97,24 +96,39 @@ public final class AbyssalLib extends JavaPlugin {
         RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
 
         Try.run(() -> {
-            PermissionStorage storage;
-            if (CONFIG.permissions.storageType.get().equalsIgnoreCase("mysql")) {
-                com.github.darksoulq.abyssallib.common.database.relational.mysql.Database db = new com.github.darksoulq.abyssallib.common.database.relational.mysql.Database(
-                    CONFIG.permissions.mysqlHost.get(),
-                    CONFIG.permissions.mysqlPort.get(),
-                    CONFIG.permissions.mysqlDatabase.get(),
-                    CONFIG.permissions.mysqlUsername.get(),
-                    CONFIG.permissions.mysqlPassword.get()
-                );
-                db.connect();
-                storage = new MysqlPermissionStorage(db);
-            } else {
-                com.github.darksoulq.abyssallib.common.database.relational.sql.Database db =
-                    new com.github.darksoulq.abyssallib.common.database.relational.sql.Database(new File(getDataFolder(), "permissions.db"));
-                db.connect();
-                storage = new SqlitePermissionStorage(db);
+            PermissionStorage storage = null;
+            String type = CONFIG.permissions.storageType.get().toLowerCase(Locale.ROOT);
+
+            switch (type) {
+                case "mysql":
+                    storage = new MysqlPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.mysql.Database) DatabaseLoader.loadRelational(CONFIG.cfg, "permissions", type));
+                    break;
+                case "mariadb":
+                    storage = new MariadbPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.mariadb.Database) DatabaseLoader.loadRelational(CONFIG.cfg, "permissions", type));
+                    break;
+                case "postgres":
+                case "postgresql":
+                    storage = new PostgresPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.postgres.Database) DatabaseLoader.loadRelational(CONFIG.cfg, "permissions", type));
+                    break;
+                case "h2":
+                    storage = new H2PermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.h2.Database) DatabaseLoader.loadRelational(CONFIG.cfg, "permissions", type));
+                    break;
+                case "sqlite":
+                    storage = new SqlitePermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.sql.Database) DatabaseLoader.loadRelational(CONFIG.cfg, "permissions", type));
+                    break;
+                case "mongodb":
+                    storage = new MongoPermissionStorage(DatabaseLoader.loadMongo(CONFIG.cfg, "permissions.nosql"));
+                    break;
+                case "redis":
+                    storage = new RedisPermissionStorage(DatabaseLoader.loadRedis(CONFIG.cfg, "permissions.nosql"));
+                    break;
             }
-            PERMISSION_MANAGER = new PermissionManager(this, storage);
+
+            if (storage != null) {
+                PERMISSION_MANAGER = new PermissionManager(this, storage);
+            } else {
+                LOGGER.severe("Invalid permission storage type: " + type);
+            }
 
             if (CONFIG.permissions.webEnabled.get()) {
                 PERMISSION_WEB_SERVER = new PermissionWebServer();

@@ -58,11 +58,13 @@ public class PluginConfig {
 
     public static class Permissions {
         public Config.Value<String> storageType;
-        public Config.Value<String> mysqlHost;
-        public Config.Value<Integer> mysqlPort;
-        public Config.Value<String> mysqlDatabase;
-        public Config.Value<String> mysqlUsername;
-        public Config.Value<String> mysqlPassword;
+        public Config.Value<String> sqlHost;
+        public Config.Value<Integer> sqlPort;
+        public Config.Value<String> sqlDatabase;
+        public Config.Value<String> sqlUsername;
+        public Config.Value<String> sqlPassword;
+        public Config.Value<String> noSqlUri;
+        public Config.Value<String> sqlFile;
 
         public Config.Value<Boolean> webEnabled;
         public Config.Value<String> webProtocol;
@@ -71,14 +73,22 @@ public class PluginConfig {
 
         public Permissions(Config cfg) {
             storageType = cfg.value("permissions.storage_type", "sqlite")
-                .withComment("Storage type for permissions. Valid options: 'sqlite' or 'mysql'");
+                .withComment("Storage type for permissions. Valid options: 'sqlite', 'mysql', 'mariadb', 'postgres', 'h2', 'mongodb', 'redis'");
 
-            cfg.addComment("permissions.mysql", "MySQL Database Settings (Used only if storage_type is 'mysql')");
-            mysqlHost = cfg.value("permissions.mysql.host", "127.0.0.1");
-            mysqlPort = cfg.value("permissions.mysql.port", 3306);
-            mysqlDatabase = cfg.value("permissions.mysql.database", "abyssallib");
-            mysqlUsername = cfg.value("permissions.mysql.username", "root");
-            mysqlPassword = cfg.value("permissions.mysql.password", "password");
+            cfg.addComment("permissions.sql", "SQL Database Settings (Used for mysql, mariadb, postgres)");
+            sqlHost = cfg.value("permissions.sql.host", "127.0.0.1");
+            sqlPort = cfg.value("permissions.sql.port", 3306);
+            sqlDatabase = cfg.value("permissions.sql.database", "abyssallib");
+            sqlUsername = cfg.value("permissions.sql.username", "root");
+            sqlPassword = cfg.value("permissions.sql.password", "password");
+
+            cfg.addComment("permissions.nosql", "NoSQL Database Settings (Used for mongodb, redis)");
+            noSqlUri = cfg.value("permissions.nosql.uri", "mongodb://localhost:27017")
+                .withComment("URI for MongoDB or host for Redis");
+
+            cfg.addComment("permissions.local", "Local Database Settings (Used for sqlite, h2)");
+            sqlFile = cfg.value("permissions.local.file", "permissions.db")
+                .withComment("File name for local databases");
 
             cfg.addComment("permissions.web", "Web Editor Settings");
             webEnabled = cfg.value("permissions.web.enabled", false)
