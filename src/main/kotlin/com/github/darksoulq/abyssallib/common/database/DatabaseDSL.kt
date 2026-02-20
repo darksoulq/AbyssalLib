@@ -1,7 +1,10 @@
 package com.github.darksoulq.abyssallib.common.database
 
-import com.github.darksoulq.abyssallib.common.database.mysql.Database as MySQLDatabase
-import com.github.darksoulq.abyssallib.common.database.sql.Database as SQLiteDatabase
+import com.github.darksoulq.abyssallib.common.database.relational.AbstractDatabase
+import com.github.darksoulq.abyssallib.common.database.relational.AbstractTableBuilder
+import com.github.darksoulq.abyssallib.common.database.relational.AbstractTableQuery
+import com.github.darksoulq.abyssallib.common.database.relational.mysql.Database as MySQLDatabase
+import com.github.darksoulq.abyssallib.common.database.relational.sql.Database as SQLiteDatabase
 import java.io.File
 import java.sql.Connection
 

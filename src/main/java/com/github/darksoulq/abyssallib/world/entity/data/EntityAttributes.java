@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.world.entity.data;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.database.sql.Database;
+import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
 import org.bukkit.entity.Entity;
 
 import java.io.File;

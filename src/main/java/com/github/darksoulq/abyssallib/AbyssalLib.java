@@ -6,12 +6,17 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.unique.*;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
-import com.github.darksoulq.abyssallib.server.util.Metrics;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
 import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
+import com.github.darksoulq.abyssallib.server.permission.*;
+import com.github.darksoulq.abyssallib.server.permission.internal.MysqlPermissionStorage;
+import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebServer;
+import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
+import com.github.darksoulq.abyssallib.server.permission.internal.SqlitePermissionStorage;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
@@ -21,6 +26,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
 import com.github.darksoulq.abyssallib.server.util.HookConstants;
+import com.github.darksoulq.abyssallib.server.util.Metrics;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.loot.LootDefaults;
@@ -31,9 +37,9 @@ import com.github.darksoulq.abyssallib.world.gen.feature.Features;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifiers;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import com.github.darksoulq.abyssallib.world.gui.internal.GuiTextures;
+import com.github.darksoulq.abyssallib.world.item.ItemPredicateLoader;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
-import com.github.darksoulq.abyssallib.world.item.ItemPredicateLoader;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemCategories;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemTicker;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
@@ -51,6 +57,8 @@ public final class AbyssalLib extends JavaPlugin {
     public static PackServer PACK_SERVER;
     public static EventBus EVENT_BUS;
     public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
+    public static PermissionManager PERMISSION_MANAGER;
+    public static PermissionWebServer PERMISSION_WEB_SERVER;
 
     @Override
     public void onEnable() {
@@ -58,6 +66,10 @@ public final class AbyssalLib extends JavaPlugin {
         LOGGER = getLogger();
         HookConstants.load();
         if (!new File(LanguageLoader.LANG_FOLDER.toFile(), "en_us.properties").exists()) saveResource("lang/en_us.properties", false);
+
+        if (!new File(getDataFolder(), "permission/index.html").exists()) saveResource("permission/index.html", true);
+        if (!new File(getDataFolder(), "permission/style.css").exists()) saveResource("permission/style.css", true);
+        if (!new File(getDataFolder(), "permission/app.js").exists()) saveResource("permission/app.js", true);
 
         ItemBridge.setup();
         BlockBridge.setup();
@@ -76,12 +88,42 @@ public final class AbyssalLib extends JavaPlugin {
         LootDefaults.LOOT_CONDITION_TYPES.apply();
 
         ItemCategories.ITEM_CATEGORIES.apply();
+        PluginPermissions.NAMESPACE.apply();
 
         CONFIG = new PluginConfig();
         CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
         RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
+
+        Try.run(() -> {
+            PermissionStorage storage;
+            if (CONFIG.permissions.storageType.get().equalsIgnoreCase("mysql")) {
+                com.github.darksoulq.abyssallib.common.database.relational.mysql.Database db = new com.github.darksoulq.abyssallib.common.database.relational.mysql.Database(
+                    CONFIG.permissions.mysqlHost.get(),
+                    CONFIG.permissions.mysqlPort.get(),
+                    CONFIG.permissions.mysqlDatabase.get(),
+                    CONFIG.permissions.mysqlUsername.get(),
+                    CONFIG.permissions.mysqlPassword.get()
+                );
+                db.connect();
+                storage = new MysqlPermissionStorage(db);
+            } else {
+                com.github.darksoulq.abyssallib.common.database.relational.sql.Database db =
+                    new com.github.darksoulq.abyssallib.common.database.relational.sql.Database(new File(getDataFolder(), "permissions.db"));
+                db.connect();
+                storage = new SqlitePermissionStorage(db);
+            }
+            PERMISSION_MANAGER = new PermissionManager(this, storage);
+
+            if (CONFIG.permissions.webEnabled.get()) {
+                PERMISSION_WEB_SERVER = new PermissionWebServer();
+                PERMISSION_WEB_SERVER.start(CONFIG.permissions.webProtocol.get(), CONFIG.permissions.webIp.get(), CONFIG.permissions.webPort.get());
+            }
+        }).onFailure(e -> {
+            LOGGER.severe("Failed to initialize permission storage.");
+            e.printStackTrace();
+        });
 
         EVENT_BUS = new EventBus(this);
 
@@ -101,7 +143,7 @@ public final class AbyssalLib extends JavaPlugin {
         PACK_SERVER = new PackServer();
         if (CONFIG.rp.enabled.get()) {
             EVENT_BUS.register(new PackEvent());
-            PACK_SERVER.start(CONFIG.rp.ip.get(), CONFIG.rp.port.get());
+            PACK_SERVER.start(CONFIG.rp.protocol.get(), CONFIG.rp.ip.get(), CONFIG.rp.port.get());
         }
 
         if (CONFIG.metrics.get()) {
@@ -118,6 +160,12 @@ public final class AbyssalLib extends JavaPlugin {
         EnergyNetwork.save();
         if (PACK_SERVER.isEnabled()) {
             PACK_SERVER.stop();
+        }
+        if (PERMISSION_MANAGER != null) {
+            PERMISSION_MANAGER.shutdown();
+        }
+        if (PERMISSION_WEB_SERVER != null && PERMISSION_WEB_SERVER.isEnabled()) {
+            PERMISSION_WEB_SERVER.stop();
         }
     }
 
@@ -155,6 +203,7 @@ public final class AbyssalLib extends JavaPlugin {
 
         rp.register(false);
     }
+
     private void createItemDef(String name, Namespace ns) {
         Texture tex = ns.texture("item/" + name);
         Model model = ns.model(name, false);
@@ -164,6 +213,7 @@ public final class AbyssalLib extends JavaPlugin {
         Selector.Model sel = new Selector.Model(model);
         ns.itemDefinition(name, sel, false);
     }
+
     private void registerBlockDataAdapters() {
         Adapter.register("age", new AgeableAdapter());
         Adapter.register("power", new AnaloguePowerableAdapter());
@@ -185,7 +235,6 @@ public final class AbyssalLib extends JavaPlugin {
         Adapter.register("side_chain", new SideChainingAdapter());
         Adapter.register("snowy", new SnowableAdapter());
         Adapter.register("waterlogged", new WaterloggedAdapter());
-        // Unique
         Adapter.register("has_bottle", new BrewingStandAdapter());
         Adapter.register("drag", new BubbleColumnAdapter());
         Adapter.register("bites", new CakeAdapter());

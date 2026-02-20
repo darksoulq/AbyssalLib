@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
@@ -23,12 +24,12 @@ public class PlayerEvents {
         CustomBlock block = CustomBlock.from(event.getClickedBlock());
         if (block == null || event.getPlayer().isSneaking()) return;
         BlockInteractionEvent be = EventBus.post(new BlockInteractionEvent(
-                event.getPlayer(),
-                block,
-                event.getBlockFace(),
-                event.getInteractionPoint(),
-                event.getAction(),
-                event.getItem()
+            event.getPlayer(),
+            block,
+            event.getBlockFace(),
+            event.getInteractionPoint(),
+            event.getAction(),
+            event.getItem()
         ));
         if (be.isCancelled()) event.setCancelled(true);
     }
@@ -38,11 +39,17 @@ public class PlayerEvents {
         PacketInterceptor.inject(event.getPlayer());
         EntityAttributes.of(event.getPlayer());
         PlayerStatistics.of(event.getPlayer());
+        if (AbyssalLib.PERMISSION_MANAGER != null) {
+            AbyssalLib.PERMISSION_MANAGER.handleJoin(event.getPlayer());
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onLeave(PlayerQuitEvent event) {
         PacketInterceptor.uninject(event.getPlayer());
+        if (AbyssalLib.PERMISSION_MANAGER != null) {
+            AbyssalLib.PERMISSION_MANAGER.handleQuit(event.getPlayer());
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)

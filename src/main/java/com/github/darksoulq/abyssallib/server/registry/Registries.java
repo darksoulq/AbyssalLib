@@ -2,6 +2,8 @@ package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.common.energy.EnergyNodeType;
 import com.github.darksoulq.abyssallib.common.energy.EnergyUnit;
+import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
+import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.loot.LootConditionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
@@ -48,6 +50,9 @@ public class Registries {
     public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>();
     public static final Registry<Tag<?, ?>> TAGS = new Registry<>();
     public static final Registry<ItemPredicate> PREDICATES = new Registry<>();
+
+    public static final Registry<PermissionNode> PERMISSIONS = new Registry<>();
+    public static final Registry<PermissionGroup> PERMISSION_GROUPS = new Registry<>();
 
     public static final Registry<ShapedRecipe> SHAPED_RECIPES = new Registry<>();
     public static final Registry<ShapelessRecipe> SHAPELESS_RECIPES = new Registry<>();

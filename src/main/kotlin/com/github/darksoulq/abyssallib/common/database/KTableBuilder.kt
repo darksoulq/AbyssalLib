@@ -1,5 +1,7 @@
 package com.github.darksoulq.abyssallib.common.database
 
+import com.github.darksoulq.abyssallib.common.database.relational.AbstractTableBuilder
+
 class KTableBuilder(val handle: AbstractTableBuilder<*>) {
     
     fun column(name: String, type: String, default: String? = null) {

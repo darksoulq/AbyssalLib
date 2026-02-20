@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.entity.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
-import com.github.darksoulq.abyssallib.common.database.sql.Database;
+import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;

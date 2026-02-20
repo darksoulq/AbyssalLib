@@ -60,6 +60,11 @@ dependencies {
     implementation('org.apache.pdfbox:fontbox:3.0.5')
     implementation('com.fasterxml.jackson.core:jackson-databind:2.17.0')
     implementation('com.fasterxml.jackson.core:jackson-core:2.17.0')
+    implementation 'org.mongodb:mongodb-driver-sync:5.0.0'
+    implementation 'redis.clients:jedis:5.1.2'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
+    implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'com.h2database:h2:2.2.224'
 
     compileOnly('com.magmaguy:ResourcePackManager:1.7.1')
     compileOnly("com.nexomc:nexo:1.12.0-dev")

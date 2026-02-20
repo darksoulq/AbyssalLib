@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.world.data.statistic;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.database.sql.BatchQuery;
-import com.github.darksoulq.abyssallib.common.database.sql.Database;
+import com.github.darksoulq.abyssallib.common.database.relational.sql.BatchQuery;
+import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;

@@ -11,11 +11,14 @@ import com.github.darksoulq.abyssallib.server.command.DefaultConditions;
 import com.github.darksoulq.abyssallib.server.command.argument.IdentifierArgument;
 import com.github.darksoulq.abyssallib.server.command.argument.RegistryEntryArgument;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
+import com.github.darksoulq.abyssallib.server.permission.Node;
+import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
+import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
+import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
-import com.github.darksoulq.abyssallib.server.util.PermissionConstants;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.dialog.DialogContent;
@@ -24,8 +27,10 @@ import com.github.darksoulq.abyssallib.world.dialog.Notice;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
+import com.github.darksoulq.abyssallib.world.gui.internal.PermissionMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -63,7 +68,7 @@ public class InternalCommand {
     @Command(name = "abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
-            .requires(DefaultConditions.hasPerm(PermissionConstants.Items.GIVE))
+            .requires(DefaultConditions.hasPerm(PluginPermissions.ITEMS_GIVE))
             .then(Commands.argument("item", RegistryEntryArgument.registryEntry(Registries.ITEMS))
                 .executes(InternalCommand::giveOneExecutor)
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
@@ -71,7 +76,7 @@ public class InternalCommand {
                 )
             )
         ).then(Commands.literal("attribute")
-            .requires(DefaultConditions.hasPerm(PermissionConstants.Attributes.GET))
+            .requires(DefaultConditions.hasPerm(PluginPermissions.ATTRIBUTES_GET))
             .then(Commands.literal("get")
                 .then(Commands.argument("selector", ArgumentTypes.entity())
                     .then(Commands.argument("type", IdentifierArgument.identifier())
@@ -81,7 +86,7 @@ public class InternalCommand {
                 )
             )
         ).then(Commands.literal("summon")
-            .requires(DefaultConditions.hasPerm(PermissionConstants.Entity.SUMMON))
+            .requires(DefaultConditions.hasPerm(PluginPermissions.ENTITY_SUMMON))
             .then(Commands.argument("location", ArgumentTypes.finePosition(false))
                 .then(Commands.argument("entity", RegistryEntryArgument.registryEntry(Registries.ENTITIES))
                     .executes(ctx -> {
@@ -95,25 +100,25 @@ public class InternalCommand {
             )
         ).then(Commands.literal("statistics")
             .then(Commands.literal("get")
-                .requires(DefaultConditions.hasAnyPerm(PermissionConstants.Statistics.VIEW_SELF, PermissionConstants.Statistics.VIEW_ALL))
+                .requires(DefaultConditions.hasAnyPerm(PluginPermissions.STATISTICS_VIEW_SELF, PluginPermissions.STATISTICS_VIEW_ALL))
                 .executes(InternalCommand::getSelfStatistics)
                 .then(Commands.argument("player", ArgumentTypes.player())
-                    .requires(DefaultConditions.hasPerm(PermissionConstants.Statistics.VIEW_ALL))
+                    .requires(DefaultConditions.hasPerm(PluginPermissions.STATISTICS_VIEW_ALL))
                     .executes(InternalCommand::getOtherStatistics))
             )
             .then(Commands.literal("view")
-                .requires(DefaultConditions.hasAnyPerm(PermissionConstants.Statistics.MENU_SELF, PermissionConstants.Statistics.MENU_ALL))
+                .requires(DefaultConditions.hasAnyPerm(PluginPermissions.STATISTICS_MENU_SELF, PluginPermissions.STATISTICS_MENU_ALL))
                 .executes(InternalCommand::getSelfStatisticsMenu)
                 .then(Commands.argument("player", ArgumentTypes.player())
                     .requires(ctx -> {
                         org.bukkit.entity.Entity sender = isEntity(ctx);
                         if (sender == null) return false;
-                        return sender.hasPermission(PermissionConstants.Statistics.MENU_ALL);
+                        return sender.hasPermission(PluginPermissions.STATISTICS_MENU_ALL.get().getNode());
                     })
                     .executes(InternalCommand::getOtherStatisticsMenu))
             )
         ).then(Commands.literal("reload")
-            .requires(DefaultConditions.hasPerm(PermissionConstants.Other.RELOAD))
+            .requires(DefaultConditions.hasPerm(PluginPermissions.RELOAD))
             .then(Commands.literal("commands")
                 .executes(ctx -> {
                     CommandBus.reloadAll();
@@ -144,7 +149,7 @@ public class InternalCommand {
             )
         ).then(Commands.literal("content")
             .then(Commands.literal("items")
-                .requires(DefaultConditions.hasPerm(PermissionConstants.Content.ITEMS_VIEW))
+                .requires(DefaultConditions.hasPerm(PluginPermissions.CONTENT_ITEMS_VIEW))
                 .executes(ctx -> {
                     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
                         reply(ctx, "<red>Only players can run this command</red>");
@@ -204,6 +209,163 @@ public class InternalCommand {
                             }
                             return Command.SUCCESS;
                         })
+                    )
+                )
+            )
+        ).then(Commands.literal("permissions")
+            .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_EDIT))
+            .then(Commands.literal("gui")
+                .executes(ctx -> {
+                    if (!(ctx.getSource().getExecutor() instanceof Player p)) return 0;
+                    PermissionMenu.openMainMenu(p);
+                    return Command.SUCCESS;
+                })
+            )
+            .then(Commands.literal("web")
+                .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_WEB))
+                .executes(ctx -> {
+                    if (AbyssalLib.PERMISSION_WEB_SERVER == null || !AbyssalLib.PERMISSION_WEB_SERVER.isEnabled()) {
+                        reply(ctx, "<red>Web server is not enabled in config.</red>");
+                        return 0;
+                    }
+                    String token = AbyssalLib.PERMISSION_WEB_SERVER.createSession();
+                    String url = AbyssalLib.CONFIG.permissions.webProtocol.get() + "://" + AbyssalLib.CONFIG.permissions.webIp.get() + ":" + AbyssalLib.CONFIG.permissions.webPort.get() + "/?token=" + token;
+                    reply(ctx, "<green>Web Editor URL: <click:open_url:'" + url + "'><aqua><u>Click Here</u></aqua></click></green>\n<gray>This link expires in 15 minutes.</gray>");
+                    return 1;
+                })
+            )
+            .then(Commands.literal("user")
+                .then(Commands.argument("target", StringArgumentType.word())
+                    .then(Commands.literal("permission")
+                        .then(Commands.literal("set")
+                            .then(Commands.argument("node", StringArgumentType.string())
+                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                    .executes(ctx -> {
+                                        UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
+                                        if (target == null) return 0;
+                                        PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
+                                        user.setPermission(new Node(ctx.getArgument("node", String.class), ctx.getArgument("value", Boolean.class)));
+                                        user.save();
+                                        reply(ctx, "<green>Permission set for user.</green>");
+                                        return 1;
+                                    })
+                                )
+                            )
+                        )
+                        .then(Commands.literal("unset")
+                            .then(Commands.argument("node", StringArgumentType.string())
+                                .executes(ctx -> {
+                                    UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
+                                    if (target == null) return 0;
+                                    PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
+                                    user.unsetPermission(ctx.getArgument("node", String.class));
+                                    user.save();
+                                    reply(ctx, "<green>Permission unset for user.</green>");
+                                    return 1;
+                                })
+                            )
+                        )
+                    )
+                    .then(Commands.literal("parent")
+                        .then(Commands.literal("add")
+                            .then(Commands.argument("group", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
+                                    if (target == null) return 0;
+                                    PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
+                                    user.addParent(new Node(ctx.getArgument("group", String.class)));
+                                    user.save();
+                                    reply(ctx, "<green>Group added to user.</green>");
+                                    return 1;
+                                })
+                            )
+                        )
+                        .then(Commands.literal("remove")
+                            .then(Commands.argument("group", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
+                                    if (target == null) return 0;
+                                    PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
+                                    user.removeParent(ctx.getArgument("group", String.class));
+                                    user.save();
+                                    reply(ctx, "<green>Group removed from user.</green>");
+                                    return 1;
+                                })
+                            )
+                        )
+                    )
+                )
+            )
+            .then(Commands.literal("group")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.literal("create")
+                        .executes(ctx -> {
+                            String id = ctx.getArgument("id", String.class);
+                            if (Registries.PERMISSION_GROUPS.contains(id)) {
+                                reply(ctx, "<red>Group already exists.</red>");
+                                return 0;
+                            }
+                            PermissionGroup group = new PermissionGroup(id);
+                            Registries.PERMISSION_GROUPS.register(id, group);
+                            group.save();
+                            reply(ctx, "<green>Group created.</green>");
+                            return 1;
+                        })
+                    )
+                    .then(Commands.literal("delete")
+                        .executes(ctx -> {
+                            String id = ctx.getArgument("id", String.class);
+                            if (!Registries.PERMISSION_GROUPS.contains(id)) {
+                                reply(ctx, "<red>Group does not exist.</red>");
+                                return 0;
+                            }
+                            AbyssalLib.PERMISSION_MANAGER.deleteGroup(id);
+                            reply(ctx, "<green>Group deleted.</green>");
+                            return 1;
+                        })
+                    )
+                    .then(Commands.literal("setweight")
+                        .then(Commands.argument("weight", IntegerArgumentType.integer())
+                            .executes(ctx -> {
+                                String id = ctx.getArgument("id", String.class);
+                                PermissionGroup group = Registries.PERMISSION_GROUPS.get(id);
+                                if (group == null) return 0;
+                                group.setWeight(ctx.getArgument("weight", Integer.class));
+                                group.save();
+                                reply(ctx, "<green>Weight set.</green>");
+                                return 1;
+                            })
+                        )
+                    )
+                    .then(Commands.literal("permission")
+                        .then(Commands.literal("set")
+                            .then(Commands.argument("node", StringArgumentType.string())
+                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                    .executes(ctx -> {
+                                        String id = ctx.getArgument("id", String.class);
+                                        PermissionGroup group = Registries.PERMISSION_GROUPS.get(id);
+                                        if (group == null) return 0;
+                                        group.setPermission(new Node(ctx.getArgument("node", String.class), ctx.getArgument("value", Boolean.class)));
+                                        group.save();
+                                        reply(ctx, "<green>Permission set for group.</green>");
+                                        return 1;
+                                    })
+                                )
+                            )
+                        )
+                        .then(Commands.literal("unset")
+                            .then(Commands.argument("node", StringArgumentType.string())
+                                .executes(ctx -> {
+                                    String id = ctx.getArgument("id", String.class);
+                                    PermissionGroup group = Registries.PERMISSION_GROUPS.get(id);
+                                    if (group == null) return 0;
+                                    group.unsetPermission(ctx.getArgument("node", String.class));
+                                    group.save();
+                                    reply(ctx, "<green>Permission unset for group.</green>");
+                                    return 1;
+                                })
+                            )
+                        )
                     )
                 )
             )

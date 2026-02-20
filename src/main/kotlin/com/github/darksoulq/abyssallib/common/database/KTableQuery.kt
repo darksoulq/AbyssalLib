@@ -1,8 +1,11 @@
 package com.github.darksoulq.abyssallib.common.database
 
 
-import com.github.darksoulq.abyssallib.common.database.mysql.TableQuery as MySQLTableQuery
-import com.github.darksoulq.abyssallib.common.database.sql.TableQuery as SQLiteTableQuery
+import com.github.darksoulq.abyssallib.common.database.relational.AbstractBatchQuery
+import com.github.darksoulq.abyssallib.common.database.relational.AbstractTableQuery
+import com.github.darksoulq.abyssallib.common.database.relational.ResultMapper
+import com.github.darksoulq.abyssallib.common.database.relational.mysql.TableQuery as MySQLTableQuery
+import com.github.darksoulq.abyssallib.common.database.relational.sql.TableQuery as SQLiteTableQuery
 import kotlinx.coroutines.future.await
 import java.sql.ResultSet
 import java.util.concurrent.CompletableFuture

@@ -1,5 +1,7 @@
 package com.github.darksoulq.abyssallib.server.command;
 
+import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
+import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
@@ -34,6 +36,14 @@ public final class DefaultConditions {
             return entity.hasPermission(permission);
         };
     }
+
+    public static Predicate<CommandSourceStack> hasPerm(Holder<PermissionNode> permission) {
+        return src -> {
+            if (!(src.getExecutor() instanceof Entity entity)) return false;
+            return entity.hasPermission(permission.get().getNode());
+        };
+    }
+
     public static Predicate<CommandSourceStack> hasAnyPerm(String... permissions) {
         return src -> {
             if (!(src.getExecutor() instanceof Entity entity)) return false;
@@ -41,6 +51,16 @@ public final class DefaultConditions {
             return false;
         };
     }
+
+    @SafeVarargs
+    public static Predicate<CommandSourceStack> hasAnyPerm(Holder<PermissionNode>... permissions) {
+        return src -> {
+            if (!(src.getExecutor() instanceof Entity entity)) return false;
+            for (Holder<PermissionNode> perm : permissions) if (entity.hasPermission(perm.get().getNode())) return true;
+            return false;
+        };
+    }
+
     public static Predicate<CommandSourceStack> hasAllPerms(String... permissions) {
         return src -> {
             if (!(src.getExecutor() instanceof Entity entity)) return false;
@@ -49,23 +69,24 @@ public final class DefaultConditions {
         };
     }
 
-    public static Predicate<CommandSourceStack> and(
-        Predicate<CommandSourceStack> a,
-        Predicate<CommandSourceStack> b
-    ) {
+    @SafeVarargs
+    public static Predicate<CommandSourceStack> hasAllPerms(Holder<PermissionNode>... permissions) {
+        return src -> {
+            if (!(src.getExecutor() instanceof Entity entity)) return false;
+            for (Holder<PermissionNode> perm : permissions) if (!entity.hasPermission(perm.get().getNode())) return false;
+            return true;
+        };
+    }
+
+    public static Predicate<CommandSourceStack> and(Predicate<CommandSourceStack> a, Predicate<CommandSourceStack> b) {
         return a.and(b);
     }
 
-    public static Predicate<CommandSourceStack> or(
-        Predicate<CommandSourceStack> a,
-        Predicate<CommandSourceStack> b
-    ) {
+    public static Predicate<CommandSourceStack> or(Predicate<CommandSourceStack> a, Predicate<CommandSourceStack> b) {
         return a.or(b);
     }
 
-    public static Predicate<CommandSourceStack> not(
-        Predicate<CommandSourceStack> predicate
-    ) {
+    public static Predicate<CommandSourceStack> not(Predicate<CommandSourceStack> predicate) {
         return predicate.negate();
     }
 }

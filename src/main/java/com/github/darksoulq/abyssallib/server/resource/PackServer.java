@@ -3,7 +3,10 @@ package com.github.darksoulq.abyssallib.server.resource;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -16,17 +19,33 @@ import java.util.UUID;
 import java.util.zip.ZipFile;
 
 public class PackServer {
+    private String protocol;
     private String host;
     private int port;
     private HttpServer server;
     private final Map<String, Path> registeredPaths = new HashMap<>();
     private boolean enabled = false;
 
-    public void start(String host, int port) {
+    public void start(String protocol, String host, int port) {
         try {
+            this.protocol = protocol;
             this.host = host;
             this.port = port;
-            server = HttpServer.create(new InetSocketAddress(host, port), 0);
+
+            if ("https".equalsIgnoreCase(protocol)) {
+                HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(host, port), 0);
+                try {
+                    SSLContext sslContext = SSLContext.getDefault();
+                    httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+                    server = httpsServer;
+                } catch (Exception e) {
+                    AbyssalLib.getInstance().getLogger().severe("Failed to initialize HTTPS context: " + e.getMessage());
+                    return;
+                }
+            } else {
+                server = HttpServer.create(new InetSocketAddress(host, port), 0);
+            }
+
             server.createContext("/", exchange -> {
                 String path = exchange.getRequestURI().getPath();
 
@@ -53,7 +72,7 @@ public class PackServer {
             server.setExecutor(null);
             server.start();
             this.enabled = true;
-            AbyssalLib.getInstance().getLogger().info("Hosting resource packs at http://" + host + ":" + port);
+            AbyssalLib.getInstance().getLogger().info("Hosting resource packs at " + protocol + "://" + host + ":" + port);
         } catch (IOException e) {
             AbyssalLib.getInstance().getLogger().severe("ResourcePackServer failed: " + e.getMessage());
             e.printStackTrace();
@@ -113,7 +132,7 @@ public class PackServer {
     }
 
     public String getUrl(String pluginId) {
-        return "http://" + host + ":" + port + "/" + pluginId + "/resourcepack.zip";
+        return protocol + "://" + host + ":" + port + "/" + pluginId + "/resourcepack.zip";
     }
     public Path getPath(String pluginId) {
         return registeredPaths.get(pluginId);

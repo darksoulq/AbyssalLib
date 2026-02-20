@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  *
  * <p>Example usage:</p>
  * <pre>{@code
- * @AbyssalCommand(name = "example")
+ * @Command(name = "example")
  * public void exampleCommand(LiteralArgumentBuilder<CommandSourceStack> builder) {
  *     builder.executes(ctx -> {
  *         return 1;
@@ -28,6 +28,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Command {
     int SUCCESS = 1;
+    int FAILURE = 0;
 
     /**
      * The name of the command. This becomes the literal root node in the Brigadier tree.

@@ -2,9 +2,9 @@ package com.github.darksoulq.abyssallib.world.gui.internal;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
+import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
-import com.github.darksoulq.abyssallib.server.util.PermissionConstants;
 import com.github.darksoulq.abyssallib.world.gui.*;
 import com.github.darksoulq.abyssallib.world.gui.element.GuiButton;
 import com.github.darksoulq.abyssallib.world.gui.layer.PagedLayer;
@@ -117,7 +117,7 @@ public class ItemMenu {
         List<GuiElement> elements = new ArrayList<>();
         for (Item item : category.getItems()) {
             elements.add(GuiButton.of(item.getStack().asOne(), ctx -> {
-                if (!player.hasPermission(PermissionConstants.Items.GIVE)) return;
+                if (!PluginPermissions.ITEMS_GIVE.get().has(player)) return;
                 player.getInventory().addItem(item.getStack().asOne());
             }));
         }
