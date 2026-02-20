@@ -132,6 +132,10 @@ public class Config {
         for (String line : lines) {
             String trimmed = line.trim();
 
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+
             if (trimmed.startsWith("#") || !trimmed.contains(":")) {
                 newLines.add(line);
                 continue;
@@ -140,14 +144,23 @@ public class Config {
             int indent = countLeadingSpaces(line) / 2;
             while (pathStack.size() > indent) pathStack.removeLast();
 
-            String key = trimmed.split(":", 2)[0];
+            String key = trimmed.split(":", 2)[0].trim();
+            if (key.startsWith("-")) {
+                newLines.add(line);
+                continue;
+            }
+            if (key.startsWith("'") || key.startsWith("\"")) {
+                key = key.substring(1, key.length() - 1);
+            }
             pathStack.addLast(key);
             String fullPath = String.join(".", pathStack);
 
-            if (comments.containsKey(fullPath)) {
-                List<String> commentLines = comments.get(fullPath);
-                boolean alreadyPresent = true;
+            boolean hasComments = comments.containsKey(fullPath);
+            List<String> commentLines = hasComments ? comments.get(fullPath) : Collections.emptyList();
 
+            boolean alreadyPresent = false;
+            if (hasComments) {
+                alreadyPresent = true;
                 for (int j = 0; j < commentLines.size(); j++) {
                     int checkLineIndex = newLines.size() - commentLines.size() + j;
                     if (checkLineIndex < 0 || !newLines.get(checkLineIndex).trim().equals("# " + commentLines.get(j))) {
@@ -155,15 +168,33 @@ public class Config {
                         break;
                     }
                 }
+            }
 
-                if (!alreadyPresent) {
-                    for (String commentLine : commentLines) {
-                        newLines.add("  ".repeat(indent) + "# " + commentLine);
+            int insertionIndex = newLines.size();
+            if (alreadyPresent) {
+                insertionIndex -= commentLines.size();
+            }
+
+            if (insertionIndex > 0) {
+                String lineBefore = newLines.get(insertionIndex - 1).trim();
+                if (!lineBefore.isEmpty() && !lineBefore.endsWith(":") && !lineBefore.startsWith("#")) {
+                    if (indent == 0 || hasComments) {
+                        newLines.add(insertionIndex, "");
                     }
                 }
             }
 
+            if (hasComments && !alreadyPresent) {
+                for (String commentLine : commentLines) {
+                    newLines.add("  ".repeat(indent) + "# " + commentLine);
+                }
+            }
+
             newLines.add(line);
+        }
+
+        while (!newLines.isEmpty() && newLines.get(newLines.size() - 1).trim().isEmpty()) {
+            newLines.remove(newLines.size() - 1);
         }
 
         Files.write(file.toPath(), newLines);

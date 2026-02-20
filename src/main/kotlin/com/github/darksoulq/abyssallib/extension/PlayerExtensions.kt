@@ -2,6 +2,8 @@ package com.github.darksoulq.abyssallib.extension
 
 import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler
+import com.github.darksoulq.abyssallib.server.permission.PermissionNode
+import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic
 import com.github.darksoulq.abyssallib.world.gui.Gui
@@ -22,13 +24,9 @@ fun Player.openGui(gui: Gui) {
     GuiManager.close(this)
     GuiManager.open(this, gui);
 }
-fun Player.closeGui() {
-    GuiManager.close(this)
-}
+fun Player.closeGui() = GuiManager.close(this)
 
-fun Player.give(item: Item): GiveResult {
-    return give(item, true)
-}
+fun Player.give(item: Item): GiveResult = give(item, true)
 fun Player.give(item: Item, shouldDrop: Boolean): GiveResult {
     val stack = item.stack.clone()
     val remaining = this.remainingSpaceFor(listOf(stack))
@@ -52,9 +50,7 @@ fun Player.give(item: Item, shouldDrop: Boolean): GiveResult {
 
     return GiveResult(leftovers, drops)
 }
-fun Player.give(items: List<Item>): GiveResult {
-    return give(items, true)
-}
+fun Player.give(items: List<Item>): GiveResult = give(items, true)
 fun Player.give(items: List<Item>, shouldDrop: Boolean): GiveResult {
     val totalLeftovers = mutableListOf<Item>()
     val totalDrops = mutableListOf<Item>()
@@ -119,25 +115,14 @@ fun Player.remainingSpaceFor(items: List<ItemStack>): Int {
     return totalSpace
 }
 
-fun Player.chatInput(inputHandler: Consumer<String>) {
-    ChatInputHandler.await(this, inputHandler)
-}
-fun Player.chatInput(inputHandler: Consumer<String>, prompt: Component) {
-    ChatInputHandler.await(this, inputHandler, prompt)
-}
-fun Player.chatInput(inputHandler: Consumer<String>, timeoutTicks: Long) {
-    ChatInputHandler.await(this, inputHandler, timeoutTicks)
-}
-fun Player.chatInput(inputHandler: Consumer<String>, prompt: Component, timeoutTicks: Long) {
-    ChatInputHandler.await(this, inputHandler, prompt, timeoutTicks)
-}
-fun Player.cancelChatInput() {
-    ChatInputHandler.cancel(this)
-}
+fun Player.chatInput(inputHandler: Consumer<String>) = ChatInputHandler.await(this, inputHandler)
+fun Player.chatInput(inputHandler: Consumer<String>, prompt: Component) = ChatInputHandler.await(this, inputHandler, prompt)
+fun Player.chatInput(inputHandler: Consumer<String>, timeoutTicks: Long) = ChatInputHandler.await(this, inputHandler, timeoutTicks)
+fun Player.chatInput(inputHandler: Consumer<String>, prompt: Component, timeoutTicks: Long) = ChatInputHandler.await(this, inputHandler, prompt, timeoutTicks)
+fun Player.cancelChatInput() = ChatInputHandler.cancel(this)
 
-fun Player.getStat(id: Identifier) : Statistic? {
-    return PlayerStatistics.of(this).get(id)
-}
-fun Player.setStat(stat: Statistic) {
-    PlayerStatistics.of(this).set(stat)
-}
+fun Player.getStat(id: Identifier) : Statistic? = PlayerStatistics.of(this).get(id)
+fun Player.setStat(stat: Statistic) = PlayerStatistics.of(this).set(stat)
+
+fun Player.hasPerm(perm: PermissionNode) : Boolean = perm.has(this)
+fun Player.hasPerm(perm: Holder<PermissionNode>) : Boolean = perm.get().has(this)

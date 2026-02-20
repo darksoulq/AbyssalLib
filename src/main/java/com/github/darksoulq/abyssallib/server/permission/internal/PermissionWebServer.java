@@ -23,7 +23,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -90,19 +92,24 @@ public class PermissionWebServer {
 
                 if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
                     JsonObject root = new JsonObject();
-
                     JsonArray permsArray = new JsonArray();
-                    for (Permission perm : Bukkit.getPluginManager().getPermissions()) {
-                        JsonObject po = new JsonObject();
-                        po.addProperty("node", perm.getName());
-                        po.addProperty("desc", perm.getDescription());
-                        permsArray.add(po);
-                    }
+                    Set<String> addedPerms = new HashSet<>();
+
                     for (PermissionNode pNode : Registries.PERMISSIONS.getAll().values()) {
-                        JsonObject po = new JsonObject();
-                        po.addProperty("node", pNode.getNode());
-                        po.addProperty("desc", pNode.getDescription() != null ? pNode.getDescription() : "");
-                        permsArray.add(po);
+                        if (addedPerms.add(pNode.getNode())) {
+                            JsonObject po = new JsonObject();
+                            po.addProperty("node", pNode.getNode());
+                            po.addProperty("desc", pNode.getDescription() != null ? pNode.getDescription() : "");
+                            permsArray.add(po);
+                        }
+                    }
+                    for (Permission perm : Bukkit.getPluginManager().getPermissions()) {
+                        if (addedPerms.add(perm.getName())) {
+                            JsonObject po = new JsonObject();
+                            po.addProperty("node", perm.getName());
+                            po.addProperty("desc", perm.getDescription());
+                            permsArray.add(po);
+                        }
                     }
                     root.add("permissions", permsArray);
 
