@@ -29,6 +29,7 @@ class ItemBuilder(val id: Identifier, val material: Material) {
     private val dataComponents = mutableListOf<DataComponent<*>>()
     private val tags = mutableListOf<ItemTag>()
     private var tooltipConfig: (Item.Tooltip.() -> Unit)? = null
+    private var playerTooltipConfig: (Item.Tooltip.(Player?) -> Unit)? = null
 
     private var postMineHandler: ((LivingEntity, Block) -> ActionResult)? = null
     private var postHitHandler: ((LivingEntity, Entity) -> ActionResult)? = null
@@ -47,6 +48,12 @@ class ItemBuilder(val id: Identifier, val material: Material) {
         this.tooltipConfig = {
             val builder = TooltipBuilder(this)
             builder.init()
+        }
+    }
+    fun tooltip(init: PlayerTooltipBuilder.(Player?) -> Unit) {
+        this.playerTooltipConfig = { player ->
+            val builder = PlayerTooltipBuilder(this)
+            builder.init(player)
         }
     }
 
@@ -84,6 +91,10 @@ class ItemBuilder(val id: Identifier, val material: Material) {
 
             override fun createTooltip(tooltip: Tooltip) {
                 this@ItemBuilder.tooltipConfig?.invoke(tooltip)
+            }
+
+            override fun createTooltip(tooltip: Tooltip, player: Player?) {
+                this@ItemBuilder.playerTooltipConfig?.invoke(tooltip, player)
             }
 
             override fun postMine(source: LivingEntity, target: Block): ActionResult =
@@ -130,6 +141,28 @@ class ItemBuilder(val id: Identifier, val material: Material) {
 
 @ItemDSL
 class TooltipBuilder(private val tooltip: Item.Tooltip) {
+    var isVisible: Boolean
+        get() = tooltip.isVisible
+        set(value) {
+            tooltip.isVisible = value
+        }
+
+    var style: Identifier?
+        get() = tooltip.style
+        set(value) = tooltip.withStyle(value)
+
+    fun line(component: Component) {
+        tooltip.addLine(component)
+    }
+
+    fun hide(type: PaperComponentType) {
+        tooltip.withHidden(type)
+    }
+}
+
+@ItemDSL
+class PlayerTooltipBuilder(private val tooltip: Item.Tooltip) {
+
     var isVisible: Boolean
         get() = tooltip.isVisible
         set(value) {
