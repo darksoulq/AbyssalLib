@@ -185,7 +185,7 @@ public final class AbyssalLib extends JavaPlugin {
 
     private void createDefaultPack() {
         ResourcePack rp = new ResourcePack(this, PLUGIN_ID);
-        Namespace ns = rp.namespace("abyssallib");
+        Namespace ns = rp.namespace(PLUGIN_ID);
         ns.icon();
 
         TextOffset.init(ns);
@@ -196,6 +196,11 @@ public final class AbyssalLib extends JavaPlugin {
         createItemDef("close", ns);
         createItemDef("back", ns);
         createItemDef("checkmark", ns);
+
+        createItemDef("permission", ns);
+        createItemDef("permission_bukkit", ns);
+        createItemDef("perm_user", ns);
+        createItemDef("perm_group", ns);
 
         createItemDef("bounding_toggle", ns);
         createItemDef("name_structure", ns);

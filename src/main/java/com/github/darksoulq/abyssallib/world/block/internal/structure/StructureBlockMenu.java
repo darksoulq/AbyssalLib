@@ -36,10 +36,10 @@ public class StructureBlockMenu {
     }
 
     public void open(Player player) {
-        Gui.Builder builder = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><width>Structure Block",
+        Gui.Builder builder = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><re_offset>Structure Block",
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
             Placeholder.parsed("texture", GuiTextures.STRUCTURE_BLOCK_MENU.toMiniMessageString()),
-            Placeholder.parsed("width", TextOffset.getOffsetMinimessage(-170))));
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))));
         Gui gui = builder.build();
         refresh(gui, player);
         GuiManager.open(player, gui);

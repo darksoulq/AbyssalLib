@@ -12,6 +12,7 @@ import com.github.darksoulq.abyssallib.server.permission.PermissionHolder;
 import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
 import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.world.gui.*;
 import com.github.darksoulq.abyssallib.world.gui.element.GuiButton;
 import com.github.darksoulq.abyssallib.world.gui.element.GuiItem;
@@ -22,6 +23,7 @@ import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -29,7 +31,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.view.AnvilView;
 import org.bukkit.permissions.Permission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,9 +57,7 @@ public class PermissionMenu {
         18, 19, 20, 21, 22, 23, 24, 25, 26,
         27, 28, 29, 30, 31, 32, 33, 34, 35
     };
-
     private static final Map<UUID, ItemStack[]> INVENTORY_BACKUPS = new HashMap<>();
-
     public static final Comparator<String> NODE_COMPARATOR = (s1, s2) -> {
         String[] p1 = s1.split("\\.");
         String[] p2 = s2.split("\\.");
@@ -64,6 +67,7 @@ public class PermissionMenu {
         }
         return Integer.compare(p1.length, p2.length);
     };
+    private static final Logger log = LoggerFactory.getLogger(PermissionMenu.class);
 
     static void setupBackup(GuiView view) {
         Player player = (Player) view.getInventoryView().getPlayer();
@@ -138,10 +142,12 @@ public class PermissionMenu {
 
                 List<Component> lore = new ArrayList<>();
                 if (!desc.isEmpty()) lore.add(Component.text(desc, NamedTextColor.GRAY));
-                lore.add(Component.text("Expiry: " + formatExpiry(node.getExpiry()), NamedTextColor.GOLD));
-                lore.add(Component.text("Left-Click to Toggle Value", NamedTextColor.YELLOW));
-                lore.add(Component.text("Shift-Click to Set Expiry", NamedTextColor.YELLOW));
-                lore.add(Component.text("Right-Click to Remove", NamedTextColor.RED));
+                lore.add(Component.text("<!i>Expiry: " + formatExpiry(node.getExpiry()), NamedTextColor.GOLD));
+                lore.add(TextUtil.parse("<!i><white><left_click></white> <yellow>to Toggle Value",
+                    Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())));
+                lore.add(Component.text("<!i>Shift-Click to Set Expiry", NamedTextColor.YELLOW));
+                lore.add(TextUtil.parse("<!i><white><right_click></white> <red>to Remove",
+                    Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString())));
                 item.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
                 return item;
             }
@@ -182,9 +188,10 @@ public class PermissionMenu {
                 ItemStack item = new ItemStack(Material.BOOK);
                 item.setData(DataComponentTypes.ITEM_NAME, Component.text("Parent: " + parent.getKey(), NamedTextColor.GOLD));
                 item.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
-                    Component.text("Expiry: " + formatExpiry(parent.getExpiry()), NamedTextColor.GOLD),
-                    Component.text("Shift-Click to Set Expiry", NamedTextColor.YELLOW),
-                    Component.text("Right-Click to Remove", NamedTextColor.RED)
+                    Component.text("<!i>Expiry: " + formatExpiry(parent.getExpiry()), NamedTextColor.GOLD),
+                    Component.text("<!i>Shift-Click to Set Expiry", NamedTextColor.YELLOW),
+                    TextUtil.parse("<!i><white><right_click></white> <red>to Remove",
+                        Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
                 )));
                 return item;
             }
@@ -215,14 +222,15 @@ public class PermissionMenu {
     }
 
     public static void openMainMenu(Player player) {
-        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X3, TextUtil.parse("Permission Manager"));
+        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X3, TextUtil.parse("<white><offset><texture></white><re_offset>Permission Manager",
+            Placeholder.parsed("texture", GuiTextures.PERMISSION_MAIN_MENU.toMiniMessageString()),
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
+            ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
-        ItemStack groupItem = new ItemStack(Material.NAME_TAG);
-        groupItem.setData(DataComponentTypes.ITEM_NAME, Component.text("Groups", NamedTextColor.YELLOW));
-
-        ItemStack userItem = new ItemStack(Material.PLAYER_HEAD);
-        userItem.setData(DataComponentTypes.ITEM_NAME, Component.text("Users", NamedTextColor.AQUA));
+        ItemStack groupItem = Items.PERMISSION_GROUP.get().getStack().clone();
+        ItemStack userItem = Items.PERMISSION_USER.get().getStack().clone();
 
         gui.set(SlotPosition.top(11), GuiButton.of(groupItem, ctx -> openGroupList(player)));
         gui.set(SlotPosition.top(15), GuiButton.of(userItem, ctx -> openUserList(player)));
@@ -232,7 +240,10 @@ public class PermissionMenu {
     }
 
     public static void openGroupList(Player player) {
-        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("Permission Groups"));
+        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><re_offset>Permission Groups",
+            Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -244,11 +255,14 @@ public class PermissionMenu {
             ItemStack item = new ItemStack(Material.PAPER);
             item.setData(DataComponentTypes.ITEM_NAME, Component.text(group.getId(), NamedTextColor.GREEN));
             item.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
-                Component.text("Weight: " + group.getWeight(), NamedTextColor.GRAY),
-                Component.text("Nodes: " + group.getNodes().size(), NamedTextColor.GRAY),
-                Component.text("Left-Click to Edit", NamedTextColor.YELLOW),
-                Component.text("Shift-Left-Click to set Weight", NamedTextColor.YELLOW),
-                Component.text("Shift-Right-Click to Delete", NamedTextColor.RED)
+                Component.text("<!i>Weight: " + group.getWeight(), NamedTextColor.GRAY),
+                Component.text("<!i>Nodes: " + group.getNodes().size(), NamedTextColor.GRAY),
+                TextUtil.parse("<!i><yellow><white><left_click></white> <red>to Edit",
+                    Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())),
+                TextUtil.parse("<!i><yellow>Shift <white><left_click></white> to set Weight",
+                    Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())),
+                TextUtil.parse("<!i><red>Shift <white><right_click></white> to Delete",
+                    Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
             )));
 
             elements.add(GuiButton.of(item, ctx -> {
@@ -310,7 +324,11 @@ public class PermissionMenu {
     }
 
     public static void openGroupEditor(Player player, PermissionGroup group) {
-        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("Edit Group: " + group.getId()));
+        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><re_offset>Edit Group: <group_id>",
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
+            Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170)),
+            Placeholder.parsed("group_id", group.getId())));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack weightItem = new ItemStack(Material.ANVIL);
@@ -385,7 +403,11 @@ public class PermissionMenu {
     }
 
     public static void openUserList(Player player) {
-        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("Known Users"));
+        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><re_offset>Known Users",
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
+            Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
+        ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -406,7 +428,7 @@ public class PermissionMenu {
 
             ItemStack item = new ItemStack(Material.PLAYER_HEAD);
             item.setData(DataComponentTypes.ITEM_NAME, Component.text(name != null ? name : u.toString(), isOnline ? NamedTextColor.AQUA : NamedTextColor.GRAY));
-            item.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(Component.text(isOnline ? "Online" : "Offline", isOnline ? NamedTextColor.GREEN : NamedTextColor.DARK_GRAY))));
+            item.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(Component.text(isOnline ? "<!i>Online" : "<!i>Offline", isOnline ? NamedTextColor.GREEN : NamedTextColor.DARK_GRAY))));
 
             elements.add(GuiButton.of(item, ctx -> {
                 PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(u);
@@ -419,7 +441,12 @@ public class PermissionMenu {
     }
 
     public static void openUserEditor(Player player, PermissionUser user) {
-        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("Edit User: " + user.getName()));
+        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><re_offset>Edit User: <user_name>",
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
+            Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170)),
+            Placeholder.parsed("user_name", user.getName())
+        ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -463,7 +490,11 @@ public class PermissionMenu {
     }
 
     public static void openAddPermission(Player player, PermissionHolder holder, Runnable onBack) {
-        Gui.Builder gui = Gui.builder(MenuType.ANVIL, TextUtil.parse("Search/Add Node"));
+        Gui.Builder gui = Gui.builder(MenuType.ANVIL, TextUtil.parse("<white><offset><texture></white><re_offset>Search/Add Node",
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-60)),
+            Placeholder.parsed("texture", GuiTextures.PERMISSION_SEARCH_MENU.toMiniMessageString()),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
+            ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack invisibleFiller = Items.INVISIBLE_ITEM.get().getStack();
@@ -483,11 +514,11 @@ public class PermissionMenu {
 
         List<GuiElement> allElements = new ArrayList<>();
         for (String node : sortedPerms) {
-            ItemStack item = new ItemStack(Material.PAPER);
+            PermissionNode pNode = Registries.PERMISSIONS.get(node);
+            ItemStack item = pNode == null ? Items.PERMISSION_BUKKIT.get().getStack().clone() : Items.PERMISSION.get().getStack().clone();
             item.setData(DataComponentTypes.ITEM_NAME, Component.text(node, NamedTextColor.WHITE));
 
             String desc = "";
-            PermissionNode pNode = Registries.PERMISSIONS.get(node);
             if (pNode != null && pNode.getDescription() != null && !pNode.getDescription().isEmpty()) {
                 desc = pNode.getDescription();
             } else {
@@ -499,8 +530,10 @@ public class PermissionMenu {
 
             List<Component> lore = new ArrayList<>();
             if (!desc.isEmpty()) lore.add(Component.text(desc, NamedTextColor.GRAY));
-            lore.add(Component.text("Left-Click to set True", NamedTextColor.GREEN));
-            lore.add(Component.text("Right-Click to set False", NamedTextColor.RED));
+            lore.add(TextUtil.parse("<!i><white><left_click></white><green> to set True",
+                Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())));
+            lore.add(TextUtil.parse("<!i><white><right_click></white><red> to set False",
+                Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString())));
             item.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
 
             allElements.add(GuiButton.of(item, ctx -> {
@@ -554,12 +587,14 @@ public class PermissionMenu {
                 }
 
                 if (!query.isEmpty() && !query.startsWith("@")) {
-                    ItemStack custom = new ItemStack(Material.WRITTEN_BOOK);
+                    ItemStack custom = Items.PERMISSION_BUKKIT.get().getStack().clone();
                     custom.setData(DataComponentTypes.ITEM_NAME, Component.text(query, NamedTextColor.AQUA));
                     custom.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
                         Component.text("Custom Node", NamedTextColor.GOLD),
-                        Component.text("Left-Click to set True", NamedTextColor.GREEN),
-                        Component.text("Right-Click to set False", NamedTextColor.RED)
+                        TextUtil.parse("<!i><white><left_click></white><green> to set True",
+                            Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())),
+                        TextUtil.parse("<!i><white><right_click></white><red> to set False",
+                            Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
                     )));
 
                     view.getGui().getElements().put(SlotPosition.top(2), GuiButton.of(custom, ctx -> {
@@ -589,7 +624,11 @@ public class PermissionMenu {
     }
 
     public static void openAddGroup(Player player, PermissionHolder holder, Runnable onBack) {
-        Gui.Builder gui = Gui.builder(MenuType.ANVIL, TextUtil.parse("Search/Add Group"));
+        Gui.Builder gui = Gui.builder(MenuType.ANVIL, TextUtil.parse("<white><offset><texture></white><re_offset>Search/Add Group",
+            Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-60)),
+            Placeholder.parsed("texture", GuiTextures.PERMISSION_SEARCH_MENU.toMiniMessageString()),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
+            ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack invisibleFiller = Items.INVISIBLE_ITEM.get().getStack();
@@ -604,10 +643,8 @@ public class PermissionMenu {
 
         for (PermissionGroup group : sortedGroups) {
             ItemStack item = new ItemStack(Material.NAME_TAG);
-            ItemMeta meta = item.getItemMeta();
-            meta.displayName(Component.text(group.getId(), NamedTextColor.YELLOW));
-            meta.lore(List.of(Component.text("Click to Add", NamedTextColor.GREEN)));
-            item.setItemMeta(meta);
+            item.setData(DataComponentTypes.ITEM_NAME, Component.text(group.getId(), NamedTextColor.YELLOW));
+            item.setData(DataComponentTypes.LORE, ItemLore.lore((List.of(Component.text("<!i>Click to Add", NamedTextColor.GREEN)))));
 
             allElements.add(GuiButton.of(item, ctx -> {
                 holder.addParent(new Node(group.getId()));
@@ -629,7 +666,7 @@ public class PermissionMenu {
         gui.onClose(PermissionMenu::loadBackup);
 
         gui.onTick(view -> {
-            if (view.getInventoryView() instanceof org.bukkit.inventory.view.AnvilView anvil) {
+            if (view.getInventoryView() instanceof AnvilView anvil) {
                 String query = Optional.ofNullable(anvil.getRenameText()).orElse("").trim();
                 if (!query.equals(state.lastQuery)) {
                     state.lastQuery = query;

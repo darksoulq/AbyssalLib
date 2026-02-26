@@ -15,6 +15,11 @@ public class Items {
     public static final Holder<Item> BACK = ITEMS.register("back", (id) -> new Item(id, Material.STICK));
     public static final Holder<Item> CHECKMARK = ITEMS.register("checkmark", (id) -> new Item(id, Material.STICK));
 
+    public static final Holder<Item> PERMISSION = ITEMS.register("permission", id -> new Item(id, Material.STICK));
+    public static final Holder<Item> PERMISSION_BUKKIT = ITEMS.register("permission_bukkit", id -> new Item(id, Material.STICK));
+    public static final Holder<Item> PERMISSION_USER = ITEMS.register("perm_user", id -> new Item(id, Material.STICK));
+    public static final Holder<Item> PERMISSION_GROUP = ITEMS.register("perm_group", id -> new Item(id, Material.STICK));
+
     public static final Holder<Item> BOUNDING_TOGGLE = ITEMS.register("bounding_toggle", (id) -> new Item(id, Material.STICK));
     public static final Holder<Item> NAME_STRUCTURE = ITEMS.register("name_structure", (id) -> new Item(id, Material.STICK));
     public static final Holder<Item> INTEGRITY = ITEMS.register("integrity", (id) -> new Item(id, Material.STICK));

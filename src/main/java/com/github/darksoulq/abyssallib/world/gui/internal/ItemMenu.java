@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 public class ItemMenu {
 
     public static void open(Player player) {
-        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><width>Plugins [Items]",
+        Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<white><offset><texture></white><re_offset>Plugins [Items]",
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
-            Placeholder.parsed("texture", GuiTextures.ITEM_MAIN_MENU.toMiniMessageString()),
-            Placeholder.parsed("width", TextOffset.getOffsetMinimessage(-170))));
+            Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
+            Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))));
 
         gui.addFlags(GuiFlag.DISABLE_BOTTOM, GuiFlag.DISABLE_ADVANCEMENTS, GuiFlag.DISABLE_ITEM_PICKUP);
 
@@ -79,10 +79,10 @@ public class ItemMenu {
 
             openCategory(player, defaultCat);
         } else {
-            Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<offset><white><texture></white><width>Categories [<namespace>]",
+            Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<offset><white><texture></white><re_offset>Categories [<namespace>]",
                 Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
-                Placeholder.parsed("texture", GuiTextures.ITEM_MAIN_MENU.toMiniMessageString()),
-                Placeholder.parsed("width", TextOffset.getOffsetMinimessage(-170)),
+                Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
+                Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170)),
                 Placeholder.parsed("namespace", "<lang:plugin." + namespace + ">")));
 
             gui.addFlags(GuiFlag.DISABLE_BOTTOM, GuiFlag.DISABLE_ADVANCEMENTS, GuiFlag.DISABLE_ITEM_PICKUP);
@@ -108,7 +108,7 @@ public class ItemMenu {
     public static void openCategory(Player player, ItemCategory category) {
         Gui.Builder gui = Gui.builder(MenuType.GENERIC_9X6, TextUtil.parse("<offset><white><texture></white><width><title>",
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
-            Placeholder.parsed("texture", GuiTextures.ITEM_MAIN_MENU.toMiniMessageString()),
+            Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
             Placeholder.parsed("width", TextOffset.getOffsetMinimessage(-170)),
             Placeholder.component("title", category.getTitle())));
 
