@@ -9,5 +9,5 @@ import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureB
 public class Blocks {
     public static final DeferredRegistry<CustomBlock> BLOCKS = DeferredRegistry.create(Registries.BLOCKS, AbyssalLib.PLUGIN_ID);
 
-    public static final Holder<CustomBlock> STRUCTURE_BLOCK = BLOCKS.register("structure_block", StructureBlock::new);
+    public static final CustomBlock STRUCTURE_BLOCK = BLOCKS.register("structure_block", StructureBlock::new);
 }

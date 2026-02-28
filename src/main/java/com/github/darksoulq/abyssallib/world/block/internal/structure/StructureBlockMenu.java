@@ -48,7 +48,7 @@ public class StructureBlockMenu {
     private void refresh(Gui gui, Player player) {
         gui.getElements().clear();
         StructureMode mode = tile.mode.get();
-        Item modeItem = mode == StructureMode.LOAD ? Items.LOAD_STRUCTURE.get() : Items.SAVE.get();
+        Item modeItem = mode == StructureMode.LOAD ? Items.LOAD_STRUCTURE : Items.SAVE;
 
         gui.getElements().put(SlotPosition.top(0), makeButton(modeItem,
             Component.text("Mode: ", NamedTextColor.GRAY).append(Component.text(mode.name(), NamedTextColor.YELLOW)),
@@ -62,7 +62,7 @@ public class StructureBlockMenu {
             Component.text("Click to cycle mode", NamedTextColor.GRAY)
         ));
 
-        gui.getElements().put(SlotPosition.top(4), makeButton(Items.NAME_STRUCTURE.get(),
+        gui.getElements().put(SlotPosition.top(4), makeButton(Items.NAME_STRUCTURE,
             Component.text("Name: ", NamedTextColor.GRAY).append(Component.text(tile.structureName.get(), NamedTextColor.GREEN)),
             ctx -> {
                 ctx.view().close(player);
@@ -75,9 +75,9 @@ public class StructureBlockMenu {
             Component.text("Click to rename", NamedTextColor.GRAY)
         ));
 
-        gui.getElements().put(SlotPosition.top(21), makeIntButton(Items.X.get(), "Pos X", tile.offsetX, gui, player));
-        gui.getElements().put(SlotPosition.top(22), makeIntButton(Items.Y.get(), "Pos Y", tile.offsetY, gui, player));
-        gui.getElements().put(SlotPosition.top(23), makeIntButton(Items.Z.get(), "Pos Z", tile.offsetZ, gui, player));
+        gui.getElements().put(SlotPosition.top(21), makeIntButton(Items.X, "Pos X", tile.offsetX, gui, player));
+        gui.getElements().put(SlotPosition.top(22), makeIntButton(Items.Y, "Pos Y", tile.offsetY, gui, player));
+        gui.getElements().put(SlotPosition.top(23), makeIntButton(Items.Z, "Pos Z", tile.offsetZ, gui, player));
 
         if (mode == StructureMode.SAVE) {
             setupSaveMode(gui, player);
@@ -87,11 +87,11 @@ public class StructureBlockMenu {
     }
 
     private void setupSaveMode(Gui gui, Player player) {
-        gui.getElements().put(SlotPosition.top(30), makeIntButton(Items.SIZE_X.get(), "Size X", tile.sizeX, gui, player, 1, 48));
-        gui.getElements().put(SlotPosition.top(31), makeIntButton(Items.SIZE_Y.get(), "Size Y", tile.sizeY, gui, player, 1, 48));
-        gui.getElements().put(SlotPosition.top(32), makeIntButton(Items.SIZE_Z.get(), "Size Z", tile.sizeZ, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(30), makeIntButton(Items.SIZE_X, "Size X", tile.sizeX, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(31), makeIntButton(Items.SIZE_Y, "Size Y", tile.sizeY, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(32), makeIntButton(Items.SIZE_Z, "Size Z", tile.sizeZ, gui, player, 1, 48));
 
-        gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK.get(),
+        gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("SAVE", NamedTextColor.GREEN, TextDecoration.BOLD),
             ctx -> {
                 if (tile.save()) player.sendMessage(Component.text("Structure saved successfully!", NamedTextColor.GREEN));
@@ -101,7 +101,7 @@ public class StructureBlockMenu {
         ));
 
         boolean showBox = tile.showBoundingBox.get();
-        gui.getElements().put(SlotPosition.top(45), makeButton(Items.BOUNDING_TOGGLE.get(),
+        gui.getElements().put(SlotPosition.top(45), makeButton(Items.BOUNDING_TOGGLE,
             Component.text("Bounding Box: ", NamedTextColor.GRAY).append(Component.text(showBox ? "ON" : "OFF", showBox ? NamedTextColor.GREEN : NamedTextColor.RED)),
             ctx -> {
                 tile.showBoundingBox.set(!showBox);
@@ -115,7 +115,7 @@ public class StructureBlockMenu {
     private void setupLoadMode(Gui gui, Player player) {
         if (tile.particles != null) tile.particles.stop();
 
-        gui.getElements().put(SlotPosition.top(30), makeButton(Items.ROTATE.get(),
+        gui.getElements().put(SlotPosition.top(30), makeButton(Items.ROTATE,
             Component.text("Rotation: ", NamedTextColor.GRAY).append(Component.text(tile.rotation.get().name(), NamedTextColor.YELLOW)),
             ctx -> {
                 StructureRotation[] rots = StructureRotation.values();
@@ -126,7 +126,7 @@ public class StructureBlockMenu {
             Component.text("Click to cycle rotation", NamedTextColor.GRAY)
         ));
 
-        gui.getElements().put(SlotPosition.top(31), makeButton(Items.MIRROR.get(),
+        gui.getElements().put(SlotPosition.top(31), makeButton(Items.MIRROR,
             Component.text("Mirror: ", NamedTextColor.GRAY).append(Component.text(tile.mirror.get().name(), NamedTextColor.YELLOW)),
             ctx -> {
                 Mirror[] mirrors = Mirror.values();
@@ -137,7 +137,7 @@ public class StructureBlockMenu {
             Component.text("Click to cycle mirror", NamedTextColor.GRAY)
         ));
 
-        gui.getElements().put(SlotPosition.top(32), makeButton(Items.INTEGRITY.get(),
+        gui.getElements().put(SlotPosition.top(32), makeButton(Items.INTEGRITY,
             Component.text("Integrity: ", NamedTextColor.GRAY).append(Component.text(String.format("%.1f", tile.integrity.get()), NamedTextColor.AQUA)),
             ctx -> {
                 float val = tile.integrity.get() + (ctx.clickType().isLeftClick() ? 0.1f : -0.1f);
@@ -149,7 +149,7 @@ public class StructureBlockMenu {
                 Placeholder.parsed("icon_right", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
         ));
 
-        gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK.get(),
+        gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("LOAD", NamedTextColor.GREEN, TextDecoration.BOLD),
             ctx -> {
                 if (tile.load()) player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));

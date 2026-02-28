@@ -4,7 +4,7 @@ import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry
 import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
 import net.kyori.adventure.key.Key
 
-fun DeferredRegistry<Multiblock>.register(id: String, init: MultiblockBuilder.() -> Unit): Holder<Multiblock> {
+fun DeferredRegistry<Multiblock>.register(id: String, init: MultiblockBuilder.() -> Unit): Multiblock {
     return this.register(id) { key ->
         val builder = MultiblockBuilder(key)
         builder.init()
@@ -12,7 +12,7 @@ fun DeferredRegistry<Multiblock>.register(id: String, init: MultiblockBuilder.()
     }
 }
 
-fun DeferredRegistry<Multiblock>.multiblock(id: String, init: MultiblockBuilder.() -> Unit = {}): Holder<Multiblock> = register(id, init)
+fun DeferredRegistry<Multiblock>.multiblock(id: String, init: MultiblockBuilder.() -> Unit = {}): Multiblock = register(id, init)
 
 fun multiblock(namespace: String, path: String, init: MultiblockBuilder.() -> Unit = {}): Multiblock {
     val builder = MultiblockBuilder(Key.key(namespace, path))

@@ -80,18 +80,18 @@ public final class DeferredRegistry<T> {
      * @param supplier
      * A function that creates the object using the generated {@link Key}.
      * @return
-     * A {@link Holder} wrapping the future object.
+     * A {@link T}  registered object.
      * @throws IllegalStateException
      * If the name has already been registered in this deferred registry.
      */
-    public Holder<T> register(String name, Function<Key, T> supplier) {
+    public T register(String name, Function<Key, T> supplier) {
         if (entries.containsKey(name)) {
             throw new IllegalStateException("Duplicate deferred registration: " + pluginId + ":" + name);
         }
         Key id = Key.key(pluginId, name);
         Holder<T> holder = new Holder<>(() -> supplier.apply(id));
         entries.put(name, holder);
-        return holder;
+        return holder.get();
     }
 
     /**

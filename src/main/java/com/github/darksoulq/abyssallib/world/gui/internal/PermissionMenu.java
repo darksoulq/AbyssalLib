@@ -214,12 +214,12 @@ public class PermissionMenu {
             ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
-        ItemStack groupItem = Items.PERMISSION_GROUP.get().getStack().clone();
-        ItemStack userItem = Items.PERMISSION_USER.get().getStack().clone();
+        ItemStack groupItem = Items.PERMISSION_GROUP.getStack().clone();
+        ItemStack userItem = Items.PERMISSION_USER.getStack().clone();
 
         gui.set(SlotPosition.top(11), GuiButton.of(groupItem, ctx -> openGroupList(player)));
         gui.set(SlotPosition.top(15), GuiButton.of(userItem, ctx -> openUserList(player)));
-        gui.set(SlotPosition.top(22), GuiButton.of(Items.CLOSE.get().getStack(), ctx -> GuiManager.close(player)));
+        gui.set(SlotPosition.top(22), GuiButton.of(Items.CLOSE.getStack(), ctx -> GuiManager.close(player)));
 
         GuiManager.open(player, gui.build());
     }
@@ -283,7 +283,7 @@ public class PermissionMenu {
         ItemStack createGroupItem = new ItemStack(Material.EMERALD_BLOCK);
         createGroupItem.setData(DataComponentTypes.ITEM_NAME, Component.text("+ Create New Group", NamedTextColor.GREEN));
 
-        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> openMainMenu(player)));
+        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> openMainMenu(player)));
         gui.set(SlotPosition.top(50), GuiButton.of(createGroupItem, ctx -> {
             GuiManager.close(player);
             ChatInputHandler.await(player, input -> {
@@ -369,7 +369,7 @@ public class PermissionMenu {
         addNode.setData(DataComponentTypes.ITEM_NAME, Component.text("Add Permission Node", NamedTextColor.GREEN));
         gui.set(SlotPosition.top(48), GuiButton.of(addNode, ctx -> openAddPermission(player, group, () -> openGroupEditor(player, group))));
 
-        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> openGroupList(player)));
+        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> openGroupList(player)));
 
         ItemStack addGroup = new ItemStack(Material.GOLD_BLOCK);
         addGroup.setData(DataComponentTypes.ITEM_NAME, Component.text("Add Parent Group", NamedTextColor.YELLOW));
@@ -421,7 +421,7 @@ public class PermissionMenu {
             }));
         }
 
-        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> openMainMenu(player)));
+        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> openMainMenu(player)));
         setupPages(player, gui, elements, PermissionMenu::openMainMenu, false);
     }
 
@@ -456,7 +456,7 @@ public class PermissionMenu {
         addNode.setData(DataComponentTypes.ITEM_NAME, Component.text("Add Permission Node", NamedTextColor.GREEN));
         gui.set(SlotPosition.top(48), GuiButton.of(addNode, ctx -> openAddPermission(player, user, () -> openUserEditor(player, user))));
 
-        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> openUserList(player)));
+        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> openUserList(player)));
 
         ItemStack addGroup = new ItemStack(Material.GOLD_BLOCK);
         addGroup.setData(DataComponentTypes.ITEM_NAME, Component.text("Add Parent Group", NamedTextColor.YELLOW));
@@ -482,7 +482,7 @@ public class PermissionMenu {
             ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
-        ItemStack invisibleFiller = Items.INVISIBLE_ITEM.get().getStack();
+        ItemStack invisibleFiller = Items.INVISIBLE_ITEM.getStack();
         invisibleFiller.setData(DataComponentTypes.ITEM_NAME, Component.text(" "));
         invisibleFiller.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
         gui.set(SlotPosition.top(0), GuiItem.of(invisibleFiller));
@@ -500,7 +500,7 @@ public class PermissionMenu {
         List<GuiElement> allElements = new ArrayList<>();
         for (String node : sortedPerms) {
             PermissionNode pNode = Registries.PERMISSIONS.get(node);
-            ItemStack item = pNode == null ? Items.PERMISSION_BUKKIT.get().getStack().clone() : Items.PERMISSION.get().getStack().clone();
+            ItemStack item = pNode == null ? Items.PERMISSION_BUKKIT.getStack().clone() : Items.PERMISSION.getStack().clone();
             item.setData(DataComponentTypes.ITEM_NAME, Component.text(node, NamedTextColor.WHITE));
 
             String desc = "";
@@ -572,7 +572,7 @@ public class PermissionMenu {
                 }
 
                 if (!query.isEmpty() && !query.startsWith("@")) {
-                    ItemStack custom = Items.PERMISSION_BUKKIT.get().getStack().clone();
+                    ItemStack custom = Items.PERMISSION_BUKKIT.getStack().clone();
                     custom.setData(DataComponentTypes.ITEM_NAME, Component.text(query, NamedTextColor.AQUA));
                     custom.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
                         Component.text("Custom Node", NamedTextColor.GOLD),
@@ -595,12 +595,12 @@ public class PermissionMenu {
             }
         });
 
-        gui.set(SlotPosition.bottom(0), GuiButton.of(Items.BACKWARD.get().getStack(), ctx -> {
+        gui.set(SlotPosition.bottom(0), GuiButton.of(Items.BACKWARD.getStack(), ctx -> {
             layer.previous(ctx.view());
             layer.renderTo(ctx.view());
         }));
-        gui.set(SlotPosition.bottom(4), GuiButton.of(Items.BACK.get().getStack(), ctx -> onBack.run()));
-        gui.set(SlotPosition.bottom(8), GuiButton.of(Items.FORWARD.get().getStack(), ctx -> {
+        gui.set(SlotPosition.bottom(4), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.run()));
+        gui.set(SlotPosition.bottom(8), GuiButton.of(Items.FORWARD.getStack(), ctx -> {
             layer.next(ctx.view());
             layer.renderTo(ctx.view());
         }));
@@ -616,7 +616,7 @@ public class PermissionMenu {
             ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
-        ItemStack invisibleFiller = Items.INVISIBLE_ITEM.get().getStack();
+        ItemStack invisibleFiller = Items.INVISIBLE_ITEM.getStack();
         invisibleFiller.setData(DataComponentTypes.ITEM_NAME, Component.text(" "));
         invisibleFiller.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
         gui.set(SlotPosition.top(0), GuiItem.of(invisibleFiller));
@@ -669,12 +669,12 @@ public class PermissionMenu {
             }
         });
 
-        gui.set(SlotPosition.bottom(0), GuiButton.of(Items.BACKWARD.get().getStack(), ctx -> {
+        gui.set(SlotPosition.bottom(0), GuiButton.of(Items.BACKWARD.getStack(), ctx -> {
             layer.previous(ctx.view());
             layer.renderTo(ctx.view());
         }));
-        gui.set(SlotPosition.bottom(4), GuiButton.of(Items.BACK.get().getStack(), ctx -> onBack.run()));
-        gui.set(SlotPosition.bottom(8), GuiButton.of(Items.FORWARD.get().getStack(), ctx -> {
+        gui.set(SlotPosition.bottom(4), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.run()));
+        gui.set(SlotPosition.bottom(8), GuiButton.of(Items.FORWARD.getStack(), ctx -> {
             layer.next(ctx.view());
             layer.renderTo(ctx.view());
         }));
@@ -687,11 +687,11 @@ public class PermissionMenu {
         PagedLayer<GuiElement> layer = PagedLayer.of(elements, positions.stream().mapToInt(SlotPosition::index).toArray(), GuiView.Segment.TOP);
 
         gui.addLayer(layer);
-        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.get().getStack(), ctx -> layer.previous(ctx.view())));
+        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.getStack(), ctx -> layer.previous(ctx.view())));
         if (!isEditor) {
-            gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> onBack.accept(player)));
+            gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.accept(player)));
         }
-        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.get().getStack(), ctx -> layer.next(ctx.view())));
+        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> layer.next(ctx.view())));
 
         GuiManager.open(player, gui.build());
         return layer;

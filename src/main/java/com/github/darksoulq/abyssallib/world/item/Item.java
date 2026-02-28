@@ -78,6 +78,16 @@ public class Item implements Cloneable {
      * Constructs a new custom item definition.
      *
      * @param id
+     * The unique {@link Key} for the item (e.g, "plugin_id:item_name").
+     */
+    public Item(Key id) {
+        this(id, Material.STICK);
+    }
+
+    /**
+     * Constructs a new custom item definition.
+     *
+     * @param id
      * The unique {@link Key} for the item (e.g., "plugin_id:item_name").
      * @param base
      * The base {@link Material} used for the underlying item stack.

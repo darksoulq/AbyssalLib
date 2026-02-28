@@ -10,6 +10,6 @@ import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 public class TagTypes {
     public static final DeferredRegistry<TagType<?, ?>> TAG_TYPES = DeferredRegistry.create(Registries.TAG_TYPES, AbyssalLib.PLUGIN_ID);
 
-    public static final Holder<TagType<?, ?>> ITEM = TAG_TYPES.register("item", id -> ItemTag.TYPE);
-    public static final Holder<TagType<?, ?>> BLOCK = TAG_TYPES.register("block", id -> BlockTag.TYPE);
+    public static final TagType<?, ?> ITEM = TAG_TYPES.register("item", id -> ItemTag.TYPE);
+    public static final TagType<?, ?> BLOCK = TAG_TYPES.register("block", id -> BlockTag.TYPE);
 }

@@ -168,18 +168,6 @@ public class ItemCategory {
         }
 
         /**
-         * Sets the icon using a Holder of an Item.
-         *
-         * @param icon
-         * The {@link Holder} containing the icon item.
-         * @return
-         * This builder for chaining.
-         */
-        public Builder icon(Holder<Item> icon) {
-            return icon(icon.get());
-        }
-
-        /**
          * Adds a single item to the category.
          *
          * @param item
@@ -190,18 +178,6 @@ public class ItemCategory {
         public Builder add(Item item) {
             this.items.add(item);
             return this;
-        }
-
-        /**
-         * Adds a single item to the category via its registered holder.
-         *
-         * @param holder
-         * The {@link Holder} of the item to add.
-         * @return
-         * This builder for chaining.
-         */
-        public Builder add(Holder<Item> holder) {
-            return add(holder.get());
         }
 
         /**
@@ -218,19 +194,6 @@ public class ItemCategory {
         }
 
         /**
-         * Adds multiple items to the category via their registered holders.
-         *
-         * @param items
-         * The array of {@link Holder}s of items to add.
-         * @return
-         * This builder for chaining.
-         */
-        @SafeVarargs
-        public final Builder add(Holder<Item>... items) {
-            return addAllHolders(Arrays.asList(items));
-        }
-
-        /**
          * Adds a collection of items to the category.
          *
          * @param items
@@ -241,18 +204,6 @@ public class ItemCategory {
         public Builder addAll(Collection<Item> items) {
             this.items.addAll(items);
             return this;
-        }
-
-        /**
-         * Adds a collection of item holders to the category.
-         *
-         * @param items
-         * The collection of {@link Holder}s to add.
-         * @return
-         * This builder for chaining.
-         */
-        public Builder addAllHolders(Collection<Holder<Item>> items) {
-            return addAll(items.stream().map(Holder::get).toList());
         }
 
         /**

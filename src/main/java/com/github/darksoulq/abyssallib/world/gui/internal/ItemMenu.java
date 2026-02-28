@@ -109,7 +109,7 @@ public class ItemMenu {
                 }));
             }
 
-            gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> {
+            gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> {
                 open(player);
                 GuiManager.openViews.remove(ctx.view().getInventoryView());
             }));
@@ -135,7 +135,7 @@ public class ItemMenu {
             }));
         }
 
-        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> {
+        gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> {
             boolean hasCat = Registries.ITEM_CATEGORIES.getAll().values().stream()
                 .anyMatch(c -> c.getId().namespace().equals(category.getId().namespace()));
             if (hasCat) {
@@ -154,8 +154,8 @@ public class ItemMenu {
         PagedLayer<GuiElement> layer = PagedLayer.of(elements, positions.stream().mapToInt(SlotPosition::index).toArray(), GuiView.Segment.TOP);
 
         gui.addLayer(layer);
-        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.get().getStack(), ctx -> layer.previous(ctx.view())));
-        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.get().getStack(), ctx -> layer.next(ctx.view())));
+        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.getStack(), ctx -> layer.previous(ctx.view())));
+        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> layer.next(ctx.view())));
 
         GuiManager.open(player, gui.build());
     }
