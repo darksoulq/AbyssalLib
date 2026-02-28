@@ -8,11 +8,7 @@ import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bson.Document;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class MongoPermissionStorage implements PermissionStorage {
     private final Database db;

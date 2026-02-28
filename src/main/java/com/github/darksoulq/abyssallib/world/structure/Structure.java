@@ -4,16 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.darksoulq.abyssallib.common.serialization.AbyssalLibBlockSerializer;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.MinecraftBlockSerializer;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.nms.NMSWorldGenAccess;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import com.github.darksoulq.abyssallib.world.structure.processor.impl.IntegrityProcessor;
-import com.github.darksoulq.abyssallib.world.structure.serializer.AbyssalLibBlockSerializer;
-import com.github.darksoulq.abyssallib.world.structure.serializer.MinecraftBlockSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -251,7 +251,7 @@ public class Structure {
             } else {
                 current = processor.process((org.bukkit.World) worldOrLevel, origin, current, original);
             }
-            if (current == null) return;
+            return;
         }
 
         try {

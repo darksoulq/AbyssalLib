@@ -10,7 +10,6 @@ import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem
 import net.kyori.adventure.key.Key
-import io.papermc.paper.datacomponent.DataComponentType as PaperComponentType
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -19,6 +18,7 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.PlayerInventory
+import io.papermc.paper.datacomponent.DataComponentType as PaperComponentType
 
 @DslMarker
 annotation class ItemDSL

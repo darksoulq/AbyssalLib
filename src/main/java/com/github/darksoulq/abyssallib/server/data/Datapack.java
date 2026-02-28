@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.data;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
 import io.papermc.paper.datapack.DatapackRegistrar;
 import io.papermc.paper.plugin.bootstrap.BootstrapContext;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;

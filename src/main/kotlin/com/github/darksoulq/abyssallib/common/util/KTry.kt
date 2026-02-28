@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.common.util
 
-import java.util.NoSuchElementException
-import java.util.Optional
+import java.util.*
 
 /**
  * A sealed class used to represent the outcome of a computation that may result

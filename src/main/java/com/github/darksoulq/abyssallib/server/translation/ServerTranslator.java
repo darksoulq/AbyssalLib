@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * The central management class for server-side translations and component rendering.
@@ -31,6 +31,15 @@ public final class ServerTranslator {
     private static final TranslatableComponentRenderer<Locale> RENDERER = TranslatableComponentRenderer.usingTranslationSource(GlobalTranslator.translator());
 
     /**
+     * Internal cache for all externally loaded translations from plugin resources.
+     */
+    private static final Map<Plugin, List<String>> RESOURCE_FILES = new HashMap<>();
+    /**
+     * Internal cache for all externally loaded translations.
+     */
+    private static final List<Path> PATH_FILES = new ArrayList<>();
+
+    /**
      * Initializes the translation system by registering the custom source
      * and performing an initial language load.
      */
@@ -44,6 +53,8 @@ public final class ServerTranslator {
      */
     public static void reload() {
         LanguageLoader.load(TRANSLATOR);
+        PATH_FILES.forEach(p -> LanguageLoader.loadFile(p, TRANSLATOR));
+        RESOURCE_FILES.forEach((p, l) -> l.forEach(s -> LanguageLoader.loadResource(p, s, TRANSLATOR)));
     }
 
     /**
@@ -99,6 +110,7 @@ public final class ServerTranslator {
      */
     public static void loadFile(Path path) {
         LanguageLoader.loadFile(path, TRANSLATOR);
+        PATH_FILES.add(path);
     }
     /**
      * Loads a language file embedded within a plugin's JAR as a resource.
@@ -108,6 +120,7 @@ public final class ServerTranslator {
      */
     public static void loadResource(Plugin plugin, String resourcePath) {
         LanguageLoader.loadResource(plugin, resourcePath, TRANSLATOR);
+        RESOURCE_FILES.computeIfAbsent(plugin, p -> new ArrayList<>()).add(resourcePath);
     }
 
     /**

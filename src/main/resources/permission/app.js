@@ -5,6 +5,7 @@ const app = {
     current: { type: null, id: null },
     contextTarget: null,
     sidebarContextTarget: null,
+    currentTab: 'perms',
 
     init() {
         const params = new URLSearchParams(window.location.search);
@@ -33,6 +34,12 @@ const app = {
                 this.updateSuggestions(e.target.value);
             });
 
+            window.addEventListener('resize', () => {
+                if (this.current.type) {
+                    this.switchTab(this.currentTab);
+                }
+            });
+
             setInterval(() => {
                 let changed = false;
                 document.querySelectorAll('[data-expiry]').forEach(el => {
@@ -48,6 +55,26 @@ const app = {
                     app.refreshData();
                 }
             }, 1000);
+        }
+    },
+
+    toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sb.classList.toggle('show');
+        overlay.classList.toggle('show');
+    },
+
+    switchTab(tab) {
+        this.currentTab = tab;
+        if (window.innerWidth <= 1000) {
+            document.getElementById('card-perms').style.display = tab === 'perms' ? 'flex' : 'none';
+            document.getElementById('card-parents').style.display = tab === 'parents' ? 'flex' : 'none';
+            document.getElementById('tab-perms').classList.toggle('active', tab === 'perms');
+            document.getElementById('tab-parents').classList.toggle('active', tab === 'parents');
+        } else {
+            document.getElementById('card-perms').style.display = 'flex';
+            document.getElementById('card-parents').style.display = 'flex';
         }
     },
 
@@ -157,15 +184,12 @@ const app = {
         if (el) el.classList.add('active');
         this.renderEditor();
 
-        if (window.innerWidth <= 768) {
-            document.querySelector('.sidebar').classList.add('mobile-hidden');
-            document.querySelector('.main-content').classList.add('mobile-active');
+        if (window.innerWidth <= 1000) {
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sb.classList.remove('show');
+            overlay.classList.remove('show');
         }
-    },
-
-    backToSidebar() {
-        document.querySelector('.sidebar').classList.remove('mobile-hidden');
-        document.querySelector('.main-content').classList.remove('mobile-active');
     },
 
     filterSidebar() {
@@ -198,6 +222,7 @@ const app = {
     renderEditor() {
         document.getElementById('empty-state').style.display = 'none';
         document.getElementById('editor-area').style.display = 'flex';
+        this.switchTab(this.currentTab);
 
         const isGroup = this.current.type === 'group';
         const entity = isGroup
@@ -215,18 +240,16 @@ const app = {
             return;
         }
 
-        let backBtn = window.innerWidth <= 768 ? `<button class="icon-btn" onclick="app.backToSidebar()" style="margin-right:10px;"><i class="fa-solid fa-arrow-left"></i></button>` : '';
-
         document.getElementById('editor-path').innerHTML = `Permissions / <span>${isGroup ? 'Groups' : 'Users'}</span> / <span>${isGroup ? entity.id : entity.name}</span>`;
         document.getElementById('editor-icon').className = isGroup ? 'fa-solid fa-users title-icon' : 'fa-solid fa-user title-icon';
-        document.getElementById('editor-name').innerHTML = `${backBtn}${isGroup ? entity.id : entity.name}`;
-        document.getElementById('editor-subtitle').innerText = isGroup ? `group` : `uuid: ${entity.uuid}`;
+        document.getElementById('editor-name').innerHTML = `${isGroup ? entity.id : entity.name}`;
+        document.getElementById('editor-subtitle').innerText = isGroup ? `Group Object` : `UUID: ${entity.uuid}`;
 
         let actionsHtml = '';
         if (isGroup) {
             actionsHtml += `
                 <div class="weight-box">
-                    <span style="font-size:0.8rem; color:var(--text-muted); font-weight:bold;">WEIGHT</span>
+                    <span class="weight-label">WEIGHT</span>
                     <input type="number" class="weight-input" value="${entity.weight}" onchange="app.action({action:'setGroupWeight', id:'${entity.id}', weight: parseInt(this.value)})">
                 </div>
             `;
@@ -235,43 +258,56 @@ const app = {
 
         const parentsList = document.getElementById('parents-list');
         if (entity.parents.length === 0) {
-            parentsList.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">No parents assigned</span>';
+            parentsList.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">No parents assigned</span>';
         } else {
             const sortedParents = [...entity.parents].sort((a,b) => this.compareNodes(a.key, b.key));
             parentsList.innerHTML = sortedParents.map(p => `
                 <div class="badge" oncontextmenu="app.showContext(event, 'parent', '${p.key}', null, ${p.expiry})">
                     <div class="badge-info">
-                        <span><i class="fa-solid fa-sitemap"></i> ${p.key}</span>
-                        <span class="badge-time" data-expiry="${p.expiry}" data-prefix="Exp: ">Exp: ${this.formatTime(p.expiry)}</span>
+                        <span><i class="fa-solid fa-sitemap" style="color: var(--primary)"></i> ${p.key}</span>
+                        <span class="badge-time" data-expiry="${p.expiry}" data-prefix="Exp: " onclick="app.promptParentExpiry('${p.key}'); event.stopPropagation();">Exp: ${this.formatTime(p.expiry)}</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        const nodesTbody = document.getElementById('nodes-tbody');
+        const nodesList = document.getElementById('nodes-list');
         if (entity.nodes.length === 0) {
-            nodesTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); font-style:italic; padding:2rem;">No permissions set</td></tr>';
+            nodesList.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:2rem;">No permissions set</div>';
         } else {
             const sortedNodes = [...entity.nodes].sort((a,b) => this.compareNodes(a.key, b.key));
-            nodesTbody.innerHTML = sortedNodes.map(n => {
+            nodesList.innerHTML = sortedNodes.map(n => {
                 const pObj = this.registry.permissions.find(p => p.node === n.key);
                 const desc = pObj && pObj.desc ? pObj.desc : '';
                 return `
-                <tr oncontextmenu="app.showContext(event, 'node', '${n.key}', ${n.value}, ${n.expiry})">
-                    <td>
-                        <div class="node-cell">
-                            <span class="node-key ${desc ? 'has-desc' : ''}" title="${desc}">${n.key}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="val-badge ${n.value ? '' : 'false'}">
-                            ${n.value ? 'true' : 'false'}
+                <div class="grid-row" oncontextmenu="app.showContext(event, 'node', '${n.key}', ${n.value}, ${n.expiry})">
+                    <div class="node-cell">
+                        <span class="node-key ${desc ? 'has-desc' : ''}" title="${desc}">${n.key}</span>
+                    </div>
+                    <div class="center-align">
+                        <span class="val-badge ${n.value ? '' : 'false'}" onclick="app.toggleNodeValue('${n.key}', ${n.value}, ${n.expiry}); event.stopPropagation();">
+                            ${n.value ? 'True' : 'False'}
                         </span>
-                    </td>
-                    <td><span class="time-text" data-expiry="${n.expiry}" data-prefix="">${this.formatTime(n.expiry)}</span></td>
-                </tr>
+                    </div>
+                    <div class="right-align"><span class="time-text" data-expiry="${n.expiry}" data-prefix="" onclick="app.promptNodeExpiry('${n.key}', ${n.value}); event.stopPropagation();">${this.formatTime(n.expiry)}</span></div>
+                </div>
             `}).join('');
         }
+    },
+
+    toggleNodeValue(node, currentValue, expiry) {
+        const isGroup = this.current.type === 'group';
+        const payload = { action: isGroup ? 'setGroupNode' : 'setUserNode', node: node, value: !currentValue, expiry: expiry };
+        if(isGroup) payload.id = this.current.id; else payload.uuid = this.current.id;
+        this.action(payload);
+    },
+
+    promptNodeExpiry(node, currentValue) {
+        this.promptExpiry(node, this.current.type === 'group', false, currentValue);
+    },
+
+    promptParentExpiry(parent) {
+        this.promptExpiry(parent, this.current.type === 'group', true, true);
     },
 
     showContext(e, type, key, value, expiry) {
@@ -317,7 +353,7 @@ const app = {
         if (actionType === 'weight') {
             let html = `
                 <label>Set Weight</label>
-                <input type="number" id="modal-input" class="modal-input" value="${tgt.weight}">
+                <input type="number" id="modal-input" class="input-box" value="${tgt.weight}">
             `;
             this.openModal(`Edit Weight: ${tgt.id}`, html, () => {
                 const w = parseInt(document.getElementById('modal-input').value);
@@ -337,10 +373,7 @@ const app = {
         const isGroup = this.current.type === 'group';
 
         if (actionType === 'toggle') {
-            const act = isGroup ? 'setGroupNode' : 'setUserNode';
-            const payload = { action: act, node: tgt.key, value: !tgt.value, expiry: tgt.expiry };
-            if(isGroup) payload.id = this.current.id; else payload.uuid = this.current.id;
-            this.action(payload);
+            this.toggleNodeValue(tgt.key, tgt.value, tgt.expiry);
         } else if (actionType === 'expiry') {
             this.promptExpiry(tgt.key, isGroup, tgt.type === 'parent', tgt.value);
         } else if (actionType === 'delete') {
@@ -362,7 +395,6 @@ const app = {
 
     updateSuggestions(query) {
         const suggBox = document.getElementById('node-suggestions');
-
         const tokens = query.toLowerCase().split(' ').filter(t => t.length > 0);
 
         const filtered = this.registry.permissions.filter(pObj => {
@@ -393,8 +425,8 @@ const app = {
             const desc = pObj.desc || '';
             return `
             <div class="suggestion-item" onmousedown="document.getElementById('add-node-input').value='${node}'; document.getElementById('node-suggestions').style.display='none';">
-                <span style="color:var(--text-main); font-family:monospace; font-size:0.85rem; margin:0;">${node}</span>
-                ${desc ? `<span style="color:var(--text-muted); font-size:0.75rem; margin-top:0.2rem;">${desc}</span>` : ''}
+                <span>${node}</span>
+                ${desc ? `<span>${desc}</span>` : ''}
             </div>
         `}).join('');
         suggBox.style.display = 'block';
@@ -402,8 +434,8 @@ const app = {
 
     promptExpiry(key, isGroup, isParent, currentValue = true) {
         let html = `
-            <label>Set Duration (e.g., 1w 2d 5h 30m, 0 for perm)</label>
-            <input type="text" id="modal-input" class="modal-input" placeholder="Permanent">
+            <label>Set Duration (e.g. 1w 2d 5h 30m, 0 for perm)</label>
+            <input type="text" id="modal-input" class="input-box" placeholder="Permanent">
         `;
         this.openModal(`Edit Expiry: ${key}`, html, () => {
             const val = document.getElementById('modal-input').value.trim();
@@ -418,10 +450,10 @@ const app = {
 
     createGroup() {
         let html = `
-            <label>Group ID (lowercase, numbers, underscores only)</label>
-            <input type="text" id="modal-input" class="modal-input" placeholder="e.g. vip">
+            <label>Group ID (lowercase, numbers, underscores)</label>
+            <input type="text" id="modal-input" class="input-box" placeholder="e.g. vip">
         `;
-        this.openModal('Create New Group', html, () => {
+        this.openModal('Create Group', html, () => {
             const id = document.getElementById('modal-input').value.trim().toLowerCase();
             if (id && /^[a-z0-9_]+$/.test(id)) {
                 this.action({ action: 'createGroup', id: id });
@@ -432,7 +464,7 @@ const app = {
     },
 
     deleteGroup(id) {
-        let html = `<p>Are you sure you want to delete group <strong>${id}</strong>? This cannot be undone.</p>`;
+        let html = `<p>Are you sure you want to delete group <strong style="color:var(--danger)">${id}</strong>? This cannot be undone.</p>`;
         this.openModal('Delete Group', html, () => {
             this.action({ action: 'deleteGroup', id });
             if (this.current.id === id) {

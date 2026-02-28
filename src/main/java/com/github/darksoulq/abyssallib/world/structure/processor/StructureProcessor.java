@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.world.structure.processor;
 
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;

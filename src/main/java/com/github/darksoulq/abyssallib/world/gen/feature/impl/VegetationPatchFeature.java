@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
-import com.github.darksoulq.abyssallib.world.gen.feature.util.BlockStateCodec;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -139,8 +135,8 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
                 List<String> rep = Codecs.STRING.list().decode(ops, map.get(ops.createString("replaceable")));
-                BlockInfo g = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("ground")));
-                BlockInfo v = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("vegetation")));
+                BlockInfo g = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("ground")));
+                BlockInfo v = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("vegetation")));
                 int r = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
                 int d = Codecs.INT.decode(ops, map.get(ops.createString("depth")));
                 float c = Codecs.FLOAT.decode(ops, map.get(ops.createString("vegetation_chance")));
@@ -160,8 +156,8 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
                 map.put(ops.createString("replaceable"), Codecs.STRING.list().encode(ops, value.replaceable));
-                map.put(ops.createString("ground"), BlockStateCodec.CODEC.encode(ops, value.ground));
-                map.put(ops.createString("vegetation"), BlockStateCodec.CODEC.encode(ops, value.vegetation));
+                map.put(ops.createString("ground"), ExtraCodecs.BLOCK_INFO.encode(ops, value.ground));
+                map.put(ops.createString("vegetation"), ExtraCodecs.BLOCK_INFO.encode(ops, value.vegetation));
                 map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
                 map.put(ops.createString("depth"), Codecs.INT.encode(ops, value.depth));
                 map.put(ops.createString("vegetation_chance"), Codecs.FLOAT.encode(ops, value.vegetationChance));

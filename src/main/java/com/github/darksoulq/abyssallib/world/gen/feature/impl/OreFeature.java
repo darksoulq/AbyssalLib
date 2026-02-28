@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
-import com.github.darksoulq.abyssallib.world.gen.feature.util.BlockStateCodec;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
@@ -126,7 +122,7 @@ public class OreFeature extends Feature<OreFeature.Config> {
             public <D> Target decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
                 List<String> target = Codecs.STRING.list().decode(ops, map.get(ops.createString("target")));
-                BlockInfo state = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("state")));
+                BlockInfo state = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("state")));
                 return new Target(target, state);
             }
 
@@ -143,7 +139,7 @@ public class OreFeature extends Feature<OreFeature.Config> {
             public <D> D encode(DynamicOps<D> ops, Target value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
                 map.put(ops.createString("target"), Codecs.STRING.list().encode(ops, value.target));
-                map.put(ops.createString("state"), BlockStateCodec.CODEC.encode(ops, value.state));
+                map.put(ops.createString("state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.state));
                 return ops.createMap(map);
             }
         };

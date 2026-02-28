@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.multiblock;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import net.kyori.adventure.key.Key;

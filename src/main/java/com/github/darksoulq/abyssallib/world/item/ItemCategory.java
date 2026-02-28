@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.item;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -11,14 +10,13 @@ import java.util.function.Supplier;
 
 /**
  * Represents a categorized collection of {@link Item} instances.
- * <p>
- * Categories are identified by a unique {@link Identifier} and include an icon
- * for display in graphical user interfaces.
+ * Categories are identified by a unique {@link Key} and include an icon
+ * used for display in graphical user interfaces or creative menus.
  */
 public class ItemCategory {
 
     /**
-     * The unique identifier for this category.
+     * The unique {@link Key} for this category.
      */
     private final Key id;
 
@@ -35,9 +33,12 @@ public class ItemCategory {
     /**
      * Private constructor for the builder.
      *
-     * @param id    The category identifier.
-     * @param icon  The icon supplier.
-     * @param items The list of items to include.
+     * @param id
+     * The category {@link Key}.
+     * @param icon
+     * The icon supplier.
+     * @param items
+     * The list of items to include.
      */
     private ItemCategory(Key id, Supplier<ItemStack> icon, List<Item> items) {
         this.id = id;
@@ -46,7 +47,10 @@ public class ItemCategory {
     }
 
     /**
-     * @return The {@link Identifier} of this category.
+     * Retrieves the unique Key associated with this category.
+     *
+     * @return
+     * The {@link Key} of this category.
      */
     public Key getId() {
         return id;
@@ -54,24 +58,30 @@ public class ItemCategory {
 
     /**
      * Gets the translatable title of this category.
-     * <p>
      * The translation key follows the format: {@code category.item.[namespace].[path]}
      *
-     * @return A {@link Component} representing the localized title.
+     * @return
+     * A {@link Component} representing the localized title.
      */
     public Component getTitle() {
         return Component.translatable("category.item." + id.namespace() + "." + id.value());
     }
 
     /**
-     * @return A new {@link ItemStack} representing this category's icon.
+     * Generates a new ItemStack to be used as the visual icon for this category.
+     *
+     * @return
+     * A new {@link ItemStack} representing this category's icon.
      */
     public ItemStack getIcon() {
         return icon.get();
     }
 
     /**
-     * @return An unmodifiable view of the {@link Item}s in this category.
+     * Retrieves the list of all items registered to this category.
+     *
+     * @return
+     * An unmodifiable view of the {@link Item}s in this category.
      */
     public List<Item> getItems() {
         return Collections.unmodifiableList(items);
@@ -80,8 +90,10 @@ public class ItemCategory {
     /**
      * Creates a new builder for an ItemCategory.
      *
-     * @param id The {@link Identifier} for the new category.
-     * @return A new {@link Builder} instance.
+     * @param id
+     * The {@link Key} for the new category.
+     * @return
+     * A new {@link Builder} instance.
      */
     public static Builder builder(Key id) {
         return new Builder(id);
@@ -108,9 +120,10 @@ public class ItemCategory {
         private final List<Item> items = new ArrayList<>();
 
         /**
-         * Constructs a builder with a mandatory identifier.
+         * Constructs a builder with a mandatory Key.
          *
-         * @param id The {@link Identifier} to assign.
+         * @param id
+         * The {@link Key} to assign to the category.
          */
         public Builder(Key id) {
             this.id = id;
@@ -119,8 +132,10 @@ public class ItemCategory {
         /**
          * Sets the icon using a lazy supplier.
          *
-         * @param icon A {@link Supplier} providing the {@link ItemStack}.
-         * @return This builder for chaining.
+         * @param icon
+         * A {@link Supplier} providing the {@link ItemStack}.
+         * @return
+         * This builder for chaining.
          */
         public Builder icon(Supplier<ItemStack> icon) {
             this.icon = icon;
@@ -130,8 +145,10 @@ public class ItemCategory {
         /**
          * Sets the icon using a static ItemStack.
          *
-         * @param icon The {@link ItemStack} to use as an icon.
-         * @return This builder for chaining.
+         * @param icon
+         * The {@link ItemStack} to use as an icon.
+         * @return
+         * This builder for chaining.
          */
         public Builder icon(ItemStack icon) {
             this.icon = () -> icon;
@@ -139,20 +156,24 @@ public class ItemCategory {
         }
 
         /**
-         * Sets the icon using an {@link Item} instance.
+         * Sets the icon using a specific Item instance.
          *
-         * @param icon The item to extract the stack from.
-         * @return This builder for chaining.
+         * @param icon
+         * The {@link Item} to extract the stack from.
+         * @return
+         * This builder for chaining.
          */
         public Builder icon(Item icon) {
             return icon(icon.getStack());
         }
 
         /**
-         * Sets the icon using a {@link Holder} of an {@link Item}.
+         * Sets the icon using a Holder of an Item.
          *
-         * @param icon The holder containing the icon item.
-         * @return This builder for chaining.
+         * @param icon
+         * The {@link Holder} containing the icon item.
+         * @return
+         * This builder for chaining.
          */
         public Builder icon(Holder<Item> icon) {
             return icon(icon.get());
@@ -161,8 +182,10 @@ public class ItemCategory {
         /**
          * Adds a single item to the category.
          *
-         * @param item The {@link Item} to add.
-         * @return This builder for chaining.
+         * @param item
+         * The {@link Item} to add.
+         * @return
+         * This builder for chaining.
          */
         public Builder add(Item item) {
             this.items.add(item);
@@ -170,10 +193,12 @@ public class ItemCategory {
         }
 
         /**
-         * Adds a single item to the category via its holder.
+         * Adds a single item to the category via its registered holder.
          *
-         * @param holder The {@link Holder} of the item to add.
-         * @return This builder for chaining.
+         * @param holder
+         * The {@link Holder} of the item to add.
+         * @return
+         * This builder for chaining.
          */
         public Builder add(Holder<Item> holder) {
             return add(holder.get());
@@ -182,8 +207,10 @@ public class ItemCategory {
         /**
          * Adds multiple items to the category.
          *
-         * @param items The {@link Item}s to add.
-         * @return This builder for chaining.
+         * @param items
+         * The array of {@link Item}s to add.
+         * @return
+         * This builder for chaining.
          */
         public Builder add(Item... items) {
             this.items.addAll(Arrays.asList(items));
@@ -191,10 +218,12 @@ public class ItemCategory {
         }
 
         /**
-         * Adds multiple items to the category via their holders.
+         * Adds multiple items to the category via their registered holders.
          *
-         * @param items The {@link Holder}s of items to add.
-         * @return This builder for chaining.
+         * @param items
+         * The array of {@link Holder}s of items to add.
+         * @return
+         * This builder for chaining.
          */
         @SafeVarargs
         public final Builder add(Holder<Item>... items) {
@@ -204,8 +233,10 @@ public class ItemCategory {
         /**
          * Adds a collection of items to the category.
          *
-         * @param items The collection of {@link Item}s to add.
-         * @return This builder for chaining.
+         * @param items
+         * The collection of {@link Item}s to add.
+         * @return
+         * This builder for chaining.
          */
         public Builder addAll(Collection<Item> items) {
             this.items.addAll(items);
@@ -215,8 +246,10 @@ public class ItemCategory {
         /**
          * Adds a collection of item holders to the category.
          *
-         * @param items The collection of {@link Holder}s to add.
-         * @return This builder for chaining.
+         * @param items
+         * The collection of {@link Holder}s to add.
+         * @return
+         * This builder for chaining.
          */
         public Builder addAllHolders(Collection<Holder<Item>> items) {
             return addAll(items.stream().map(Holder::get).toList());
@@ -225,8 +258,10 @@ public class ItemCategory {
         /**
          * Finalizes the creation of the ItemCategory.
          *
-         * @return A new {@link ItemCategory} instance.
-         * @throws NullPointerException if the icon has not been set.
+         * @return
+         * A new {@link ItemCategory} instance.
+         * @throws NullPointerException
+         * If the icon has not been set prior to building.
          */
         public ItemCategory build() {
             Objects.requireNonNull(icon, "Category icon must be set before building");

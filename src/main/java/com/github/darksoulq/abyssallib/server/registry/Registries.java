@@ -10,8 +10,8 @@ import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
+import com.github.darksoulq.abyssallib.world.data.tag.TagType;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
-import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
 import com.github.darksoulq.abyssallib.world.item.Item;
@@ -47,6 +47,7 @@ public class Registries {
     public static final Registry<LootFunctionType<?>> LOOT_FUNCTIONS = new Registry<>();
     public static final Registry<LootConditionType<?>> LOOT_CONDITIONS = new Registry<>();
 
+    public static final Registry<TagType<?, ?>> TAG_TYPES = new Registry<>();
     public static final Registry<Tag<?, ?>> TAGS = new Registry<>();
     public static final Registry<ItemPredicate> PREDICATES = new Registry<>();
 

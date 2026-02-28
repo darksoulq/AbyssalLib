@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
-import com.github.darksoulq.abyssallib.world.gen.feature.util.BlockStateCodec;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
@@ -165,13 +161,13 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
 
-                BlockInfo outer = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("outer_layer")));
-                BlockInfo middle = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("middle_layer")));
-                BlockInfo inner = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("inner_layer")));
-                BlockInfo fill = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("fill_block")));
-                BlockInfo inside = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("inner_block")));
+                BlockInfo outer = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("outer_layer")));
+                BlockInfo middle = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("middle_layer")));
+                BlockInfo inner = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("inner_layer")));
+                BlockInfo fill = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("fill_block")));
+                BlockInfo inside = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("inner_block")));
 
-                List<BlockInfo> crystals = BlockStateCodec.CODEC.list().decode(ops, map.get(ops.createString("crystals")));
+                List<BlockInfo> crystals = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("crystals")));
                 List<String> replaceable = Codecs.STRING.list().decode(ops, map.get(ops.createString("replaceable")));
                 List<String> invalid = Codecs.STRING.list().decode(ops, map.get(ops.createString("invalid_blocks")));
 
@@ -199,12 +195,12 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("outer_layer"), BlockStateCodec.CODEC.encode(ops, value.outerLayer));
-                map.put(ops.createString("middle_layer"), BlockStateCodec.CODEC.encode(ops, value.middleLayer));
-                map.put(ops.createString("inner_layer"), BlockStateCodec.CODEC.encode(ops, value.innerLayer));
-                map.put(ops.createString("fill_block"), BlockStateCodec.CODEC.encode(ops, value.fillBlock));
-                map.put(ops.createString("inner_block"), BlockStateCodec.CODEC.encode(ops, value.innerBlock));
-                map.put(ops.createString("crystals"), BlockStateCodec.CODEC.list().encode(ops, value.crystals));
+                map.put(ops.createString("outer_layer"), ExtraCodecs.BLOCK_INFO.encode(ops, value.outerLayer));
+                map.put(ops.createString("middle_layer"), ExtraCodecs.BLOCK_INFO.encode(ops, value.middleLayer));
+                map.put(ops.createString("inner_layer"), ExtraCodecs.BLOCK_INFO.encode(ops, value.innerLayer));
+                map.put(ops.createString("fill_block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.fillBlock));
+                map.put(ops.createString("inner_block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.innerBlock));
+                map.put(ops.createString("crystals"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.crystals));
                 map.put(ops.createString("replaceable"), Codecs.STRING.list().encode(ops, value.replaceable));
                 map.put(ops.createString("invalid_blocks"), Codecs.STRING.list().encode(ops, value.invalidBlocks));
                 map.put(ops.createString("outer_radius"), Codecs.INT.encode(ops, value.outerRadius));

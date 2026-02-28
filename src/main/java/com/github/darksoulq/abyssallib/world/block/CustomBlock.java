@@ -1,9 +1,7 @@
 package com.github.darksoulq.abyssallib.world.block;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
-import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -233,13 +231,12 @@ public class CustomBlock implements Cloneable {
      * @return true if tagged
      */
     public boolean hasTag(Key id) {
-        if (!(Registries.TAGS.get(id.toString()) instanceof BlockTag tag)) {
+        if (!(Registries.TAGS.get(id.asString()) instanceof BlockTag tag)) {
             AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
             return false;
         }
-        BridgeBlock<?> block = BlockBridge.get(Identifier.of("abyssallib", this.id.namespace(), this.id.value()));
-        if (block == null) return false;
-        return tag.contains(block);
+        BlockInfo blockInfo = new BlockInfo(null, this, null, null);
+        return tag.contains(blockInfo);
     }
 
     /**

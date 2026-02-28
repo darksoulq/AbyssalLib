@@ -1,9 +1,12 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.destroystokyo.paper.profile.ProfileProperty;
-import com.github.darksoulq.abyssallib.world.item.component.builtin.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import io.papermc.paper.block.BlockPredicate;
-import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.*;
 import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
 import io.papermc.paper.datacomponent.item.blocksattacks.ItemDamageFunction;
@@ -16,18 +19,15 @@ import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
 import io.papermc.paper.registry.tag.TagKey;
 import io.papermc.paper.text.Filtered;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.util.TriState;
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.FireworkEffect;
-import org.bukkit.Registry;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.BlockType;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
@@ -40,9 +40,11 @@ import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.map.MapCursor;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
 
 @SuppressWarnings("UnstableApiUsage")
 public class ExtraCodecs {
@@ -197,10 +199,9 @@ public class ExtraCodecs {
             Codecs.KEY.nullable().fieldOf("shear_sound", Equippable::shearSound),
             (slot, equipSound, assetId, cameraOverlay, allowedEntities, dispensable,
              swappable, damageOnHurt, canBeSheared, shearSound) -> {
-                Equippable.Builder builder = Equippable.equippable(slot).equipSound(equipSound).assetId((Key) assetId).cameraOverlay((Key) cameraOverlay);
-                if (allowedEntities != null) builder.allowedEntities(RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, (List<? extends EntityType>) allowedEntities));
-                return builder.dispensable(dispensable).swappable(swappable).damageOnHurt(damageOnHurt).canBeSheared(canBeSheared).shearSound((Key) shearSound)
-                        .build();
+                Equippable.Builder builder = Equippable.equippable(slot).equipSound(equipSound).assetId(assetId).cameraOverlay(cameraOverlay);
+                if (allowedEntities != null) builder.allowedEntities(RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, allowedEntities));
+                return builder.dispensable(dispensable).swappable(swappable).damageOnHurt(damageOnHurt).canBeSheared(canBeSheared).shearSound(shearSound).build();
             }
     );
 
@@ -444,73 +445,109 @@ public class ExtraCodecs {
             }
     );
 
-    // Internal usage maps
-    public static final Map<String, Codec<?>> DATA_COMPONENT_CODECS = new HashMap<>();
+    public static final Codec<BlockInfo> BLOCK_INFO = new Codec<>() {
+        @Override
+        public <D> BlockInfo decode(DynamicOps<D> ops, D input) throws CodecException {
+            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
 
-    static {
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.BANNER_PATTERNS.key().asString(), BannerPatterns.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.BASE_COLOR.key().asString(), BaseColor.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.BLOCKS_ATTACKS.key().asString(), BlockAttacks.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.BREAK_SOUND.key().asString(), BlockAttacks.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.BUNDLE_CONTENTS.key().asString(), BreakSound.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CAN_BREAK.key().asString(), CanBreak.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CAN_PLACE_ON.key().asString(), CanPlaceOn.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CHARGED_PROJECTILES.key().asString(), ChargedProjectile.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CONSUMABLE.key().asString(), Consume.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CONTAINER.key().asString(), Container.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CONTAINER_LOOT.key().asString(), ContainerLoot.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.USE_COOLDOWN.key().asString(), CooldownUse.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CUSTOM_NAME.key().asString(), CustomName.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.DEATH_PROTECTION.key().asString(), DeathProtect.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.TOOLTIP_DISPLAY.key().asString(), DisplayTooltip.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.DAMAGE.key().asString(), Durability.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.DYED_COLOR.key().asString(), DyedColor.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.ENCHANTABLE.key().asString(), EnchantableComponent.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE.key().asString(), EnchantmentGlintOverride.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.ENCHANTMENTS.key().asString(), Enchantments.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.EQUIPPABLE.key().asString(), EquippableComponent.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.FIREWORKS.key().asString(), Firework.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.FIREWORK_EXPLOSION.key().asString(), FireworkExplosion.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.FOOD.key().asString(), Food.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.INSTRUMENT.key().asString(), Instrument.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.GLIDER.key().asString(), Glider.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.INTANGIBLE_PROJECTILE.key().asString(), IntangibleProjectile.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.ATTRIBUTE_MODIFIERS.key().asString(), ItemAttributeModifier.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.ITEM_MODEL.key().asString(), ItemModel.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.ITEM_NAME.key().asString(), ItemName.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.LORE.key().asString(), Lore.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_COLOR.key().asString(), MapColor.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_DECORATIONS.key().asString(), MapDecorates.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_ID.key().asString(), MapID.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAP_POST_PROCESSING.key().asString(), MapPostProcess.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAX_DAMAGE.key().asString(), MaxDurability.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.MAX_STACK_SIZE.key().asString(), MaxStackSize.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.CUSTOM_MODEL_DATA.key().asString(), ModelData.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.NOTE_BLOCK_SOUND.key().asString(), NoteBlockSound.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER.key().asString(), OminousAmplifier.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.JUKEBOX_PLAYABLE.key().asString(), PlayableJukebox.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.POT_DECORATIONS.key().asString(), PotDecorates.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.POTION_CONTENTS.key().asString(), PotionContent.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.POTION_DURATION_SCALE.key().asString(), PotionDurationScale.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.PROVIDES_BANNER_PATTERNS.key().asString(), ProvidesBannerPatterns.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.PROVIDES_TRIM_MATERIAL.key().asString(), ProvidesTrimMaterial.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.RARITY.key().asString(), Rarity.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.RECIPES.key().asString(), Recipes.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.USE_REMAINDER.key().asString(), RemainderUse.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.REPAIRABLE.key().asString(), RepairableComponent.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.REPAIR_COST.key().asString(), RepairCost.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.DAMAGE_RESISTANT.key().asString(), ResistantDamage.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.PROFILE.key().asString(), ResolvingProfile.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.SHULKER_COLOR.key().asString(), ShulkerColor.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.STORED_ENCHANTMENTS.key().asString(), StoredEnchantments.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS.key().asString(), SuspiciousStewEffect.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.TOOL.key().asString(), ToolComponent.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.TOOLTIP_STYLE.key().asString(), TooltipStyle.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.LODESTONE_TRACKER.key().asString(), TrackerLodestone.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.TRIM.key().asString(), Trim.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.UNBREAKABLE.key().asString(), Unbreakable.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.WEAPON.key().asString(), WeaponComponent.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.WRITABLE_BOOK_CONTENT.key().asString(), WritableBookContents.CODEC);
-        DATA_COMPONENT_CODECS.put(DataComponentTypes.WRITTEN_BOOK_CONTENT.key().asString(), WrittenBookContents.CODEC);
-    }
+            String id = Codecs.STRING.decode(ops, map.get(ops.createString("id")));
+
+            Vector pos = new Vector(0, 0, 0);
+            D posObj = map.get(ops.createString("pos"));
+            if (posObj != null) {
+                pos = Codecs.VECTOR_I.decode(ops, posObj);
+            }
+
+            Object blockObject;
+            if (id.startsWith("minecraft:")) {
+                Material mat = Material.matchMaterial(id.substring(10));
+                if (mat == null || !mat.isBlock()) throw new CodecException("Invalid vanilla material: " + id);
+                blockObject = mat.createBlockData();
+            } else {
+                CustomBlock base = Registries.BLOCKS.get(id);
+                if (base == null) throw new CodecException("Unknown custom block: " + id);
+                blockObject = base.clone();
+            }
+
+            ObjectNode combinedData = null;
+            ObjectNode nbt = null;
+
+            if (ops instanceof JsonOps && input instanceof JsonNode jsonInput) {
+                if (jsonInput.has("states") || jsonInput.has("properties")) {
+                    combinedData = (ObjectNode) jsonInput.deepCopy();
+                    combinedData.remove("id");
+                    combinedData.remove("pos");
+                    combinedData.remove("nbt");
+                }
+
+                if (jsonInput.has("nbt")) {
+                    nbt = (ObjectNode) jsonInput.get("nbt");
+                }
+            }
+
+            if (blockObject instanceof BlockData bd) {
+                D states = map.get(ops.createString("states"));
+                if (states != null) {
+                    Map<D, D> statesMap = ops.getMap(states).orElse(Collections.emptyMap());
+                    MinecraftBlockSerializer.deserialize(bd, statesMap, ops);
+                }
+            } else if (blockObject instanceof CustomBlock cb) {
+                if (combinedData != null && combinedData.has("states")) {
+                    D states = map.get(ops.createString("states"));
+                    if (states != null) {
+                        Map<D, D> statesMap = ops.getMap(states).orElse(Collections.emptyMap());
+                        BlockData tempData = cb.getMaterial().createBlockData();
+                        MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
+                    }
+                }
+            }
+
+            return new BlockInfo(pos, blockObject, combinedData, nbt);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <D> D encode(DynamicOps<D> ops, BlockInfo value) throws CodecException {
+            Map<D, D> map = new HashMap<>();
+            String id;
+            Map<D, D> nbtMap = new HashMap<>();
+
+            if (value.nbt() != null) {
+                Map<D, D> existing = (Map<D, D>) ops.getMap((D) value.nbt()).orElse(null);
+                if (existing != null) nbtMap.putAll(existing);
+            }
+
+            if (value.block() instanceof CustomBlock cb) {
+                id = cb.getId().asString();
+                Map<D, D> serialized = AbyssalLibBlockSerializer.serialize(cb, ops);
+
+                if (serialized.containsKey(ops.createString("states"))) {
+                    map.put(ops.createString("states"), serialized.get(ops.createString("states")));
+                }
+
+                if (serialized.containsKey(ops.createString("properties"))) {
+                    nbtMap.put(ops.createString("properties"), serialized.get(ops.createString("properties")));
+                }
+            } else {
+                BlockData bd = (BlockData) value.block();
+                id = "minecraft:" + bd.getMaterial().name().toLowerCase();
+
+                Map<D, D> states = MinecraftBlockSerializer.serialize(bd, ops);
+                if (!states.isEmpty()) {
+                    map.put(ops.createString("states"), ops.createMap(states));
+                }
+            }
+
+            map.put(ops.createString("id"), Codecs.STRING.encode(ops, id));
+            if (value.pos() != null) {
+                map.put(ops.createString("pos"), Codecs.VECTOR_I.encode(ops, value.pos()));
+            }
+
+            if (!nbtMap.isEmpty()) {
+                map.put(ops.createString("nbt"), ops.createMap(nbtMap));
+            }
+
+            return ops.createMap(map);
+        }
+    };
 }

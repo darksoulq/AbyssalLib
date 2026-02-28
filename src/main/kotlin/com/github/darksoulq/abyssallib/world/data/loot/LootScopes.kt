@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.data.loot
 
 import org.bukkit.inventory.ItemStack
-import java.util.ArrayList
 
 @DslMarker
 annotation class LootDSL

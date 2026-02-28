@@ -1,4 +1,7 @@
-import com.github.darksoulq.abyssallib.world.particle.*
+import com.github.darksoulq.abyssallib.world.particle.Generator
+import com.github.darksoulq.abyssallib.world.particle.ParticleRenderer
+import com.github.darksoulq.abyssallib.world.particle.Particles
+import com.github.darksoulq.abyssallib.world.particle.Transformer
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector

@@ -1,14 +1,14 @@
 package com.github.darksoulq.abyssallib.common.database
 
-import com.github.darksoulq.abyssallib.common.database.nosql.mongodb.Database as MongoDatabase
-import com.github.darksoulq.abyssallib.common.database.nosql.mongodb.CollectionQuery
 import com.github.darksoulq.abyssallib.common.database.nosql.mongodb.BatchQuery
+import com.github.darksoulq.abyssallib.common.database.nosql.mongodb.CollectionQuery
 import com.github.darksoulq.abyssallib.common.database.nosql.mongodb.DocumentMapper
-import com.github.darksoulq.abyssallib.common.database.nosql.redis.Database as RedisDatabase
-import com.github.darksoulq.abyssallib.common.database.nosql.redis.QueryExecutor
 import com.github.darksoulq.abyssallib.common.database.nosql.redis.PipelineExecutor
-import org.bson.Document
+import com.github.darksoulq.abyssallib.common.database.nosql.redis.QueryExecutor
 import kotlinx.coroutines.future.await
+import org.bson.Document
+import com.github.darksoulq.abyssallib.common.database.nosql.mongodb.Database as MongoDatabase
+import com.github.darksoulq.abyssallib.common.database.nosql.redis.Database as RedisDatabase
 
 /**
  * Top-level factory function to initialize a MongoDB connection using Kotlin DSL.

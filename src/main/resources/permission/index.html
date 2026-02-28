@@ -2,46 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AbyssalLib Permissions Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AbyssalLib Permissions</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/monocraft@3.0.0/dist/monocraft.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 <div id="auth-layer" class="auth-layer">
-    <div class="auth-box">
+    <div class="auth-box slide-in">
         <i class="fa-solid fa-shield-halved auth-icon"></i>
         <h2>Authentication Required</h2>
-        <p>Please generate a secure web link via the in-game command to access the editor.</p>
+        <p>Generate a secure web link via the in-game command to access the editor.</p>
     </div>
 </div>
 
 <div id="app" style="display: none;">
-    <aside class="sidebar">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="app.toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="brand">
             <i class="fa-solid fa-layer-group brand-icon"></i>
-            <div>
+            <div class="brand-text">
                 <h2>AbyssalLib</h2>
                 <span>Permissions</span>
             </div>
+            <button class="icon-btn close-sidebar-btn" onclick="app.toggleSidebar()"><i class="fa-solid fa-times"></i></button>
         </div>
 
         <div class="sidebar-search">
             <i class="fa-solid fa-search"></i>
-            <input type="text" id="tree-search" placeholder="Search groups/users..." oninput="app.filterSidebar()">
+            <input type="text" id="tree-search" placeholder="Search..." oninput="app.filterSidebar()">
         </div>
 
         <div class="tree-container">
             <div class="tree-section">
                 <div class="tree-header">
                     <span><i class="fa-solid fa-users"></i> Groups</span>
-                    <button class="icon-btn" onclick="app.createGroup()" title="Create Group"><i class="fa-solid fa-plus"></i></button>
+                    <button class="icon-btn action-btn" onclick="app.createGroup()" title="Create Group"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <div id="tree-groups" class="tree-list"></div>
             </div>
 
-            <div class="tree-section" style="margin-top: 1.5rem;">
+            <div class="tree-section" style="margin-top: 2rem;">
                 <div class="tree-header">
                     <span><i class="fa-solid fa-user"></i> Users</span>
                 </div>
@@ -50,7 +53,7 @@
         </div>
 
         <div class="sidebar-footer">
-            <button class="btn btn-secondary" style="width:100%; border-color:var(--danger); color:var(--danger)" onclick="app.endSession()">
+            <button class="btn btn-danger btn-block" onclick="app.endSession()">
                 <i class="fa-solid fa-power-off"></i> End Session
             </button>
         </div>
@@ -58,9 +61,12 @@
 
     <main class="main-content">
         <header class="top-header">
-            <div class="header-path" id="editor-path">Select a group or user</div>
+            <div class="header-left">
+                <button class="icon-btn mobile-menu-btn" onclick="app.toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div class="header-path" id="editor-path">Select a group or user</div>
+            </div>
             <div class="status-indicator">
-                <div class="status-dot"></div> Connected
+                <div class="status-dot"></div> <span class="hide-mobile">Connected</span>
             </div>
         </header>
 
@@ -68,7 +74,7 @@
             <div class="editor-header">
                 <div class="editor-title">
                     <i id="editor-icon" class="fa-solid fa-users title-icon"></i>
-                    <div>
+                    <div class="title-text-group">
                         <h1 id="editor-name">admin</h1>
                         <span id="editor-subtitle" class="subtitle">id: admin</span>
                     </div>
@@ -76,56 +82,56 @@
                 <div class="editor-actions" id="editor-actions"></div>
             </div>
 
+            <div class="mobile-tabs" id="mobile-tabs">
+                <button id="tab-perms" class="tab-btn active" onclick="app.switchTab('perms')">Permissions</button>
+                <button id="tab-parents" class="tab-btn" onclick="app.switchTab('parents')">Parents</button>
+            </div>
+
             <div class="editor-layout">
-                <div class="main-panel">
-                    <div class="card perms-card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-key"></i> Permissions</h3>
+                <div id="card-perms" class="card perms-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-key"></i> Permissions</h3>
+                    </div>
+
+                    <div class="grid-table">
+                        <div class="grid-header">
+                            <div>Node</div>
+                            <div class="center-align">Value</div>
+                            <div class="right-align">Expiry</div>
                         </div>
-                        <div class="table-container">
-                            <table class="nodes-table">
-                                <thead>
-                                <tr>
-                                    <th>Node</th>
-                                    <th style="width: 80px;">Value</th>
-                                    <th style="width: 100px;">Expiry</th>
-                                </tr>
-                                </thead>
-                                <tbody id="nodes-tbody"></tbody>
-                            </table>
+                        <div id="nodes-list" class="grid-body"></div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="input-wrapper">
+                            <input type="text" id="add-node-input" class="input-box" placeholder="Search node (e.g. essentials.fly)" autocomplete="off">
+                            <div id="node-suggestions" class="suggestions-dropdown" style="display:none;"></div>
                         </div>
-                        <div class="add-section-bottom perm-form">
-                            <div class="input-wrapper" style="flex:1;">
-                                <input type="text" id="add-node-input" placeholder="Search node (e.g. essentials.fly, @_custom, @plugin)" oninput="app.updateSuggestions(this.value)" autocomplete="off" onfocus="app.updateSuggestions(this.value)">
-                                <div id="node-suggestions" class="suggestions-dropdown" style="display:none;"></div>
-                            </div>
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <select id="add-node-val" class="input-select" style="width: 90px; margin:0;">
-                                    <option value="true">True</option>
-                                    <option value="false">False</option>
-                                </select>
-                                <input type="text" id="add-node-exp" class="input-text" placeholder="Time (e.g. 1w 2d)" style="width: 140px;">
-                                <button class="btn btn-primary" onclick="app.submitNode()">Add Node</button>
-                            </div>
+                        <div class="input-group">
+                            <select id="add-node-val" class="input-box" style="flex: 0.5;">
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                            </select>
+                            <input type="text" id="add-node-exp" class="input-box" placeholder="Time (e.g. 1w)">
+                            <button class="btn btn-primary" onclick="app.submitNode()">Add</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="side-panel-right">
-                    <div class="card parents-card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-sitemap"></i> Parents</h3>
-                        </div>
-                        <div class="badge-list" id="parents-list"></div>
-                        <div class="add-section-bottom" style="flex-direction: column; align-items: stretch;">
-                            <input type="text" id="add-parent-input" list="groups-datalist" placeholder="Group ID...">
-                            <div style="display: flex; gap: 0.5rem;">
-                                <input type="text" id="add-parent-exp" class="input-text" placeholder="Duration (e.g. 1d 12h)">
-                                <button class="btn btn-primary btn-sm" onclick="app.submitParent()">Add Parent</button>
-                            </div>
+                <div id="card-parents" class="card parents-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-sitemap"></i> Parents</h3>
+                    </div>
+                    <div class="badge-list" id="parents-list"></div>
+                    <div class="card-footer">
+                        <input type="text" id="add-parent-input" class="input-box" list="groups-datalist" placeholder="Parent Group ID...">
+                        <div class="input-group">
+                            <input type="text" id="add-parent-exp" class="input-box" placeholder="Duration (e.g. 1d)">
+                            <button class="btn btn-primary" onclick="app.submitParent()">Add</button>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -140,14 +146,14 @@
 <datalist id="groups-datalist"></datalist>
 
 <ul id="context-menu" class="context-menu">
-    <li id="cm-toggle" class="cm-item"><i class="fa-solid fa-rotate"></i> Toggle Value</li>
-    <li id="cm-expiry" class="cm-item"><i class="fa-regular fa-clock"></i> Edit Expiry</li>
+    <li id="cm-toggle" class="cm-item"><i class="fa-solid fa-rotate"></i> Toggle</li>
+    <li id="cm-expiry" class="cm-item"><i class="fa-regular fa-clock"></i> Expiry</li>
     <li id="cm-delete" class="cm-item cm-danger"><i class="fa-solid fa-trash"></i> Delete</li>
 </ul>
 
 <ul id="sidebar-context-menu" class="context-menu">
     <li class="cm-item" onclick="app.handleSidebarContext('weight')"><i class="fa-solid fa-weight-hanging"></i> Edit Weight</li>
-    <li class="cm-item cm-danger" onclick="app.handleSidebarContext('delete')"><i class="fa-solid fa-trash"></i> Delete Group</li>
+    <li class="cm-item cm-danger" onclick="app.handleSidebarContext('delete')"><i class="fa-solid fa-trash"></i> Delete</li>
 </ul>
 
 <div id="modal" class="modal">

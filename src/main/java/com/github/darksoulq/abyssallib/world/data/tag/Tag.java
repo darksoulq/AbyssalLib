@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.data.tag;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import net.kyori.adventure.key.Key;
 
 import java.util.HashSet;
@@ -14,27 +13,29 @@ import java.util.Set;
  * other tags of the same type to form hierarchical relationships.
  * </p>
  *
- * @param <T> The type of entries stored within the tag (e.g., Predicates or Strings).
- * @param <D> The type of input used for testing membership in the tag (e.g., ItemStack or Block).
+ * @param <T> The type of entries stored within the tag.
+ * @param <D> The type of input used for testing membership in the tag.
  */
 public abstract class Tag<T, D> {
-    /** The unique identifier representing this tag. */
-    public final Key id;
-
-    /** The set of direct values contained within this tag. */
+    protected final Key id;
     protected final Set<T> values = new HashSet<>();
-
-    /** A set of other tags whose values are considered part of this tag. */
     protected final Set<Tag<T, D>> included = new HashSet<>();
 
     /**
      * Constructs a new Tag instance.
      *
-     * @param id The {@link Identifier} for this tag.
+     * @param id The identifier for this tag.
      */
     public Tag(Key id) {
         this.id = id;
     }
+
+    /**
+     * Retrieves the specific type of this tag.
+     *
+     * @return The {@link TagType} defining this tag's logic and serialization.
+     */
+    public abstract TagType<T, D> getType();
 
     /**
      * Adds a direct entry to this tag.
@@ -70,16 +71,29 @@ public abstract class Tag<T, D> {
     public abstract Set<T> getAll();
 
     /**
-     * @return The local {@link Set} of values directly assigned to this tag.
+     * Retrieves the local set of values directly assigned to this tag.
+     *
+     * @return A {@link Set} of directly added values.
      */
     public Set<T> getValues() {
         return values;
     }
 
     /**
-     * @return The {@link Set} of tags directly included by this tag.
+     * Retrieves the set of tags directly included by this tag.
+     *
+     * @return A {@link Set} of included tags.
      */
     public Set<Tag<T, D>> getIncluded() {
         return included;
+    }
+
+    /**
+     * Retrieves the unique identifier representing this tag.
+     *
+     * @return The {@link Key} identifier.
+     */
+    public Key getId() {
+        return id;
     }
 }

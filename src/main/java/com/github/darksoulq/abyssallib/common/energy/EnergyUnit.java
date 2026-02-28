@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.common.energy;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import net.kyori.adventure.key.Key;
 
 /**

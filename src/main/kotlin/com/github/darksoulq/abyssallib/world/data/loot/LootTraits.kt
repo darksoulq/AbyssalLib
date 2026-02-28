@@ -1,6 +1,9 @@
 package com.github.darksoulq.abyssallib.world.data.loot
 
-import com.github.darksoulq.abyssallib.world.data.loot.function.*
+import com.github.darksoulq.abyssallib.world.data.loot.function.EnchantRandomlyFunction
+import com.github.darksoulq.abyssallib.world.data.loot.function.SetDamageFunction
+import com.github.darksoulq.abyssallib.world.data.loot.function.SetLoreFunction
+import com.github.darksoulq.abyssallib.world.data.loot.function.SetNameFunction
 import net.kyori.adventure.text.Component
 
 interface Conditionable {

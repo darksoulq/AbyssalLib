@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyEvent;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
@@ -18,26 +17,37 @@ import java.util.function.Function;
 
 /**
  * A specialized registry utility that defers object registration until the server is ready.
- * <p>
  * This pattern allows developers to define registry entries in static fields before the
  * underlying {@link Registry} is fully initialized. When {@link #apply()} is called,
  * all queued entries are instantiated and moved into the main registry.
  *
- * @param <T> The type of objects handled by this registry.
+ * @param <T>
+ * The type of objects handled by this registry.
  */
 public final class DeferredRegistry<T> {
-    /** The target master registry where objects will eventually reside. */
+
+    /**
+     * The target master registry where objects will eventually reside.
+     */
     private final Registry<T> registry;
-    /** The unique namespace/mod ID associated with this deferred registry. */
+
+    /**
+     * The unique namespace or plugin ID associated with this deferred registry.
+     */
     private final String pluginId;
-    /** A local map of pending entries waiting to be applied. */
+
+    /**
+     * A local map of pending entries waiting to be applied, keyed by their path.
+     */
     private final Map<String, Holder<T>> entries = new HashMap<>();
 
     /**
      * Private constructor for the factory method.
      *
-     * @param registry The target {@link Registry}.
-     * @param pluginId The namespace for these entries.
+     * @param registry
+     * The target {@link Registry} instance.
+     * @param pluginId
+     * The namespace for these entries.
      */
     private DeferredRegistry(@NotNull Registry<T> registry, @NotNull String pluginId) {
         this.registry = registry;
@@ -47,10 +57,14 @@ public final class DeferredRegistry<T> {
     /**
      * Factory method to create a new deferred registry instance.
      *
-     * @param <T>      The registry type.
-     * @param registry The base {@link Registry}.
-     * @param pluginId The namespace for the objects.
-     * @return A new {@link DeferredRegistry}.
+     * @param <T>
+     * The registry type.
+     * @param registry
+     * The base {@link Registry} instance.
+     * @param pluginId
+     * The namespace for the objects.
+     * @return
+     * A new {@link DeferredRegistry} instance.
      */
     public static <T> DeferredRegistry<T> create(Registry<T> registry, String pluginId) {
         return new DeferredRegistry<>(registry, pluginId);
@@ -58,14 +72,17 @@ public final class DeferredRegistry<T> {
 
     /**
      * Queues an object for registration.
-     * <p>
      * Instead of returning the object directly, this returns a {@link Holder}, which
-     * allows for lazy initialization.
+     * allows for lazy initialization and safe cross-referencing during static init.
      *
-     * @param name     The unique name (path) within this registry's namespace.
-     * @param supplier A function that creates the object using the generated {@link Identifier}.
-     * @return A {@link Holder} wrapping the future object.
-     * @throws IllegalStateException if the name has already been registered in this deferred registry.
+     * @param name
+     * The unique name (path) within this registry's namespace.
+     * @param supplier
+     * A function that creates the object using the generated {@link Key}.
+     * @return
+     * A {@link Holder} wrapping the future object.
+     * @throws IllegalStateException
+     * If the name has already been registered in this deferred registry.
      */
     public Holder<T> register(String name, Function<Key, T> supplier) {
         if (entries.containsKey(name)) {
@@ -79,14 +96,8 @@ public final class DeferredRegistry<T> {
 
     /**
      * Finalizes the registration process by moving all deferred entries into the master registry.
-     * <p>
-     * This method performs several side effects:
-     * <ul>
-     * <li>Fires a {@link RegistryApplyEvent} to allow other plugins to modify or cancel the process.</li>
-     * <li>Registers {@link DamageType}s with the global damage registrar.</li>
-     * <li>Automatically generates Item entries and Predicates for {@link CustomBlock}s.</li>
-     * <li>Clears the internal staging map once complete.</li>
-     * </ul>
+     * This method triggers the instantiation of all {@link Holder} objects and handles
+     * secondary registration for blocks and items.
      */
     public void apply() {
         RegistryApplyEvent<T> event = new RegistryApplyEvent<>(registry, this);
@@ -95,23 +106,23 @@ public final class DeferredRegistry<T> {
             AbyssalLib.getInstance().getLogger().info("Registry apply cancelled for plugin: " + pluginId);
             return;
         }
-        List<DamageType> damageTypes = new ArrayList<>();
 
         for (Map.Entry<String, Holder<T>> entry : entries.entrySet()) {
             T value = entry.getValue().get();
-            String id = pluginId + ":" + entry.getKey();
-            registry.register(id, value);
+            String idString = pluginId + ":" + entry.getKey();
+            registry.register(idString, value);
 
             if (value instanceof CustomBlock block && block.generateItem()) {
                 Item blockItem = block.getItem().get();
-                Registries.PREDICATES.register(id, ItemPredicate.builder()
-                    .value(new CustomMarker(Key.key(id)))
+                Registries.PREDICATES.register(idString, ItemPredicate.builder()
+                    .value(new CustomMarker(Key.key(idString)))
                     .build());
-                Registries.ITEMS.register(id, blockItem);
+                Registries.ITEMS.register(idString, blockItem);
             }
+
             if (value instanceof Item) {
-                Registries.PREDICATES.register(id, ItemPredicate.builder()
-                    .value(new CustomMarker(Key.key(id)))
+                Registries.PREDICATES.register(idString, ItemPredicate.builder()
+                    .value(new CustomMarker(Key.key(idString)))
                     .build());
             }
         }
@@ -119,12 +130,22 @@ public final class DeferredRegistry<T> {
         entries.clear();
     }
 
-    /** @return An unmodifiable collection of all pending {@link Holder} entries. */
+    /**
+     * Retrieves an unmodifiable collection of all pending holders in this registry.
+     *
+     * @return
+     * A collection of {@link Holder} entries.
+     */
     public Collection<Holder<T>> getEntries() {
         return Collections.unmodifiableCollection(entries.values());
     }
 
-    /** @return The namespace associated with this registry. */
+    /**
+     * Retrieves the namespace associated with this deferred registry.
+     *
+     * @return
+     * The plugin or mod namespace string.
+     */
     public String getPluginId() {
         return pluginId;
     }

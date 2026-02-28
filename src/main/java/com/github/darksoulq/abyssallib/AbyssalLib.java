@@ -8,12 +8,11 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.unique.*;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.Try;
-import com.github.darksoulq.abyssallib.server.bridge.BlockBridge;
-import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
-import com.github.darksoulq.abyssallib.server.permission.*;
+import com.github.darksoulq.abyssallib.server.permission.PermissionManager;
+import com.github.darksoulq.abyssallib.server.permission.PermissionStorage;
 import com.github.darksoulq.abyssallib.server.permission.internal.*;
 import com.github.darksoulq.abyssallib.server.resource.Namespace;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
@@ -29,9 +28,7 @@ import com.github.darksoulq.abyssallib.server.util.Metrics;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.loot.LootDefaults;
-import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
-import com.github.darksoulq.abyssallib.world.data.tag.TagType;
-import com.github.darksoulq.abyssallib.world.entity.DamageType;
+import com.github.darksoulq.abyssallib.world.data.tag.TagTypes;
 import com.github.darksoulq.abyssallib.world.gen.feature.Features;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifiers;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
@@ -64,22 +61,21 @@ public final class AbyssalLib extends JavaPlugin {
         INSTANCE = this;
         LOGGER = getLogger();
         HookConstants.load();
+        File tagFolder = new File(getDataFolder(), "tags");
         if (!new File(LanguageLoader.LANG_FOLDER.toFile(), "en_us.properties").exists()) saveResource("lang/en_us.properties", false);
+        if (!tagFolder.exists()) tagFolder.mkdir();
 
         if (!new File(getDataFolder(), "permission/index.html").exists()) saveResource("permission/index.html", true);
         if (!new File(getDataFolder(), "permission/style.css").exists()) saveResource("permission/style.css", true);
         if (!new File(getDataFolder(), "permission/app.js").exists()) saveResource("permission/app.js", true);
 
-        ItemBridge.setup();
-        BlockBridge.setup();
         Components.DATA_COMPONENTS_VANILLA.apply();
         Components.DATA_COMPONENTS.apply();
         ItemPredicateLoader.loadPredicates();
         Blocks.BLOCKS.apply();
         Items.ITEMS.apply();
+        TagTypes.TAG_TYPES.apply();
         registerBlockDataAdapters();
-        TagLoader.register(TagType.ITEM);
-        TagLoader.register(TagType.BLOCK);
 
         PlacementModifiers.PLACEMENT_MODIFIERS.apply();
         Features.FEATURES.apply();

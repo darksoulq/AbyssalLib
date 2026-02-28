@@ -1,6 +1,5 @@
-package com.github.darksoulq.abyssallib.world.structure.serializer;
+package com.github.darksoulq.abyssallib.common.serialization;
 
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import com.github.darksoulq.abyssallib.world.block.BlockEntity;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;

@@ -1,12 +1,8 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import io.papermc.paper.plugin.bootstrap.BootstrapContext;
-import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
-import io.papermc.paper.registry.data.DamageTypeRegistryEntry;
-import io.papermc.paper.registry.event.RegistryComposeEvent;
 import io.papermc.paper.registry.event.RegistryEvents;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
 import net.kyori.adventure.key.Key;
@@ -17,9 +13,6 @@ import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DeathMessageType;
 import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * Represents a custom damage type to be registered into the Paper {@code DamageType} registry.

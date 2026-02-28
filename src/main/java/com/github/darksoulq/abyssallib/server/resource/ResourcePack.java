@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;

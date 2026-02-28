@@ -13,9 +13,9 @@ import com.github.darksoulq.abyssallib.server.translation.internal.PacketTransla
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
+import com.github.darksoulq.abyssallib.world.data.loot.LootLoader;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.loot.MergeStrategy;
-import com.github.darksoulq.abyssallib.world.data.loot.LootLoader;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
@@ -38,6 +38,7 @@ import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
 import java.util.List;
 
 public class ServerEvents {
@@ -59,7 +60,7 @@ public class ServerEvents {
                     EntityAttributes.init();
                     PlayerStatistics.init();
                     RecipeLoader.reload();
-                    TagLoader.loadTags();
+                    TagLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "tags"));
                     NaturalSpawnRegistry.load();
                     StructureLoader.load();
                     WorldGenLoader.load();

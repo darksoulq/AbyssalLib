@@ -1,7 +1,5 @@
-package com.github.darksoulq.abyssallib.world.structure.serializer;
+package com.github.darksoulq.abyssallib.common.serialization;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import net.kyori.adventure.text.Component;

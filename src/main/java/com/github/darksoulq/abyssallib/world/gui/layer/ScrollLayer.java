@@ -1,10 +1,6 @@
 package com.github.darksoulq.abyssallib.world.gui.layer;
 
-import com.github.darksoulq.abyssallib.world.gui.Gui;
-import com.github.darksoulq.abyssallib.world.gui.GuiElement;
-import com.github.darksoulq.abyssallib.world.gui.GuiLayer;
-import com.github.darksoulq.abyssallib.world.gui.GuiView;
-import com.github.darksoulq.abyssallib.world.gui.SlotPosition;
+import com.github.darksoulq.abyssallib.world.gui.*;
 import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;

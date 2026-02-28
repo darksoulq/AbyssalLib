@@ -34,17 +34,30 @@ public class ItemMenu {
         gui.addFlags(GuiFlag.DISABLE_BOTTOM, GuiFlag.DISABLE_ADVANCEMENTS, GuiFlag.DISABLE_ITEM_PICKUP);
 
         List<GuiElement> elements = new ArrayList<>();
-        Map<String, Long> namespaceCounts = Registries.ITEMS.getAll().keySet().stream()
+        Set<String> namespaces = Registries.ITEMS.getAll().keySet().stream()
             .map(key -> key.split(":")[0])
-            .collect(Collectors.groupingBy(ns -> ns, TreeMap::new, Collectors.counting()));
+            .collect(Collectors.toCollection(TreeSet::new));
 
-        for (Map.Entry<String, Long> entry : namespaceCounts.entrySet()) {
-            String plugin = entry.getKey();
-            long count = entry.getValue();
+        for (String plugin : namespaces) {
+            List<ItemCategory> pluginCategories = Registries.ITEM_CATEGORIES.getAll().values().stream()
+                .filter(cat -> cat.getId().namespace().equals(plugin))
+                .toList();
 
-            if (count <= 1) continue;
+            long categoryCount = pluginCategories.size();
+            long itemCount;
 
-            Item icon = getPluginIcon(plugin, count - 1);
+            if (categoryCount == 0) {
+                itemCount = Registries.ITEMS.getAll().keySet().stream()
+                    .filter(key -> key.startsWith(plugin + ":") && !key.endsWith(":plugin_icon"))
+                    .count();
+                if (itemCount == 0) continue;
+            } else {
+                itemCount = pluginCategories.stream()
+                    .mapToInt(cat -> cat.getItems().size())
+                    .sum();
+            }
+
+            Item icon = getPluginIcon(plugin, itemCount, categoryCount);
             if (icon == null) continue;
 
             elements.add(GuiButton.of(icon.getStack(), ctx -> {
@@ -151,18 +164,25 @@ public class ItemMenu {
         ItemStack stack = category.getIcon().clone();
         Item item = new Item(stack);
         item.setData(new ItemName(category.getTitle()));
-        item.setData(new Lore(List.of(TextUtil.parse("<!italic><yellow><amount></yellow></!italic><white> Items</white>",
-            Placeholder.unparsed("amount", String.valueOf(category.getItems().size()))))));
+        item.setData(new Lore(List.of(
+            TextUtil.parse("<!italic><yellow><amount></yellow></!italic><white> Items</white>", Placeholder.unparsed("amount", String.valueOf(category.getItems().size())))
+        )));
         return item.getStack();
     }
 
-    private static Item getPluginIcon(String plugin, Long amount) {
+    private static Item getPluginIcon(String plugin, long itemCount, long categoryCount) {
         Item icon = Registries.ITEMS.get(plugin + ":plugin_icon");
         if (icon == null) return null;
         icon = icon.clone();
         icon.setData(new ItemName(Component.translatable("plugin." + plugin, plugin)));
-        icon.setData(new Lore(List.of(TextUtil.parse("<!italic><yellow><amount></yellow></!italic><white> Items</white>",
-            Placeholder.unparsed("amount", String.valueOf(amount))))));
+
+        List<Component> lore = new ArrayList<>();
+        if (categoryCount > 0) {
+            lore.add(TextUtil.parse("<!italic><yellow><amount></yellow></!italic><white> Categories</white>", Placeholder.unparsed("amount", String.valueOf(categoryCount))));
+        }
+        lore.add(TextUtil.parse("<!italic><yellow><amount></yellow></!italic><white> Items</white>", Placeholder.unparsed("amount", String.valueOf(itemCount))));
+
+        icon.setData(new Lore(lore));
         return icon;
     }
 }

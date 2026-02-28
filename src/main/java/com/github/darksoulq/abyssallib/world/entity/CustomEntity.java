@@ -1,8 +1,5 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
-import com.github.darksoulq.abyssallib.world.util.CTag;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.world.util.PDCTag;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
@@ -11,6 +8,8 @@ import com.github.darksoulq.abyssallib.world.entity.internal.NMSGoalHandler;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
+import com.github.darksoulq.abyssallib.world.util.CTag;
+import com.github.darksoulq.abyssallib.world.util.PDCTag;
 import net.kyori.adventure.key.Key;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;

@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.item
 
-import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry
 import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
 import net.kyori.adventure.key.Key

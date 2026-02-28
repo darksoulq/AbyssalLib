@@ -1,10 +1,10 @@
 package com.github.darksoulq.abyssallib.world.structure.processor.impl;
 
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessorType;
 import org.bukkit.Location;

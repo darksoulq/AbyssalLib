@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.util;
 
 import org.jetbrains.annotations.Nullable;
+
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;

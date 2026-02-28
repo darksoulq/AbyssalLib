@@ -1,242 +1,273 @@
 package com.github.darksoulq.abyssallib.world.data.tag;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import net.kyori.adventure.key.Key;
 import org.bukkit.plugin.Plugin;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
- * Utility class responsible for the discovery, registration, and parsing of tag files.
+ * A utility class responsible for loading, parsing, and registering data tags from external files.
  * <p>
- * The loader follows a two-pass system:
- * 1. Scan the file system to register tag IDs in the registry.
- * 2. Parse the contents of those files to populate values and handle tag inclusions.
- * </p>
+ * This loader supports deep directory scanning and can parse both JSON and YAML file formats.
+ * Files must define a {@code type} (to resolve the {@link TagType} and its codec) and an {@code id}
+ * (to register the instantiated {@link Tag} into the central registry). It automatically handles
+ * appending data to existing tags and recursively resolving cross-tag inclusions.
  */
 public class TagLoader {
-    /** The base directory where tag files are stored. */
-    private static final Path TAGS_FOLDER = new java.io.File(AbyssalLib.getInstance().getDataFolder(), "tags").toPath();
 
-    /** The list of registered {@link TagType}s available for loading. */
-    private static final List<TagType<?, ?>> TAG_TYPES = new ArrayList<>();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Map<String, List<String>> PENDING_INCLUDES = new HashMap<>();
 
     /**
-     * Orchestrates the loading of all tags from the file system.
-     * <p>
-     * Creates the tag directory if missing, registers found IDs, and then
-     * resolves all values and references.
-     * </p>
-     */
-    public static void loadTags() {
-        if (!Files.exists(TAGS_FOLDER)) {
-            try { Files.createDirectories(TAGS_FOLDER); }
-            catch (IOException e) { e.printStackTrace(); }
-        }
-
-        for (TagType<?, ?> type : TAG_TYPES) {
-            Path typeFolder = TAGS_FOLDER.resolve(type.folder());
-            if (!Files.exists(typeFolder)) continue;
-            scanAndRegister(typeFolder, type);
-        }
-        for (TagType<?, ?> type : TAG_TYPES) {
-            Path typeFolder = TAGS_FOLDER.resolve(type.folder());
-            if (!Files.exists(typeFolder)) continue;
-            parseValues(typeFolder, type);
-        }
-    }
-
-    /**
-     * Performs the first pass: identifying tag files and creating registry entries.
+     * Recursively scans a system folder and loads all JSON and YAML files found as tags.
      *
-     * @param <T>    Entry type.
-     * @param <D>    Data type.
-     * @param folder The directory for this tag type.
-     * @param type   The {@link TagType} being scanned.
+     * @param folder The root {@link File} directory to scan.
+     * @return The total number of tag files successfully processed.
      */
-    private static <T, D> void scanAndRegister(Path folder, TagType<T, D> type) {
-        try (Stream<Path> stream = Files.walk(folder)) {
-            stream.filter(Files::isRegularFile)
-                .filter(p -> p.toString().endsWith(".yml") || p.toString().endsWith(".yaml"))
-                .forEach(file -> {
-                    Key tagId = getTagId(file, folder);
-                    if (tagId != null && !Registries.TAGS.contains(tagId.toString())) {
-                        Tag<T, D> tag = type.factory().apply(tagId);
-                        Registries.TAGS.register(tagId.toString(), tag);
-                    }
-                });
-        } catch (IOException e) {
-            AbyssalLib.LOGGER.warning("Failed to scan tag folder " + folder + ": " + e.getMessage());
-        }
-    }
-
-    /**
-     * Performs the second pass: reading file contents and resolving references.
-     *
-     * @param <T>    Entry type.
-     * @param <D>    Data type.
-     * @param folder The directory for this tag type.
-     * @param type   The {@link TagType} being parsed.
-     */
-    @SuppressWarnings("unchecked")
-    private static <T, D> void parseValues(Path folder, TagType<T, D> type) {
-        try (Stream<Path> stream = Files.walk(folder)) {
-            stream.filter(Files::isRegularFile)
-                .filter(p -> p.toString().endsWith(".yml") || p.toString().endsWith(".yaml"))
-                .forEach(file -> {
-                    Key tagId = getTagId(file, folder);
-                    if (tagId == null) return;
-
-                    Tag<T, D> tag = (Tag<T, D>) Registries.TAGS.get(tagId.asString());
-                    if (tag == null) return;
-
-                    List<Object> rawList;
-                    try (InputStream in = Files.newInputStream(file)) {
-                        rawList = loadRawList(in);
-                    } catch (Exception e) {
-                        AbyssalLib.LOGGER.warning("Failed to parse tag file " + file + ": " + e.getMessage());
-                        return;
-                    }
-                    if (rawList == null) return;
-
-                    processTagEntries(tag, rawList, type, tagId);
-                });
-        } catch (IOException e) {
-            AbyssalLib.LOGGER.warning("Failed to parse tag values in " + folder + ": " + e.getMessage());
-        }
-    }
-
-    /**
-     * Loads a tag from a plugin's internal resource folder.
-     *
-     * @param <T>          Entry type.
-     * @param <D>          Data type.
-     * @param plugin       The {@link Plugin} instance.
-     * @param resourcePath Path to the resource file.
-     * @param type         The associated {@link TagType}.
-     * @param id           The {@link Identifier} to assign to the tag.
-     * @return The loaded {@link Tag} instance, or {@code null} if loading failed.
-     */
-    public static <T, D> Tag<T, D> loadResource(Plugin plugin, String resourcePath, TagType<T, D> type, Key id) {
-        try (InputStream in = plugin.getResource(resourcePath)) {
-            if (in == null) return null;
-
-            Tag<T, D> tag = type.factory().apply(id);
-            List<Object> rawList = loadRawList(in);
-            if (rawList != null) {
-                processTagEntries(tag, rawList, type, id);
+    public static int loadFolder(File folder) {
+        int loaded = 0;
+        if (!folder.exists() || !folder.isDirectory()) return loaded;
+        
+        File[] files = folder.listFiles();
+        if (files == null) return loaded;
+        
+        for (File file : files) {
+            if (file.isDirectory()) {
+                loaded += loadFolder(file);
+            } else {
+                String name = file.getName();
+                if (name.endsWith(".json") || name.endsWith(".yml") || name.endsWith(".yaml")) {
+                    loadFile(file);
+                    loaded++;
+                }
             }
-            return tag;
+        }
+        return loaded;
+    }
+
+    /**
+     * Deeply scans and loads tags from a specific resource path within a plugin's embedded JAR file.
+     *
+     * @param plugin       The {@link Plugin} instance owning the resources.
+     * @param resourcePath The internal path directory (e.g., "tags/").
+     * @return The total number of tag resources successfully processed.
+     */
+    public static int loadFolder(Plugin plugin, String resourcePath) {
+        int loaded = 0;
+        List<String> files = FileUtils.getFilePathList(plugin, resourcePath);
+        for (String file : files) {
+            if (file.endsWith(".json") || file.endsWith(".yml") || file.endsWith(".yaml")) {
+                loadResource(plugin, file);
+                loaded++;
+            }
+        }
+        return loaded;
+    }
+
+    /**
+     * Loads a single tag definition from the local file system.
+     *
+     * @param file The {@link File} to read.
+     */
+    public static void loadFile(File file) {
+        try (InputStream in = new FileInputStream(file)) {
+            if (file.getName().endsWith(".json")) {
+                loadJson(in, file.getName());
+            } else {
+                loadYaml(in, file.getName());
+            }
         } catch (Exception e) {
+            AbyssalLib.LOGGER.warning("Failed to load tag file: " + file.getName());
             e.printStackTrace();
-            return null;
         }
     }
 
     /**
-     * Extracts the "values" list from a YAML input stream.
+     * Loads a single tag definition from an internal plugin resource.
      *
-     * @param in The {@link InputStream} to parse.
-     * @return A {@link List} of raw objects, or {@code null} if the format is invalid.
+     * @param plugin       The {@link Plugin} holding the resource.
+     * @param resourcePath The relative path to the resource file.
+     */
+    public static void loadResource(Plugin plugin, String resourcePath) {
+        try (InputStream in = plugin.getResource(resourcePath)) {
+            if (in != null) {
+                if (resourcePath.endsWith(".json")) {
+                    loadJson(in, resourcePath);
+                } else {
+                    loadYaml(in, resourcePath);
+                }
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to load tag resource: " + resourcePath);
+        }
+    }
+
+    /**
+     * Parses an input stream assuming JSON formatting.
+     *
+     * @param in     The {@link InputStream} containing JSON data.
+     * @param source The source identifier used for logging errors.
+     */
+    private static void loadJson(InputStream in, String source) {
+        try {
+            JsonNode root = MAPPER.readTree(in);
+            if (root.isArray()) {
+                for (JsonNode node : root) {
+                    decode(JsonOps.INSTANCE, node, source);
+                }
+            } else {
+                decode(JsonOps.INSTANCE, root, source);
+            }
+        } catch (Exception e) {
+            AbyssalLib.LOGGER.warning("Failed to parse JSON tag from " + source);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Parses an input stream assuming YAML formatting.
+     *
+     * @param in     The {@link InputStream} containing YAML data.
+     * @param source The source identifier used for logging errors.
+     */
+    private static void loadYaml(InputStream in, String source) {
+        try {
+            Object root = YamlOps.INSTANCE.parse(in);
+            if (root instanceof List<?> list) {
+                for (Object node : list) {
+                    decode(YamlOps.INSTANCE, node, source);
+                }
+            } else {
+                decode(YamlOps.INSTANCE, root, source);
+            }
+        } catch (Exception e) {
+            AbyssalLib.LOGGER.warning("Failed to parse YAML tag from " + source);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Core decoding logic that transforms raw data maps into functional {@link Tag} objects.
+     * <p>
+     * Extracts the tag type and unique ID from the data. Decodes standard values using the type's
+     * designated codec, and defers string-based includes to be resolved after all files are parsed.
+     *
+     * @param ops    The {@link DynamicOps} protocol matching the input type.
+     * @param input  The raw data object mapped to the given dynamic ops.
+     * @param source The source identifier used for logging errors.
+     * @param <D>    The data serialization format type.
+     * @param <T>    The specific type of the tag's entries.
+     * @param <V>    The object structure verified against the tag.
      */
     @SuppressWarnings("unchecked")
-    private static List<Object> loadRawList(InputStream in) {
-        Object root = YamlOps.INSTANCE.parse(in);
-        if (!(root instanceof Map<?, ?> map)) return null;
-        Object v = map.get("values");
-        if (!(v instanceof List<?> list)) return null;
-        return (List<Object>) list;
+    private static <D, T, V> void decode(DynamicOps<D> ops, D input, String source) {
+        try {
+            Map<D, D> map = ops.getMap(input).orElse(null);
+            if (map == null) return;
+
+            D typeObj = map.get(ops.createString("type"));
+            D idObj = map.get(ops.createString("id"));
+
+            if (typeObj == null || idObj == null) {
+                AbyssalLib.LOGGER.warning("Tag definition missing required 'type' or 'id' key in " + source);
+                return;
+            }
+
+            String typeStr = Codecs.STRING.decode(ops, typeObj);
+            String idStr = Codecs.STRING.decode(ops, idObj);
+
+            TagType<T, V> type = (TagType<T, V>) Registries.TAG_TYPES.get(typeStr);
+            if (type == null) {
+                AbyssalLib.LOGGER.warning("Unknown tag type '" + typeStr + "' referenced in " + source);
+                return;
+            }
+
+            Key id = Key.key(idStr);
+            Tag<T, V> tag = type.create(id);
+
+            D valuesObj = map.get(ops.createString("values"));
+            if (valuesObj != null) {
+                List<T> values = type.codec().list().decode(ops, valuesObj);
+                if (values != null) {
+                    values.forEach(tag::add);
+                }
+            }
+
+            D includesObj = map.get(ops.createString("includes"));
+            if (includesObj != null) {
+                List<String> includes = Codecs.STRING.list().decode(ops, includesObj);
+                if (includes != null) {
+                    PENDING_INCLUDES.computeIfAbsent(idStr, k -> new ArrayList<>()).addAll(includes);
+                }
+            }
+
+            Tag<T, V> existing = (Tag<T, V>) Registries.TAGS.get(idStr);
+            if (existing != null && existing.getType() == type) {
+                tag.getValues().forEach(existing::add);
+            } else {
+                Registries.TAGS.register(idStr, tag);
+            }
+
+        } catch (Exception e) {
+            AbyssalLib.LOGGER.warning("Encountered failure while decoding tag data in " + source);
+            e.printStackTrace();
+        }
     }
 
     /**
-     * Processes raw objects into tag entries, resolving string references starting with '#'.
+     * Finalizes the tag loading phase by binding interdependent inclusions.
+     * <p>
+     * Iterates through all parsed {@code "includes"} lists to dynamically link
+     * parent and child tags. Any unresolved or mismatched types are logged as warnings.
+     */
+    public static void resolveIncludes() {
+        for (Map.Entry<String, List<String>> entry : PENDING_INCLUDES.entrySet()) {
+            Tag<?, ?> parent = Registries.TAGS.get(entry.getKey());
+            if (parent == null) continue;
+
+            for (String includeId : entry.getValue()) {
+                Tag<?, ?> included = Registries.TAGS.get(includeId);
+                
+                if (included != null) {
+                    if (parent.getType() == included.getType()) {
+                        unsafeInclude(parent, included);
+                    } else {
+                        AbyssalLib.LOGGER.warning("Tag type mismatch detected when including '" + includeId + "' into parent '" + entry.getKey() + "'. Inclusion aborted.");
+                    }
+                } else {
+                    AbyssalLib.LOGGER.warning("Attempted to include an unknown or non-existent tag: '" + includeId + "' in parent '" + entry.getKey() + "'.");
+                }
+            }
+        }
+        
+        PENDING_INCLUDES.clear();
+    }
+
+    /**
+     * Bypasses generic type erasure warnings to safely map two previously-validated tags together.
      *
-     * @param <T>     Entry type.
-     * @param <D>     Data type.
-     * @param tag     The {@link Tag} to populate.
-     * @param rawList The list of raw entries.
-     * @param type    The {@link TagType} definition.
-     * @param tagId   The ID of the tag being processed for logging.
+     * @param parent The parent {@link Tag} consuming the values.
+     * @param child  The child {@link Tag} being included.
+     * @param <T>    The matching data entry type.
+     * @param <D>    The matching evaluation logic type.
      */
     @SuppressWarnings("unchecked")
-    private static <T, D> void processTagEntries(Tag<T, D> tag, List<Object> rawList, TagType<T, D> type, Key tagId) {
-        for (Object rawEntry : rawList) {
-            if (rawEntry instanceof String s && s.startsWith("#")) {
-                String refId = s.substring(1);
-                Tag<?, ?> rawIncluded = Registries.TAGS.get(refId);
-
-                if (rawIncluded == null) {
-                    AbyssalLib.LOGGER.warning("Tag " + tagId + " references missing tag: " + refId);
-                    continue;
-                }
-
-                try {
-                    tag.include((Tag<T, D>) rawIncluded);
-                } catch (ClassCastException ex) {
-                    AbyssalLib.LOGGER.warning("Tag " + tagId + " tried to include incompatible tag type " + refId);
-                }
-                continue;
-            }
-            try {
-                T value = type.codec().decode(YamlOps.INSTANCE, rawEntry);
-                tag.add(value);
-            } catch (Exception e) {
-                AbyssalLib.LOGGER.warning("Error decoding value in tag " + tagId + ": " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Resolves a file path into a namespaced {@link Identifier}.
-     *
-     * @param file       The path to the YAML file.
-     * @param rootFolder The root folder of the tag type.
-     * @return An {@link Identifier} representing the tag, or {@code null} if naming is invalid.
-     */
-    private static Key getTagId(Path file, Path rootFolder) {
-        Path relative = rootFolder.relativize(file);
-        if (relative.getNameCount() < 2) {
-            AbyssalLib.LOGGER.warning("Skipping tag file " + file + ": Must be inside a namespace folder");
-            return null;
-        }
-        String namespace = relative.getName(0).toString();
-
-        StringBuilder pathBuilder = new StringBuilder();
-        for (int i = 1; i < relative.getNameCount(); i++) {
-            if (i > 1) pathBuilder.append("/");
-            pathBuilder.append(relative.getName(i).toString());
-        }
-
-        String fullPath = pathBuilder.toString();
-        int lastDot = fullPath.lastIndexOf('.');
-        if (lastDot > 0) fullPath = fullPath.substring(0, lastDot);
-
-        return Key.key(namespace, fullPath);
-    }
-
-    /**
-     * Registers a new {@link TagType} to be handled during the load cycle.
-     *
-     * @param <T>  Entry type.
-     * @param <D>  Data type.
-     * @param type The {@link TagType} to register.
-     */
-    public static <T, D> void register(TagType<T, D> type) {
-        if (TAG_TYPES.stream().anyMatch(t -> Objects.equals(t.folder(), type.folder()))) {
-            AbyssalLib.LOGGER.warning("TagType folder conflict: " + type.folder());
-            return;
-        }
-        TAG_TYPES.add(type);
+    private static <T, D> void unsafeInclude(Tag<?, ?> parent, Tag<?, ?> child) {
+        ((Tag<T, D>) parent).include((Tag<T, D>) child);
     }
 }

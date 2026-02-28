@@ -2,13 +2,7 @@ package com.github.darksoulq.abyssallib.server.permission;
 
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Utility class for calculating the effective permissions of a holder based on inheritance.

@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
-import com.github.darksoulq.abyssallib.world.gen.feature.util.BlockStateCodec;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 
 import java.util.ArrayList;
@@ -93,7 +89,7 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo block = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("block")));
+                BlockInfo block = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("block")));
                 int r = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
                 int h = Codecs.INT.decode(ops, map.get(ops.createString("half_height")));
 
@@ -116,7 +112,7 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("block"), BlockStateCodec.CODEC.encode(ops, value.toPlace));
+                map.put(ops.createString("block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.toPlace));
                 map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
                 map.put(ops.createString("half_height"), Codecs.INT.encode(ops, value.halfHeight));
                 map.put(ops.createString("targets"), Codecs.STRING.list().encode(ops, value.targets));

@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
-import com.github.darksoulq.abyssallib.world.gen.feature.util.BlockStateCodec;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -94,8 +90,8 @@ public class CaveVineFeature extends Feature<CaveVineFeature.Config> {
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo body = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("body")));
-                BlockInfo tip = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("tip")));
+                BlockInfo body = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("body")));
+                BlockInfo tip = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("tip")));
                 int max = Codecs.INT.decode(ops, map.get(ops.createString("max_length")));
                 return new Config(body, tip, max);
             }
@@ -112,8 +108,8 @@ public class CaveVineFeature extends Feature<CaveVineFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("body"), BlockStateCodec.CODEC.encode(ops, value.body));
-                map.put(ops.createString("tip"), BlockStateCodec.CODEC.encode(ops, value.tip));
+                map.put(ops.createString("body"), ExtraCodecs.BLOCK_INFO.encode(ops, value.body));
+                map.put(ops.createString("tip"), ExtraCodecs.BLOCK_INFO.encode(ops, value.tip));
                 map.put(ops.createString("max_length"), Codecs.INT.encode(ops, value.maxLength));
                 return ops.createMap(map);
             }

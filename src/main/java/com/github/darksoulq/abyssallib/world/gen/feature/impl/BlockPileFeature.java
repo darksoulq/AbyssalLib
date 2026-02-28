@@ -1,13 +1,13 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
-import com.github.darksoulq.abyssallib.world.gen.feature.util.BlockStateCodec;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import com.github.darksoulq.abyssallib.world.structure.processor.BlockInfo;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -16,11 +16,10 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * A world generation feature that generates a scattered pile of blocks.
+ * A world generation feature that creates a scattered, organic pile of a specific block.
  * <p>
- * This feature attempts to place a specific block state at multiple random offsets
- * around an origin point, provided the placement location is air and the block
- * immediately below is a valid "soil" material (such as dirt, grass, or moss).
+ * Used primarily for features like melon patches or scattered surface detritus,
+ * checking to ensure it lands strictly upon dirt or grass variants.
  */
 public class BlockPileFeature extends Feature<BlockPileFeature.Config> {
 
@@ -33,12 +32,8 @@ public class BlockPileFeature extends Feature<BlockPileFeature.Config> {
 
     /**
      * Executes the placement logic for the block pile.
-     * <p>
-     * The feature performs up to 64 placement attempts within a 14x8x14 area centered
-     * on the origin. Success is determined by whether the target block is air and
-     * the block below is a natural surface material.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
+     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and config.
      * @return {@code true} if at least one block was successfully placed; {@code false} otherwise.
      */
     @Override
@@ -71,7 +66,7 @@ public class BlockPileFeature extends Feature<BlockPileFeature.Config> {
     /**
      * Configuration record for {@link BlockPileFeature}.
      *
-     * @param state The {@link BlockInfo} representing the block state to be piled.
+     * @param state The {@link BlockInfo} representing the block state to scatter into a pile.
      */
     public record Config(BlockInfo state) implements FeatureConfig {
 
@@ -80,35 +75,17 @@ public class BlockPileFeature extends Feature<BlockPileFeature.Config> {
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
-            /**
-             * Decodes the configuration from a serialized map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new {@link Config} instance.
-             * @throws CodecException If the "state" field is missing or invalid.
-             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo block = BlockStateCodec.CODEC.decode(ops, map.get(ops.createString("state")));
+                BlockInfo block = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("state")));
                 return new Config(block);
             }
 
-            /**
-             * Encodes the configuration into a serialized map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance to encode.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("state"), BlockStateCodec.CODEC.encode(ops, value.state));
+                map.put(ops.createString("state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.state));
                 return ops.createMap(map);
             }
         };

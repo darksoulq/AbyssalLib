@@ -1,12 +1,9 @@
 package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
-import com.github.darksoulq.abyssallib.server.data.Datapack;
-import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import io.papermc.paper.plugin.bootstrap.BootstrapContext;
 import io.papermc.paper.plugin.bootstrap.PluginBootstrap;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import io.papermc.paper.registry.event.RegistryEvents;
 
 public class Bootstrap implements PluginBootstrap {
     @Override

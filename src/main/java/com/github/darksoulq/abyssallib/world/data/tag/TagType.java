@@ -1,32 +1,29 @@
 package com.github.darksoulq.abyssallib.world.data.tag;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
-import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
-import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
-import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import net.kyori.adventure.key.Key;
 
-import java.util.function.Function;
-
 /**
- * A record defining a category of tags, providing its storage location and serialization logic.
+ * Represents a registry type for a {@link Tag}, defining its serialization codec
+ * and the factory method used to create new tag instances.
  *
- * @param <T>     The entry type.
- * @param <D>     The test input type.
- * @param folder  The sub-folder name within the {@code tags/} directory.
- * @param codec   The {@link Codec} used to parse entries from YAML.
- * @param factory A {@link Function} to instantiate new tags of this type.
+ * @param <T> The entry type of the tag.
+ * @param <D> The test input type for the tag.
  */
-public record TagType<T, D>(String folder, Codec<T> codec, Function<Key, Tag<T, D>> factory) {
-    /** The default tag type for Items, using predicates and testing against ItemStacks. */
-    public static final TagType<ItemPredicate, ?> ITEM = new TagType<>(
-        "items", ItemPredicate.CODEC, ItemTag::new
-    );
+public interface TagType<T, D> {
 
-    /** The default tag type for Blocks, using ID strings and testing against BridgeBlocks. */
-    public static final TagType<String, ?> BLOCK = new TagType<>(
-        "blocks", Codecs.STRING, BlockTag::new
-    );
+    /**
+     * Retrieves the codec used for serializing and deserializing the tag entries.
+     *
+     * @return The {@link Codec} for the tag entry type.
+     */
+    Codec<T> codec();
+
+    /**
+     * Creates a new tag instance associated with this type.
+     *
+     * @param id The identifier for the new tag.
+     * @return A newly instantiated {@link Tag}.
+     */
+    Tag<T, D> create(Key id);
 }
