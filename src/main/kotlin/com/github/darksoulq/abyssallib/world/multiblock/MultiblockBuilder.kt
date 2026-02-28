@@ -1,9 +1,9 @@
 package com.github.darksoulq.abyssallib.world.multiblock
 
-import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.event.ActionResult
 import com.github.darksoulq.abyssallib.world.block.property.Property
 import com.github.darksoulq.abyssallib.world.entity.EntityBuilder
+import net.kyori.adventure.key.Key
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -16,7 +16,7 @@ import org.bukkit.inventory.ItemStack
 annotation class MultiblockDSL
 
 @MultiblockDSL
-class MultiblockBuilder(val id: Identifier) {
+class MultiblockBuilder(val id: Key) {
     private val patternMap = mutableMapOf<Char, MultiblockChoice>()
     private var shape: Array<String> = emptyArray()
     private var triggerChar: Char = '0'

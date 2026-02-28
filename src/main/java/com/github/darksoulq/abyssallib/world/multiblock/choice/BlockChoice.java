@@ -56,7 +56,7 @@ public class BlockChoice extends MultiblockChoice {
      */
     @Override
     public boolean matches(org.bukkit.block.Block block) {
-        CustomBlock provided = CustomBlock.from(block);
+        CustomBlock provided = CustomBlock.resolve(block);
         return expected.contains(provided);
     }
 }

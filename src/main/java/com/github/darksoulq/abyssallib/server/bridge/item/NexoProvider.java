@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 import java.util.Optional;
 
+@Deprecated
 public class NexoProvider extends ItemProvider {
     public NexoProvider() {
         super("nexo");

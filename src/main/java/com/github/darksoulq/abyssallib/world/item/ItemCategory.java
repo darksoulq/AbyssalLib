@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.item;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
 
@@ -19,7 +20,7 @@ public class ItemCategory {
     /**
      * The unique identifier for this category.
      */
-    private final Identifier id;
+    private final Key id;
 
     /**
      * A supplier that provides the icon {@link ItemStack} for this category.
@@ -38,7 +39,7 @@ public class ItemCategory {
      * @param icon  The icon supplier.
      * @param items The list of items to include.
      */
-    private ItemCategory(Identifier id, Supplier<ItemStack> icon, List<Item> items) {
+    private ItemCategory(Key id, Supplier<ItemStack> icon, List<Item> items) {
         this.id = id;
         this.icon = icon;
         this.items = new ArrayList<>(items);
@@ -47,7 +48,7 @@ public class ItemCategory {
     /**
      * @return The {@link Identifier} of this category.
      */
-    public Identifier getId() {
+    public Key getId() {
         return id;
     }
 
@@ -59,7 +60,7 @@ public class ItemCategory {
      * @return A {@link Component} representing the localized title.
      */
     public Component getTitle() {
-        return Component.translatable("category.item." + id.getNamespace() + "." + id.getPath());
+        return Component.translatable("category.item." + id.namespace() + "." + id.value());
     }
 
     /**
@@ -82,7 +83,7 @@ public class ItemCategory {
      * @param id The {@link Identifier} for the new category.
      * @return A new {@link Builder} instance.
      */
-    public static Builder builder(Identifier id) {
+    public static Builder builder(Key id) {
         return new Builder(id);
     }
 
@@ -94,7 +95,7 @@ public class ItemCategory {
         /**
          * The identifier for the category being built.
          */
-        private final Identifier id;
+        private final Key id;
 
         /**
          * The supplier for the category icon.
@@ -111,7 +112,7 @@ public class ItemCategory {
          *
          * @param id The {@link Identifier} to assign.
          */
-        public Builder(Identifier id) {
+        public Builder(Key id) {
             this.id = id;
         }
 

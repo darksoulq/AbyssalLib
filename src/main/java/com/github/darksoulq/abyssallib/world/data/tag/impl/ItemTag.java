@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.data.tag.impl;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
+import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashSet;
@@ -15,7 +16,7 @@ public class ItemTag extends Tag<ItemPredicate, ItemStack> {
     /**
      * @param id The tag identifier.
      */
-    public ItemTag(Identifier id) {
+    public ItemTag(Key id) {
         super(id);
     }
 

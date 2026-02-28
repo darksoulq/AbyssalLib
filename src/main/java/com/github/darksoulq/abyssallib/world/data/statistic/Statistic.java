@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.data.statistic;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import net.kyori.adventure.key.Key;
 
 /**
  * A type-safe container for player statistics.
@@ -13,14 +14,14 @@ public sealed abstract class Statistic
     permits Statistic.IntStatistic, Statistic.FloatStatistic, Statistic.BooleanStatistic {
 
     /** The unique identifier for this statistic. */
-    private final Identifier id;
+    private final Key id;
 
     /**
      * Internal constructor for statistic implementations.
      *
      * @param id the unique identifier
      */
-    protected Statistic(Identifier id) {
+    protected Statistic(Key id) {
         this.id = id;
     }
 
@@ -29,7 +30,7 @@ public sealed abstract class Statistic
      *
      * @return the identifier
      */
-    public Identifier getId() {
+    public Key getId() {
         return id;
     }
 
@@ -62,7 +63,7 @@ public sealed abstract class Statistic
      * @param defaultValue the starting value
      * @return a new IntStatistic instance
      */
-    public static IntStatistic of(Identifier id, int defaultValue) {
+    public static IntStatistic of(Key id, int defaultValue) {
         return new IntStatistic(id, defaultValue);
     }
 
@@ -73,7 +74,7 @@ public sealed abstract class Statistic
      * @param defaultValue the starting value
      * @return a new FloatStatistic instance
      */
-    public static FloatStatistic of(Identifier id, float defaultValue) {
+    public static FloatStatistic of(Key id, float defaultValue) {
         return new FloatStatistic(id, defaultValue);
     }
 
@@ -84,7 +85,7 @@ public sealed abstract class Statistic
      * @param defaultValue the starting value
      * @return a new BooleanStatistic instance
      */
-    public static BooleanStatistic of(Identifier id, boolean defaultValue) {
+    public static BooleanStatistic of(Key id, boolean defaultValue) {
         return new BooleanStatistic(id, defaultValue);
     }
 
@@ -94,7 +95,7 @@ public sealed abstract class Statistic
     public static final class IntStatistic extends Statistic {
         private int value;
 
-        private IntStatistic(Identifier id, int defaultValue) {
+        private IntStatistic(Key id, int defaultValue) {
             super(id);
             this.value = defaultValue;
         }
@@ -122,7 +123,7 @@ public sealed abstract class Statistic
     public static final class FloatStatistic extends Statistic {
         private float value;
 
-        private FloatStatistic(Identifier id, float defaultValue) {
+        private FloatStatistic(Key id, float defaultValue) {
             super(id);
             this.value = defaultValue;
         }
@@ -150,7 +151,7 @@ public sealed abstract class Statistic
     public static final class BooleanStatistic extends Statistic {
         private boolean value;
 
-        private BooleanStatistic(Identifier id, boolean defaultValue) {
+        private BooleanStatistic(Key id, boolean defaultValue) {
             super(id);
             this.value = defaultValue;
         }

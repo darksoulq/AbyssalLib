@@ -9,6 +9,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 import java.util.Optional;
 
+@Deprecated
 public class ItemsAdderProvider extends ItemProvider {
     public ItemsAdderProvider() {
         super("ia");

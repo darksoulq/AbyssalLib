@@ -6,9 +6,9 @@ import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -35,7 +35,7 @@ public class PlayerStatistics {
     private final UUID uuid;
 
     /** The map of identifiers to active statistic instances. */
-    private final Map<Identifier, Statistic> stats = new ConcurrentHashMap<>();
+    private final Map<Key, Statistic> stats = new ConcurrentHashMap<>();
 
     /**
      * Private constructor to initiate statistic loading for a player.
@@ -83,7 +83,7 @@ public class PlayerStatistics {
      * @param id the identifier of the statistic
      * @return a clone of the statistic, or null if not found
      */
-    public Statistic get(Identifier id) {
+    public Statistic get(Key id) {
         Statistic stat = stats.get(id);
         return stat != null ? stat.clone() : null;
     }
@@ -135,10 +135,10 @@ public class PlayerStatistics {
             .where("uuid = ?", uuid.toString())
             .selectAsync(rs -> Map.entry(rs.getString("key"), rs.getString("value")))
             .thenAccept(rows -> {
-                Map<Identifier, Statistic> tempStats = new ConcurrentHashMap<>();
+                Map<Key, Statistic> tempStats = new ConcurrentHashMap<>();
                 List<Statistic> newDefaultsToSave = new ArrayList<>();
                 for (var entry : rows) {
-                    Identifier id = Identifier.of(entry.getKey());
+                    Key id = Key.key(entry.getKey());
 
                     if (!Registries.STATISTICS.contains(id.toString())) {
                         AbyssalLib.getInstance().getLogger().warning("Statistic not registered: " + id);
@@ -156,7 +156,7 @@ public class PlayerStatistics {
                 }
 
                 Registries.STATISTICS.getAll().forEach((key, template) -> {
-                    Identifier id = Identifier.of(key);
+                    Key id = Key.key(key);
                     if (!tempStats.containsKey(id)) {
                         Statistic clone = template.clone();
                         tempStats.put(id, clone);

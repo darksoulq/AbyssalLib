@@ -10,6 +10,7 @@ import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.SpawnCategory;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
+import net.kyori.adventure.key.Key;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -44,8 +45,8 @@ public class EntityManager {
             List<CustomEntity<? extends LivingEntity>> loaded = DATABASE.executor().table("entities").select(rs -> {
                 try {
                     UUID uuid = UUID.fromString(rs.getString("entity_uuid"));
-                    Identifier id = Identifier.of(rs.getString("entity_id"));
-                    CustomEntity<? extends LivingEntity> proto = Registries.ENTITIES.get(id.toString());
+                    Key id = Key.key(rs.getString("entity_id"));
+                    CustomEntity<? extends LivingEntity> proto = Registries.ENTITIES.get(id.asString());
                     if (proto == null) return null;
                     CustomEntity<? extends LivingEntity> e = proto.clone();
                     e.uuid = uuid;

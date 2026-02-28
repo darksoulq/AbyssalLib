@@ -21,6 +21,7 @@ import java.util.*;
 
 import static com.github.darksoulq.abyssallib.world.item.component.ComponentMap.encodeComponent;
 
+@Deprecated
 public class MinecraftProvider extends ItemProvider {
 
     public MinecraftProvider() {

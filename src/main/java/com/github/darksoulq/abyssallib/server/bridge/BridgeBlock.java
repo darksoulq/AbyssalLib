@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.bridge;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import org.bukkit.Location;
 
+@Deprecated
 public abstract class BridgeBlock<T> {
     protected final Identifier id;
     protected final String provider;

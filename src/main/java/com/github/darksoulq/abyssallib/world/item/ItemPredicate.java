@@ -9,6 +9,7 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -71,8 +72,8 @@ public class ItemPredicate implements Predicate<ItemStack> {
 
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map"));
 
-            List<Condition<Identifier>> without = new ArrayList<>();
-            List<Condition<Identifier>> with = new ArrayList<>();
+            List<Condition<Key>> without = new ArrayList<>();
+            List<Condition<Key>> with = new ArrayList<>();
             List<Condition<DataComponent<?>>> valued = new ArrayList<>();
             List<Condition<ItemPredicate>> predicates = new ArrayList<>();
             Material material = null;
@@ -81,10 +82,10 @@ public class ItemPredicate implements Predicate<ItemStack> {
                 material = Codec.enumCodec(Material.class).decode(ops, map.get(ops.createString("type")));
             }
             if (map.containsKey(ops.createString("without"))) {
-                without = Condition.codec(Codecs.IDENTIFIER).list().decode(ops, map.get(ops.createString("without")));
+                without = Condition.codec(Codecs.KEY).list().decode(ops, map.get(ops.createString("without")));
             }
             if (map.containsKey(ops.createString("with"))) {
-                with = Condition.codec(Codecs.IDENTIFIER).list().decode(ops, map.get(ops.createString("with")));
+                with = Condition.codec(Codecs.KEY).list().decode(ops, map.get(ops.createString("with")));
             }
             if (map.containsKey(ops.createString("components"))) {
                 valued = Condition.codec(COMPONENT_ENTRY_CODEC).list().decode(ops, map.get(ops.createString("components")));
@@ -107,10 +108,10 @@ public class ItemPredicate implements Predicate<ItemStack> {
                 map.put(ops.createString("type"), Codec.enumCodec(Material.class).encode(ops, value.material));
             }
             if (!value.without.isEmpty()) {
-                map.put(ops.createString("without"), Condition.codec(Codecs.IDENTIFIER).list().encode(ops, value.without));
+                map.put(ops.createString("without"), Condition.codec(Codecs.KEY).list().encode(ops, value.without));
             }
             if (!value.with.isEmpty()) {
-                map.put(ops.createString("with"), Condition.codec(Codecs.IDENTIFIER).list().encode(ops, value.with));
+                map.put(ops.createString("with"), Condition.codec(Codecs.KEY).list().encode(ops, value.with));
             }
             if (!value.valued.isEmpty()) {
                 map.put(ops.createString("components"), Condition.codec(COMPONENT_ENTRY_CODEC).list().encode(ops, value.valued));
@@ -123,9 +124,9 @@ public class ItemPredicate implements Predicate<ItemStack> {
     };
 
     /** Conditions defining what component identifiers MUST NOT be present on the item. */
-    private final List<Condition<Identifier>> without;
+    private final List<Condition<Key>> without;
     /** Conditions defining what component identifiers MUST be present on the item. */
-    private final List<Condition<Identifier>> with;
+    private final List<Condition<Key>> with;
     /** Conditions defining specific components and values that MUST match on the item. */
     private final List<Condition<DataComponent<?>>> valued;
     /** Conditions defining nested sub-predicates that MUST evaluate to true. */
@@ -142,8 +143,8 @@ public class ItemPredicate implements Predicate<ItemStack> {
      * @param predicates List of sub-predicate conditions.
      * @param material   The required {@link Material}.
      */
-    public ItemPredicate(List<Condition<Identifier>> without,
-                         List<Condition<Identifier>> with,
+    public ItemPredicate(List<Condition<Key>> without,
+                         List<Condition<Key>> with,
                          List<Condition<DataComponent<?>>> valued,
                          List<Condition<ItemPredicate>> predicates,
                          Material material) {
@@ -191,14 +192,14 @@ public class ItemPredicate implements Predicate<ItemStack> {
 
         if (material != null && !material.equals(stack.getType())) return false;
 
-        for (Condition<Identifier> condition : without) {
+        for (Condition<Key> condition : without) {
             if (condition.test(id -> {
                 DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id.toString());
                 return type != null && finalItem.hasData(type);
             })) return false;
         }
 
-        for (Condition<Identifier> condition : with) {
+        for (Condition<Key> condition : with) {
             if (!condition.test(id -> {
                 DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id.toString());
                 return type != null && finalItem.hasData(type);
@@ -227,8 +228,8 @@ public class ItemPredicate implements Predicate<ItemStack> {
      * A fluent builder for constructing complex {@link ItemPredicate} instances.
      */
     public static class Builder {
-        private final List<Condition<Identifier>> without = new ArrayList<>();
-        private final List<Condition<Identifier>> with = new ArrayList<>();
+        private final List<Condition<Key>> without = new ArrayList<>();
+        private final List<Condition<Key>> with = new ArrayList<>();
         private final List<Condition<DataComponent<?>>> valued = new ArrayList<>();
         private final List<Condition<ItemPredicate>> predicates = new ArrayList<>();
         private Material material = null;
@@ -248,7 +249,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @param condition The exclusion condition.
          * @return This builder.
          */
-        public Builder without(Condition<Identifier> condition) {
+        public Builder without(Condition<Key> condition) {
             this.without.add(condition);
             return this;
         }
@@ -258,7 +259,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @param condition The inclusion condition.
          * @return This builder.
          */
-        public Builder with(Condition<Identifier> condition) {
+        public Builder with(Condition<Key> condition) {
             this.with.add(condition);
             return this;
         }
@@ -288,7 +289,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @param identifier The component ID.
          * @return This builder.
          */
-        public Builder without(Identifier identifier) {
+        public Builder without(Key identifier) {
             return without(Condition.one(identifier));
         }
 
@@ -297,7 +298,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @param identifier The component ID.
          * @return This builder.
          */
-        public Builder with(Identifier identifier) {
+        public Builder with(Key identifier) {
             return with(Condition.one(identifier));
         }
 
@@ -326,7 +327,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @param identifiers Varargs of identifiers.
          * @return This builder.
          */
-        public Builder withAny(Identifier... identifiers) {
+        public Builder withAny(Key... identifiers) {
             return with(Condition.anyOf(Arrays.stream(identifiers).map(Condition::one).toList()));
         }
 
@@ -335,7 +336,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @param identifiers Collection of identifiers.
          * @return This builder.
          */
-        public Builder withAny(Collection<Identifier> identifiers) {
+        public Builder withAny(Collection<Key> identifiers) {
             return with(Condition.anyOf(identifiers.stream().map(Condition::one).toList()));
         }
 

@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.extension
 
-import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler
 import com.github.darksoulq.abyssallib.server.permission.PermissionNode
 import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
@@ -10,6 +9,7 @@ import com.github.darksoulq.abyssallib.world.gui.Gui
 import com.github.darksoulq.abyssallib.world.gui.GuiManager
 import com.github.darksoulq.abyssallib.world.item.Item
 import io.papermc.paper.datacomponent.DataComponentTypes
+import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack
@@ -121,7 +121,7 @@ fun Player.chatInput(inputHandler: Consumer<String>, timeoutTicks: Long) = ChatI
 fun Player.chatInput(inputHandler: Consumer<String>, prompt: Component, timeoutTicks: Long) = ChatInputHandler.await(this, inputHandler, prompt, timeoutTicks)
 fun Player.cancelChatInput() = ChatInputHandler.cancel(this)
 
-fun Player.getStat(id: Identifier) : Statistic? = PlayerStatistics.of(this).get(id)
+fun Player.getStat(id: Key) : Statistic? = PlayerStatistics.of(this).get(id)
 fun Player.setStat(stat: Statistic) = PlayerStatistics.of(this).set(stat)
 
 fun Player.hasPerm(perm: PermissionNode) : Boolean = perm.has(this)

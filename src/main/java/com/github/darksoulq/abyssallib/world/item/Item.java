@@ -19,8 +19,10 @@ import com.github.darksoulq.abyssallib.world.item.component.builtin.*;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -41,7 +43,7 @@ import java.util.*;
  */
 public class Item implements Cloneable {
     /** The unique {@link Identifier} representing the item's namespace and path. */
-    private Identifier id;
+    private Key id;
     /** The actual {@link ItemStack} linked to this custom item instance. */
     private ItemStack stack;
     /** The map containing all {@link DataComponent}s applied to this item. */
@@ -56,7 +58,7 @@ public class Item implements Cloneable {
      */
     @ApiStatus.Internal
     public Item(ItemStack stack) {
-        this.id = Identifier.of("unknown", "unknown");
+        this.id = NamespacedKey.minecraft(stack.getType().name().toLowerCase());
         this.stack = stack;
         componentMap = new ComponentMap(this);
     }
@@ -67,7 +69,7 @@ public class Item implements Cloneable {
      * @param id   The unique {@link Identifier} for the item (e.g., "modid:item_name").
      * @param base The base {@link Material} used for the underlying item stack.
      */
-    public Item(Identifier id, Material base) {
+    public Item(Key id, Material base) {
         this.id = id;
         stack = ItemStack.of(base);
         Integer size = stack.getData(DataComponentTypes.MAX_STACK_SIZE);
@@ -79,8 +81,8 @@ public class Item implements Cloneable {
         }
 
         if (size != null) setData(new MaxStackSize(size));
-        setData(new ItemName(Component.translatable("item." + id.getNamespace() + "." + id.getPath())));
-        setData(new ItemModel(id.asNamespacedKey()));
+        setData(new ItemName(Component.translatable("item." + id.namespace() + "." + id.value())));
+        setData(new ItemModel(id));
         setData(new CustomMarker(id));
     }
 
@@ -110,7 +112,7 @@ public class Item implements Cloneable {
         setData(new DisplayTooltip(TooltipDisplay.tooltipDisplay()
             .hideTooltip(tooltip.hide)
             .hiddenComponents(tooltip.hiddenComponents).build()));
-        if (tooltip.style != null) setData(new TooltipStyle(tooltip.style.asNamespacedKey()));
+        if (tooltip.style != null) setData(new TooltipStyle(tooltip.style));
         else unsetData(TooltipStyle.TYPE);
     }
 
@@ -159,8 +161,8 @@ public class Item implements Cloneable {
      * @param id The {@link Identifier} of the tag (e.g., "minecraft:swords").
      * @return {@code true} if the item is included in the tag.
      */
-    public boolean hasTag(Identifier id) {
-        if (!(Registries.TAGS.get(id.toString()) instanceof ItemTag tag)) {
+    public boolean hasTag(Key id) {
+        if (!(Registries.TAGS.get(id.asString()) instanceof ItemTag tag)) {
             AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
             return false;
         }
@@ -195,7 +197,7 @@ public class Item implements Cloneable {
      * @param target The {@link Block} that was destroyed.
      * @return The resulting {@link ActionResult} determining event continuation.
      */
-    public ActionResult postMine(LivingEntity source, Block target) {
+    public ActionResult onMine(LivingEntity source, Block target) {
         return ActionResult.PASS;
     }
 
@@ -206,7 +208,7 @@ public class Item implements Cloneable {
      * @param target The {@link Entity} victim.
      * @return The resulting {@link ActionResult} for the hit event.
      */
-    public ActionResult postHit(LivingEntity source, Entity target) {
+    public ActionResult onHit(LivingEntity source, Entity target) {
         return ActionResult.PASS;
     }
 
@@ -256,7 +258,7 @@ public class Item implements Cloneable {
      * @param type      The {@link InventoryClickType} representing the click style.
      * @return The {@link ActionResult} determining if the click is allowed.
      */
-    public ActionResult onClickInInventory(Player player, int slot, PlayerInventory inventory, InventoryClickType type) {
+    public ActionResult onClick(Player player, int slot, PlayerInventory inventory, InventoryClickType type) {
         return ActionResult.PASS;
     }
 
@@ -297,7 +299,7 @@ public class Item implements Cloneable {
      * @param ctx The {@link AnvilContext} containing the input and result slots.
      * @return The {@link ActionResult} of the anvil process.
      */
-    public ActionResult onAnvilPrepare(AnvilContext ctx) {
+    public ActionResult onAnvil(AnvilContext ctx) {
         return ActionResult.PASS;
     }
 
@@ -306,10 +308,10 @@ public class Item implements Cloneable {
      *
      * @param player The {@link Player} who completed the craft.
      */
-    public void onCraftedBy(Player player) {}
+    public void onCraft(Player player) {}
 
     /** @return The item's unique {@link Identifier}. */
-    public Identifier getId() {
+    public Key getId() {
         return id;
     }
 
@@ -357,9 +359,9 @@ public class Item implements Cloneable {
         if (stack == null || stack.getType().isAir()) return null;
         Item base = new Item(stack);
         if (!base.hasData(CustomMarker.TYPE)) return null;
-        Identifier id = (Identifier) base.getData(CustomMarker.TYPE).getValue();
+        Key id = base.getData(CustomMarker.TYPE).getValue();
         if (id == null) return null;
-        Item item = Registries.ITEMS.get(id.toString());
+        Item item = Registries.ITEMS.get(id.asString());
         if (item == null) return null;
         Item clone = item.clone();
         clone.stack = stack;
@@ -375,8 +377,8 @@ public class Item implements Cloneable {
      */
     public static CustomBlock asBlock(Item item) {
         if (!item.hasData(BlockItem.TYPE)) return null;
-        Identifier blockId = (Identifier) item.getData(BlockItem.TYPE).getValue();
-        return Registries.BLOCKS.get(blockId.toString()).clone();
+        Key blockId =  item.getData(BlockItem.TYPE).getValue();
+        return Registries.BLOCKS.get(blockId.asString()).clone();
     }
 
     /**
@@ -431,7 +433,7 @@ public class Item implements Cloneable {
         /** A set of vanilla component types that are explicitly hidden from the client display. */
         public Set<io.papermc.paper.datacomponent.DataComponentType> hiddenComponents = new HashSet<>();
         /** The {@link Identifier} of the resource-pack based tooltip style to apply. */
-        private Identifier style = null;
+        private Key style = null;
 
         /**
          * Sets whether the tooltip should be visible to players.
@@ -465,12 +467,12 @@ public class Item implements Cloneable {
          *
          * @param style The {@link Identifier} representing the style.
          */
-        public void withStyle(Identifier style) {
+        public void withStyle(Key style) {
             this.style = style;
         }
 
         /** @return The currently assigned tooltip style {@link Identifier}. */
-        public Identifier getStyle() {
+        public Key getStyle() {
             return this.style;
         }
 

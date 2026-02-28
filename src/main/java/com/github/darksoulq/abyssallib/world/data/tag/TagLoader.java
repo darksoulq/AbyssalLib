@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import net.kyori.adventure.key.Key;
 import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
@@ -69,7 +70,7 @@ public class TagLoader {
             stream.filter(Files::isRegularFile)
                 .filter(p -> p.toString().endsWith(".yml") || p.toString().endsWith(".yaml"))
                 .forEach(file -> {
-                    Identifier tagId = getTagId(file, folder);
+                    Key tagId = getTagId(file, folder);
                     if (tagId != null && !Registries.TAGS.contains(tagId.toString())) {
                         Tag<T, D> tag = type.factory().apply(tagId);
                         Registries.TAGS.register(tagId.toString(), tag);
@@ -94,10 +95,10 @@ public class TagLoader {
             stream.filter(Files::isRegularFile)
                 .filter(p -> p.toString().endsWith(".yml") || p.toString().endsWith(".yaml"))
                 .forEach(file -> {
-                    Identifier tagId = getTagId(file, folder);
+                    Key tagId = getTagId(file, folder);
                     if (tagId == null) return;
 
-                    Tag<T, D> tag = (Tag<T, D>) Registries.TAGS.get(tagId.toString());
+                    Tag<T, D> tag = (Tag<T, D>) Registries.TAGS.get(tagId.asString());
                     if (tag == null) return;
 
                     List<Object> rawList;
@@ -127,7 +128,7 @@ public class TagLoader {
      * @param id           The {@link Identifier} to assign to the tag.
      * @return The loaded {@link Tag} instance, or {@code null} if loading failed.
      */
-    public static <T, D> Tag<T, D> loadResource(Plugin plugin, String resourcePath, TagType<T, D> type, Identifier id) {
+    public static <T, D> Tag<T, D> loadResource(Plugin plugin, String resourcePath, TagType<T, D> type, Key id) {
         try (InputStream in = plugin.getResource(resourcePath)) {
             if (in == null) return null;
 
@@ -169,7 +170,7 @@ public class TagLoader {
      * @param tagId   The ID of the tag being processed for logging.
      */
     @SuppressWarnings("unchecked")
-    private static <T, D> void processTagEntries(Tag<T, D> tag, List<Object> rawList, TagType<T, D> type, Identifier tagId) {
+    private static <T, D> void processTagEntries(Tag<T, D> tag, List<Object> rawList, TagType<T, D> type, Key tagId) {
         for (Object rawEntry : rawList) {
             if (rawEntry instanceof String s && s.startsWith("#")) {
                 String refId = s.substring(1);
@@ -203,7 +204,7 @@ public class TagLoader {
      * @param rootFolder The root folder of the tag type.
      * @return An {@link Identifier} representing the tag, or {@code null} if naming is invalid.
      */
-    private static Identifier getTagId(Path file, Path rootFolder) {
+    private static Key getTagId(Path file, Path rootFolder) {
         Path relative = rootFolder.relativize(file);
         if (relative.getNameCount() < 2) {
             AbyssalLib.LOGGER.warning("Skipping tag file " + file + ": Must be inside a namespace folder");
@@ -221,7 +222,7 @@ public class TagLoader {
         int lastDot = fullPath.lastIndexOf('.');
         if (lastDot > 0) fullPath = fullPath.substring(0, lastDot);
 
-        return Identifier.of(namespace, fullPath);
+        return Key.key(namespace, fullPath);
     }
 
     /**

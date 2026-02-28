@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.world.entity.data;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
+import net.kyori.adventure.key.Key;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
@@ -23,7 +23,7 @@ public final class Attribute<T extends Number> {
     private final T defaultValue;
 
     /** Map of active modifiers applied to this attribute, indexed by a unique identifier. */
-    private final Map<Identifier, AttributeModifier<T>> modifiers = new LinkedHashMap<>();
+    private final Map<Key, AttributeModifier<T>> modifiers = new LinkedHashMap<>();
 
     /**
      * Constructs a new attribute definition.
@@ -73,7 +73,7 @@ public final class Attribute<T extends Number> {
      * @param modifier  The modifier value.
      * @param operation The arithmetic operation to apply.
      */
-    public void addModifier(Identifier id, T modifier, AttributeOperation operation) {
+    public void addModifier(Key id, T modifier, AttributeOperation operation) {
         if (!isNumericType()) return;
         modifiers.put(id, new AttributeModifier<>(modifier, operation));
     }
@@ -83,7 +83,7 @@ public final class Attribute<T extends Number> {
      *
      * @param id The identifier of the modifier to remove.
      */
-    public void removeModifier(Identifier id) {
+    public void removeModifier(Key id) {
         modifiers.remove(id);
     }
 
@@ -92,7 +92,7 @@ public final class Attribute<T extends Number> {
      *
      * @return The attribute modifier map
      */
-    public Map<Identifier, AttributeModifier<T>> getModifiers() {
+    public Map<Key, AttributeModifier<T>> getModifiers() {
         return modifiers;
     }
 

@@ -72,7 +72,10 @@ public class LanguageLoader {
      */
     public static void loadResource(Plugin plugin, String resourcePath, CustomTranslator translator) {
         try (InputStream in = plugin.getResource(resourcePath)) {
-            if (in == null) return;
+            if (in == null) {
+                AbyssalLib.getInstance().getLogger().warning("Failed to load language resource: " + resourcePath + " - File doesn't exist");
+                return;
+            }
 
             String fileName = resourcePath;
             if (fileName.contains("/")) fileName = fileName.substring(fileName.lastIndexOf('/') + 1);

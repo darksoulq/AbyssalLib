@@ -2,9 +2,9 @@ package com.github.darksoulq.abyssallib.world.item;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import net.kyori.adventure.key.Key;
 import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
@@ -39,12 +39,12 @@ public class ItemPredicateLoader {
     }
 
     private static void loadSingle(Path path) {
-        Identifier id = getPredicateId(path);
+        Key id = getPredicateId(path);
         if (id == null) return;
 
         ItemPredicate predicate = load(path);
         if (predicate != null) {
-            Registries.PREDICATES.register(id.toString(), predicate);
+            Registries.PREDICATES.register(id.asString(), predicate);
         }
     }
 
@@ -67,7 +67,7 @@ public class ItemPredicateLoader {
         }).onFailure(e -> e.printStackTrace()).orElse(null);
     }
 
-    private static Identifier getPredicateId(Path file) {
+    private static Key getPredicateId(Path file) {
         Path relative = PREDICATES_FOLDER.relativize(file);
         if (relative.getNameCount() < 2) {
             AbyssalLib.LOGGER.warning("Skipping file " + file + ": Must be inside a namespace folder (predicates/<namespace>/<name>.yml)");
@@ -86,6 +86,6 @@ public class ItemPredicateLoader {
         if (lastDot > 0) {
             fullPath = fullPath.substring(0, lastDot);
         }
-        return Identifier.of(namespace, fullPath);
+        return Key.key(namespace, fullPath);
     }
 }

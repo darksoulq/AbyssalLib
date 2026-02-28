@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.gui.internal;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -13,6 +12,7 @@ import com.github.darksoulq.abyssallib.world.item.ItemCategory;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemName;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.Lore;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Material;
@@ -57,7 +57,7 @@ public class ItemMenu {
 
     public static void openPlugin(Player player, String namespace) {
         List<ItemCategory> categories = Registries.ITEM_CATEGORIES.getAll().values().stream()
-            .filter(cat -> cat.getId().getNamespace().equals(namespace))
+            .filter(cat -> cat.getId().namespace().equals(namespace))
             .toList();
 
         if (categories.isEmpty()) {
@@ -72,7 +72,7 @@ public class ItemMenu {
             Item pluginIconItem = Registries.ITEMS.get(namespace + ":plugin_icon");
             ItemStack iconStack = pluginIconItem != null ? pluginIconItem.getStack().clone() : new ItemStack(Material.STONE);
 
-            ItemCategory defaultCat = ItemCategory.builder(Identifier.of(namespace, "all"))
+            ItemCategory defaultCat = ItemCategory.builder(Key.key(namespace, "all"))
                 .icon(iconStack)
                 .addAll(defaultItems)
                 .build();
@@ -124,9 +124,9 @@ public class ItemMenu {
 
         gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.get().getStack(), ctx -> {
             boolean hasCat = Registries.ITEM_CATEGORIES.getAll().values().stream()
-                .anyMatch(c -> c.getId().getNamespace().equals(category.getId().getNamespace()));
+                .anyMatch(c -> c.getId().namespace().equals(category.getId().namespace()));
             if (hasCat) {
-                openPlugin(player, category.getId().getNamespace());
+                openPlugin(player, category.getId().namespace());
             } else {
                 open(player);
             }

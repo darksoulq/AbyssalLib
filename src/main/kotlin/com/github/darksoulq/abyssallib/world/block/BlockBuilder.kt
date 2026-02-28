@@ -1,10 +1,10 @@
 package com.github.darksoulq.abyssallib.world.block
 
-import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.event.ActionResult
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent
 import com.github.darksoulq.abyssallib.world.block.property.Property
 import com.github.darksoulq.abyssallib.world.entity.EntityBuilder
+import net.kyori.adventure.key.Key
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -22,7 +22,7 @@ import org.bukkit.inventory.ItemStack
 annotation class BlockDSL
 
 @BlockDSL
-class BlockBuilder(val id: Identifier, val material: Material) {
+class BlockBuilder(val id: Key, val material: Material) {
     private var propertiesConfig: (BlockProperties.Builder.() -> Unit)? = null
     private var entityFactory: ((CustomBlock) -> BlockEntity)? = null
     private var generateItem: Boolean = true
@@ -103,13 +103,13 @@ class BlockBuilder(val id: Identifier, val material: Material) {
     fun onInteract(handler: (BlockInteractionEvent) -> ActionResult) { interactHandler = handler }
     fun onPlace(handler: (Player, Location, ItemStack) -> ActionResult) { placeHandler = handler }
     fun onBreak(handler: (Player, Location, ItemStack) -> ActionResult) { breakHandler = handler }
-    fun onExplosion(handler: (Entity?, Block?) -> ActionResult) { explosionHandler = handler }
-    fun onLand(handler: (Entity) -> Unit) { landHandler = handler }
-    fun onStep(handler: (LivingEntity) -> Unit) { stepHandler = handler }
+    fun onDestroyedByExplosion(handler: (Entity?, Block?) -> ActionResult) { explosionHandler = handler }
+    fun onLanded(handler: (Entity) -> Unit) { landHandler = handler }
+    fun onSteppedOn(handler: (LivingEntity) -> Unit) { stepHandler = handler }
     fun onRedstone(handler: (Int, Int) -> Int) { redstoneHandler = handler }
-    fun onProjectile(handler: (Projectile) -> ActionResult) { projectileHandler = handler }
-    fun onNeighbor(handler: (Block) -> ActionResult) { neighborUpdateHandler = handler }
-    fun onPiston(handler: (BlockFace) -> ActionResult) { pistonMoveHandler = handler }
+    fun onProjectileHit(handler: (Projectile) -> ActionResult) { projectileHandler = handler }
+    fun onNeighborUpdate(handler: (Block) -> ActionResult) { neighborUpdateHandler = handler }
+    fun onPistonMove(handler: (BlockFace) -> ActionResult) { pistonMoveHandler = handler }
     fun onBoneMeal(handler: (Player) -> ActionResult) { boneMealHandler = handler }
     fun onFade(handler: (Block, BlockState) -> ActionResult) { fadeHandler = handler }
     fun onForm(handler: (Block, BlockState) -> ActionResult) { formHandler = handler }
@@ -117,8 +117,8 @@ class BlockBuilder(val id: Identifier, val material: Material) {
     fun onIgnite(handler: (BlockIgniteEvent.IgniteCause, Entity, Block) -> ActionResult) { igniteHandler = handler }
     fun onSpread(handler: (Block, Block, BlockState) -> ActionResult) { spreadHandler = handler }
     fun onLeavesDecay(handler: () -> ActionResult) { leavesDecayHandler = handler }
-    fun onSponge(handler: (List<BlockState>) -> ActionResult) { spongeAbsorbHandler = handler }
-    fun onSign(handler: (Player, Side) -> ActionResult) { signChangeHandler = handler }
+    fun onSpongeAbsorb(handler: (List<BlockState>) -> ActionResult) { spongeAbsorbHandler = handler }
+    fun onSignChange(handler: (Player, Side) -> ActionResult) { signChangeHandler = handler }
 
     fun build(): CustomBlock {
         val block = object : CustomBlock(id, material) {
@@ -131,7 +131,7 @@ class BlockBuilder(val id: Identifier, val material: Material) {
             override fun onLoad() = onLoadHandler?.invoke() ?: super.onLoad()
             override fun onUnLoad() = onUnLoadHandler?.invoke() ?: super.onUnLoad()
             override fun onInteract(event: BlockInteractionEvent) = interactHandler?.invoke(event) ?: super.onInteract(event)
-            override fun onPlaced(player: Player, loc: Location, stack: ItemStack) = placeHandler?.invoke(player, loc, stack) ?: super.onPlaced(player, loc, stack)
+            override fun onPlace(player: Player, loc: Location, stack: ItemStack) = placeHandler?.invoke(player, loc, stack) ?: super.onPlace(player, loc, stack)
             override fun onBreak(player: Player, loc: Location, tool: ItemStack) = breakHandler?.invoke(player, loc, tool) ?: super.onBreak(player, loc, tool)
             override fun onDestroyedByExplosion(eCause: Entity?, bCause: Block?) = explosionHandler?.invoke(eCause, bCause) ?: super.onDestroyedByExplosion(eCause, bCause)
             override fun onLanded(entity: Entity) { landHandler?.invoke(entity) ?: super.onLanded(entity) }

@@ -53,7 +53,6 @@ public class RecipeLoader {
     }
 
     static {
-        // Standard Crafting Recipes
         registerHandler("minecraft:shaped", data -> {
             ShapedRecipe r = Codecs.SHAPED_RECIPE.decode(YamlOps.INSTANCE, data);
             if (r != null) Registries.SHAPED_RECIPES.register(r.getKey().toString(), r);
@@ -63,13 +62,11 @@ public class RecipeLoader {
             if (r != null) Registries.SHAPELESS_RECIPES.register(r.getKey().toString(), r);
         });
 
-        // AbyssalLib Custom Recipes
         registerHandler("minecraft:transmute", data -> {
             TransmuteRecipe r = Codecs.TRANSMUTE_RECIPE.decode(YamlOps.INSTANCE, data);
             if (r != null) Registries.TRANSMUTE_RECIPES.register(r.getKey().toString(), r);
         });
 
-        // Smelting/Cooking Recipes
         registerHandler("minecraft:furnace", data -> {
             FurnaceRecipe r = Codecs.FURNACE_RECIPE.decode(YamlOps.INSTANCE, data);
             if (r != null) Registries.FURNACE_RECIPES.register(r.getKey().toString(), r);
@@ -87,7 +84,6 @@ public class RecipeLoader {
             if (r != null) Registries.CAMPFIRE_RECIPES.register(r.getKey().toString(), r);
         });
 
-        // Advanced Table Recipes
         registerHandler("minecraft:smithing_transform", data -> {
             SmithingTransformRecipe r = Codecs.SMITHING_TRANSFORM_RECIPE.decode(YamlOps.INSTANCE, data);
             if (r != null) Registries.SMITHING_TRANSFORM_RECIPES.register(r.getKey().toString(), r);
@@ -97,7 +93,6 @@ public class RecipeLoader {
             if (r != null) Registries.STONECUTTING_RECIPES.register(r.getKey().toString(), r);
         });
 
-        // Alchemy/Brewing Recipes
         registerHandler("minecraft:potion_mix", data -> {
             PotionMix r = Codecs.POTION_MIX.decode(YamlOps.INSTANCE, data);
             if (r != null) Registries.POTION_MIXES.register(r.getKey().toString(), r);
@@ -109,16 +104,19 @@ public class RecipeLoader {
      *
      * @param folder The {@link File} directory to scan.
      */
-    public static void loadFolder(File folder) {
-        if (!folder.exists() || !folder.isDirectory()) return;
+    public static int loadFolder(File folder) {
+        int loaded = 0;
+        if (!folder.exists() || !folder.isDirectory()) return loaded;
         File[] files = folder.listFiles();
-        if (files == null) return;
+        if (files == null) return loaded;
         for (File file : files) {
-            if (file.isDirectory()) loadFolder(file);
+            if (file.isDirectory()) loaded += loadFolder(file);
             else if (file.getName().endsWith(".yml") || file.getName().endsWith(".yaml")) {
                 load(file);
+                loaded++;
             }
         }
+        return loaded;
     }
 
     /**
@@ -127,11 +125,14 @@ public class RecipeLoader {
      * @param plugin       The {@link Plugin} instance.
      * @param resourcePath The internal path (e.g., "recipes/").
      */
-    public static void loadFolder(Plugin plugin, String resourcePath) {
+    public static int loadFolder(Plugin plugin, String resourcePath) {
+        int loaded = 0;
         List<String> files = FileUtils.getFilePathList(plugin, resourcePath);
         for (String file : files) {
             loadResource(plugin, file);
+            loaded++;
         }
+        return loaded;
     }
 
     /**

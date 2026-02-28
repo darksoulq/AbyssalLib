@@ -47,7 +47,7 @@ public class WorldGenUtils {
 
         if (validIds.contains(vanillaId)) return true;
 
-        CustomBlock cb = CustomBlock.from(loc.getBlock());
+        CustomBlock cb = CustomBlock.resolve(loc.getBlock());
         if (cb != null) {
             return validIds.contains(cb.getId().toString());
         }

@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
@@ -23,6 +22,7 @@ import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
 import com.github.darksoulq.abyssallib.world.util.BlockPersistentData;
 import io.papermc.paper.event.entity.EntityMoveEvent;
+import net.kyori.adventure.key.Key;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -53,7 +53,7 @@ public class BlockEvents {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getClickedBlock() == null) return;
 
-        CustomBlock block = CustomBlock.from(event.getClickedBlock());
+        CustomBlock block = CustomBlock.resolve(event.getClickedBlock());
         if (block == null) return;
 
         BlockInteractionEvent interactionEvent = new BlockInteractionEvent(
@@ -111,7 +111,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockDamage(BlockDamageEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
 
         if (block.properties.hardness < 0) {
@@ -129,8 +129,8 @@ public class BlockEvents {
             event.setCancelled(true);
             return;
         }
-        Identifier blockId = heldItem.getData(BlockItem.TYPE).getValue();
-        CustomBlock block = Registries.BLOCKS.get(blockId.toString());
+        Key blockId = heldItem.getData(BlockItem.TYPE).getValue();
+        CustomBlock block = Registries.BLOCKS.get(blockId.asString());
         if (block == null) return;
 
         CustomBlock instance = block.clone();
@@ -143,7 +143,7 @@ public class BlockEvents {
             return;
         }
 
-        ActionResult result = instance.onPlaced(event.getPlayer(), loc, handItem);
+        ActionResult result = instance.onPlace(event.getPlayer(), loc, handItem);
         if (result == ActionResult.CANCEL) {
             event.setCancelled(true);
             BlockManager.remove(loc);
@@ -153,7 +153,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockBreak(BlockBreakEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
 
         Player player = event.getPlayer();
@@ -188,7 +188,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockFertilize(BlockFertilizeEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
 
         if (block.onBoneMeal(event.getPlayer()) == ActionResult.CANCEL) {
@@ -210,7 +210,7 @@ public class BlockEvents {
         if (event instanceof Cancellable cancellable && cancellable.isCancelled()) return;
 
         for (Block b : blocks) {
-            CustomBlock cb = CustomBlock.from(b);
+            CustomBlock cb = CustomBlock.resolve(b);
             if (cb != null) {
                 if (cb.getEntity() != null) {
                     if (event instanceof Cancellable c) c.setCancelled(true);
@@ -256,7 +256,7 @@ public class BlockEvents {
         List<CustomBlock> movingBlocks = new ArrayList<>();
 
         for (Block b : blocks) {
-            CustomBlock cb = CustomBlock.from(b);
+            CustomBlock cb = CustomBlock.resolve(b);
             if (cb != null && cb.properties.pistonReaction == BlockProperties.PistonReaction.MOVE) {
                 movingBlocks.add(cb);
             }
@@ -279,7 +279,7 @@ public class BlockEvents {
     public void onEntityMove(EntityMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
-        CustomBlock block = CustomBlock.from(event.getTo().clone().add(0, -1, 0).getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getTo().clone().add(0, -1, 0).getBlock());
         if (block == null) return;
         if (event.getEntity().getFallDistance() > 1) {
             block.onLanded(event.getEntity());
@@ -292,7 +292,7 @@ public class BlockEvents {
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
-        CustomBlock block = CustomBlock.from(event.getTo().clone().add(0, -1, 0).getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getTo().clone().add(0, -1, 0).getBlock());
         if (block == null) return;
         if (event.getPlayer().getFallDistance() > 1) {
             block.onLanded(event.getPlayer());
@@ -303,7 +303,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onEntityChangeBlock(EntityChangeBlockEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             event.setCancelled(true);
         }
@@ -314,7 +314,7 @@ public class BlockEvents {
         Iterator<Block> it = event.blockList().iterator();
         while (it.hasNext()) {
             Block bukkitBlock = it.next();
-            CustomBlock block = CustomBlock.from(bukkitBlock);
+            CustomBlock block = CustomBlock.resolve(bukkitBlock);
             if (block == null) continue;
 
             ActionResult result = block.onDestroyedByExplosion(null, event.getBlock());
@@ -337,7 +337,7 @@ public class BlockEvents {
         Iterator<Block> it = event.blockList().iterator();
         while (it.hasNext()) {
             Block bukkitBlock = it.next();
-            CustomBlock block = CustomBlock.from(bukkitBlock);
+            CustomBlock block = CustomBlock.resolve(bukkitBlock);
             if (block == null) continue;
 
             ActionResult result = block.onDestroyedByExplosion(event.getEntity(), null);
@@ -359,14 +359,14 @@ public class BlockEvents {
     public void onProjectileHit(ProjectileHitEvent event) {
         if (event.getHitBlock() == null) return;
 
-        CustomBlock block = CustomBlock.from(event.getHitBlock());
+        CustomBlock block = CustomBlock.resolve(event.getHitBlock());
         if (block == null) return;
         if (block.onProjectileHit(event.getEntity()) == ActionResult.CANCEL) event.setCancelled(true);
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockRedstone(BlockRedstoneEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
         int oldCurrent = event.getOldCurrent();
         int newCurrent = event.getNewCurrent();
@@ -376,7 +376,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockPhysics(BlockPhysicsEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
 
         if (!block.properties.allowPhysics) {
@@ -392,7 +392,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockBurn(BlockBurnEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (!block.properties.isFlammable) {
                 event.setCancelled(true);
@@ -408,7 +408,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockFade(BlockFadeEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onFade(event.getBlock(), event.getNewState()) == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -420,7 +420,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockForm(BlockFormEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onForm(event.getBlock(), event.getNewState()) == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -432,7 +432,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockGrow(BlockGrowEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onGrow(event.getBlock(), event.getNewState()) == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -442,7 +442,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockIgnite(BlockIgniteEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (!block.properties.isFlammable) {
                 event.setCancelled(true);
@@ -456,7 +456,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockSpread(BlockSpreadEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onSpread(event.getBlock(), event.getSource(), event.getNewState()) == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -466,7 +466,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onLeavesDecay(LeavesDecayEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onLeavesDecay() == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -478,7 +478,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onSpongeAbsorb(SpongeAbsorbEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onSpongeAbsorb(event.getBlocks()) == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -488,7 +488,7 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onSignChange(SignChangeEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             if (block.onSignChange(event.getPlayer(), event.getSide()) == ActionResult.CANCEL) {
                 event.setCancelled(true);
@@ -499,7 +499,7 @@ public class BlockEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
         for (Location loc : BlockManager.ACTIVE_BLOCKS) {
-            CustomBlock block = CustomBlock.from(loc.getBlock());
+            CustomBlock block = CustomBlock.resolve(loc.getBlock());
             if (block == null) {
                 return;
             }

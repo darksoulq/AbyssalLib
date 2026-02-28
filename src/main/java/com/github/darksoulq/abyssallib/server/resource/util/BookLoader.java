@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.server.resource.util;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.google.gson.*;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -41,8 +41,8 @@ public class BookLoader {
      * @throws IllegalStateException if the resource cannot be found
      * @throws RuntimeException      if parsing or loading fails
      */
-    public static ItemStack load(Plugin plugin, Identifier id) {
-        String path = "books/" + id.getPath() + ".json";
+    public static ItemStack load(Plugin plugin, Key id) {
+        String path = "books/" + id.value() + ".json";
         InputStream in = plugin.getResource(path);
         if (in == null) throw new IllegalStateException("Book resource not found: " + path);
 

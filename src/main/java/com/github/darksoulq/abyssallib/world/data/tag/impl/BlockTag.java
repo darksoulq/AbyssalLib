@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.data.tag.impl;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.bridge.BridgeBlock;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
+import net.kyori.adventure.key.Key;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,7 +15,7 @@ public class BlockTag extends Tag<String, BridgeBlock<?>> {
     /**
      * @param id The tag identifier.
      */
-    public BlockTag(Identifier id) {
+    public BlockTag(Key id) {
         super(id);
     }
 

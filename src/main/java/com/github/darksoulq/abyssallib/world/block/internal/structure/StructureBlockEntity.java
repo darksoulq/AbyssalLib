@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.world.block.internal.structure;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.BlockEntity;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
@@ -14,6 +13,7 @@ import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
 import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
 import com.github.darksoulq.abyssallib.world.structure.StructureLoader;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.block.structure.Mirror;
@@ -108,7 +108,7 @@ public class StructureBlockEntity extends BlockEntity {
     public boolean save() {
         if (mode.get() != StructureMode.SAVE) return false;
         validateName();
-        Identifier id = Identifier.of(structureName.get());
+        Key id = Key.key(structureName.get());
 
         Location origin = getBlock().getLocation();
         Location corner1 = origin.clone().add(offsetX.get(), offsetY.get(), offsetZ.get());
@@ -126,7 +126,7 @@ public class StructureBlockEntity extends BlockEntity {
     public boolean load() {
         if (mode.get() != StructureMode.LOAD) return false;
         validateName();
-        Identifier id = Identifier.of(structureName.get());
+        Key id = Key.key(structureName.get());
 
         try {
             Structure structure = Registries.STRUCTURES.get(id.toString());

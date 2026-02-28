@@ -1,11 +1,15 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import io.papermc.paper.plugin.bootstrap.BootstrapContext;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.data.DamageTypeRegistryEntry;
 import io.papermc.paper.registry.event.RegistryComposeEvent;
+import io.papermc.paper.registry.event.RegistryEvents;
 import io.papermc.paper.registry.keys.DamageTypeKeys;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Location;
 import org.bukkit.damage.DamageEffect;
 import org.bukkit.damage.DamageScaling;
@@ -28,7 +32,7 @@ import java.util.List;
 public class DamageType {
 
     /** Unique identifier of the damage type. */
-    private Identifier id;
+    private Key id;
 
     /** Visual/audio effect applied when this damage is dealt. */
     private DamageEffect effect = DamageEffect.HURT;
@@ -39,6 +43,11 @@ public class DamageType {
     /** The type of death message displayed if this damage causes death. */
     private DeathMessageType messageType = DeathMessageType.DEFAULT;
 
+    /**
+     * The ID of the Death Message (e.g death.attack.<message_id>). Only effective if DeathMessageType is DEFAULT
+     */
+    private String messageId = "";
+
     /** The amount of hunger exhaustion this damage produces. */
     private float exhaustion = 0;
 
@@ -47,35 +56,48 @@ public class DamageType {
      *
      * @param id Unique namespaced ID for this damage type.
      */
-    public DamageType(Identifier id) {
+    public DamageType(Key id) {
         this.id = id;
     }
 
     public DamageSource withCause(Entity cause) {
-        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
-                .getOrThrow(id.asNamespacedKey());
+        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(id);
         return DamageSource.builder(dmg).withCausingEntity(cause).build();
     }
     public DamageSource withDirect(Entity direct) {
-        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
-                .getOrThrow(id.asNamespacedKey());
+        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(id);
         return DamageSource.builder(dmg).withDirectEntity(direct).build();
     }
     public DamageSource withLocation(Location loc) {
-        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)
-                .getOrThrow(id.asNamespacedKey());
+        org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(id);
         return DamageSource.builder(dmg).withDamageLocation(loc).build();
     }
 
-    public static Builder builder(Identifier id) {
+    public void register(BootstrapContext ctx) {
+        ctx.getLifecycleManager().registerEventHandler(RegistryEvents.DAMAGE_TYPE.compose(), event -> {
+            event.registry().register(
+                DamageTypeKeys.create(id),
+                builder -> {
+                    builder.damageEffect(effect);
+                    builder.damageScaling(scaling);
+                    builder.deathMessageType(messageType);
+                    builder.exhaustion(exhaustion);
+                    builder.messageId(messageId);
+                }
+            );
+        });
+    }
+
+    public static Builder builder(Key id) {
         return new Builder(id);
     }
 
     protected static class Builder {
-        private Identifier id;
+        private Key id;
         private DamageEffect effect = DamageEffect.HURT;
         private DamageScaling scaling = DamageScaling.NEVER;
         private DeathMessageType messageType = DeathMessageType.DEFAULT;
+        private String messageId = "";
         private float exhaustion = 0;
 
         /**
@@ -83,7 +105,7 @@ public class DamageType {
          *
          * @param id Unique namespaced ID for this damage type.
          */
-        public Builder(Identifier id) {
+        public Builder(Key id) {
             this.id = id;
         }
 
@@ -127,57 +149,25 @@ public class DamageType {
             return this;
         }
 
+        /**
+         * Sets the Message ID of the Death Message (e.g death.attack.<message_id>).
+         * Only works if deathMessageType is set to DEFAULT.
+         *
+         * @param messageId
+         * @return This builder
+         */
+        public Builder messageId(String messageId) {
+            this.messageId = messageId;
+            return this;
+        }
+
         public DamageType build() {
             DamageType dmg = new DamageType(id);
             dmg.scaling = scaling;
             dmg.effect = effect;
             dmg.exhaustion = exhaustion;
+            dmg.messageId =messageId;
             return dmg;
-        }
-    }
-
-    /**
-     * Internal class responsible for registering {@link DamageType} instances to the Paper registry.
-     *
-     * <p><strong>This class is not intended to be constructed or used directly by plugin developers.</strong>
-     * It is automatically invoked when a {@code DeferredRegistry<DamageType>} is applied via
-     * {@code #apply} in {@code PluginBootstrap}.</p>
-     */
-    @ApiStatus.Internal
-    public static class Registrar {
-
-        private RegistryComposeEvent<org.bukkit.damage.DamageType, DamageTypeRegistryEntry.Builder> event;
-
-        /**
-         * Internal constructor used during registry freeze to bind and register custom damage types.
-         *
-         * @param event The registry freeze event triggered by Paper.
-         */
-        public Registrar(RegistryComposeEvent<org.bukkit.damage.DamageType,
-                        DamageTypeRegistryEntry.@NotNull Builder> event) {
-            this.event = event;
-        }
-
-        /**
-         * Registers all provided {@link DamageType} instances into the Paper damage registry.
-         *
-         * <p>This method is called internally when {@code DeferredRegistry#apply()} is used.</p>
-         *
-         * @param types List of {@link DamageType} entries to register.
-         */
-        public void register(List<DamageType> types) {
-            types.forEach(type -> {
-                event.registry().register(
-                        DamageTypeKeys.create(type.id.asNamespacedKey()),
-                        (builder) -> {
-                            builder.damageEffect(type.effect);
-                            builder.damageScaling(type.scaling);
-                            builder.deathMessageType(type.messageType);
-                            builder.messageId(type.id.toString().replace(':', '.'));
-                            builder.exhaustion(type.exhaustion);
-                        }
-                );
-            });
         }
     }
 }

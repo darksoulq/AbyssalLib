@@ -2,13 +2,11 @@ package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.command.Command;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.DefaultConditions;
-import com.github.darksoulq.abyssallib.server.command.argument.IdentifierArgument;
 import com.github.darksoulq.abyssallib.server.command.argument.RegistryEntryArgument;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.permission.Node;
@@ -45,6 +43,7 @@ import io.papermc.paper.command.brigadier.argument.resolvers.FinePositionResolve
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import io.papermc.paper.dialog.Dialog;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.Bukkit;
@@ -79,7 +78,7 @@ public class InternalCommand {
             .requires(DefaultConditions.hasPerm(PluginPermissions.ATTRIBUTES_GET))
             .then(Commands.literal("get")
                 .then(Commands.argument("selector", ArgumentTypes.entity())
-                    .then(Commands.argument("type", IdentifierArgument.identifier())
+                    .then(Commands.argument("type", ArgumentTypes.key())
                         .suggests(InternalCommand::attributeTypeSuggests)
                         .executes(InternalCommand::attributeGetExecutor)
                     )
@@ -181,8 +180,8 @@ public class InternalCommand {
                             String ns = ctx.getArgument("plugin", String.class);
                             boolean hasCustom = false;
                             for (ItemCategory cat : Registries.ITEM_CATEGORIES.getAll().values()) {
-                                if (cat.getId().getNamespace().equals(ns)) {
-                                    builder.suggest(cat.getId().getPath());
+                                if (cat.getId().namespace().equals(ns)) {
+                                    builder.suggest(cat.getId().value());
                                     hasCustom = true;
                                 }
                             }
@@ -425,7 +424,7 @@ public class InternalCommand {
     }
 
     public static int attributeGetExecutor(CommandContext<CommandSourceStack> ctx) {
-        Identifier key = ctx.getArgument("type", Identifier.class);
+        Key key = ctx.getArgument("type", Key.class);
         EntitySelectorArgumentResolver selector = ctx.getArgument("selector", EntitySelectorArgumentResolver.class);
 
         Try.of(() -> selector.resolve(ctx.getSource()))
@@ -481,7 +480,7 @@ public class InternalCommand {
 
         String msg = stats.get().stream()
             .map(stat -> {
-                String key = "<lang:%s.stat.%s>".formatted(stat.getId().getNamespace(), stat.getId().getPath());
+                String key = "<lang:%s.stat.%s>".formatted(stat.getId().namespace(), stat.getId().value());
                 return "<aqua>%s</aqua> <gray>=</gray> <yellow>%s</yellow>".formatted(key, stat.getValue());
             })
             .collect(Collectors.joining("\n"));
@@ -528,7 +527,7 @@ public class InternalCommand {
         PlayerStatistics stats = PlayerStatistics.of(player);
         if (stats.get().isEmpty()) dialog.body(DialogContent.text(TextUtil.parse("<gray>No statistics found.</gray>")));
         for (Statistic stat : stats.get()) {
-            String langKey = "<lang:%s.stat.%s>".formatted(stat.getId().getNamespace(), stat.getId().getPath());
+            String langKey = "<lang:%s.stat.%s>".formatted(stat.getId().namespace(), stat.getId().value());
             dialog.body(DialogContent.text(TextUtil.parse(TextOffset.getOffsetMinimessage(40) + langKey + " = " + stat.getValue())));
         }
         return dialog.build();

@@ -15,11 +15,5 @@ public class Bootstrap implements PluginBootstrap {
                 commands -> {
             CommandBus.init(commands.registrar().getDispatcher());
         });
-
-        context.getLifecycleManager().registerEventHandler(RegistryEvents.DAMAGE_TYPE.compose()
-                .newHandler(event -> {
-                    AbyssalLib.DAMAGE_TYPE_REGISTRAR = new DamageType.Registrar(event);
-                })
-        );
     }
 }

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.energy;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import net.kyori.adventure.key.Key;
 
 /**
  * A record defining an energy measurement unit with its own identifier,
@@ -10,9 +11,9 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
  * @param symbol         Short display name (e.g., "PE", "FE").
  * @param conversionRate The multiplier used to convert this unit into the base unit.
  */
-public record EnergyUnit(Identifier id, String symbol, double conversionRate) {
+public record EnergyUnit(Key id, String symbol, double conversionRate) {
     /** The default unit for AbyssalLib (Paper Energy). */
-    public static final EnergyUnit PE = new EnergyUnit(Identifier.of("abyssallib", "pe"), "PE", 1.0);
+    public static final EnergyUnit PE = new EnergyUnit(Key.key("abyssallib", "pe"), "PE", 1.0);
 
     /**
      * Converts an amount from this unit to another unit.

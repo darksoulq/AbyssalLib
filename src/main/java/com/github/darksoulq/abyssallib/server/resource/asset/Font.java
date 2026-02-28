@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.google.gson.*;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.apache.fontbox.ttf.CmapSubtable;
@@ -103,7 +103,7 @@ public class Font implements Asset {
      * @return The created {@link OffsetGlyph}.
      */
     public @NotNull OffsetGlyph offset(int pixelOffset, char unicode) {
-        OffsetGlyph g = new OffsetGlyph(Identifier.of(namespace, id), unicode, pixelOffset);
+        OffsetGlyph g = new OffsetGlyph(Key.key(namespace, id), unicode, pixelOffset);
         LinkedList<Glyph> list = new LinkedList<>();
         list.add(g);
         glyphGroups.add(list);
@@ -125,7 +125,7 @@ public class Font implements Asset {
         for (char c : chars) ensureNotOccupied(c);
         occupied.addAll(chars);
         LinkedList<Glyph> gl = new LinkedList<>();
-        gl.add(new TtfFont(Identifier.of(namespace, id), ttfFile.getPath(), shiftX, shiftY, size, oversample));
+        gl.add(new TtfFont(Key.key(namespace, id), ttfFile.getPath(), shiftX, shiftY, size, oversample));
         glyphGroups.add(gl);
     }
 
@@ -141,7 +141,7 @@ public class Font implements Asset {
         for (char c : chars) ensureNotOccupied(c);
         occupied.addAll(chars);
         LinkedList<Glyph> gl = new LinkedList<>();
-        gl.add(new UnihexFont(Identifier.of(namespace, id), zipFile.getPath(), overrides));
+        gl.add(new UnihexFont(Key.key(namespace, id), zipFile.getPath(), overrides));
         glyphGroups.add(gl);
     }
 
@@ -156,7 +156,7 @@ public class Font implements Asset {
      */
     public @NotNull TextureGlyph glyph(Texture texture, int height, int ascent) {
         char c = nextUnicode();
-        TextureGlyph g = new TextureGlyph(Identifier.of(namespace, id), texture, c, height, ascent);
+        TextureGlyph g = new TextureGlyph(Key.key(namespace, id), texture, c, height, ascent);
         LinkedList<Glyph> gl = new LinkedList<>();
         gl.add(g);
         occupied.add(c);
@@ -193,7 +193,7 @@ public class Font implements Asset {
             LinkedList<Glyph> line = new LinkedList<>();
             for (int c = 0; c < cols; c++) {
                 char ch = nextUnicode();
-                TextureGlyph tg = new TextureGlyph(Identifier.of(namespace, id), texture, ch, height, ascent);
+                TextureGlyph tg = new TextureGlyph(Key.key(namespace, id), texture, ch, height, ascent);
                 line.add(tg);
                 occupied.add(ch);
             }
@@ -319,7 +319,7 @@ public class Font implements Asset {
      * @param a       The ascent of the glyph in pixels.
      */
     private void addTextureGlyph(@NotNull Texture texture, char c, int h, int a) {
-        TextureGlyph g = new TextureGlyph(Identifier.of(namespace, id), texture, c, h, a);
+        TextureGlyph g = new TextureGlyph(Key.key(namespace, id), texture, c, h, a);
         LinkedList<Glyph> list = new LinkedList<>();
         list.add(g);
         glyphGroups.add(list);
@@ -418,9 +418,9 @@ public class Font implements Asset {
     /**
      * A glyph from a bitmap texture.
      */
-    public record TextureGlyph(Identifier fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
+    public record TextureGlyph(Key fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
         public TextComponent toComponent() {
-            return Component.text(character).font(fontId.asNamespacedKey());
+            return Component.text(character).font(fontId);
         }
         public String toMiniMessageString() {
             return "<font:" + fontId.toString() + ">" + character + "</font>";
@@ -430,9 +430,9 @@ public class Font implements Asset {
     /**
      * A spacing glyph that adjusts character advance.
      */
-    public record OffsetGlyph(Identifier fontId, char character, int advance) implements Glyph {
+    public record OffsetGlyph(Key fontId, char character, int advance) implements Glyph {
         public TextComponent toComponent() {
-            return Component.text(character).font(fontId.asNamespacedKey());
+            return Component.text(character).font(fontId);
         }
         public String toMiniMessageString() {
             return "<font:" + fontId.toString() + ">" + character + "</font>";
@@ -442,7 +442,7 @@ public class Font implements Asset {
     /**
      * TTF font provider.
      */
-    public record TtfFont(Identifier fontId, String file, int shiftX, int shiftY, int size, int oversample) implements Glyph {
+    public record TtfFont(Key fontId, String file, int shiftX, int shiftY, int size, int oversample) implements Glyph {
         /**
          * @return the json representation.
          */
@@ -463,7 +463,7 @@ public class Font implements Asset {
     /**
      * Unihex font provider with size overrides.
      */
-    public record UnihexFont(Identifier fontId, String file, List<Override> sizeOverrides) implements Glyph {
+    public record UnihexFont(Key fontId, String file, List<Override> sizeOverrides) implements Glyph {
         public record Override(int from, int to, int left, int right) {}
 
         /**

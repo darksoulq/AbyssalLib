@@ -86,7 +86,7 @@ public class Structure {
                     Block block = corner1.getWorld().getBlockAt(x, y, z);
                     if (block.getType() == Material.STRUCTURE_VOID) continue;
 
-                    CustomBlock custom = CustomBlock.from(block);
+                    CustomBlock custom = CustomBlock.resolve(block);
                     String id;
                     Map<JsonNode, JsonNode> serialized;
 

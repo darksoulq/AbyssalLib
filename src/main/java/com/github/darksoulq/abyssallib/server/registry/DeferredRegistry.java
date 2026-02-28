@@ -9,6 +9,7 @@ import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,11 +67,11 @@ public final class DeferredRegistry<T> {
      * @return A {@link Holder} wrapping the future object.
      * @throws IllegalStateException if the name has already been registered in this deferred registry.
      */
-    public Holder<T> register(String name, Function<Identifier, T> supplier) {
+    public Holder<T> register(String name, Function<Key, T> supplier) {
         if (entries.containsKey(name)) {
             throw new IllegalStateException("Duplicate deferred registration: " + pluginId + ":" + name);
         }
-        Identifier id = Identifier.of(pluginId, name);
+        Key id = Key.key(pluginId, name);
         Holder<T> holder = new Holder<>(() -> supplier.apply(id));
         entries.put(name, holder);
         return holder;
@@ -101,21 +102,19 @@ public final class DeferredRegistry<T> {
             String id = pluginId + ":" + entry.getKey();
             registry.register(id, value);
 
-            if (value instanceof DamageType) damageTypes.add((DamageType) value);
             if (value instanceof CustomBlock block && block.generateItem()) {
                 Item blockItem = block.getItem().get();
                 Registries.PREDICATES.register(id, ItemPredicate.builder()
-                    .value(new CustomMarker(Identifier.of(id)))
+                    .value(new CustomMarker(Key.key(id)))
                     .build());
                 Registries.ITEMS.register(id, blockItem);
             }
             if (value instanceof Item) {
                 Registries.PREDICATES.register(id, ItemPredicate.builder()
-                    .value(new CustomMarker(Identifier.of(id)))
+                    .value(new CustomMarker(Key.key(id)))
                     .build());
             }
         }
-        if (!damageTypes.isEmpty()) AbyssalLib.DAMAGE_TYPE_REGISTRAR.register(damageTypes);
 
         entries.clear();
     }

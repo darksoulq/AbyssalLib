@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.server.PacketReceiveEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
@@ -65,6 +66,8 @@ public class ServerEvents {
                     AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
+        } else {
+            RecipeLoader.reload();
         }
     }
 
@@ -72,10 +75,21 @@ public class ServerEvents {
     public void onPacketSend(PacketSendEvent event) {
         if (event.getPlayer() == null) return;
         Packet<?> original = event.getPacket();
-        Packet<?> translated = PacketTranslator.process(original, event.getPlayer());
+        Packet<?> translated = PacketTranslator.processSend(original, event.getPlayer());
 
         if (original != translated) {
             event.setPacket(translated);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPacketReceive(PacketReceiveEvent event) {
+        if (event.getPlayer() == null) return;
+        Packet<?> original = event.getPacket();
+        Packet<?> unTranslated = PacketTranslator.processReceive(original, event.getPlayer());
+
+        if (original != unTranslated) {
+            event.setPacket(unTranslated);
         }
     }
 

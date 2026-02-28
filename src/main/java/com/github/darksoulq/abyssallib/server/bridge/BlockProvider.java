@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.util.Identifier;
 
 import java.util.Map;
 
+@Deprecated
 public abstract class BlockProvider<T> {
     private final String prefix;
     public BlockProvider(String prefix) {

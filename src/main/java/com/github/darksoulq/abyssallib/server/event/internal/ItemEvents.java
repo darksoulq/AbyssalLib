@@ -93,7 +93,7 @@ public class ItemEvents {
         Block block = event.getBlock();
         Item item = Item.resolve(event.getPlayer().getActiveItem());
         if (item != null) {
-            ActionResult result = item.postMine(player, block);
+            ActionResult result = item.onMine(player, block);
             if (result == ActionResult.CANCEL) {
                 event.setCancelled(true);
             }
@@ -121,7 +121,7 @@ public class ItemEvents {
                 }
             }
             if (item != null) {
-                ActionResult result = item.postHit(lSource, target);
+                ActionResult result = item.onHit(lSource, target);
                 if (result == ActionResult.CANCEL) {
                     event.setCancelled(true);
                 }
@@ -173,12 +173,12 @@ public class ItemEvents {
             if (hotbarSlot != -1) {
                 Item item = Item.resolve(event.getClickedInventory().getItem(hotbarSlot));
                 if (item != null
-                        && item.onClickInInventory((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+                        && item.onClick((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
             }
         }
         Item item = Item.resolve(event.getCurrentItem());
         if (item == null) return;
-        if (item.onClickInInventory((Player) event.getWhoClicked(), event.getSlot(), pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+        if (item.onClick((Player) event.getWhoClicked(), event.getSlot(), pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -243,7 +243,7 @@ public class ItemEvents {
         for (ItemStack stack : stacks) {
             Item item = Item.resolve(stack);
             if (item != null) {
-                ActionResult result = item.onAnvilPrepare(new AnvilContext(event));
+                ActionResult result = item.onAnvil(new AnvilContext(event));
                 if (result == ActionResult.CANCEL) {
                     event.getInventory().setResult(null);
                 }
@@ -257,7 +257,7 @@ public class ItemEvents {
         Player player = (Player) event.getWhoClicked();
         Item item = Item.resolve(event.getRecipe().getResult());
         if (item != null) {
-            item.onCraftedBy(player);
+            item.onCraft(player);
         }
     }
 

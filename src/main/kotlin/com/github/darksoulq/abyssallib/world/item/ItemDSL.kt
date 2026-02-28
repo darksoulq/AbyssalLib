@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.item
 import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry
 import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
+import net.kyori.adventure.key.Key
 import org.bukkit.Material
 
 fun DeferredRegistry<Item>.register(
@@ -10,8 +11,8 @@ fun DeferredRegistry<Item>.register(
     material: Material,
     init: ItemBuilder.() -> Unit
 ): Holder<Item> {
-    return this.register(id) { identifier ->
-        val builder = ItemBuilder(identifier, material)
+    return this.register(id) { key ->
+        val builder = ItemBuilder(key, material)
         builder.init()
         builder.build()
     }
@@ -29,13 +30,13 @@ fun item(
     material: Material,
     init: ItemBuilder.() -> Unit = {}
 ): Item {
-    val builder = ItemBuilder(Identifier.of(namespace, path), material)
+    val builder = ItemBuilder(Key.key(namespace, path), material)
     builder.init()
     return builder.build()
 }
 
 fun item(
-    id: Identifier,
+    id: Key,
     material: Material,
     init: ItemBuilder.() -> Unit = {}
 ): Item {

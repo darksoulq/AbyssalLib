@@ -23,6 +23,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
+import com.github.darksoulq.abyssallib.server.translation.internal.PacketTranslator;
 import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.server.util.Metrics;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
@@ -55,7 +56,6 @@ public final class AbyssalLib extends JavaPlugin {
     public static PluginConfig CONFIG;
     public static PackServer PACK_SERVER;
     public static EventBus EVENT_BUS;
-    public static DamageType.Registrar DAMAGE_TYPE_REGISTRAR;
     public static PermissionManager PERMISSION_MANAGER;
     public static PermissionWebServer PERMISSION_WEB_SERVER;
 
@@ -93,7 +93,7 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG.cfg.save();
 
         FileUtils.createDirectories(new File(getDataFolder(), "recipes"));
-        RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes"));
+        LOGGER.info("Loaded " + RecipeLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "recipes")) + " Recipes");
 
         Try.run(() -> {
             PermissionStorage storage = null;
@@ -148,6 +148,7 @@ public final class AbyssalLib extends JavaPlugin {
 
         GuiManager.init(this);
         ItemTicker.start();
+        PacketTranslator.startUpdater();
         EnergyNetwork.init();
 
         PACK_SERVER = new PackServer();

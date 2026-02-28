@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 import java.util.Optional;
 
+@Deprecated
 public abstract class ItemProvider {
     private final String prefix;
     public ItemProvider(String prefix) {

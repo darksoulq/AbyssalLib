@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
 
+@Deprecated
 public class MinecraftProvider extends BlockProvider<BlockData> {
     public MinecraftProvider() {
         super("minecraft");

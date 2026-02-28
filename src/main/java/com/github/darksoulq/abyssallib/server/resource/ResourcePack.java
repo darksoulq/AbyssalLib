@@ -15,6 +15,7 @@ import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemModel;
 import com.magmaguy.resourcepackmanager.api.ResourcePackManagerAPI;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -144,7 +145,7 @@ public class ResourcePack {
         if (!override && outputFile.toFile().exists()) {
             HASH_MAP.put(pluginId, FileUtils.sha1(outputFile));
             for (Namespace ns : namespaces.values()) {
-                Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
+                Item icon = new Item(Key.key(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
                 if (ns.getIcon() == null) {
                     icon.setData(new ItemModel(NamespacedKey.fromString("apple")));
                 }
@@ -156,7 +157,7 @@ public class ResourcePack {
         files.clear();
 
         for (Namespace ns : namespaces.values()) {
-            Item icon = new Item(Identifier.of(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
+            Item icon = new Item(Key.key(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
             Texture nsIcon = ns.getIcon();
             if (nsIcon == null) {
                 icon.setData(new ItemModel(NamespacedKey.fromString("apple")));

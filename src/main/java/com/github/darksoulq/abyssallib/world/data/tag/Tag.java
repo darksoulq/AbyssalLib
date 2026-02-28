@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.data.tag;
 
 import com.github.darksoulq.abyssallib.common.util.Identifier;
+import net.kyori.adventure.key.Key;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +19,7 @@ import java.util.Set;
  */
 public abstract class Tag<T, D> {
     /** The unique identifier representing this tag. */
-    public final Identifier id;
+    public final Key id;
 
     /** The set of direct values contained within this tag. */
     protected final Set<T> values = new HashSet<>();
@@ -31,7 +32,7 @@ public abstract class Tag<T, D> {
      *
      * @param id The {@link Identifier} for this tag.
      */
-    public Tag(Identifier id) {
+    public Tag(Key id) {
         this.id = id;
     }
 

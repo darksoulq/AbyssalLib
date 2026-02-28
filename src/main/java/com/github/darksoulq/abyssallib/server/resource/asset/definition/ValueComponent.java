@@ -1,6 +1,6 @@
 package com.github.darksoulq.abyssallib.server.resource.asset.definition;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
+import net.kyori.adventure.key.Key;
 import org.bukkit.attribute.Attribute;
 
 import java.util.*;
@@ -91,7 +91,7 @@ public interface ValueComponent {
             }
         }
 
-        public record Contains(List<Attribute> attributes, Identifier id, Integer min, Integer max, Operation operation, Slot slot) {
+        public record Contains(List<Attribute> attributes, Key id, Integer min, Integer max, Operation operation, Slot slot) {
             public static Builder builder() {
                 return new Builder();
             }
@@ -99,7 +99,7 @@ public interface ValueComponent {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("attribute", attributes.size() > 1 ? attributes.stream().map(a -> a.key().toString()).toList() : attributes.getFirst().key().toString());
-                json.put("id", id.toString());
+                json.put("id", id.asString());
                 if (min != null) {
                     if (max != null) {
                         Map<String, Integer> amount = new LinkedHashMap<>();
@@ -115,7 +115,7 @@ public interface ValueComponent {
 
             public static class Builder {
                 private final Set<Attribute> attributes = new HashSet<>();
-                private Identifier id = null;
+                private Key id = null;
                 private Integer min, max = null;
                 private Operation operation = null;
                 private Slot slot = null;
@@ -133,7 +133,7 @@ public interface ValueComponent {
                     return this;
                 }
 
-                public Builder id(Identifier id) {
+                public Builder id(Key id) {
                     this.id = id;
                     return this;
                 }

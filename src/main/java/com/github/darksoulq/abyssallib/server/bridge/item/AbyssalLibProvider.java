@@ -11,6 +11,7 @@ import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
+import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public class AbyssalLibProvider extends ItemProvider {
     public AbyssalLibProvider() {
         super("abyssallib");
@@ -33,7 +35,8 @@ public class AbyssalLibProvider extends ItemProvider {
         Item item = Item.resolve(value);
         if (item == null) return null;
         if (!item.hasData(CustomMarker.TYPE)) return null;
-        return item.getData(CustomMarker.TYPE).getValue();
+        Key id = item.getData(CustomMarker.TYPE).getValue();
+        return Identifier.of(id.namespace(), id.value());
     }
 
     @Override

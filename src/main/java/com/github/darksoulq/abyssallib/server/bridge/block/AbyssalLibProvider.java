@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class AbyssalLibProvider extends BlockProvider<CustomBlock> {
     public AbyssalLibProvider() {
         super("abyssallib");
@@ -77,10 +78,10 @@ public class AbyssalLibProvider extends BlockProvider<CustomBlock> {
 
         Map<D, D> states = ops.getMap(data.get(ops.createString("states"))).orElse(Collections.emptyMap());
 
-        return new BridgeBlock<>(block.getId(), value.provider(), block.clone()) {
+        return new BridgeBlock<>(Identifier.of("abyssallib", block.getId().namespace(), block.getId().value()), value.provider(), block.clone()) {
             @Override
             public void place(Location location) throws Exception {
-                BlockData bd = value.getMaterial().createBlockData();
+                BlockData bd = block.getMaterial().createBlockData();
                 Adapter.load(ops, states, bd);
 
                 if (location.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) {
@@ -91,12 +92,12 @@ public class AbyssalLibProvider extends BlockProvider<CustomBlock> {
                 Block placedBlock = location.getBlock();
                 if (placedBlock.isEmpty()) return;
 
-                value.place(placedBlock, false);
+                block.place(placedBlock, false);
 
-                if (value.getEntity() != null) {
+                if (block.getEntity() != null) {
                     D props = data.get(ops.createString("properties"));
                     if (props != null) {
-                        value.getEntity().deserialize(ops, props);
+                        block.getEntity().deserialize(ops, props);
                     }
                 }
             }

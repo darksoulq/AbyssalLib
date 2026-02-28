@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@Deprecated
 public class BlockBridge {
     public static final String ID_MINECRAFT = "minecraft";
     public static final String ID_ABYSSAL = "abyssallib";
@@ -100,7 +101,7 @@ public class BlockBridge {
                 return (BridgeBlock<T>) get(Identifier.of(ID_MINECRAFT, data.getMaterial().toString().toLowerCase()));
             }
             case CustomBlock abyssal -> {
-                return (BridgeBlock<T>) get(Identifier.of(AbyssalLib.PLUGIN_ID, abyssal.getId().getNamespace(), abyssal.getId().getPath()));
+                return (BridgeBlock<T>) get(Identifier.of(AbyssalLib.PLUGIN_ID, abyssal.getId().namespace(), abyssal.getId().value()));
             }
             default -> {
             }
@@ -138,7 +139,7 @@ public class BlockBridge {
                 return Identifier.of(ID_MINECRAFT, data.getMaterial().toString().toLowerCase());
             }
             case CustomBlock abyssal -> {
-                return Identifier.of(AbyssalLib.PLUGIN_ID, abyssal.getId().getNamespace(), abyssal.getId().getPath());
+                return Identifier.of(AbyssalLib.PLUGIN_ID, abyssal.getId().namespace(), abyssal.getId().value());
             }
             default -> {}
         }

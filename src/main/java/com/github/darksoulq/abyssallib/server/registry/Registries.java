@@ -47,7 +47,6 @@ public class Registries {
     public static final Registry<LootFunctionType<?>> LOOT_FUNCTIONS = new Registry<>();
     public static final Registry<LootConditionType<?>> LOOT_CONDITIONS = new Registry<>();
 
-    public static final Registry<DamageType> DAMAGE_TYPES = new Registry<>();
     public static final Registry<Tag<?, ?>> TAGS = new Registry<>();
     public static final Registry<ItemPredicate> PREDICATES = new Registry<>();
 

@@ -21,7 +21,7 @@ import java.util.HashMap;
 public class PlayerEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
-        CustomBlock block = CustomBlock.from(event.getClickedBlock());
+        CustomBlock block = CustomBlock.resolve(event.getClickedBlock());
         if (block == null || event.getPlayer().isSneaking()) return;
         BlockInteractionEvent be = EventBus.post(new BlockInteractionEvent(
             event.getPlayer(),
@@ -54,7 +54,7 @@ public class PlayerEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onPick(PlayerPickBlockEvent event) {
-        CustomBlock block = CustomBlock.from(event.getBlock());
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block != null) {
             event.setCancelled(true);
             Item item = CustomBlock.asItem(block);

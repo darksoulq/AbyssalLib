@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import net.kyori.adventure.key.Key;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * <p>
  * This class scans the {@code structures/} directory and automatically registers
  * valid JSON files into the {@link Registries#STRUCTURES} registry. It uses
- * namespaced subfolders to determine the {@link Identifier} for each structure.
+ * namespaced subfolders to determine the {@link Key} for each structure.
  */
 public class StructureLoader {
     /** The root directory where structure JSON files are stored. */
@@ -59,15 +59,15 @@ public class StructureLoader {
      * @param path The path to the JSON structure file.
      */
     private static void loadFileAndRegister(Path path) {
-        Identifier id = getStructureId(path);
+        Key id = getStructureId(path);
         if (id == null) return;
 
         Structure structure = load(path);
         if (structure != null) {
-            if (Registries.STRUCTURES.contains(id.toString())) {
+            if (Registries.STRUCTURES.contains(id.asString())) {
                 AbyssalLib.LOGGER.warning("Duplicate structure ID '" + id + "' found in file " + path + ". Skipping registration.");
             } else {
-                Registries.STRUCTURES.register(id.toString(), structure);
+                Registries.STRUCTURES.register(id.asString(), structure);
             }
         }
     }
@@ -107,16 +107,16 @@ public class StructureLoader {
      * <p>
      * The file will be saved at {@code structures/<namespace>/<path>.json}.
      *
-     * @param id        The {@link Identifier} defining the namespace and file name.
+     * @param id        The {@link Key} defining the namespace and file name.
      * @param structure The {@link Structure} instance to save.
      * @return {@code true} if the save was successful; {@code false} otherwise.
      */
-    public static boolean save(Identifier id, Structure structure) {
-        Path namespaceFolder = STRUCTURES_FOLDER.resolve(id.getNamespace());
+    public static boolean save(Key id, Structure structure) {
+        Path namespaceFolder = STRUCTURES_FOLDER.resolve(id.namespace());
         try {
             if (!Files.exists(namespaceFolder)) Files.createDirectories(namespaceFolder);
 
-            Path file = namespaceFolder.resolve(id.getPath() + ".json");
+            Path file = namespaceFolder.resolve(id.value() + ".json");
             ObjectNode root = structure.serialize();
             MAPPER.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), root);
             return true;
@@ -133,9 +133,9 @@ public class StructureLoader {
      * ID will be {@code abyssallib:dungeon/room1}.
      *
      * @param file The absolute path to the file.
-     * @return An {@link Identifier}, or {@code null} if the file is not in a valid subfolder.
+     * @return An {@link Key}, or {@code null} if the file is not in a valid subfolder.
      */
-    private static Identifier getStructureId(Path file) {
+    private static Key getStructureId(Path file) {
         Path relative = STRUCTURES_FOLDER.relativize(file);
         if (relative.getNameCount() < 2) {
             AbyssalLib.LOGGER.warning("Skipping structure file " + file + ": Must be inside a namespace folder (structures/<namespace>/<name>.json)");
@@ -154,6 +154,6 @@ public class StructureLoader {
         if (lastDot > 0) {
             fullPath = fullPath.substring(0, lastDot);
         }
-        return Identifier.of(namespace, fullPath);
+        return Key.key(namespace, fullPath);
     }
 }

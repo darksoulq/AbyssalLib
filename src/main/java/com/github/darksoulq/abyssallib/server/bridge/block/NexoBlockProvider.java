@@ -10,6 +10,7 @@ import org.bukkit.Location;
 
 import java.util.Map;
 
+@Deprecated
 public class NexoBlockProvider extends BlockProvider<CustomBlockMechanic> {
     public NexoBlockProvider() {
         super("nexo");

@@ -15,7 +15,10 @@ import java.util.Objects;
  * <li><b>Keyed:</b> {@code key:namespace:path} (Extended format for specific sub-categorization)</li>
  * </ul>
  * All components are restricted to lowercase alphanumeric characters, dots, underscores, and hyphens.
+ *
+ * @deprecated use {@link Key} (not yet changed)
  */
+@Deprecated(since = "v2.0.0-mc1.21.11", forRemoval = true)
 public class Identifier {
     /** The optional primary category key. */
     private final String key;

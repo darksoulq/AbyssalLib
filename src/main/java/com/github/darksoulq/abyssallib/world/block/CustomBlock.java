@@ -12,6 +12,7 @@ import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -44,7 +45,7 @@ public class CustomBlock implements Cloneable {
     /**
      * The unique identifier of this block.
      */
-    protected final Identifier id;
+    protected final Key id;
 
     /**
      * The underlying Bukkit material of this block.
@@ -71,7 +72,7 @@ public class CustomBlock implements Cloneable {
      *
      * @param id the unique identifier
      */
-    public CustomBlock(Identifier id) {
+    public CustomBlock(Key id) {
         this.id = id;
     }
 
@@ -81,7 +82,7 @@ public class CustomBlock implements Cloneable {
      * @param id       the unique identifier
      * @param material the base vanilla material
      */
-    public CustomBlock(Identifier id, Material material) {
+    public CustomBlock(Key id, Material material) {
         this.id = id;
         this.material = material;
     }
@@ -91,7 +92,7 @@ public class CustomBlock implements Cloneable {
      *
      * @return the block identifier
      */
-    public Identifier getId() {
+    public Key getId() {
         return id;
     }
 
@@ -231,12 +232,12 @@ public class CustomBlock implements Cloneable {
      * @param id the tag identifier
      * @return true if tagged
      */
-    public boolean hasTag(Identifier id) {
+    public boolean hasTag(Key id) {
         if (!(Registries.TAGS.get(id.toString()) instanceof BlockTag tag)) {
             AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
             return false;
         }
-        BridgeBlock<?> block = BlockBridge.get(Identifier.of("abyssallib", this.id.getNamespace(), this.id.getPath()));
+        BridgeBlock<?> block = BlockBridge.get(Identifier.of("abyssallib", this.id.namespace(), this.id.value()));
         if (block == null) return false;
         return tag.contains(block);
     }
@@ -247,7 +248,7 @@ public class CustomBlock implements Cloneable {
      * @param block the bukkit block
      * @return the custom block, or null
      */
-    public static CustomBlock from(Block block) {
+    public static CustomBlock resolve(Block block) {
         if (block == null) return null;
         return BlockManager.get(block.getLocation());
     }
@@ -258,7 +259,7 @@ public class CustomBlock implements Cloneable {
      * @param loc the location
      * @return the custom block, or null
      */
-    public static CustomBlock from(Location loc) {
+    public static CustomBlock resolve(Location loc) {
         if (loc == null) return null;
         return BlockManager.get(loc);
     }
@@ -338,7 +339,7 @@ public class CustomBlock implements Cloneable {
      * @param stack  the item stack used
      * @return ActionResult
      */
-    public ActionResult onPlaced(Player player, Location loc, ItemStack stack) {
+    public ActionResult onPlace(Player player, Location loc, ItemStack stack) {
         return ActionResult.PASS;
     }
 

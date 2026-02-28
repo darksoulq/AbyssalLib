@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.multiblock;
 import com.github.darksoulq.abyssallib.common.util.Identifier;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -27,7 +28,7 @@ import java.util.Objects;
 public abstract class Multiblock implements Cloneable {
 
     /** The unique identifier for this multiblock type. */
-    protected final Identifier id;
+    protected final Key id;
 
     /** The current rotation (0-3) assigned during matching. */
     protected int rotation = 0;
@@ -49,7 +50,7 @@ public abstract class Multiblock implements Cloneable {
      *
      * @param id The unique identifier.
      */
-    public Multiblock(Identifier id) {
+    public Multiblock(Key id) {
         this.id = id;
     }
 
@@ -203,7 +204,7 @@ public abstract class Multiblock implements Cloneable {
     public Location getOrigin() { return origin; }
 
     /** @return The unique identifier of this multiblock. */
-    public Identifier getId() {
+    public Key getId() {
         return id;
     }
 

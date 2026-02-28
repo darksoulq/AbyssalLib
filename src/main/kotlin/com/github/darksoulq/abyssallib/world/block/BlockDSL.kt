@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.world.block
 
-import com.github.darksoulq.abyssallib.common.util.Identifier
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry
 import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
+import net.kyori.adventure.key.Key
 import org.bukkit.Material
 
 fun DeferredRegistry<CustomBlock>.register(
@@ -10,8 +10,8 @@ fun DeferredRegistry<CustomBlock>.register(
     material: Material,
     init: BlockBuilder.() -> Unit
 ): Holder<CustomBlock> {
-    return this.register(id) { identifier ->
-        val builder = BlockBuilder(identifier, material)
+    return this.register(id) { key ->
+        val builder = BlockBuilder(key, material)
         builder.init()
         builder.build()
     }
@@ -29,13 +29,13 @@ fun block(
     material: Material,
     init: BlockBuilder.() -> Unit = {}
 ): CustomBlock {
-    val builder = BlockBuilder(Identifier.of(namespace, path), material)
+    val builder = BlockBuilder(Key.key(namespace, path), material)
     builder.init()
     return builder.build()
 }
 
 fun block(
-    id: Identifier,
+    id: Key,
     material: Material,
     init: BlockBuilder.() -> Unit = {}
 ): CustomBlock {

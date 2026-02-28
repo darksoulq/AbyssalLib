@@ -16,6 +16,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 
+@Deprecated
 public class ItemBridge {
     public static final String ID_MINECRAFT = "minecraft";
     public static final String ID_ABYSSAL = "abyssallib";

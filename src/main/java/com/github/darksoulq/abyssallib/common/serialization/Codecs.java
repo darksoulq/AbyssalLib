@@ -1,8 +1,11 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
-import com.github.darksoulq.abyssallib.common.util.Identifier;
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
-import com.github.darksoulq.abyssallib.server.bridge.ItemBridge;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
+import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.potion.PotionMix;
 import io.papermc.paper.registry.RegistryAccess;
@@ -10,10 +13,7 @@ import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.recipe.CookingBookCategory;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
@@ -46,7 +46,6 @@ public class Codecs {
             return ops.createString(value);
         }
     };
-    public static final Codec<Identifier> IDENTIFIER = STRING.xmap(Identifier::of, Identifier::toString);
     public static final Codec<Character> CHARACTER = STRING.xmap((str) -> str.charAt(0), String::valueOf);
     public static final Codec<Integer> INT = new Codec<>() {
         @Override
@@ -169,43 +168,89 @@ public class Codecs {
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getOrThrow,
             RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getKeyOrThrow
     );
-    @SuppressWarnings("unchecked")
+    public static final Codec<List<DataComponent<?>>> DATA_COMPONENT_MAP = new Codec<>() {
+        @Override
+        public <D> List<DataComponent<?>> decode(DynamicOps<D> ops, D input) {
+            if (input == null) throw new CodecException("Expected Map");
+            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map"));
+            List<DataComponent<?>> components = new ArrayList<>();
+            for (Map.Entry<D, D> entry : map.entrySet()) {
+                String componentID = STRING.decode(ops, entry.getKey());
+                com.github.darksoulq.abyssallib.world.item.component.DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(componentID);
+                if (type == null) {
+                    AbyssalLib.LOGGER.warning("Failed to load component with ID: " + componentID + ", The component does not exist");
+                    continue;
+                }
+                DataComponent<?> component = type.codec().decode(ops, entry.getValue());
+                components.add(component);
+            }
+            return components;
+        }
+
+        @Override
+        public <D> D encode(DynamicOps<D> ops, List<DataComponent<?>> value) {
+            if (value == null) throw new CodecException("Expected Map");
+            Map<D, D> map = new HashMap<>();
+            for (DataComponent<?> component : value) {
+                String id = Registries.DATA_COMPONENT_TYPES.getId(component.getType());
+                if (id == null) {
+                    AbyssalLib.LOGGER.warning("Failed to serialize DataComponent as its ID is null");
+                    continue;
+                }
+                map.put(STRING.encode(ops, id), ComponentMap.encodeComponent(component, ops));
+            }
+            return ops.createMap(map);
+        }
+    };
+
     public static final Codec<ItemStack> ITEM_STACK = Codec.fallback(
         new Codec<>() {
             @Override
             public <D> ItemStack decode(DynamicOps<D> ops, D input) throws CodecException {
-                if (ops.getMap(input).isEmpty()) throw new CodecException("Expected map");
-                Map<D, D> map = ops.getMap(input).get();
-                D itemIDKey = map.get(ops.createString("id"));
-                Optional<String> itemID = itemIDKey == null ? Optional.empty() : ops.getStringValue(itemIDKey);
-                D amountKey = map.get(ops.createString("amount"));
-                Optional<Integer> amount = amountKey == null ? Optional.empty() : ops.getIntValue(amountKey);
-                D dataKey = map.get(ops.createString("data"));
-                Optional<Map<String, Optional<D>>> data = (Optional<Map<String, Optional<D>>>) (dataKey == null ? Optional.empty() : ops.getMap(dataKey));
-                if (itemID.isEmpty()) throw new CodecException("Expected id string");
-                ItemStack stack = ItemBridge.get(itemID.get());
-                if (stack == null) throw new CodecException("ItemBridge does not contain ID " + itemID.get());
-                amount.ifPresent(stack::setAmount);
-                data.ifPresent(c -> ItemBridge.deserializeData(c, stack, ops));
-                return stack;
+                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map"));
+                Key itemID = KEY.decode(ops, map.get(ops.createString("id")));
+                Integer amount = INT.nullable().decode(ops, map.get(ops.createString("amount")));
+                List<DataComponent<?>> components = DATA_COMPONENT_MAP.nullable().decode(ops, map.get(ops.createString("data")));
+                Item item;
+                if ("minecraft".equals(itemID.namespace()))
+                    item = new Item(new ItemStack(Material.valueOf(itemID.value().toUpperCase())));
+                else {
+                    Item base = Registries.ITEMS.get(itemID.asString());
+                    if (base == null)
+                        throw new CodecException("Failed to load item, item ID: " + itemID.asString() + ", does not exist");
+                    item = base.clone();
+                }
+                if (amount != null) item.getStack().setAmount(amount);
+                if (components != null && !components.isEmpty()) {
+                    components.forEach(item::setData);
+                }
+                return item.getStack();
             }
 
             @Override
             public <D> D encode(DynamicOps<D> ops, ItemStack value) throws CodecException {
-                Map<D, D> map = new LinkedHashMap<>();
-                map.put(ops.createString("id"), ops.createString(ItemBridge.getIdAsString(value)));
-                if (value.getAmount() > 1) map.put(ops.createString("amount"), ops.createInt(value.getAmount()));
-                Identifier id = ItemBridge.getId(value);
-                Map<String, Optional<Object>> data = ItemBridge.serializeData(value, ops);
-                if (id != null && !value.equals(ItemBridge.get(id)) && !data.isEmpty())
-                    map.put(ops.createString("data"), ops.createMap((Map<D, D>) data));
-                if (!map.containsKey(ops.createString("amount")) && !map.containsKey(ops.createString("data"))) throw new CodecException("Neither data nor amount is present");
-                return (D) map;
+                Map<D, D> map = new HashMap<>();
+                Item item = Item.resolve(value);
+                if (item == null) item = new Item(value);
+                int amount = value.getAmount();
+                List<DataComponent<?>> components = item.getComponentMap().getAllComponents();
+                map.put(ops.createString("id"), KEY.encode(ops, item.getId()));
+                if (amount > 1) map.put(ops.createString("amount"), ops.createInt(amount));
+                if (components != null && !components.isEmpty())
+                    map.put(ops.createString("data"), DATA_COMPONENT_MAP.encode(ops, components));
+                return ops.createMap(map);
             }
         },
-        STRING.xmap(
-            ItemBridge::get,
-            ItemBridge::getIdAsString
+        KEY.xmap(
+            key -> {
+                if (!NamespacedKey.MINECRAFT.equals(key.namespace())) return Registries.ITEMS.get(key.asString()).clone().getStack();
+                else return new ItemStack(Material.valueOf(key.value().toUpperCase()));
+            },
+            stack -> {
+                Item item = Item.resolve(stack);
+                if (item == null) item = new Item(stack);
+                return item.getId();
+            }
         )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()
@@ -344,8 +389,7 @@ public class Codecs {
             RECIPE_CHOICE.fieldOf("template", SmithingTransformRecipe::getTemplate),
             RECIPE_CHOICE.fieldOf("addition", SmithingTransformRecipe::getAddition),
             ITEM_STACK.fieldOf("result", SmithingTransformRecipe::getResult),
-            BOOLEAN.optional().fieldOf("copy_components", r ->
-                    Optional.of(r.willCopyDataComponents())),
+            BOOLEAN.optional().fieldOf("copy_components", r -> Optional.of(r.willCopyDataComponents())),
             (id, base, template, addition,
              result, copy) -> copy.map(aBoolean ->
                     new SmithingTransformRecipe(id, result, template, base, addition, aBoolean)).orElseGet(() -> new SmithingTransformRecipe(id, result, template, base, addition))

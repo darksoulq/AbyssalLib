@@ -9,6 +9,7 @@ import org.bukkit.Location;
 
 import java.util.Map;
 
+@Deprecated
 public class ItemsAdderProvider extends BlockProvider<CustomBlock> {
     public ItemsAdderProvider() {
         super("ia");

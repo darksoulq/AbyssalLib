@@ -11,6 +11,7 @@ import com.github.darksoulq.abyssallib.world.entity.internal.NMSGoalHandler;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
+import net.kyori.adventure.key.Key;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -32,7 +33,7 @@ import java.util.function.Function;
 
 public class CustomEntity<T extends LivingEntity> implements Cloneable {
     public UUID uuid = null;
-    private Identifier id;
+    private Key id;
     private Class<T> baseClass;
     private SpawnCategory category;
     private SpawnSettings spawnSettings;
@@ -43,7 +44,7 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     private ComponentMap componentMap;
     private final Map<Attribute, List<AttributeModifier>> modifiers = new LinkedHashMap<>();
 
-    public CustomEntity(Identifier id, Class<T> baseClass, SpawnCategory category) {
+    public CustomEntity(Key id, Class<T> baseClass, SpawnCategory category) {
         this.id = id;
         this.baseClass = baseClass;
         this.category = category;
@@ -155,7 +156,7 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
         componentMap = new ComponentMap(this);
     }
 
-    public Identifier getId() {
+    public Key getId() {
         return id;
     }
     public Optional<PDCTag> getData() {
