@@ -6,7 +6,7 @@
     <build-profile instance="a">
         <variables>
             <color-preset>soft</color-preset>
-            <primary-color>blueberry</primary-color>
+            <primary-color>aqua</primary-color>
             <noindex-content>false</noindex-content>
         </variables>
     </build-profile>
