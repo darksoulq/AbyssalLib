@@ -172,8 +172,13 @@ public class ItemMenu {
 
     private static Item getPluginIcon(String plugin, long itemCount, long categoryCount) {
         Item icon = Registries.ITEMS.get(plugin + ":plugin_icon");
-        if (icon == null) return null;
-        icon = icon.clone();
+
+        if (icon == null) {
+            icon = new Item(new ItemStack(Material.APPLE));
+        } else {
+            icon = icon.clone();
+        }
+
         icon.setData(new ItemName(Component.translatable("plugin." + plugin, plugin)));
 
         List<Component> lore = new ArrayList<>();
