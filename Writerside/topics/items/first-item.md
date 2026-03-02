@@ -25,7 +25,8 @@ public final class Items {
 You can register an item using the method now.
 
 <tip>
-You can use the <code>ItemModel</code> component to set the texture to a vanilla one. <br>
+You can use the <code>ItemModel</code> component to set the texture to a vanilla one.
+
 <code>item -> item.setData(new ItemModel(Key.key("minecraft", "diamond")</code>
 </tip>
 
@@ -49,7 +50,7 @@ public final class AbyssalLibExample extends JavaPlugin {
 
 Now when you load into the server, and run `/abyssallib contents items` (or use `/abyssallib give <id>`, and open your plugins section you will find the item in it.
 However you will realize the item has a missing texture and an untranslated name
-<img src="creating_1.png" alt="no texture"/>
+<img src="creating_1.png" alt="no texture" style="block" />
 
 ### Creating a Texture and Naming the item
 To load textures, lang files and such, you will need to use the ResourcePack API.
@@ -59,8 +60,8 @@ To load a texture, it must be present inside <path>resources/resourcepack/&lt;na
 
 For example purposes, you can use this `ruby.png` texture. <br>
 
-<img src="ruby_preview.png" alt="ruby_preview.png"/>
-<resource src="../images/items/ruby.png"></resource>
+<img src="ruby_preview.png" alt="ruby_preview.png" style="block"/>
+<resource src="../../images/items/ruby.png"></resource>
 
 ```Java
 public final class Pack {
@@ -92,7 +93,7 @@ public final class Pack {
 ```
 
 Now when you launch the server and check, the item will have a Name and a Texture
-<img src="creating_2.png" alt="textured_item"/>
+<img src="creating_2.png" alt="textured_item" style="block"/>
 
 ### Adding a crafting recipe
 If you want to add a crafting recipe, you can either make a recipe normally, or use the provided RecipeLoader for loading from YML files. <br>
@@ -119,7 +120,7 @@ RecipeLoader.loadResource(this, "data/recipes/ruby.yml");
 ### Custom tooltips
 For custom tooltips, you can either use `Item#setData` to set the `Lore` component, or override `createTooltip` in Item and call it in constructor (aswell as `updateTooltip`). <br>
 <note>
-This example uses the `FireSword` class created in <a href="Custom-Item-Interactions.md"></a>
+This example uses the `FireSword` class created in <a href="item-interactions.md"></a>
 </note>
 
 ```Java

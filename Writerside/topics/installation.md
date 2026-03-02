@@ -9,7 +9,7 @@ To get started, you will need to complete 2 steps:
 2. Adding the `paper-plugin.yml` dependency so the server loads AbyssalLib first.
 
 <note>
-If you plan to use the built-in resource pack features, also check out the <a href="Configuration.md">Configuration</a> page to enable resource pack hosting.
+If you plan to use the built-in resource pack features, also check out the <a href="configuration.md">Configuration</a> page to enable resource pack hosting.
 </note>
 
 ### Adding the Build Dependency

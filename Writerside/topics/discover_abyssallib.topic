@@ -3,23 +3,23 @@
         SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
 <topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
-       title="Discover AbyssalLib" id="Discover-AbyssalLib">
+       title="Discover AbyssalLib" id="discover_abyssallib" help-id="Discover-AbyssalLib">
     <section-starting-page>
         <title>AbyssalLib</title>
         <description>
             PaperMC library for Streamlining Item, Block and GUI creation.
         </description>
         <spotlight>
-            <card href="Installation.md" badge="install" summary="Add the dependency and start using now.">
+            <card href="installation.md" badge="install" summary="Add the dependency and start using now.">
             </card>
-            <card href="Configuration.md" badge="start" summary="Configuration details, for both developers and server owners.">
+            <card href="configuration.md" badge="start" summary="Configuration details, for both developers and server owners.">
             </card>
         </spotlight>
         <primary>
             <title>Items</title>
-            <card href="Creating-Your-First-Item.md" summary="Register your first item.">
+            <card href="first-item.md" summary="Register your first item.">
             </card>
-            <card href="Custom-Item-Interactions.md" summary="Add custom behaviour to your items.">
+            <card href="item-interactions.md" summary="Add custom behaviour to your items.">
             </card>
         </primary>
     </section-starting-page>
