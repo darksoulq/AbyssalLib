@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * This interface is used to inject custom text representations directly into an item's name or lore via code.
  * </p>
  */
+@FunctionalInterface
 public interface ItemTranslationProvider {
 
     /**

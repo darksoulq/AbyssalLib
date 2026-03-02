@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.server.event.ClickType
 import com.github.darksoulq.abyssallib.server.event.InventoryClickType
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext
+import com.github.darksoulq.abyssallib.server.translation.ItemTranslationProvider
 import com.github.darksoulq.abyssallib.world.block.CustomBlock
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent
@@ -27,6 +28,7 @@ annotation class ItemDSL
 class ItemBuilder(val id: Key, val material: Material) {
     private val dataComponents = mutableListOf<DataComponent<*>>()
     private val tags = mutableListOf<ItemTag>()
+    private val translationProviders = mutableListOf<ItemTranslationProvider>()
     private var tooltipConfig: (Item.Tooltip.() -> Unit)? = null
     private var playerTooltipConfig: (Item.Tooltip.(Player?) -> Unit)? = null
 
@@ -60,6 +62,10 @@ class ItemBuilder(val id: Key, val material: Material) {
         dataComponents.add(component)
     }
 
+    fun translation(provider: ItemTranslationProvider) {
+        translationProviders.add(provider)
+    }
+
     fun block(block: CustomBlock) {
         component(BlockItem(block.id))
     }
@@ -86,6 +92,7 @@ class ItemBuilder(val id: Key, val material: Material) {
             init {
                 this@ItemBuilder.dataComponents.forEach { setData(it) }
                 this@ItemBuilder.tags.forEach { setTag(it) }
+                this@ItemBuilder.translationProviders.forEach { addTranslationProvider(it) }
             }
 
             override fun createTooltip(tooltip: Tooltip) {

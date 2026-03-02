@@ -34,15 +34,23 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PacketTranslator {
 
     private static final Map<UUID, Map<Integer, Integer>> translationHashes = new ConcurrentHashMap<>();
+    private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
+    private static final Base64.Encoder B64_ENCODER = Base64.getEncoder();
+    private static final Base64.Decoder B64_DECODER = Base64.getDecoder();
 
     public static void startUpdater() {
-        Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
+        Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), () -> {
             translationHashes.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
 
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -85,31 +93,35 @@ public class PacketTranslator {
                     hashes.remove(-1);
                 }
             }
-        }, 20L, 20L);
+        }, 5L, 5L);
     }
 
     public static Packet<?> processSend(Packet<?> packet, Player player) {
-        if (packet instanceof ClientboundBundlePacket p) return handleBundle(p, player);
-        if (packet instanceof ClientboundSystemChatPacket p) return handleChat(p, player);
-        if (packet instanceof ClientboundSetTitleTextPacket p) return handleTitle(p, player);
-        if (packet instanceof ClientboundSetSubtitleTextPacket p) return handleSubtitle(p, player);
-        if (packet instanceof ClientboundSetActionBarTextPacket p) return handleActionBar(p, player);
-        if (packet instanceof ClientboundOpenScreenPacket p) return handleOpenScreen(p, player);
-        if (packet instanceof ClientboundTabListPacket p) return handleTabList(p, player);
-        if (packet instanceof ClientboundContainerSetSlotPacket p) return handleSlot(p, player);
-        if (packet instanceof ClientboundContainerSetContentPacket p) return handleContent(p, player);
-        if (packet instanceof ClientboundSetEntityDataPacket p) return handleEntityData(p, player);
-        if (packet instanceof ClientboundSetEquipmentPacket p) return handleEquipment(p, player);
-        if (packet instanceof ClientboundMerchantOffersPacket p) return handleMerchantOffers(p, player);
-        return packet;
+        return switch (packet) {
+            case ClientboundBundlePacket p -> handleBundle(p, player);
+            case ClientboundSystemChatPacket p -> handleChat(p, player);
+            case ClientboundSetTitleTextPacket p -> handleTitle(p, player);
+            case ClientboundSetSubtitleTextPacket p -> handleSubtitle(p, player);
+            case ClientboundSetActionBarTextPacket p -> handleActionBar(p, player);
+            case ClientboundOpenScreenPacket p -> handleOpenScreen(p, player);
+            case ClientboundTabListPacket p -> handleTabList(p, player);
+            case ClientboundContainerSetSlotPacket p -> handleSlot(p, player);
+            case ClientboundContainerSetContentPacket p -> handleContent(p, player);
+            case ClientboundSetEntityDataPacket p -> handleEntityData(p, player);
+            case ClientboundSetEquipmentPacket p -> handleEquipment(p, player);
+            case ClientboundMerchantOffersPacket p -> handleMerchantOffers(p, player);
+            default -> packet;
+        };
     }
 
     public static Packet<?> processReceive(Packet<?> packet, Player player) {
-        if (packet instanceof ServerboundContainerClickPacket p) return handleSlotChange(p, player);
-        if (packet instanceof ServerboundSetCreativeModeSlotPacket p) return handleCreativeSlot(p);
-        if (packet instanceof ServerboundPlayerActionPacket p) return handleSlotChange(p, player);
-        if (packet instanceof ServerboundClientInformationPacket p) return handleClientInfo(p, player);
-        return packet;
+        return switch (packet) {
+            case ServerboundContainerClickPacket p -> handleSlotChange(p, player);
+            case ServerboundSetCreativeModeSlotPacket p -> handleCreativeSlot(p);
+            case ServerboundPlayerActionPacket p -> handleSlotChange(p, player);
+            case ServerboundClientInformationPacket p -> handleClientInfo(p, player);
+            default -> packet;
+        };
     }
 
     @SuppressWarnings("unchecked")
@@ -202,8 +214,7 @@ public class PacketTranslator {
         for (SynchedEntityData.DataValue<?> entry : packed) {
             Object val = entry.value();
             switch (val) {
-                case
-                    Optional<?> opt when opt.isPresent() && opt.get() instanceof net.minecraft.network.chat.Component c -> {
+                case Optional<?> opt when opt.isPresent() && opt.get() instanceof net.minecraft.network.chat.Component c -> {
                     net.minecraft.network.chat.Component translated = translateNMS(c, player);
                     EntityDataSerializer<Optional<net.minecraft.network.chat.Component>> serializer = (EntityDataSerializer<Optional<net.minecraft.network.chat.Component>>) entry.serializer();
                     newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, Optional.of(translated)));
@@ -360,20 +371,19 @@ public class PacketTranslator {
 
         CompoundTag translationCache = new CompoundTag();
         boolean hasOg = false;
-        GsonComponentSerializer gson = GsonComponentSerializer.gson();
 
         net.minecraft.network.chat.Component customName = stack.get(DataComponents.CUSTOM_NAME);
         if (customName != null) {
-            String json = gson.serialize(PaperAdventure.asAdventure(customName));
-            translationCache.putString("cn", Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8)));
+            String json = GSON.serialize(PaperAdventure.asAdventure(customName));
+            translationCache.putString("cn", B64_ENCODER.encodeToString(json.getBytes(StandardCharsets.UTF_8)));
             stack.set(DataComponents.CUSTOM_NAME, translateItemNMS(customName, player, stack, ItemTranslationContext.CUSTOM_NAME));
             hasOg = true;
         }
 
         net.minecraft.network.chat.Component itemName = stack.get(DataComponents.ITEM_NAME);
         if (itemName != null) {
-            String json = gson.serialize(PaperAdventure.asAdventure(itemName));
-            translationCache.putString("in", Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8)));
+            String json = GSON.serialize(PaperAdventure.asAdventure(itemName));
+            translationCache.putString("in", B64_ENCODER.encodeToString(json.getBytes(StandardCharsets.UTF_8)));
             stack.set(DataComponents.ITEM_NAME, translateItemNMS(itemName, player, stack, ItemTranslationContext.NAME));
             hasOg = true;
         }
@@ -384,8 +394,8 @@ public class PacketTranslator {
             List<net.minecraft.network.chat.Component> translatedLines = new ArrayList<>();
 
             for (net.minecraft.network.chat.Component line : lore.lines()) {
-                String json = gson.serialize(PaperAdventure.asAdventure(line));
-                loreOg.add(StringTag.valueOf(Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8))));
+                String json = GSON.serialize(PaperAdventure.asAdventure(line));
+                loreOg.add(StringTag.valueOf(B64_ENCODER.encodeToString(json.getBytes(StandardCharsets.UTF_8))));
                 translatedLines.add(translateItemNMS(line, player, stack, ItemTranslationContext.LORE));
             }
             translationCache.put("lr", loreOg);
@@ -423,22 +433,21 @@ public class PacketTranslator {
         if (cacheOpt.isEmpty()) return false;
 
         CompoundTag translationCache = cacheOpt.get();
-        GsonComponentSerializer gson = GsonComponentSerializer.gson();
 
         try {
             translationCache.getString("cn").ifPresent(b64 -> {
                 try {
                     String cleanB64 = b64.replaceAll("^\"|\"$", "");
-                    String json = new String(Base64.getDecoder().decode(cleanB64), StandardCharsets.UTF_8);
-                    stack.set(DataComponents.CUSTOM_NAME, PaperAdventure.asVanilla(gson.deserialize(json)));
+                    String json = new String(B64_DECODER.decode(cleanB64), StandardCharsets.UTF_8);
+                    stack.set(DataComponents.CUSTOM_NAME, PaperAdventure.asVanilla(GSON.deserialize(json)));
                 } catch (Exception ignored) {}
             });
 
             translationCache.getString("in").ifPresent(b64 -> {
                 try {
                     String cleanB64 = b64.replaceAll("^\"|\"$", "");
-                    String json = new String(Base64.getDecoder().decode(cleanB64), StandardCharsets.UTF_8);
-                    stack.set(DataComponents.ITEM_NAME, PaperAdventure.asVanilla(gson.deserialize(json)));
+                    String json = new String(B64_DECODER.decode(cleanB64), StandardCharsets.UTF_8);
+                    stack.set(DataComponents.ITEM_NAME, PaperAdventure.asVanilla(GSON.deserialize(json)));
                 } catch (Exception ignored) {}
             });
 
@@ -449,8 +458,8 @@ public class PacketTranslator {
                         tag.asString().ifPresent(b64 -> {
                             try {
                                 String cleanB64 = b64.replaceAll("^\"|\"$", "");
-                                String json = new String(Base64.getDecoder().decode(cleanB64), StandardCharsets.UTF_8);
-                                restoredLines.add(PaperAdventure.asVanilla(gson.deserialize(json)));
+                                String json = new String(B64_DECODER.decode(cleanB64), StandardCharsets.UTF_8);
+                                restoredLines.add(PaperAdventure.asVanilla(GSON.deserialize(json)));
                             } catch (Exception ignored) {}
                         });
                     }

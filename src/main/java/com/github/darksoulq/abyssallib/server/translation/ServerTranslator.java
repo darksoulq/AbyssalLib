@@ -3,9 +3,11 @@ package com.github.darksoulq.abyssallib.server.translation;
 import com.github.darksoulq.abyssallib.common.color.MiniMessageBridge;
 import com.github.darksoulq.abyssallib.server.translation.internal.CustomTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
+import com.github.darksoulq.abyssallib.world.item.Item;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslationArgument;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.renderer.TranslatableComponentRenderer;
 import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.entity.Player;
@@ -133,9 +135,19 @@ public final class ServerTranslator {
             String key = translatable.key();
             String resolvedMmString = null;
 
-            for (ItemTranslationProvider provider : ITEM_PROVIDERS) {
-                resolvedMmString = provider.resolve(key, item, player, context);
-                if (resolvedMmString != null) break;
+            Item customItem = Item.resolve(item);
+            if (customItem != null) {
+                for (ItemTranslationProvider provider : customItem.getTranslationProviders()) {
+                    resolvedMmString = provider.resolve(key, item, player, context);
+                    if (resolvedMmString != null) break;
+                }
+            }
+
+            if (resolvedMmString == null) {
+                for (ItemTranslationProvider provider : ITEM_PROVIDERS) {
+                    resolvedMmString = provider.resolve(key, item, player, context);
+                    if (resolvedMmString != null) break;
+                }
             }
 
             Component rendered;
@@ -146,7 +158,24 @@ public final class ServerTranslator {
                 MessageFormat format = TRANSLATOR.translate(key, locale);
 
                 if (format != null) {
-                    rendered = MiniMessageBridge.parse(format.toPattern(), PlaceholderService.resolve(player));
+                    String pattern = format.toPattern();
+                    List<TagResolver> resolvers = new ArrayList<>();
+                    resolvers.add(PlaceholderService.resolve(player));
+
+                    List<TranslationArgument> args = translatable.arguments();
+                    for (int i = 0; i < args.size(); i++) {
+                        TranslationArgument arg = args.get(i);
+                        Object val = arg.value();
+                        Component argComponent;
+                        if (val instanceof Component componentArg) {
+                            argComponent = processComponent(componentArg, player, item, context);
+                        } else {
+                            argComponent = Component.text(val.toString());
+                        }
+                        resolvers.add(Placeholder.component(String.valueOf(i), argComponent));
+                        pattern = pattern.replace("{" + i + "}", "<" + i + ">");
+                    }
+                    rendered = MiniMessageBridge.parse(pattern, resolvers.toArray(new TagResolver[0]));
                 } else {
                     List<TranslationArgument> processedArgs = new ArrayList<>();
                     for (TranslationArgument arg : translatable.arguments()) {

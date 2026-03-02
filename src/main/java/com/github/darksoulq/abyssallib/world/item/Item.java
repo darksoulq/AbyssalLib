@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.server.event.InventoryClickType;
 import com.github.darksoulq.abyssallib.server.event.context.item.AnvilContext;
 import com.github.darksoulq.abyssallib.server.event.context.item.UseContext;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.translation.ItemTranslationProvider;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.ItemTag;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
@@ -55,6 +56,11 @@ public class Item implements Cloneable {
      * The map containing all {@link DataComponent}s applied to this item.
      */
     private ComponentMap componentMap;
+
+    /**
+     * A list of local item translation providers applied strictly to this custom item instance.
+     */
+    private List<ItemTranslationProvider> translationProviders = new ArrayList<>();
 
     /**
      * The helper object used to build and manage procedural tooltips.
@@ -111,6 +117,24 @@ public class Item implements Cloneable {
         setData(new ItemName(Component.translatable("item." + id.namespace() + "." + id.value())));
         setData(new ItemModel(id));
         setData(new CustomMarker(id));
+    }
+
+    /**
+     * Retrieves the list of local translation providers applied to this item.
+     *
+     * @return A list of {@link ItemTranslationProvider} instances.
+     */
+    public List<ItemTranslationProvider> getTranslationProviders() {
+        return translationProviders;
+    }
+
+    /**
+     * Adds a translation provider to this item for resolving localized text elements dynamically.
+     *
+     * @param provider The {@link ItemTranslationProvider} to add.
+     */
+    public void addTranslationProvider(ItemTranslationProvider provider) {
+        this.translationProviders.add(provider);
     }
 
     /**
@@ -514,6 +538,7 @@ public class Item implements Cloneable {
             item.id = this.id;
             item.stack = this.stack.clone();
             item.componentMap = new ComponentMap(item);
+            item.translationProviders = new ArrayList<>(this.translationProviders);
             item.tooltip = new Tooltip();
             item.tooltip.hide = this.tooltip.hide;
             item.tooltip.style = this.tooltip.style;

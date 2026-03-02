@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.world.item.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
@@ -18,29 +18,35 @@ public class ItemTicker {
 
     public static void start() {
         if (task != null) return;
-        task = TaskUtil.repeatingTask(AbyssalLib.getInstance(), 0, 1, () -> {
-            for (Player player : items.keySet()) {
-                List<Item> item = items.get(player);
-                if (item == null || item.isEmpty()) continue;
-                for (Item i : item) {
+        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), () -> {
+            for (Map.Entry<Player, List<Item>> entry : items.entrySet()) {
+                Player player = entry.getKey();
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                List<Item> itemList = entry.getValue();
+                if (itemList == null || itemList.isEmpty()) continue;
+                for (Item i : itemList) {
                     i.onInventoryTick(player);
                 }
             }
-        });
+        }, 0L, 5L);
     }
 
     public static void update(Player player) {
-        List<Item> items = new ArrayList<>();
-        for (ItemStack stack : player.getInventory().getContents()) {
-            if (stack == null) continue;
-            Item item = Item.resolve(stack);
-            if (item != null) items.add(item);
-        }
-        if (items.isEmpty()) {
-            remove(player);
-            return;
-        }
-        ItemTicker.items.put(player, items);
+        Bukkit.getScheduler().runTaskAsynchronously(AbyssalLib.getInstance(), () -> {
+            List<Item> playerItems = new ArrayList<>();
+            for (ItemStack stack : player.getInventory().getContents()) {
+                if (stack == null) continue;
+                Item item = Item.resolve(stack);
+                if (item != null) playerItems.add(item);
+            }
+            if (playerItems.isEmpty()) {
+                remove(player);
+            } else {
+                items.put(player, playerItems);
+            }
+        });
     }
 
     public static void remove(Player player) {
