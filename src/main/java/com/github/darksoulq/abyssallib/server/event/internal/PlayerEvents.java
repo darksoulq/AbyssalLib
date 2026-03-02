@@ -9,7 +9,11 @@ import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -17,6 +21,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class PlayerEvents {
     @SubscribeEvent(ignoreCancelled = false)

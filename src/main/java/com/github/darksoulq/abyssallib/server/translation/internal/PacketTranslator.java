@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.translation.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.translation.ItemTranslationContext;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.mojang.datafixers.util.Pair;
@@ -29,6 +30,7 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 
 import java.nio.charset.StandardCharsets;
@@ -50,7 +52,7 @@ public class PacketTranslator {
 
                 for (int i = 0; i < menu.slots.size(); i++) {
                     Slot slot = menu.slots.get(i);
-                    if (slot != null && slot.hasItem()) {
+                    if (slot.hasItem()) {
                         ItemStack original = slot.getItem();
                         ItemStack translated = original.copy();
                         translateItem(translated, player);
@@ -199,28 +201,32 @@ public class PacketTranslator {
 
         for (SynchedEntityData.DataValue<?> entry : packed) {
             Object val = entry.value();
-            if (val instanceof Optional<?> opt && opt.isPresent() && opt.get() instanceof net.minecraft.network.chat.Component c) {
-                net.minecraft.network.chat.Component translated = translateNMS(c, player);
-                EntityDataSerializer<Optional<net.minecraft.network.chat.Component>> serializer = (EntityDataSerializer<Optional<net.minecraft.network.chat.Component>>) entry.serializer();
-                newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, Optional.of(translated)));
-                modified = true;
-            } else if (val instanceof net.minecraft.network.chat.Component c) {
-                net.minecraft.network.chat.Component translated = translateNMS(c, player);
-                EntityDataSerializer<net.minecraft.network.chat.Component> serializer = (EntityDataSerializer<net.minecraft.network.chat.Component>) entry.serializer();
-                newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, translated));
-                modified = true;
-            } else if (val instanceof ItemStack stack) {
-                if (!stack.isEmpty()) {
-                    ItemStack copy = stack.copy();
-                    translateItem(copy, player);
-                    EntityDataSerializer<ItemStack> serializer = (EntityDataSerializer<ItemStack>) entry.serializer();
-                    newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, copy));
+            switch (val) {
+                case
+                    Optional<?> opt when opt.isPresent() && opt.get() instanceof net.minecraft.network.chat.Component c -> {
+                    net.minecraft.network.chat.Component translated = translateNMS(c, player);
+                    EntityDataSerializer<Optional<net.minecraft.network.chat.Component>> serializer = (EntityDataSerializer<Optional<net.minecraft.network.chat.Component>>) entry.serializer();
+                    newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, Optional.of(translated)));
                     modified = true;
-                } else {
-                    newValues.add(entry);
                 }
-            } else {
-                newValues.add(entry);
+                case net.minecraft.network.chat.Component c -> {
+                    net.minecraft.network.chat.Component translated = translateNMS(c, player);
+                    EntityDataSerializer<net.minecraft.network.chat.Component> serializer = (EntityDataSerializer<net.minecraft.network.chat.Component>) entry.serializer();
+                    newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, translated));
+                    modified = true;
+                }
+                case ItemStack stack -> {
+                    if (!stack.isEmpty()) {
+                        ItemStack copy = stack.copy();
+                        translateItem(copy, player);
+                        EntityDataSerializer<ItemStack> serializer = (EntityDataSerializer<ItemStack>) entry.serializer();
+                        newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, copy));
+                        modified = true;
+                    } else {
+                        newValues.add(entry);
+                    }
+                }
+                default -> newValues.add(entry);
             }
         }
 
@@ -360,7 +366,7 @@ public class PacketTranslator {
         if (customName != null) {
             String json = gson.serialize(PaperAdventure.asAdventure(customName));
             translationCache.putString("cn", Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8)));
-            stack.set(DataComponents.CUSTOM_NAME, translateNMS(customName, player));
+            stack.set(DataComponents.CUSTOM_NAME, translateItemNMS(customName, player, stack, ItemTranslationContext.CUSTOM_NAME));
             hasOg = true;
         }
 
@@ -368,7 +374,7 @@ public class PacketTranslator {
         if (itemName != null) {
             String json = gson.serialize(PaperAdventure.asAdventure(itemName));
             translationCache.putString("in", Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8)));
-            stack.set(DataComponents.ITEM_NAME, translateNMS(itemName, player));
+            stack.set(DataComponents.ITEM_NAME, translateItemNMS(itemName, player, stack, ItemTranslationContext.NAME));
             hasOg = true;
         }
 
@@ -380,7 +386,7 @@ public class PacketTranslator {
             for (net.minecraft.network.chat.Component line : lore.lines()) {
                 String json = gson.serialize(PaperAdventure.asAdventure(line));
                 loreOg.add(StringTag.valueOf(Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8))));
-                translatedLines.add(translateNMS(line, player));
+                translatedLines.add(translateItemNMS(line, player, stack, ItemTranslationContext.LORE));
             }
             translationCache.put("lr", loreOg);
             stack.set(DataComponents.LORE, new ItemLore(translatedLines));
@@ -393,6 +399,13 @@ public class PacketTranslator {
             rootTag.put("CustomData", customDataKeyTag);
             stack.set(DataComponents.CUSTOM_DATA, CustomData.of(rootTag));
         }
+    }
+
+    private static net.minecraft.network.chat.Component translateItemNMS(net.minecraft.network.chat.Component vanilla, Player player, ItemStack stack, ItemTranslationContext context) {
+        Component adventure = PaperAdventure.asAdventure(vanilla);
+        org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
+        Component translated = ServerTranslator.translateItemComponent(adventure, player, bukkitStack, context);
+        return PaperAdventure.asVanilla(translated);
     }
 
     private static boolean untranslateItem(ItemStack stack) {

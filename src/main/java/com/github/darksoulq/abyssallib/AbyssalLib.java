@@ -21,6 +21,7 @@ import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
+import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
 import com.github.darksoulq.abyssallib.server.translation.internal.PacketTranslator;
 import com.github.darksoulq.abyssallib.server.util.HookConstants;
