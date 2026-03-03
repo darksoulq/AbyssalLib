@@ -17,18 +17,24 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class stores {@link ResourceBundle}s in a thread-safe map, allowing for
  * dynamic registration and retrieval of localized strings. It serves as the
  * bridge between raw property files and the high-level component rendering system.
+ * </p>
  */
 public class CustomTranslator implements Translator {
-    /** The unique {@link Key} identifying this translation source within Adventure. */
+
+    /**
+     * The unique {@link Key} identifying this translation source within Adventure.
+     */
     private static final Key KEY = Key.key("abyssallib", "translator");
 
-    /** * A thread-safe map storing {@link ResourceBundle} data indexed by their
-     * respective {@link Locale}.
+    /**
+     * A thread-safe map storing {@link ResourceBundle} data indexed by their respective {@link Locale}.
      */
     private final Map<Locale, ResourceBundle> bundles = new ConcurrentHashMap<>();
 
     /**
-     * @return The unique identifier for this translator instance.
+     * Retrieves the unique identifier for this translator instance.
+     *
+     * @return The translation key associated with this source.
      */
     @Override
     public @NotNull Key name() {
@@ -37,21 +43,32 @@ public class CustomTranslator implements Translator {
 
     /**
      * Attempts to translate a key into a {@link MessageFormat} for a specific locale.
-     * <p>
-     * If the specified locale is not found, the system will attempt to fall
-     * back to the {@link Locale#US} bundle.
      *
      * @param key    The translation key to look up.
      * @param locale The target {@link Locale} for the translation.
-     * @return A {@link MessageFormat} containing the translated pattern,
-     * or {@code null} if the key is missing from both the target and fallback bundles.
+     * @return A {@link MessageFormat} containing the translated pattern, or {@code null} if missing.
      */
     @Override
     public @Nullable MessageFormat translate(@NotNull String key, @NotNull Locale locale) {
+        String format = getRawTranslation(key, locale);
+        if (format != null) {
+            return new MessageFormat(format, locale);
+        }
+        return null;
+    }
+
+    /**
+     * Retrieves the raw string format from the bundle bypassing {@link MessageFormat} parsing.
+     * This prevents unintended alteration of formatting characters such as single quotes and brackets.
+     *
+     * @param key    The translation key to look up.
+     * @param locale The target {@link Locale} for the translation.
+     * @return The raw, unparsed localized string, or {@code null} if missing.
+     */
+    public @Nullable String getRawTranslation(@NotNull String key, @NotNull Locale locale) {
         ResourceBundle bundle = getBundle(locale);
         if (bundle != null && bundle.containsKey(key)) {
-            String format = bundle.getString(key);
-            return new MessageFormat(format, locale);
+            return bundle.getString(key);
         }
         return null;
     }
@@ -62,7 +79,7 @@ public class CustomTranslator implements Translator {
      * @param locale The locale associated with the bundle.
      * @param bundle The {@link ResourceBundle} containing the translation keys and values.
      */
-    public void register(Locale locale, ResourceBundle bundle) {
+    public void register(@NotNull Locale locale, @NotNull ResourceBundle bundle) {
         bundles.put(locale, bundle);
     }
 
@@ -79,8 +96,7 @@ public class CustomTranslator implements Translator {
      * @param locale The requested {@link Locale}.
      * @return The matching {@link ResourceBundle}, the US fallback, or {@code null} if neither exist.
      */
-    @Nullable
-    private ResourceBundle getBundle(Locale locale) {
+    private @Nullable ResourceBundle getBundle(@NotNull Locale locale) {
         ResourceBundle bundle = bundles.get(locale);
         if (bundle == null && !locale.equals(Locale.US)) {
             return bundles.get(Locale.US);

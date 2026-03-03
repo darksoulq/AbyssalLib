@@ -8,17 +8,22 @@ import com.mojang.datafixers.util.Pair;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ClientboundShowDialogPacket;
 import net.minecraft.network.protocol.common.ServerboundClientInformationPacket;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.dialog.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -28,6 +33,7 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.scores.Objective;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -43,7 +49,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PacketTranslator {
-
     private static final Map<UUID, Map<Integer, Integer>> translationHashes = new ConcurrentHashMap<>();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
     private static final Base64.Encoder B64_ENCODER = Base64.getEncoder();
@@ -99,17 +104,22 @@ public class PacketTranslator {
     public static Packet<?> processSend(Packet<?> packet, Player player) {
         return switch (packet) {
             case ClientboundBundlePacket p -> handleBundle(p, player);
-            case ClientboundSystemChatPacket p -> handleChat(p, player);
-            case ClientboundSetTitleTextPacket p -> handleTitle(p, player);
-            case ClientboundSetSubtitleTextPacket p -> handleSubtitle(p, player);
-            case ClientboundSetActionBarTextPacket p -> handleActionBar(p, player);
-            case ClientboundOpenScreenPacket p -> handleOpenScreen(p, player);
-            case ClientboundTabListPacket p -> handleTabList(p, player);
             case ClientboundContainerSetSlotPacket p -> handleSlot(p, player);
             case ClientboundContainerSetContentPacket p -> handleContent(p, player);
             case ClientboundSetEntityDataPacket p -> handleEntityData(p, player);
             case ClientboundSetEquipmentPacket p -> handleEquipment(p, player);
             case ClientboundMerchantOffersPacket p -> handleMerchantOffers(p, player);
+            case ClientboundShowDialogPacket p -> handleShowDialog(p, player);
+            case ClientboundSystemChatPacket p -> handleSystemChat(p, player);
+            case ClientboundPlayerChatPacket p -> handlePlayerChat(p, player);
+            case ClientboundDisguisedChatPacket p -> handleDisguisedChat(p, player);
+            case ClientboundSetActionBarTextPacket p -> handleActionBar(p, player);
+            case ClientboundSetTitleTextPacket p -> handleTitle(p, player);
+            case ClientboundSetSubtitleTextPacket p -> handleSubtitle(p, player);
+            case ClientboundTabListPacket p -> handleTabList(p, player);
+            case ClientboundOpenScreenPacket p -> handleOpenScreen(p, player);
+            case ClientboundSetObjectivePacket p -> handleObjective(p, player);
+            case ClientboundBossEventPacket p -> handleBossEvent(p, player);
             default -> packet;
         };
     }
@@ -139,31 +149,159 @@ public class PacketTranslator {
         return new ClientboundBundlePacket(subPackets);
     }
 
-    private static Packet<?> handleChat(ClientboundSystemChatPacket packet, Player player) {
-        return new ClientboundSystemChatPacket((net.minecraft.network.chat.Component) translate(packet.content(), player), packet.overlay());
+    private static Packet<?> handleSystemChat(ClientboundSystemChatPacket packet, Player player) {
+        return new ClientboundSystemChatPacket(translateNMS(packet.content(), player), packet.overlay());
     }
 
-    private static Packet<?> handleTitle(ClientboundSetTitleTextPacket packet, Player player) {
-        return new ClientboundSetTitleTextPacket((net.minecraft.network.chat.Component) translate(packet.text(), player));
+    private static Packet<?> handlePlayerChat(ClientboundPlayerChatPacket packet, Player player) {
+        net.minecraft.network.chat.Component content = packet.unsignedContent();
+        if (content == null) {
+            content = net.minecraft.network.chat.Component.literal(packet.body().content());
+        }
+
+        ChatType.Bound chatType = packet.chatType();
+        ChatType.Bound translatedChatType = new ChatType.Bound(
+            chatType.chatType(),
+            translateNMS(chatType.name(), player),
+            chatType.targetName().map(c -> translateNMS(c, player))
+        );
+
+        return new ClientboundPlayerChatPacket(
+            packet.globalIndex(),
+            packet.sender(),
+            packet.index(),
+            packet.signature(),
+            packet.body(),
+            translateNMS(content, player),
+            packet.filterMask(),
+            translatedChatType
+        );
     }
 
-    private static Packet<?> handleSubtitle(ClientboundSetSubtitleTextPacket packet, Player player) {
-        return new ClientboundSetSubtitleTextPacket((net.minecraft.network.chat.Component) translate(packet.text(), player));
+    private static Packet<?> handleDisguisedChat(ClientboundDisguisedChatPacket packet, Player player) {
+        ChatType.Bound chatType = packet.chatType();
+        ChatType.Bound translatedChatType = new ChatType.Bound(
+            chatType.chatType(),
+            translateNMS(chatType.name(), player),
+            chatType.targetName().map(c -> translateNMS(c, player))
+        );
+
+        return new ClientboundDisguisedChatPacket(
+            translateNMS(packet.message(), player),
+            translatedChatType
+        );
     }
 
     private static Packet<?> handleActionBar(ClientboundSetActionBarTextPacket packet, Player player) {
-        return new ClientboundSetActionBarTextPacket((net.minecraft.network.chat.Component) translate(packet.text(), player));
+        return new ClientboundSetActionBarTextPacket(translateNMS(packet.text(), player));
     }
 
-    private static Packet<?> handleOpenScreen(ClientboundOpenScreenPacket packet, Player player) {
-        return new ClientboundOpenScreenPacket(packet.getContainerId(), packet.getType(), (net.minecraft.network.chat.Component) translate(packet.getTitle(), player));
+    private static Packet<?> handleTitle(ClientboundSetTitleTextPacket packet, Player player) {
+        return new ClientboundSetTitleTextPacket(translateNMS(packet.text(), player));
+    }
+
+    private static Packet<?> handleSubtitle(ClientboundSetSubtitleTextPacket packet, Player player) {
+        return new ClientboundSetSubtitleTextPacket(translateNMS(packet.text(), player));
     }
 
     private static Packet<?> handleTabList(ClientboundTabListPacket packet, Player player) {
-        return new ClientboundTabListPacket(
-            (net.minecraft.network.chat.Component) translate(packet.header(), player),
-            (net.minecraft.network.chat.Component) translate(packet.footer(), player)
+        return new ClientboundTabListPacket(translateNMS(packet.header(), player), translateNMS(packet.footer(), player));
+    }
+
+    private static Packet<?> handleOpenScreen(ClientboundOpenScreenPacket packet, Player player) {
+        return new ClientboundOpenScreenPacket(packet.getContainerId(), packet.getType(), translateNMS(packet.getTitle(), player));
+    }
+
+    private static Packet<?> handleObjective(ClientboundSetObjectivePacket packet, Player player) {
+        Objective dummy = new Objective(
+            null,
+            packet.getObjectiveName(),
+            null,
+            translateNMS(packet.getDisplayName(), player),
+            packet.getRenderType(),
+            false,
+            packet.getNumberFormat().orElse(null)
         );
+        return new ClientboundSetObjectivePacket(dummy, packet.getMethod());
+    }
+
+    private static Packet<?> handleBossEvent(ClientboundBossEventPacket packet, Player player) {
+        try {
+            for (java.lang.reflect.Field field : packet.getClass().getDeclaredFields()) {
+                if (net.minecraft.network.chat.Component.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    net.minecraft.network.chat.Component comp = (net.minecraft.network.chat.Component) field.get(packet);
+                    if (comp != null) {
+                        field.set(packet, translateNMS(comp, player));
+                    }
+                } else if (!field.getType().isPrimitive() && !field.getType().getName().startsWith("java.lang.")) {
+                    field.setAccessible(true);
+                    Object innerObj = field.get(packet);
+                    if (innerObj != null) {
+                        for (java.lang.reflect.Field innerField : innerObj.getClass().getDeclaredFields()) {
+                            if (net.minecraft.network.chat.Component.class.isAssignableFrom(innerField.getType())) {
+                                innerField.setAccessible(true);
+                                net.minecraft.network.chat.Component innerComp = (net.minecraft.network.chat.Component) innerField.get(innerObj);
+                                if (innerComp != null) {
+                                    innerField.set(innerObj, translateNMS(innerComp, player));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return packet;
+    }
+
+    private static Packet<?> handleShowDialog(ClientboundShowDialogPacket packet, Player player) {
+        Dialog original = packet.dialog().value();
+        Dialog translated = translateDialog(original, player);
+        if (original == translated) return packet;
+        return new ClientboundShowDialogPacket(Holder.direct(translated));
+    }
+
+    private static Dialog translateDialog(Dialog dialog, Player player) {
+        if (dialog instanceof NoticeDialog(CommonDialogData common, ActionButton action)) {
+            return new NoticeDialog(translateCommonDialogData(common, player), translateActionButton(action, player));
+        } else if (dialog instanceof ConfirmationDialog(CommonDialogData common, ActionButton yesButton, ActionButton noButton)) {
+            return new ConfirmationDialog(translateCommonDialogData(common, player), translateActionButton(yesButton, player), translateActionButton(noButton, player));
+        } else if (dialog instanceof DialogListDialog(CommonDialogData common, HolderSet<Dialog> dialogs, Optional<ActionButton> exitAction, int columns, int buttonWidth)) {
+            List<Holder<Dialog>> newDialogs = new ArrayList<>();
+            for (Holder<Dialog> h : dialogs) {
+                newDialogs.add(Holder.direct(translateDialog(h.value(), player)));
+            }
+            return new DialogListDialog(translateCommonDialogData(common, player), HolderSet.direct(newDialogs), exitAction.map(a -> translateActionButton(a, player)), columns, buttonWidth);
+        } else if (dialog instanceof MultiActionDialog(CommonDialogData common, List<ActionButton> actions, Optional<ActionButton> exitAction, int columns)) {
+            List<ActionButton> newActions = actions.stream().map(a -> translateActionButton(a, player)).toList();
+            return new MultiActionDialog(translateCommonDialogData(common, player), newActions, exitAction.map(a -> translateActionButton(a, player)), columns);
+        } else if (dialog instanceof ServerLinksDialog(CommonDialogData common, Optional<ActionButton> exitAction, int columns, int buttonWidth)) {
+            return new ServerLinksDialog(translateCommonDialogData(common, player), exitAction.map(a -> translateActionButton(a, player)), columns, buttonWidth);
+        }
+        return dialog;
+    }
+
+    private static CommonDialogData translateCommonDialogData(CommonDialogData data, Player player) {
+        return new CommonDialogData(
+            translateNMS(data.title(), player),
+            data.externalTitle().map(c -> translateNMS(c, player)),
+            data.canCloseWithEscape(),
+            data.pause(),
+            data.afterAction(),
+            data.body(),
+            data.inputs()
+        );
+    }
+
+    private static CommonButtonData translateCommonButtonData(CommonButtonData data, Player player) {
+        return new CommonButtonData(
+            translateNMS(data.label(), player),
+            data.width()
+        );
+    }
+
+    private static ActionButton translateActionButton(ActionButton button, Player player) {
+        return new ActionButton(translateCommonButtonData(button.button(), player), button.action());
     }
 
     private static Packet<?> handleSlot(ClientboundContainerSetSlotPacket packet, Player player) {
@@ -481,13 +619,6 @@ public class PacketTranslator {
             }
         }
         return true;
-    }
-
-    private static Object translate(Object vanillaComponent, Player player) {
-        if (vanillaComponent instanceof net.minecraft.network.chat.Component c) {
-            return translateNMS(c, player);
-        }
-        return vanillaComponent;
     }
 
     private static net.minecraft.network.chat.Component translateNMS(net.minecraft.network.chat.Component vanilla, Player player) {

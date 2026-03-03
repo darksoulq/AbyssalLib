@@ -5,11 +5,12 @@ import com.github.darksoulq.abyssallib.server.translation.internal.CustomTransla
 import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.TranslationArgument;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.text.renderer.TranslatableComponentRenderer;
-import net.kyori.adventure.translation.GlobalTranslator;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -18,52 +19,54 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
 
 /**
- * A central utility for server-side translations, custom MiniMessage rendering, and localized item processing.
+ * Utility class for managing server-side component translations and MiniMessage parsing.
  * <p>
- * This class hooks into Adventure's GlobalTranslator to provide custom, on-the-fly component translations.
- * It also supports custom injected item providers to allow developers to replace translatable keys with code-defined MiniMessage strings.
+ * This system decouples entirely from Adventure's standard GlobalTranslator to avert Server-Side Rendering conflicts.
+ * It manually resolves formatting indexes, nested localized tags, and custom item-specific components prior to evaluating
+ * the raw string through the overarching MiniMessage implementation.
  * </p>
  */
 public final class ServerTranslator {
 
     /**
-     * The custom underlying translator source for mapping translation keys to patterns.
+     * The custom source utilized for mapping dictionary translation keys directly to raw localized format patterns.
      */
     private static final CustomTranslator TRANSLATOR = new CustomTranslator();
 
     /**
-     * The renderer responsible for taking a translatable component and a locale, and returning a fully resolved localized component.
-     */
-    private static final TranslatableComponentRenderer<Locale> RENDERER = TranslatableComponentRenderer.usingTranslationSource(GlobalTranslator.translator());
-
-    /**
-     * A registry mapping plugins to their internal resource file paths to be loaded during translation reloads.
+     * A map storing target plugin instances paired to lists of internal resource paths defining language files.
      */
     private static final Map<Plugin, List<String>> RESOURCE_FILES = new HashMap<>();
 
     /**
-     * A list of external file paths registered to be loaded into the custom translator.
+     * A sequential list storing external system file paths containing parsed translation properties.
      */
     private static final List<Path> PATH_FILES = new ArrayList<>();
 
     /**
-     * A list of active providers capable of replacing translation keys with dynamic MiniMessage text for item components.
+     * A sequential list of active providers utilized for dynamically substituting translation keys exclusively on item components.
      */
     private static final List<ItemTranslationProvider> ITEM_PROVIDERS = new ArrayList<>();
 
     /**
-     * Initializes the server translator, adding its custom translator to the global translation source, and reloads languages.
+     * Initializes the server translation module and invokes the primary language loading sequence.
      */
     public static void init() {
-        GlobalTranslator.translator().addSource(TRANSLATOR);
         reload();
     }
 
     /**
-     * Reloads all translation entries from the designated language files and plugin resources.
+     * Reloads all active translation configurations traversing registered system files and internally bundled plugin resources.
      */
     public static void reload() {
         LanguageLoader.load(TRANSLATOR);
@@ -72,135 +75,164 @@ public final class ServerTranslator {
     }
 
     /**
-     * Registers a custom item translation provider.
-     * Providers can define and resolve specific keys on items.
+     * Registers a custom item translation provider empowering dynamic resolution of item-bound translatable component keys.
      *
-     * @param provider The item translation provider to register.
+     * @param provider The provider implementation added to the internal resolution registry.
      */
-    public static void registerItemProvider(ItemTranslationProvider provider) {
+    public static void registerItemProvider(@NotNull ItemTranslationProvider provider) {
         ITEM_PROVIDERS.add(provider);
     }
 
     /**
-     * Translates the provided component using a specific locale.
+     * Translates a provided raw component directly utilizing the specified system locale.
      *
-     * @param component The component to translate.
-     * @param locale    The target locale. If null, {@link Locale#US} is used as the fallback.
-     * @return The translated component.
+     * @param component The raw translatable component requiring localization resolution.
+     * @param locale    The language locale identifying the corresponding target dictionary entries.
+     * @return A localized component resolving all internally mapped keys and parameters.
      */
     public static Component translate(@Nullable Component component, @Nullable Locale locale) {
         if (component == null) return null;
-        return RENDERER.render(component, locale != null ? locale : Locale.US);
+        return resolveComponent(component, null, locale != null ? locale : Locale.US, null, null);
     }
 
     /**
-     * Translates the provided component tailored to a player's current locale.
+     * Translates a provided raw component adapting directly to an observing player's locale and placeholder contexts.
      *
-     * @param component The component to translate.
-     * @param player    The target player to determine the locale. If null, {@link Locale#US} is used.
-     * @return The translated component.
+     * @param component The raw translatable component requiring localization resolution.
+     * @param player    The viewing player whose client locale and active placeholders execute against the text.
+     * @return A localized component resolving mapped parameters accurately assigned to the viewer.
      */
     public static Component translate(@Nullable Component component, @Nullable Player player) {
-        return translate(component, player != null ? player.locale() : Locale.US);
+        if (component == null) return null;
+        return resolveComponent(component, player, player != null ? player.locale() : Locale.US, null, null);
     }
 
     /**
-     * Recursively processes an item's component (such as its name or a line of lore),
-     * attempting to intercept and replace translatable keys using the registered item translation providers.
-     * If no translation is found by providers or the server, it will remain a translatable component for the client to handle.
+     * Contextually evaluates an item's specific translatable component conditionally applying registered item translation providers.
      *
-     * @param component The root component to process.
-     * @param player    The player viewing the item, or null if unavailable.
-     * @param item      The item stack associated with this component translation.
-     * @param context   The exact component context (e.g. NAME, CUSTOM_NAME, LORE).
-     * @return The fully resolved component with key replacements applied, or null if the initial component is null.
+     * @param component The raw item component requiring immediate localization processing.
+     * @param player    The target viewer currently examining the inventory item stack.
+     * @param item      The interactive item stack directly associated with the specific component context.
+     * @param context   The specific area categorical classification rendering the component.
+     * @return A natively localized component resolving keys distinctively relative to the encompassing item.
      */
     public static Component translateItemComponent(@Nullable Component component, @Nullable Player player, @NotNull ItemStack item, @NotNull ItemTranslationContext context) {
         if (component == null) return null;
-        return processComponent(component, player, item, context);
+        return resolveComponent(component, player, player != null ? player.locale() : Locale.US, item, context);
     }
 
     /**
-     * Recursively scans the component tree for translatable components, replacing their keys via
-     * the item translation providers or standard rendering. Missing keys are preserved as TranslatableComponents.
+     * Deeply processes a standard component tree recursively converting formatting indexes, assessing custom nested tags,
+     * serializing parameters, and finally interpreting raw strings safely through MiniMessage evaluators.
      *
-     * @param component The component tree element to process.
-     * @param player    The viewing player, or null if unavailable.
-     * @param item      The associated item stack.
-     * @param context   The component context (name or lore).
-     * @return The processed and potentially altered component tree element.
+     * @param component The isolated element actively evaluated within the component tree structure.
+     * @param player    The targeted audience viewer mapped against corresponding system placeholders.
+     * @param locale    The active locale dictionary determining precise translated string output variations.
+     * @param item      The relevant underlying item stack if rendering targets an item specific interface context.
+     * @param context   The locational representation of the active item rendering phase.
+     * @return The correctly evaluated and rendered functional component maintaining structural styling formats.
      */
-    private static Component processComponent(Component component, Player player, ItemStack item, ItemTranslationContext context) {
-        if (component instanceof net.kyori.adventure.text.TranslatableComponent translatable) {
+    private static Component resolveComponent(@NotNull Component component, @Nullable Player player, @NotNull Locale locale, @Nullable ItemStack item, @Nullable ItemTranslationContext context) {
+        if (component instanceof TranslatableComponent translatable) {
             String key = translatable.key();
-            String resolvedMmString = null;
+            String pattern = null;
 
-            Item customItem = Item.resolve(item);
-            if (customItem != null) {
-                for (ItemTranslationProvider provider : customItem.getTranslationProviders()) {
-                    resolvedMmString = provider.resolve(key, item, player, context);
-                    if (resolvedMmString != null) break;
+            if (item != null && context != null) {
+                Item customItem = Item.resolve(item);
+                if (customItem != null) {
+                    for (ItemTranslationProvider provider : customItem.getTranslationProviders()) {
+                        pattern = provider.resolve(key, item, player, context);
+                        if (pattern != null) break;
+                    }
+                }
+                if (pattern == null) {
+                    for (ItemTranslationProvider provider : ITEM_PROVIDERS) {
+                        pattern = provider.resolve(key, item, player, context);
+                        if (pattern != null) break;
+                    }
                 }
             }
 
-            if (resolvedMmString == null) {
-                for (ItemTranslationProvider provider : ITEM_PROVIDERS) {
-                    resolvedMmString = provider.resolve(key, item, player, context);
-                    if (resolvedMmString != null) break;
-                }
+            if (pattern == null) {
+                pattern = TRANSLATOR.getRawTranslation(key, locale);
             }
 
-            Component rendered;
-            if (resolvedMmString != null) {
-                rendered = MiniMessageBridge.parse(resolvedMmString, PlaceholderService.resolve(player));
-            } else {
-                Locale locale = player != null ? player.locale() : Locale.US;
-                MessageFormat format = TRANSLATOR.translate(key, locale);
+            if (pattern == null) {
+                pattern = translatable.fallback();
+            }
 
-                if (format != null) {
-                    String pattern = format.toPattern();
-                    List<TagResolver> resolvers = new ArrayList<>();
+            if (pattern != null) {
+                List<Component> args = extractArguments(translatable);
+
+                StringBuilder sb = new StringBuilder(pattern);
+
+                for (int i = 0; i < args.size(); i++) {
+                    Component argComp = resolveComponent(args.get(i), player, locale, item, context);
+                    String serialized = MiniMessage.miniMessage().serialize(argComp);
+
+                    replaceInBuilder(sb, "{" + i + "}", serialized);
+                    replaceInBuilder(sb, "%" + (i + 1) + "$s", serialized);
+                    replaceInBuilder(sb, "%" + (i + 1) + "$d", serialized);
+                }
+
+                int sIdx;
+                int argCounter = 0;
+                while ((sIdx = sb.indexOf("%s")) != -1 && argCounter < args.size()) {
+                    Component argComp = resolveComponent(args.get(argCounter), player, locale, item, context);
+                    String serialized = MiniMessage.miniMessage().serialize(argComp);
+                    sb.replace(sIdx, sIdx + 2, serialized);
+                    argCounter++;
+                }
+
+                String parsed = sb.toString();
+
+                for (int i = 0; i < args.size(); i++) {
+                    Component argComp = resolveComponent(args.get(i), player, locale, item, context);
+                    String serialized = MiniMessage.miniMessage().serialize(argComp);
+                    parsed = parsed.replaceAll("\\{" + i + ",[^}]+\\}", Matcher.quoteReplacement(serialized));
+                }
+
+                List<TagResolver> resolvers = new ArrayList<>();
+                if (player != null) {
                     resolvers.add(PlaceholderService.resolve(player));
-
-                    List<TranslationArgument> args = translatable.arguments();
-                    for (int i = 0; i < args.size(); i++) {
-                        TranslationArgument arg = args.get(i);
-                        Object val = arg.value();
-                        Component argComponent;
-                        if (val instanceof Component componentArg) {
-                            argComponent = processComponent(componentArg, player, item, context);
-                        } else {
-                            argComponent = Component.text(val.toString());
-                        }
-                        resolvers.add(Placeholder.component(String.valueOf(i), argComponent));
-                        pattern = pattern.replace("{" + i + "}", "<" + i + ">");
-                    }
-                    rendered = MiniMessageBridge.parse(pattern, resolvers.toArray(new TagResolver[0]));
-                } else {
-                    List<TranslationArgument> processedArgs = new ArrayList<>();
-                    for (TranslationArgument arg : translatable.arguments()) {
-                        Object val = arg.value();
-                        if (val instanceof Component componentArg) {
-                            processedArgs.add(TranslationArgument.component(processComponent(componentArg, player, item, context)));
-                        } else {
-                            processedArgs.add(arg);
-                        }
-                    }
-                    rendered = translatable.arguments(processedArgs);
                 }
-            }
 
-            List<Component> children = new ArrayList<>();
-            for (Component child : translatable.children()) {
-                children.add(processComponent(child, player, item, context));
+                resolvers.add(TagResolver.resolver(Set.of("tr", "translate"), (queue, ctx) -> {
+                    if (!queue.hasNext()) return Tag.inserting(Component.empty());
+                    String nestedKey = queue.pop().value();
+                    return Tag.inserting(resolveComponent(Component.translatable(nestedKey), player, locale, item, context));
+                }));
+
+                Component rendered = MiniMessageBridge.parse(parsed, resolvers.toArray(new TagResolver[0]));
+                List<Component> finalChildren = new ArrayList<>(rendered.children());
+                for (Component child : translatable.children()) {
+                    finalChildren.add(resolveComponent(child, player, locale, item, context));
+                }
+
+                return rendered.style(translatable.style().merge(rendered.style())).children(finalChildren);
+            } else {
+                List<TranslationArgument> processedArgs = new ArrayList<>();
+                for (TranslationArgument arg : translatable.arguments()) {
+                    if (arg.value() instanceof Component comp) {
+                        processedArgs.add(TranslationArgument.component(resolveComponent(comp, player, locale, item, context)));
+                    } else {
+                        processedArgs.add(arg);
+                    }
+                }
+
+                List<Component> finalChildren = new ArrayList<>();
+                for (Component child : translatable.children()) {
+                    finalChildren.add(resolveComponent(child, player, locale, item, context));
+                }
+
+                return translatable.arguments(processedArgs).children(finalChildren);
             }
-            return rendered.style(translatable.style().merge(rendered.style())).children(children);
         }
 
         if (!component.children().isEmpty()) {
             List<Component> children = new ArrayList<>();
             for (Component child : component.children()) {
-                children.add(processComponent(child, player, item, context));
+                children.add(resolveComponent(child, player, locale, item, context));
             }
             return component.children(children);
         }
@@ -209,54 +241,99 @@ public final class ServerTranslator {
     }
 
     /**
-     * Renders a translation key directly into a component, evaluating any applicable player placeholders or styles.
-     * If the key cannot be found, it is returned as a raw translatable component to be handled by the client.
+     * Targets and overwrites identified character sequences strictly and sequentially inside a designated builder scope.
      *
-     * @param key            The translation key to render.
-     * @param player         The viewing player, which determines the locale and placeholder data.
-     * @param extraResolvers Additional standard or custom resolvers to apply alongside standard parsing.
-     * @return The fully rendered component instance, or a translatable component if the key doesn't exist.
+     * @param sb          The builder subject instance requiring character substitutions.
+     * @param target      The specified constant substring actively targeted for deletion.
+     * @param replacement The substituting text string replacing the targeted characters identically.
      */
-    public static Component render(@NotNull String key, @Nullable Player player, @NotNull TagResolver... extraResolvers) {
-        Locale locale = player != null ? player.locale() : Locale.US;
-        MessageFormat format = TRANSLATOR.translate(key, locale);
-
-        if (format == null) {
-            return Component.translatable(key);
+    private static void replaceInBuilder(@NotNull StringBuilder sb, @NotNull String target, @NotNull String replacement) {
+        int idx = sb.indexOf(target);
+        while (idx != -1) {
+            sb.replace(idx, idx + target.length(), replacement);
+            idx = sb.indexOf(target, idx + replacement.length());
         }
-
-        TagResolver[] resolvers = new TagResolver[extraResolvers.length + 1];
-        resolvers[0] = PlaceholderService.resolve(player);
-        System.arraycopy(extraResolvers, 0, resolvers, 1, extraResolvers.length);
-
-        return MiniMessageBridge.parse(format.toPattern(), resolvers);
     }
 
     /**
-     * Registers and loads translations from a specific external system file path.
+     * Accumulates completely formatted and safely isolated component arguments extracted safely from the parent instance.
      *
-     * @param path The system path pointing to the translation file or directory.
+     * @param translatable The localized interface parent enforcing stored internal variables constraints.
+     * @return A cleanly isolated listing encompassing all translated subset values mapped sequentially.
      */
-    public static void loadFile(Path path) {
+    private static List<Component> extractArguments(@NotNull TranslatableComponent translatable) {
+        List<Component> extracted = new ArrayList<>();
+        try {
+            for (TranslationArgument arg : translatable.arguments()) {
+                if (arg.value() instanceof Component comp) {
+                    extracted.add(comp);
+                } else {
+                    extracted.add(Component.text(String.valueOf(arg.value())));
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        if (extracted.isEmpty()) {
+            extracted.addAll(translatable.args());
+        }
+        return extracted;
+    }
+
+    /**
+     * Instigates singular execution interpreting unique translation targets directly avoiding generalized component generation.
+     *
+     * @param key            The singular translation identifier accessing active application dictionary resources.
+     * @param player         The viewing target allocating accurate visual logic placeholders against variables.
+     * @param extraResolvers Sequential array storing externally mandated resolution mappings executed during translation.
+     * @return Formatted static text structure mirroring underlying system configurations effectively.
+     */
+    public static Component render(@NotNull String key, @Nullable Player player, @NotNull TagResolver... extraResolvers) {
+        Locale locale = player != null ? player.locale() : Locale.US;
+        String pattern = TRANSLATOR.getRawTranslation(key, locale);
+
+        if (pattern == null) {
+            return Component.translatable(key);
+        }
+
+        List<TagResolver> resolvers = new ArrayList<>(Arrays.asList(extraResolvers));
+        if (player != null) {
+            resolvers.add(PlaceholderService.resolve(player));
+        }
+
+        resolvers.add(TagResolver.resolver(Set.of("tr", "translate"), (queue, ctx) -> {
+            if (!queue.hasNext()) return Tag.inserting(Component.empty());
+            String nestedKey = queue.pop().value();
+            return Tag.inserting(resolveComponent(Component.translatable(nestedKey), player, locale, null, null));
+        }));
+
+        return MiniMessageBridge.parse(pattern, resolvers.toArray(new TagResolver[0]));
+    }
+
+    /**
+     * Integrates raw translation properties parsed strictly from externally registered storage allocations.
+     *
+     * @param path The operating system file target navigating specifically to the language properties.
+     */
+    public static void loadFile(@NotNull Path path) {
         LanguageLoader.loadFile(path, TRANSLATOR);
         PATH_FILES.add(path);
     }
 
     /**
-     * Registers and loads translations from a bundled internal plugin resource.
+     * Incorporates raw property details derived inherently from a specific compiled project resource payload.
      *
-     * @param plugin       The plugin instance that owns the internal resource.
-     * @param resourcePath The path pointing to the translation file within the plugin's jar.
+     * @param plugin       The compiled java module acting as root target for path acquisition algorithms.
+     * @param resourcePath The internally nested pathway mapped cleanly against the desired asset array.
      */
-    public static void loadResource(Plugin plugin, String resourcePath) {
+    public static void loadResource(@NotNull Plugin plugin, @NotNull String resourcePath) {
         LanguageLoader.loadResource(plugin, resourcePath, TRANSLATOR);
         RESOURCE_FILES.computeIfAbsent(plugin, p -> new ArrayList<>()).add(resourcePath);
     }
 
     /**
-     * Retrieves the custom underlying translation source used by the ServerTranslator.
+     * Returns the master translation interface acting as fundamental repository controlling formatting operations.
      *
-     * @return The {@link CustomTranslator} instance.
+     * @return The translation structure mapped against active project variables determining overall strings.
      */
     public static CustomTranslator getSource() {
         return TRANSLATOR;
