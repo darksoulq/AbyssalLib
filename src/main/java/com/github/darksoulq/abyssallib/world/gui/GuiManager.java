@@ -41,6 +41,7 @@ public class GuiManager {
         InventoryView view = gui.getMenuType().create(player, gui.getTitle());
         view.open();
         GuiView guiView = new GuiView(gui, view);
+        guiView.render();
         gui.getOnOpen().accept(guiView);
         OPEN_VIEWS.put(view, guiView);
         if (gui.getTickInterval() > 0) TICK_VIEWS.put(guiView, startGuiTick(guiView, gui.getTickInterval()));
@@ -55,9 +56,9 @@ public class GuiManager {
         InventoryView view = player.getOpenInventory();
         GuiView guiView = OPEN_VIEWS.remove(view);
         if (guiView != null) {
-            guiView.close(player);
             BukkitTask task = TICK_VIEWS.remove(guiView);
             if (task != null) task.cancel();
+            guiView.close(player);
         }
         view.close();
     }

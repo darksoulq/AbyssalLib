@@ -14,6 +14,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.scheduler.BukkitTask;
 
 public class GuiEvents {
 
@@ -78,6 +79,8 @@ public class GuiEvents {
     public void onClose(InventoryCloseEvent event) {
         GuiView view = GuiManager.OPEN_VIEWS.remove(event.getView());
         if (view != null) {
+            BukkitTask task = GuiManager.TICK_VIEWS.remove(view);
+            if (task != null) task.cancel();
             view.getGui().getOnClose().accept(view);
         }
     }

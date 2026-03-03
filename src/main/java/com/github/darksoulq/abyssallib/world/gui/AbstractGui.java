@@ -24,9 +24,11 @@ public abstract class AbstractGui extends Gui {
      * The {@link MenuType} defining the size and shape of the inventory.
      * @param title
      * The {@link Component} representing the display name of the menu.
+     * @param tickInterval
+     * The interval between each GuiView#render call
      */
-    public AbstractGui(MenuType menuType, Component title) {
-        super(menuType, title, new HashMap<>(), new LinkedList<>(), new LinkedList<>(), EnumSet.noneOf(GuiFlag.class), null, null);
+    public AbstractGui(MenuType menuType, Component title, int tickInterval) {
+        super(menuType, title, new HashMap<>(), new LinkedList<>(), new LinkedList<>(), EnumSet.noneOf(GuiFlag.class), tickInterval, null, null);
         init();
         this.onOpen = this::onOpen;
         this.onClose = this::onClose;
