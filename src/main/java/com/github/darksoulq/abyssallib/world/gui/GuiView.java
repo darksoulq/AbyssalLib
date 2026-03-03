@@ -90,7 +90,7 @@ public class GuiView {
      * This method renders all active layers, executes ticker logic,
      * and updates slot contents based on the elements defined in the Gui.
      */
-    public void tick() {
+    public void render() {
         Inventory top = getTop();
         Inventory bot = getBottom();
         gui.getLayers().forEach(layer -> layer.renderTo(this));

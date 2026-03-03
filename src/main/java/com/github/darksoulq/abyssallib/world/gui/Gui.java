@@ -33,6 +33,12 @@ public class Gui {
     /** A set of configuration flags affecting GUI behavior. */
     private final EnumSet<GuiFlag> flags;
 
+    /**
+     * Dictates how frequently the gui should update, affects elements depending on ticks (as this practically "skips" ticks.
+     * if value is 0 or less, the gui will not tick and GuiView#render must be called manually on any changes. (By default its set to 1)
+     */
+    private final int tickInterval;
+
     /** Logic executed when the GUI is opened. */
     Consumer<GuiView> onOpen;
 
@@ -56,6 +62,7 @@ public class Gui {
                List<GuiLayer> layers,
                List<Consumer<GuiView>> tickers,
                EnumSet<GuiFlag> flags,
+               int tickInterval,
                Consumer<GuiView> onOpen,
                Consumer<GuiView> onClose) {
         this.menuType = menuType;
@@ -64,6 +71,7 @@ public class Gui {
         this.layers.addAll(layers);
         this.tickers.addAll(tickers);
         this.flags = flags;
+        this.tickInterval = tickInterval;
         this.onOpen = onOpen;
         this.onClose = onClose;
     }
@@ -142,6 +150,14 @@ public class Gui {
     }
 
     /**
+     * Gets the interval between each {@code GuiView#render} call.
+     *
+     * @return The interval between render calls    */
+    public int getTickInterval() {
+        return tickInterval;
+    }
+
+    /**
      * Gets the title component of this GUI.
      *
      * @return the title
@@ -171,6 +187,7 @@ public class Gui {
         private final List<GuiLayer> layers = new ArrayList<>();
         private final List<Consumer<GuiView>> tickers = new ArrayList<>();
         private final EnumSet<GuiFlag> flags = EnumSet.noneOf(GuiFlag.class);
+        private int tickInterval = 1;
         private Consumer<GuiView> onOpen = v -> {};
         private Consumer<GuiView> onClose = v -> {};
 
@@ -377,12 +394,23 @@ public class Gui {
         }
 
         /**
+         * Sets the tick interval between {@code GuiView#render} calls.
+         *
+         * @param interval The tick interval.
+         * @return This builder
+         */
+        public Builder tickInterval(int interval) {
+            this.tickInterval = interval;
+            return this;
+        }
+
+        /**
          * Constructs the Gui instance from the builder configuration.
          *
          * @return the built Gui
          */
         public Gui build() {
-            return new Gui(menuType, title, elements, layers, tickers, flags, onOpen, onClose);
+            return new Gui(menuType, title, elements, layers, tickers, flags, tickInterval, onOpen, onClose);
         }
     }
 }

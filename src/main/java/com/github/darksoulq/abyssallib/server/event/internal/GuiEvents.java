@@ -20,7 +20,7 @@ public class GuiEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onDropPickup(EntityPickupItemEvent event) {
         if (event.getEntity() instanceof Player player) {
-            GuiView view = GuiManager.openViews.get(player.getOpenInventory());
+            GuiView view = GuiManager.OPEN_VIEWS.get(player.getOpenInventory());
             if (view == null) return;
             if (view.getGui().hasFlag(GuiFlag.DISABLE_ITEM_PICKUP)) event.setCancelled(true);
         }
@@ -28,7 +28,7 @@ public class GuiEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onCriterionGrant(PlayerAdvancementCriterionGrantEvent event) {
-        GuiView view = GuiManager.openViews.get(event.getPlayer().getOpenInventory());
+        GuiView view = GuiManager.OPEN_VIEWS.get(event.getPlayer().getOpenInventory());
         if (view == null) return;
         if (view.getGui().hasFlag(GuiFlag.DISABLE_ADVANCEMENTS)) {
             event.setCancelled(true);
@@ -37,7 +37,7 @@ public class GuiEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onClick(InventoryClickEvent event) {
-        GuiView view = GuiManager.openViews.get(event.getView());
+        GuiView view = GuiManager.OPEN_VIEWS.get(event.getView());
         if (view == null) return;
 
         int rawSlot = event.getRawSlot();
@@ -56,7 +56,7 @@ public class GuiEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onDrag(InventoryDragEvent event) {
-        GuiView view = GuiManager.openViews.get(event.getView());
+        GuiView view = GuiManager.OPEN_VIEWS.get(event.getView());
         if (view == null) return;
 
         for (int rawSlot : event.getRawSlots()) {
@@ -76,7 +76,7 @@ public class GuiEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onClose(InventoryCloseEvent event) {
-        GuiView view = GuiManager.openViews.remove(event.getView());
+        GuiView view = GuiManager.OPEN_VIEWS.remove(event.getView());
         if (view != null) {
             view.getGui().getOnClose().accept(view);
         }

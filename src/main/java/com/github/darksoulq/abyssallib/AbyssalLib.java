@@ -143,7 +143,6 @@ public final class AbyssalLib extends JavaPlugin {
         EVENT_BUS.register(new ServerEvents());
         EVENT_BUS.register(new GuiEvents());
 
-        GuiManager.init(this);
         ItemTicker.start();
         PacketTranslator.startUpdater();
         EnergyNetwork.init();

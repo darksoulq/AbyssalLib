@@ -1,11 +1,15 @@
 package com.github.darksoulq.abyssallib.world.gui;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,7 +21,11 @@ import java.util.Map;
 public class GuiManager {
 
     /** A map of active Bukkit InventoryViews to their corresponding AbyssalLib GuiViews. */
-    public static final Map<InventoryView, GuiView> openViews = new HashMap<>();
+    public static final Map<InventoryView, GuiView> OPEN_VIEWS = new HashMap<>();
+    /**
+     * A map of active BukkitTasks to their corresponding GUiViews.
+     */
+    public static final Map<GuiView, BukkitTask> TICK_VIEWS = new HashMap<>();
 
     /**
      * Opens a custom GUI for a player.
@@ -34,7 +42,8 @@ public class GuiManager {
         view.open();
         GuiView guiView = new GuiView(gui, view);
         gui.getOnOpen().accept(guiView);
-        openViews.put(view, guiView);
+        OPEN_VIEWS.put(view, guiView);
+        if (gui.getTickInterval() > 0) TICK_VIEWS.put(guiView, startGuiTick(guiView, gui.getTickInterval()));
     }
 
     /**
@@ -44,27 +53,38 @@ public class GuiManager {
      */
     public static void close(HumanEntity player) {
         InventoryView view = player.getOpenInventory();
-        GuiView guiView = openViews.remove(view);
+        GuiView guiView = OPEN_VIEWS.remove(view);
         if (guiView != null) {
             guiView.close(player);
+            BukkitTask task = TICK_VIEWS.remove(guiView);
+            if (task != null) task.cancel();
         }
         view.close();
     }
 
     /**
-     * Initializes the GUI system by starting the per-tick update task.
+     * Removed the GUiView from both Maps so that users may open a new gui over old gui.
      *
-     * @param pl the plugin instance responsible for the task
+     * @param view THe view to remove.
      */
-    public static void init(Plugin pl) {
-        new BukkitRunnable() {
-            /**
-             * Iterates through all active GUI views and triggers their tick logic.
-             */
+    public static void remove(GuiView view) {
+        OPEN_VIEWS.remove(view.getInventoryView());
+        TICK_VIEWS.remove(view);
+    }
+
+    /**
+     * Starts a ticking tasks for a GuiView.
+     *
+     * @param view THe guiView to tick.
+     * @param interval The interval between ticks.
+     * @return The BukkitTask that can be cancelled whenever needed.
+     */
+    private static BukkitTask startGuiTick(GuiView view, int interval) {
+        return new BukkitRunnable() {
             @Override
             public void run() {
-                openViews.values().forEach(GuiView::tick);
+                view.render();
             }
-        }.runTaskTimer(pl, 0, 1);
+        }.runTaskTimer(AbyssalLib.getInstance(), 0, interval);
     }
 }

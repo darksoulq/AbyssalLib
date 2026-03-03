@@ -11,6 +11,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * A lightweight event bus for registering Bukkit event handlers using the {@link SubscribeEvent} format.
@@ -77,8 +78,7 @@ public class EventBus {
                             try {
                                 handle.invokeWithArguments(event);
                             } catch (Throwable t) {
-                                plugin.getLogger().severe("Failed to invoke event handler: " + t.getMessage());
-                                t.printStackTrace();
+                                plugin.getLogger().log(Level.SEVERE, "Failed to invoke event handler", t);
                             }
                         }
                     },

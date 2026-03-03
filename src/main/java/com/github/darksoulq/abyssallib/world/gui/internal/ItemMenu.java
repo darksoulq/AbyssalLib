@@ -31,6 +31,7 @@ public class ItemMenu {
             Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))));
 
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_BOTTOM, GuiFlag.DISABLE_ADVANCEMENTS, GuiFlag.DISABLE_ITEM_PICKUP);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -58,11 +59,10 @@ public class ItemMenu {
             }
 
             Item icon = getPluginIcon(plugin, itemCount, categoryCount);
-            if (icon == null) continue;
 
             elements.add(GuiButton.of(icon.getStack(), ctx -> {
                 openPlugin(player, plugin);
-                GuiManager.openViews.remove(ctx.view().getInventoryView());
+                GuiManager.remove(ctx.view());
             }));
         }
         setupPages(player, gui, elements);
@@ -98,6 +98,7 @@ public class ItemMenu {
                 Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170)),
                 Placeholder.parsed("namespace", "<lang:plugin." + namespace + ">")));
 
+            gui.tickInterval(0);
             gui.addFlags(GuiFlag.DISABLE_BOTTOM, GuiFlag.DISABLE_ADVANCEMENTS, GuiFlag.DISABLE_ITEM_PICKUP);
 
             List<GuiElement> elements = new ArrayList<>();
@@ -105,13 +106,13 @@ public class ItemMenu {
                 if (cat.getItems().isEmpty()) continue;
                 elements.add(GuiButton.of(buildCategoryIcon(cat), ctx -> {
                     openCategory(player, cat);
-                    GuiManager.openViews.remove(ctx.view().getInventoryView());
+                    GuiManager.remove(ctx.view());
                 }));
             }
 
             gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> {
                 open(player);
-                GuiManager.openViews.remove(ctx.view().getInventoryView());
+                GuiManager.remove(ctx.view());
             }));
 
             setupPages(player, gui, elements);
@@ -125,6 +126,7 @@ public class ItemMenu {
             Placeholder.parsed("width", TextOffset.getOffsetMinimessage(-170)),
             Placeholder.component("title", category.getTitle())));
 
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS, GuiFlag.DISABLE_BOTTOM);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -143,7 +145,7 @@ public class ItemMenu {
             } else {
                 open(player);
             }
-            GuiManager.openViews.remove(ctx.view().getInventoryView());
+            GuiManager.remove(ctx.view());
         }));
 
         setupPages(player, gui, elements);
@@ -154,8 +156,16 @@ public class ItemMenu {
         PagedLayer<GuiElement> layer = PagedLayer.of(elements, positions.stream().mapToInt(SlotPosition::index).toArray(), GuiView.Segment.TOP);
 
         gui.addLayer(layer);
-        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.getStack(), ctx -> layer.previous(ctx.view())));
-        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> layer.next(ctx.view())));
+
+        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.getStack(), ctx -> {
+            layer.previous(ctx.view());
+            ctx.view().render();
+        }));
+
+        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> {
+            layer.next(ctx.view());
+            ctx.view().render();
+        }));
 
         GuiManager.open(player, gui.build());
     }

@@ -18,7 +18,7 @@ public class ItemTicker {
 
     public static void start() {
         if (task != null) return;
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), () -> {
+        task = Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
             for (Map.Entry<Player, List<Item>> entry : items.entrySet()) {
                 Player player = entry.getKey();
                 if (player == null || !player.isOnline()) {

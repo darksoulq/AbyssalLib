@@ -40,6 +40,9 @@ public class StructureBlockMenu {
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
             Placeholder.parsed("texture", GuiTextures.STRUCTURE_BLOCK_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))));
+
+        builder.tickInterval(0);
+
         Gui gui = builder.build();
         refresh(gui, player);
         GuiManager.open(player, gui);
@@ -58,6 +61,7 @@ public class StructureBlockMenu {
                 tile.mode.set(modes[nextIndex]);
                 tile.updateParticles();
                 refresh(gui, player);
+                ctx.view().render();
             },
             Component.text("Click to cycle mode", NamedTextColor.GRAY)
         ));
@@ -107,6 +111,7 @@ public class StructureBlockMenu {
                 tile.showBoundingBox.set(!showBox);
                 tile.updateParticles();
                 refresh(gui, player);
+                ctx.view().render();
             },
             Component.text("Click to toggle visibility", NamedTextColor.GRAY)
         ));
@@ -122,6 +127,7 @@ public class StructureBlockMenu {
                 int next = (tile.rotation.get().ordinal() + 1) % rots.length;
                 tile.rotation.set(rots[next]);
                 refresh(gui, player);
+                ctx.view().render();
             },
             Component.text("Click to cycle rotation", NamedTextColor.GRAY)
         ));
@@ -133,6 +139,7 @@ public class StructureBlockMenu {
                 int next = (tile.mirror.get().ordinal() + 1) % mirrors.length;
                 tile.mirror.set(mirrors[next]);
                 refresh(gui, player);
+                ctx.view().render();
             },
             Component.text("Click to cycle mirror", NamedTextColor.GRAY)
         ));
@@ -143,6 +150,7 @@ public class StructureBlockMenu {
                 float val = tile.integrity.get() + (ctx.clickType().isLeftClick() ? 0.1f : -0.1f);
                 tile.integrity.set(Math.max(0.0f, Math.min(1.0f, val)));
                 refresh(gui, player);
+                ctx.view().render();
             },
             TextUtil.parse("<white><icon_left> <gray>+0.1 | <white><icon_right> <gray>-0.1",
                 Placeholder.parsed("icon_left", GuiTextures.MOUSE_LEFT.toMiniMessageString()),
@@ -159,8 +167,8 @@ public class StructureBlockMenu {
         ));
     }
 
-    private GuiButton makeIntButton(Item item, String name, Property<Integer> prop, Gui gui, Player player) {
-        return makeIntButton(item, name, prop, gui, player, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    private GuiButton makeIntButton(Item item, String nameStr, Property<Integer> prop, Gui gui, Player player) {
+        return makeIntButton(item, nameStr, prop, gui, player, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     private GuiButton makeIntButton(Item item, String nameStr, Property<Integer> prop, Gui gui, Player player, int min, int max) {
@@ -172,6 +180,7 @@ public class StructureBlockMenu {
                 prop.set(Math.max(min, Math.min(max, newVal)));
                 tile.updateParticles();
                 refresh(gui, player);
+                ctx.view().render();
             },
             TextUtil.parse("<white><icon_left> <gray>+1 | <white><icon_right> <gray>-1",
                 Placeholder.parsed("icon_left", GuiTextures.MOUSE_LEFT.toMiniMessageString()),

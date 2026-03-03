@@ -211,7 +211,9 @@ public class PermissionMenu {
             Placeholder.parsed("texture", GuiTextures.PERMISSION_MAIN_MENU.toMiniMessageString()),
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
-            ));
+        ));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack groupItem = Items.PERMISSION_GROUP.getStack().clone();
@@ -229,6 +231,8 @@ public class PermissionMenu {
             Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -314,6 +318,8 @@ public class PermissionMenu {
             Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170)),
             Placeholder.parsed("group_id", group.getId())));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack weightItem = new ItemStack(Material.ANVIL);
@@ -375,14 +381,12 @@ public class PermissionMenu {
         addGroup.setData(DataComponentTypes.ITEM_NAME, Component.text("Add Parent Group", NamedTextColor.YELLOW));
         gui.set(SlotPosition.top(50), GuiButton.of(addGroup, ctx -> openAddGroup(player, group, () -> openGroupEditor(player, group))));
 
-        PagedLayer<GuiElement> layer = setupPages(player, gui, elements, PermissionMenu::openGroupList, true);
+        setupPages(player, gui, elements, PermissionMenu::openGroupList, true);
 
         gui.onTick(v -> {
             if (group.clearExpired()) {
                 group.save();
                 openGroupEditor(player, group);
-            } else {
-                layer.renderTo(v);
             }
         });
     }
@@ -393,6 +397,8 @@ public class PermissionMenu {
             Placeholder.parsed("texture", GuiTextures.GENERIC_9X6_PAGE_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
         ));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -432,6 +438,8 @@ public class PermissionMenu {
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170)),
             Placeholder.parsed("user_name", user.getName())
         ));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         List<GuiElement> elements = new ArrayList<>();
@@ -462,14 +470,12 @@ public class PermissionMenu {
         addGroup.setData(DataComponentTypes.ITEM_NAME, Component.text("Add Parent Group", NamedTextColor.YELLOW));
         gui.set(SlotPosition.top(50), GuiButton.of(addGroup, ctx -> openAddGroup(player, user, () -> openUserEditor(player, user))));
 
-        PagedLayer<GuiElement> layer = setupPages(player, gui, elements, PermissionMenu::openUserList, true);
+        setupPages(player, gui, elements, PermissionMenu::openUserList, true);
 
         gui.onTick(v -> {
             if (user.clearExpired()) {
                 user.save();
                 openUserEditor(player, user);
-            } else {
-                layer.renderTo(v);
             }
         });
     }
@@ -479,7 +485,9 @@ public class PermissionMenu {
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-60)),
             Placeholder.parsed("texture", GuiTextures.PERMISSION_SEARCH_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
-            ));
+        ));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack invisibleFiller = Items.INVISIBLE_ITEM.getStack();
@@ -529,6 +537,7 @@ public class PermissionMenu {
         }
 
         PagedLayer<GuiElement> layer = PagedLayer.of(allElements, BOTTOM_SLOTS, GuiView.Segment.BOTTOM);
+        gui.addLayer(layer);
 
         class SearchState { String lastQuery = ""; }
         SearchState state = new SearchState();
@@ -536,12 +545,12 @@ public class PermissionMenu {
         gui.onOpen(view -> {
             setupBackup(view);
             layer.setFilter(e -> true);
-            layer.renderTo(view);
+            view.render();
         });
         gui.onClose(PermissionMenu::loadBackup);
 
         gui.onTick(view -> {
-            if (view.getInventoryView() instanceof org.bukkit.inventory.view.AnvilView anvil) {
+            if (view.getInventoryView() instanceof AnvilView anvil) {
                 String query = Optional.ofNullable(anvil.getRenameText()).orElse("").trim();
                 if (!query.equals(state.lastQuery)) {
                     state.lastQuery = query;
@@ -568,41 +577,40 @@ public class PermissionMenu {
                         }
                         return true;
                     });
-                    layer.renderTo(view);
-                }
 
-                if (!query.isEmpty() && !query.startsWith("@")) {
-                    ItemStack custom = Items.PERMISSION_BUKKIT.getStack().clone();
-                    custom.setData(DataComponentTypes.ITEM_NAME, Component.text(query, NamedTextColor.AQUA));
-                    custom.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
-                        Component.text("Custom Node", NamedTextColor.GOLD),
-                        TextUtil.parse("<!i><white><left_click></white><green> to set True",
-                            Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())),
-                        TextUtil.parse("<!i><white><right_click></white><red> to set False",
-                            Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
-                    )));
+                    if (!query.isEmpty() && !query.startsWith("@")) {
+                        ItemStack custom = Items.PERMISSION_BUKKIT.getStack().clone();
+                        custom.setData(DataComponentTypes.ITEM_NAME, Component.text(query, NamedTextColor.AQUA));
+                        custom.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
+                            Component.text("Custom Node", NamedTextColor.GOLD),
+                            TextUtil.parse("<!i><white><left_click></white><green> to set True",
+                                Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())),
+                            TextUtil.parse("<!i><white><right_click></white><red> to set False",
+                                Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
+                        )));
 
-                    view.getGui().getElements().put(SlotPosition.top(2), GuiButton.of(custom, ctx -> {
-                        holder.setPermission(new Node(query, ctx.clickType().isLeftClick()));
-                        holder.save();
-                        onBack.run();
-                    }));
-                    view.getTop().setItem(2, custom);
-                } else {
-                    view.getGui().getElements().remove(SlotPosition.top(2));
-                    view.getTop().setItem(2, null);
+                        view.getGui().getElements().put(SlotPosition.top(2), GuiButton.of(custom, ctx -> {
+                            holder.setPermission(new Node(query, ctx.clickType().isLeftClick()));
+                            holder.save();
+                            onBack.run();
+                        }));
+                    } else {
+                        view.getGui().getElements().remove(SlotPosition.top(2));
+                    }
+
+                    view.render();
                 }
             }
         });
 
         gui.set(SlotPosition.bottom(0), GuiButton.of(Items.BACKWARD.getStack(), ctx -> {
             layer.previous(ctx.view());
-            layer.renderTo(ctx.view());
+            ctx.view().render();
         }));
         gui.set(SlotPosition.bottom(4), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.run()));
         gui.set(SlotPosition.bottom(8), GuiButton.of(Items.FORWARD.getStack(), ctx -> {
             layer.next(ctx.view());
-            layer.renderTo(ctx.view());
+            ctx.view().render();
         }));
 
         GuiManager.open(player, gui.build());
@@ -613,7 +621,9 @@ public class PermissionMenu {
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-60)),
             Placeholder.parsed("texture", GuiTextures.PERMISSION_SEARCH_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
-            ));
+        ));
+
+        gui.tickInterval(0);
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack invisibleFiller = Items.INVISIBLE_ITEM.getStack();
@@ -639,6 +649,7 @@ public class PermissionMenu {
         }
 
         PagedLayer<GuiElement> layer = PagedLayer.of(allElements, BOTTOM_SLOTS, GuiView.Segment.BOTTOM);
+        gui.addLayer(layer);
 
         class SearchState { String lastQuery = ""; }
         SearchState state = new SearchState();
@@ -646,7 +657,7 @@ public class PermissionMenu {
         gui.onOpen(view -> {
             setupBackup(view);
             layer.setFilter(e -> true);
-            layer.renderTo(view);
+            view.render();
         });
         gui.onClose(PermissionMenu::loadBackup);
 
@@ -664,19 +675,20 @@ public class PermissionMenu {
                         String plain = PlainTextComponentSerializer.plainText().serialize(name);
                         return plain.toLowerCase(Locale.ROOT).contains(query.toLowerCase(Locale.ROOT));
                     });
-                    layer.renderTo(view);
+
+                    view.render();
                 }
             }
         });
 
         gui.set(SlotPosition.bottom(0), GuiButton.of(Items.BACKWARD.getStack(), ctx -> {
             layer.previous(ctx.view());
-            layer.renderTo(ctx.view());
+            ctx.view().render();
         }));
         gui.set(SlotPosition.bottom(4), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.run()));
         gui.set(SlotPosition.bottom(8), GuiButton.of(Items.FORWARD.getStack(), ctx -> {
             layer.next(ctx.view());
-            layer.renderTo(ctx.view());
+            ctx.view().render();
         }));
 
         GuiManager.open(player, gui.build());
@@ -687,11 +699,17 @@ public class PermissionMenu {
         PagedLayer<GuiElement> layer = PagedLayer.of(elements, positions.stream().mapToInt(SlotPosition::index).toArray(), GuiView.Segment.TOP);
 
         gui.addLayer(layer);
-        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.getStack(), ctx -> layer.previous(ctx.view())));
+        gui.set(SlotPosition.top(45), GuiButton.of(Items.BACKWARD.getStack(), ctx -> {
+            layer.previous(ctx.view());
+            ctx.view().render();
+        }));
         if (!isEditor) {
             gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.accept(player)));
         }
-        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> layer.next(ctx.view())));
+        gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> {
+            layer.next(ctx.view());
+            ctx.view().render();
+        }));
 
         GuiManager.open(player, gui.build());
         return layer;
