@@ -4,6 +4,8 @@ import com.google.gson.*;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.minimessage.tag.Tag;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.apache.fontbox.ttf.CmapSubtable;
 import org.apache.fontbox.ttf.CmapTable;
 import org.apache.fontbox.ttf.TTFParser;
@@ -11,12 +13,14 @@ import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.RandomAccessReadBufferedFile;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -26,22 +30,51 @@ import java.util.zip.ZipInputStream;
  */
 public class Font implements Asset {
 
-    /** Namespace of this font (e.g., plugin or resource pack namespace). */
+    /**
+     * A thread-safe global registry mapping namespace-prefixed names to their respective visual components.
+     */
+    private static final Map<String, Component> NAMED_GLYPHS = new ConcurrentHashMap<>();
+
+    /**
+     * The namespace of this font, typically aligning with the plugin or resource pack namespace.
+     */
     private final String namespace;
 
-    /** Identifier of this font (e.g., file name without extension). */
+    /**
+     * The unique identifier of this font, commonly corresponding to the file name excluding the extension.
+     */
     private final String id;
 
-    /** Ordered list of glyph groups, grouped by provider type. */
+    /**
+     * An ordered list containing grouped glyphs, separated logically by their respective provider types.
+     */
     private final List<LinkedList<Glyph>> glyphGroups = new LinkedList<>();
 
-    /** Tracks used Unicode characters to prevent duplication. */
+    /**
+     * A tracking set storing all Unicode characters currently utilized to prevent inadvertent duplication.
+     */
     private final Set<Character> occupied = new HashSet<>();
 
-    /** Base Unicode code point for private-use area allocations. */
+    /**
+     * The starting Unicode code point utilized for allocating new characters within the Private Use Area (PUA).
+     */
     private int unicodeBase = 0xE000;
 
+    /**
+     * The raw byte data representing pre-compiled JSON font files, bypassing dynamic generation when present.
+     */
     private byte[] rawData = null;
+
+    /**
+     * Retrieves a mapped glyph component globally by its registered namespace and name.
+     *
+     * @param namespace The namespace the glyph was registered under.
+     * @param name      The unique identifier name of the glyph.
+     * @return The text component representation of the glyph, or null if absent.
+     */
+    public static @Nullable Component getGlyph(@NotNull String namespace, @NotNull String name) {
+        return NAMED_GLYPHS.get(namespace + ":" + name);
+    }
 
     /**
      * Constructs a new empty Font.
@@ -52,8 +85,15 @@ public class Font implements Asset {
     public Font(@NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
         this.id = id;
-
     }
+
+    /**
+     * Constructs a new Font from pre-compiled byte data.
+     *
+     * @param namespace The font's namespace.
+     * @param id        The font's identifier (usually filename without extension).
+     * @param data      The raw byte data representing the font JSON.
+     */
     public Font(@NotNull String namespace, @NotNull String id, byte[] data) {
         this.namespace = namespace;
         this.id = id;
@@ -66,6 +106,8 @@ public class Font implements Asset {
      * @param plugin    The plugin providing the resource.
      * @param namespace Namespace for this font.
      * @param id        Font identifier (without .json).
+     * @throws IllegalStateException If the requested resource path cannot be located.
+     * @throws RuntimeException      If an I/O error occurs during file reading or parsing.
      */
     public Font(@NotNull Plugin plugin, @NotNull String namespace, @NotNull String id) {
         this.namespace = namespace;
@@ -74,9 +116,9 @@ public class Font implements Asset {
         try (InputStream in = plugin.getResource(path)) {
             if (in == null) throw new IllegalStateException("Font not found: " + path);
             JsonArray providers = JsonParser.parseReader(
-                            new InputStreamReader(in, StandardCharsets.UTF_8))
-                    .getAsJsonObject()
-                    .getAsJsonArray("providers");
+                    new InputStreamReader(in, StandardCharsets.UTF_8))
+                .getAsJsonObject()
+                .getAsJsonArray("providers");
             for (JsonElement el : providers) {
                 JsonObject p = el.getAsJsonObject();
                 if ("bitmap".equals(p.get("type").getAsString())) {
@@ -100,6 +142,7 @@ public class Font implements Asset {
      * Creates an offset glyph that affects spacing only.
      *
      * @param pixelOffset The horizontal offset in pixels.
+     * @param unicode     The specific unicode character to map the offset to.
      * @return The created {@link OffsetGlyph}.
      */
     public @NotNull OffsetGlyph offset(int pixelOffset, char unicode) {
@@ -118,7 +161,8 @@ public class Font implements Asset {
      * @param shiftY     Y offset for rendering.
      * @param size       Size of font in pixels.
      * @param oversample Oversample factor.
-     * @throws IOException If the file fails to load or parse.
+     * @throws IOException           If the file fails to load or parse.
+     * @throws IllegalStateException If a detected unicode character is already occupied.
      */
     public void ttf(@NotNull File ttfFile, int shiftX, int shiftY, int size, int oversample) throws IOException {
         Set<Character> chars = readTtfUnicodes(ttfFile);
@@ -134,7 +178,8 @@ public class Font implements Asset {
      *
      * @param zipFile   ZIP file containing .hex glyphs.
      * @param overrides List of overrides for character sizing.
-     * @throws IOException If loading the ZIP fails.
+     * @throws IOException           If loading the ZIP fails.
+     * @throws IllegalStateException If a detected unicode character is already occupied.
      */
     public void unihex(@NotNull File zipFile, @NotNull List<UnihexFont.Override> overrides) throws IOException {
         Set<Character> chars = readUnihexUnicodes(zipFile);
@@ -146,17 +191,36 @@ public class Font implements Asset {
     }
 
     /**
-     * Creates a texture glyph (bitmap glyph)
-     * DO MOT USE THIS IF MULTIPLE GLYPHS ARE TO USE SAME TEXTURE! (e.g a glyph spritesheet)
+     * Creates a named texture glyph (bitmap glyph) and registers it globally for tag resolution.
      *
-     * @param texture The texture used by the glyph
-     * @param height The height of the image
-     * @param ascent The ascent of the glyph
-     * @return The glyph that has been created
+     * @param name    The name of the glyph used for the tag resolver.
+     * @param texture The texture used by the glyph.
+     * @param height  The height of the image.
+     * @param ascent  The ascent of the glyph.
+     * @return The glyph that has been created.
      */
-    public @NotNull TextureGlyph glyph(Texture texture, int height, int ascent) {
+    public @NotNull TextureGlyph glyph(@NotNull String name, @NotNull Texture texture, int height, int ascent) {
         char c = nextUnicode();
-        TextureGlyph g = new TextureGlyph(Key.key(namespace, id), texture, c, height, ascent);
+        TextureGlyph g = new TextureGlyph(name, Key.key(namespace, id), texture, c, height, ascent);
+        LinkedList<Glyph> gl = new LinkedList<>();
+        gl.add(g);
+        occupied.add(c);
+        glyphGroups.add(gl);
+        NAMED_GLYPHS.put(namespace + ":" + name, g.toComponent());
+        return g;
+    }
+
+    /**
+     * Creates a texture glyph (bitmap glyph) without registering a global tag resolver.
+     *
+     * @param texture The texture used by the glyph.
+     * @param height  The height of the image.
+     * @param ascent  The ascent of the glyph.
+     * @return The glyph that has been created.
+     */
+    public @NotNull TextureGlyph glyph(@NotNull Texture texture, int height, int ascent) {
+        char c = nextUnicode();
+        TextureGlyph g = new TextureGlyph(null, Key.key(namespace, id), texture, c, height, ascent);
         LinkedList<Glyph> gl = new LinkedList<>();
         gl.add(g);
         occupied.add(c);
@@ -167,19 +231,19 @@ public class Font implements Asset {
     /**
      * Converts a texture atlas into glyphs split into rows.
      *
-     * @param texture  Texture data.
-     * @param spriteW  Width of a single glyph.
-     * @param spriteH  Height of a single glyph.
-     * @param height   Glyph visual height.
-     * @param ascent   Glyph ascent.
+     * @param texture Texture data.
+     * @param spriteW Width of a single glyph.
+     * @param spriteH Height of a single glyph.
+     * @param height  Glyph visual height.
+     * @param ascent  Glyph ascent.
      * @return Glyphs grouped by texture rows.
      */
     public @NotNull List<LinkedList<Glyph>> glyphs(
-            @NotNull Texture texture,
-            int spriteW,
-            int spriteH,
-            int height,
-            int ascent
+        @NotNull Texture texture,
+        int spriteW,
+        int spriteH,
+        int height,
+        int ascent
     ) {
         int[] size = getImageSize(texture.data());
         int textureWidth = size[0];
@@ -193,7 +257,7 @@ public class Font implements Asset {
             LinkedList<Glyph> line = new LinkedList<>();
             for (int c = 0; c < cols; c++) {
                 char ch = nextUnicode();
-                TextureGlyph tg = new TextureGlyph(Key.key(namespace, id), texture, ch, height, ascent);
+                TextureGlyph tg = new TextureGlyph(null, Key.key(namespace, id), texture, ch, height, ascent);
                 line.add(tg);
                 occupied.add(ch);
             }
@@ -205,7 +269,7 @@ public class Font implements Asset {
     }
 
     /**
-     * Emits this font to a JSON file.
+     * Emits this font to a JSON file format.
      *
      * @param files Output file map for resource pack building.
      */
@@ -254,8 +318,8 @@ public class Font implements Asset {
         root.add("providers", providers);
 
         files.put("assets/" + namespace + "/font/" + id + ".json",
-                new GsonBuilder().setPrettyPrinting().create()
-                        .toJson(root).getBytes(StandardCharsets.UTF_8));
+            new GsonBuilder().setPrettyPrinting().create()
+                .toJson(root).getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -319,11 +383,12 @@ public class Font implements Asset {
      * @param a       The ascent of the glyph in pixels.
      */
     private void addTextureGlyph(@NotNull Texture texture, char c, int h, int a) {
-        TextureGlyph g = new TextureGlyph(Key.key(namespace, id), texture, c, h, a);
+        TextureGlyph g = new TextureGlyph(String.valueOf(c), Key.key(namespace, id), texture, c, h, a);
         LinkedList<Glyph> list = new LinkedList<>();
         list.add(g);
         glyphGroups.add(list);
         occupied.add(c);
+        NAMED_GLYPHS.put(namespace + ":" + String.valueOf(c), g.toComponent());
     }
 
     /**
@@ -334,7 +399,7 @@ public class Font implements Asset {
      */
     private void ensureNotOccupied(char c) {
         if (occupied.contains(c)) throw new IllegalStateException(
-                "Unicode U+" + Integer.toHexString(c).toUpperCase() + " already occupied");
+            "Unicode U+" + Integer.toHexString(c).toUpperCase() + " already occupied");
     }
 
     /**
@@ -407,21 +472,40 @@ public class Font implements Asset {
     public sealed interface Glyph permits TextureGlyph, OffsetGlyph, TtfFont, UnihexFont {}
 
     /**
-     * Represents a unique bitmap provider group
+     * Represents a unique bitmap provider group.
      *
-     * @param texture the texture of the groupd
-     * @param height the height of the griup
-     * @param ascent the ascent of the group
+     * @param texture The texture associated with the group.
+     * @param height  The pixel height applied to the group.
+     * @param ascent  The pixel ascent applied to the group.
      */
     private record BitmapKey(Texture texture, int height, int ascent) {}
 
     /**
      * A glyph from a bitmap texture.
+     *
+     * @param name      The name of the glyph used for tag resolution, or null if unnamed.
+     * @param fontId    The key identifier of the font.
+     * @param texture   The texture used by the glyph.
+     * @param character The unicode character.
+     * @param height    The pixel height.
+     * @param ascent    The pixel ascent.
      */
-    public record TextureGlyph(Key fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
+    public record TextureGlyph(@Nullable String name, Key fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
+
+        /**
+         * Converts this glyph to a TextComponent.
+         *
+         * @return The representing TextComponent.
+         */
         public TextComponent toComponent() {
             return Component.text(character).font(fontId);
         }
+
+        /**
+         * Converts this glyph to a MiniMessage string format.
+         *
+         * @return The formatted MiniMessage string.
+         */
         public String toMiniMessageString() {
             return "<font:" + fontId.toString() + ">" + character + "</font>";
         }
@@ -429,11 +513,27 @@ public class Font implements Asset {
 
     /**
      * A spacing glyph that adjusts character advance.
+     *
+     * @param fontId    The key identifier of the font.
+     * @param character The unicode character.
+     * @param advance   The pixel advance distance.
      */
     public record OffsetGlyph(Key fontId, char character, int advance) implements Glyph {
+
+        /**
+         * Converts this offset glyph to a TextComponent.
+         *
+         * @return The representing TextComponent.
+         */
         public TextComponent toComponent() {
             return Component.text(character).font(fontId);
         }
+
+        /**
+         * Converts this offset glyph to a MiniMessage string format.
+         *
+         * @return The formatted MiniMessage string.
+         */
         public String toMiniMessageString() {
             return "<font:" + fontId.toString() + ">" + character + "</font>";
         }
@@ -441,10 +541,20 @@ public class Font implements Asset {
 
     /**
      * TTF font provider.
+     *
+     * @param fontId     The key identifier of the font.
+     * @param file       The TTF file path.
+     * @param shiftX     The X offset.
+     * @param shiftY     The Y offset.
+     * @param size       The font size.
+     * @param oversample The oversample scaling.
      */
     public record TtfFont(Key fontId, String file, int shiftX, int shiftY, int size, int oversample) implements Glyph {
+
         /**
-         * @return the json representation.
+         * Serializes the provider into a JSON object representation.
+         *
+         * @return The generated JsonObject.
          */
         public JsonObject toJson() {
             JsonObject p = new JsonObject();
@@ -462,12 +572,27 @@ public class Font implements Asset {
 
     /**
      * Unihex font provider with size overrides.
+     *
+     * @param fontId        The key identifier of the font.
+     * @param file          The Hex file path.
+     * @param sizeOverrides List of spacing adjustments for subsets.
      */
     public record UnihexFont(Key fontId, String file, List<Override> sizeOverrides) implements Glyph {
+
+        /**
+         * Represents a dimensional spacing override within the Unihex font.
+         *
+         * @param from  Start unicode integer boundary.
+         * @param to    End unicode integer boundary.
+         * @param left  Left spacing pixel amount.
+         * @param right Right spacing pixel amount.
+         */
         public record Override(int from, int to, int left, int right) {}
 
         /**
-         * @return the json representation.
+         * Serializes the provider into a JSON object representation.
+         *
+         * @return The generated JsonObject.
          */
         public JsonObject toJson() {
             JsonObject p = new JsonObject();

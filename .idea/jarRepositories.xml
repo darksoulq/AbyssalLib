@@ -76,5 +76,10 @@
       <option name="name" value="maven3" />
       <option name="url" value="https://repo.extendedclip.com/releases/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="faststatsReleases" />
+      <option name="name" value="faststatsReleases" />
+      <option name="url" value="https://repo.faststats.dev/releases" />
+    </remote-repository>
   </component>
 </project>

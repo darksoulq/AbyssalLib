@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.server.translation.internal;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.translation.ItemTranslationContext;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.mojang.datafixers.util.Pair;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
@@ -19,7 +18,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundShowDialogPacket;
-import net.minecraft.network.protocol.common.ServerboundClientInformationPacket;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -47,38 +45,45 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PacketTranslator {
-    private static final Map<UUID, Map<Integer, Integer>> translationHashes = new ConcurrentHashMap<>();
+    private static final Map<UUID, Map<Integer, String>> TRANSLATION_STATES = new ConcurrentHashMap<>();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
     private static final Base64.Encoder B64_ENCODER = Base64.getEncoder();
     private static final Base64.Decoder B64_DECODER = Base64.getDecoder();
 
     public static void startUpdater() {
-        Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), () -> {
-            translationHashes.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
+        Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
+            TRANSLATION_STATES.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
 
             for (Player player : Bukkit.getOnlinePlayers()) {
                 ServerPlayer sp = ((CraftPlayer) player).getHandle();
                 AbstractContainerMenu menu = sp.containerMenu;
-                Map<Integer, Integer> hashes = translationHashes.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
+                Map<Integer, String> states = TRANSLATION_STATES.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
+                int selectedSlot = sp.getInventory().getSelectedSlot();
 
                 for (int i = 0; i < menu.slots.size(); i++) {
                     Slot slot = menu.slots.get(i);
+
+                    if (slot.container == sp.getInventory() && slot.getContainerSlot() == selectedSlot) {
+                        continue;
+                    }
+
                     if (slot.hasItem()) {
                         ItemStack original = slot.getItem();
                         ItemStack translated = original.copy();
                         translateItem(translated, player);
 
-                        int currentHash = translated.hashCode();
-                        Integer lastHash = hashes.get(i);
+                        String currentState = getTranslationState(translated);
+                        String lastState = states.get(i);
 
-                        if (lastHash == null || lastHash != currentHash) {
-                            hashes.put(i, currentHash);
+                        if (!currentState.equals(lastState)) {
+                            states.put(i, currentState);
                             sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.getStateId(), i, translated));
                         }
                     } else {
-                        hashes.remove(i);
+                        states.remove(i);
                     }
                 }
 
@@ -87,18 +92,37 @@ public class PacketTranslator {
                     ItemStack translatedCarried = carried.copy();
                     translateItem(translatedCarried, player);
 
-                    int carriedHash = translatedCarried.hashCode();
-                    Integer lastCarried = hashes.get(-1);
+                    String currentState = getTranslationState(translatedCarried);
+                    String lastState = states.get(-1);
 
-                    if (lastCarried == null || lastCarried != carriedHash) {
-                        hashes.put(-1, carriedHash);
+                    if (!currentState.equals(lastState)) {
+                        states.put(-1, currentState);
                         sp.connection.send(new ClientboundContainerSetSlotPacket(-1, menu.getStateId(), -1, translatedCarried));
                     }
                 } else {
-                    hashes.remove(-1);
+                    states.remove(-1);
                 }
             }
         }, 5L, 5L);
+    }
+
+    private static String getTranslationState(ItemStack stack) {
+        StringBuilder state = new StringBuilder();
+        net.minecraft.network.chat.Component customName = stack.get(DataComponents.CUSTOM_NAME);
+        if (customName != null) {
+            state.append(GSON.serialize(PaperAdventure.asAdventure(customName)));
+        }
+        net.minecraft.network.chat.Component itemName = stack.get(DataComponents.ITEM_NAME);
+        if (itemName != null) {
+            state.append(GSON.serialize(PaperAdventure.asAdventure(itemName)));
+        }
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore != null) {
+            for (net.minecraft.network.chat.Component line : lore.lines()) {
+                state.append(GSON.serialize(PaperAdventure.asAdventure(line)));
+            }
+        }
+        return state.toString();
     }
 
     public static Packet<?> processSend(Packet<?> packet, Player player) {
@@ -125,13 +149,10 @@ public class PacketTranslator {
     }
 
     public static Packet<?> processReceive(Packet<?> packet, Player player) {
-        return switch (packet) {
-            case ServerboundContainerClickPacket p -> handleSlotChange(p, player);
-            case ServerboundSetCreativeModeSlotPacket p -> handleCreativeSlot(p);
-            case ServerboundPlayerActionPacket p -> handleSlotChange(p, player);
-            case ServerboundClientInformationPacket p -> handleClientInfo(p, player);
-            default -> packet;
-        };
+        if (packet instanceof ServerboundSetCreativeModeSlotPacket p) {
+            return handleCreativeSlot(p);
+        }
+        return packet;
     }
 
     @SuppressWarnings("unchecked")
@@ -439,64 +460,12 @@ public class PacketTranslator {
         return new ClientboundMerchantOffersPacket(packet.getContainerId(), copy, packet.getVillagerLevel(), packet.getVillagerXp(), packet.showProgress(), packet.canRestock());
     }
 
-    private static Packet<?> handleSlotChange(Packet<?> packet, Player player) {
-        TaskUtil.delayedTask(AbyssalLib.getInstance(), 1, () -> cleanPlayerInventory(player));
-        return packet;
-    }
-
     private static Packet<?> handleCreativeSlot(ServerboundSetCreativeModeSlotPacket packet) {
         ItemStack item = packet.itemStack();
         if (!item.isEmpty()) {
             untranslateItem(item);
         }
         return packet;
-    }
-
-    private static Packet<?> handleClientInfo(ServerboundClientInformationPacket packet, Player player) {
-        TaskUtil.delayedTask(AbyssalLib.getInstance(), 10, () -> cleanPlayerInventory(player));
-        return packet;
-    }
-
-    private static void cleanPlayerInventory(Player player) {
-        ServerPlayer sp = ((CraftPlayer) player).getHandle();
-        AbstractContainerMenu menu = sp.containerMenu;
-        Map<Integer, Integer> hashes = translationHashes.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
-
-        untranslateItem(menu.getCarried());
-        for (int i = 0; i < menu.slots.size(); i++) {
-            Slot slot = menu.slots.get(i);
-            if (slot.hasItem()) {
-                untranslateItem(slot.getItem());
-            }
-        }
-
-        for (int i = 0; i < menu.slots.size(); i++) {
-            Slot slot = menu.slots.get(i);
-            if (slot.hasItem()) {
-                ItemStack translated = slot.getItem().copy();
-                translateItem(translated, player);
-                int hash = translated.hashCode();
-                if (!hashes.containsKey(i) || hashes.get(i) != hash) {
-                    hashes.put(i, hash);
-                    sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.getStateId(), i, translated));
-                }
-            } else {
-                hashes.remove(i);
-            }
-        }
-
-        ItemStack carried = menu.getCarried();
-        if (!carried.isEmpty()) {
-            ItemStack translatedCarried = carried.copy();
-            translateItem(translatedCarried, player);
-            int hash = translatedCarried.hashCode();
-            if (!hashes.containsKey(-1) || hashes.get(-1) != hash) {
-                hashes.put(-1, hash);
-                sp.connection.send(new ClientboundContainerSetSlotPacket(-1, menu.getStateId(), -1, translatedCarried));
-            }
-        } else {
-            hashes.remove(-1);
-        }
     }
 
     private static void translateItem(ItemStack stack, Player player) {
@@ -549,15 +518,23 @@ public class PacketTranslator {
         }
     }
 
+    private static Component preProcessTags(Component component) {
+        return component
+            .replaceText(b -> b.match(java.util.regex.Pattern.compile("<(?:lang|tr|translate):([^>]+)>"))
+                .replacement((match, builder) -> Component.translatable(match.group(1))))
+            .replaceText(b -> b.match(java.util.regex.Pattern.compile("<(?:lang_or|tr_or|translate_or):([^:]+):([^>]+)>"))
+                .replacement((match, builder) -> Component.translatable(match.group(1)).fallback(match.group(2))));
+    }
+
     private static net.minecraft.network.chat.Component translateItemNMS(net.minecraft.network.chat.Component vanilla, Player player, ItemStack stack, ItemTranslationContext context) {
-        Component adventure = PaperAdventure.asAdventure(vanilla);
+        Component adventure = preProcessTags(PaperAdventure.asAdventure(vanilla));
         org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
         Component translated = ServerTranslator.translateItemComponent(adventure, player, bukkitStack, context);
         return PaperAdventure.asVanilla(translated);
     }
 
     private static boolean untranslateItem(ItemStack stack) {
-        if (stack.isEmpty()) return false;
+        if (stack == null || stack.isEmpty()) return false;
 
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return false;
@@ -622,7 +599,7 @@ public class PacketTranslator {
     }
 
     private static net.minecraft.network.chat.Component translateNMS(net.minecraft.network.chat.Component vanilla, Player player) {
-        Component adventure = PaperAdventure.asAdventure(vanilla);
+        Component adventure = preProcessTags(PaperAdventure.asAdventure(vanilla));
         Component translated = ServerTranslator.translate(adventure, player);
         return PaperAdventure.asVanilla(translated);
     }

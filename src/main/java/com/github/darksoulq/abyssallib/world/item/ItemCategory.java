@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.world.item;
 
-import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;

@@ -4,7 +4,6 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyEvent;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
-import com.github.darksoulq.abyssallib.world.entity.DamageType;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
@@ -12,7 +11,10 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 /**

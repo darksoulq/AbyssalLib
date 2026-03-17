@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.world.item.internal;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
 import com.github.darksoulq.abyssallib.world.item.Items;

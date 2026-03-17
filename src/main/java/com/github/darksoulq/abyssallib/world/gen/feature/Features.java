@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.world.gen.feature;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.gen.feature.impl.*;
 
 public class Features {

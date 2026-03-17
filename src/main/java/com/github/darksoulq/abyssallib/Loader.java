@@ -17,7 +17,9 @@ public class Loader implements PluginLoader {
         resolver.addDependency(new Dependency(new DefaultArtifact("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"), null));
         resolver.addDependency(new Dependency(new DefaultArtifact("com.fasterxml.jackson.core:jackson-databind:2.17.0"), null));
         resolver.addDependency(new Dependency(new DefaultArtifact("com.fasterxml.jackson.core:jackson-core:2.17.0"), null));
+        resolver.addDependency(new Dependency(new DefaultArtifact("dev.faststats.metrics:bukkit:0.18.1"), null));
         resolver.addRepository(new RemoteRepository.Builder("central", "default", MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR).build());
+        resolver.addRepository(new RemoteRepository.Builder("faststatsReleases", "default", "https://repo.faststats.dev/releases").build());
 
         classpathBuilder.addLibrary(resolver);
     }

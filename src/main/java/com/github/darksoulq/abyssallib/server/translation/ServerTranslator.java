@@ -59,6 +59,16 @@ public final class ServerTranslator {
     private static final List<ItemTranslationProvider> ITEM_PROVIDERS = new ArrayList<>();
 
     /**
+     * A sequential list of globally active providers mapped to override dictionary variables system-wide.
+     */
+    private static final List<GlobalTranslationProvider> GLOBAL_PROVIDERS = new ArrayList<>();
+
+    /**
+     * A sequential list of globally active TagResolvers applied to all translated components.
+     */
+    private static final List<TagResolver> GLOBAL_RESOLVERS = new ArrayList<>();
+
+    /**
      * Initializes the server translation module and invokes the primary language loading sequence.
      */
     public static void init() {
@@ -81,6 +91,24 @@ public final class ServerTranslator {
      */
     public static void registerItemProvider(@NotNull ItemTranslationProvider provider) {
         ITEM_PROVIDERS.add(provider);
+    }
+
+    /**
+     * Registers a global translation provider empowering dynamic resolution of component keys system-wide.
+     *
+     * @param provider The provider implementation added to the global resolution registry.
+     */
+    public static void registerGlobalProvider(@NotNull GlobalTranslationProvider provider) {
+        GLOBAL_PROVIDERS.add(provider);
+    }
+
+    /**
+     * Registers a global TagResolver that will be applied to all translated components.
+     *
+     * @param resolver The TagResolver to add to the global registry.
+     */
+    public static void registerGlobalResolver(@NotNull TagResolver resolver) {
+        GLOBAL_RESOLVERS.add(resolver);
     }
 
     /**
@@ -154,6 +182,13 @@ public final class ServerTranslator {
             }
 
             if (pattern == null) {
+                for (GlobalTranslationProvider provider : GLOBAL_PROVIDERS) {
+                    pattern = provider.resolve(key, player);
+                    if (pattern != null) break;
+                }
+            }
+
+            if (pattern == null) {
                 pattern = TRANSLATOR.getRawTranslation(key, locale);
             }
 
@@ -192,10 +227,12 @@ public final class ServerTranslator {
                     parsed = parsed.replaceAll("\\{" + i + ",[^}]+\\}", Matcher.quoteReplacement(serialized));
                 }
 
-                List<TagResolver> resolvers = new ArrayList<>();
+                List<TagResolver> resolvers = new ArrayList<>(GLOBAL_RESOLVERS);
                 if (player != null) {
                     resolvers.add(PlaceholderService.resolve(player));
                 }
+
+                resolvers.add(GlyphService.resolve());
 
                 resolvers.add(TagResolver.resolver(Set.of("tr", "translate"), (queue, ctx) -> {
                     if (!queue.hasNext()) return Tag.inserting(Component.empty());
@@ -289,16 +326,29 @@ public final class ServerTranslator {
      */
     public static Component render(@NotNull String key, @Nullable Player player, @NotNull TagResolver... extraResolvers) {
         Locale locale = player != null ? player.locale() : Locale.US;
-        String pattern = TRANSLATOR.getRawTranslation(key, locale);
+        String pattern = null;
+
+        for (GlobalTranslationProvider provider : GLOBAL_PROVIDERS) {
+            pattern = provider.resolve(key, player);
+            if (pattern != null) break;
+        }
+
+        if (pattern == null) {
+            pattern = TRANSLATOR.getRawTranslation(key, locale);
+        }
 
         if (pattern == null) {
             return Component.translatable(key);
         }
 
-        List<TagResolver> resolvers = new ArrayList<>(Arrays.asList(extraResolvers));
+        List<TagResolver> resolvers = new ArrayList<>(GLOBAL_RESOLVERS);
+        resolvers.addAll(Arrays.asList(extraResolvers));
+
         if (player != null) {
             resolvers.add(PlaceholderService.resolve(player));
         }
+
+        resolvers.add(GlyphService.resolve());
 
         resolvers.add(TagResolver.resolver(Set.of("tr", "translate"), (queue, ctx) -> {
             if (!queue.hasNext()) return Tag.inserting(Component.empty());

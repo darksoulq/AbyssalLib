@@ -17,7 +17,7 @@ public class GuiTextures {
         STRUCTURE_BLOCK_MENU = fn.glyph(ns.texture("gui/structure_block_menu"), 222, 13);
         PERMISSION_MAIN_MENU = fn.glyph(ns.texture("gui/permission_main_menu"), 168, 13);
         PERMISSION_SEARCH_MENU = fn.glyph(ns.texture("gui/permission_search_menu"), 168, 13);
-        MOUSE_LEFT = fn.glyph(ns.texture("gui/mouse_left"), 8, 8);
+        MOUSE_LEFT = fn.glyph("mouse_left", ns.texture("gui/mouse_left"), 8, 8);
         MOUSE_RIGHT = fn.glyph(ns.texture("gui/mouse_right"), 8, 8);
     }
 }

@@ -43,22 +43,27 @@ repositories {
     maven {
         url = 'https://repo.extendedclip.com/releases/'
     }
+    maven {
+        name = "faststatsReleases"
+        url = uri("https://repo.faststats.dev/releases")
+    }
 }
 
 dependencies {
     paperweight.paperDevBundle('1.21.11-R0.1-SNAPSHOT')
-    implementation('org.jetbrains.kotlin:kotlin-stdlib')
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    compileOnly("dev.faststats.metrics:bukkit:0.18.1")
+    compileOnly('org.jetbrains.kotlin:kotlin-stdlib')
+    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-    implementation('org.xerial:sqlite-jdbc:3.44.1.0')
-    implementation('org.apache.pdfbox:fontbox:3.0.5')
-    implementation('com.fasterxml.jackson.core:jackson-databind:2.17.0')
-    implementation('com.fasterxml.jackson.core:jackson-core:2.17.0')
-    implementation 'org.mongodb:mongodb-driver-sync:5.0.0'
-    implementation 'redis.clients:jedis:5.1.2'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
-    implementation 'org.postgresql:postgresql:42.7.3'
-    implementation 'com.h2database:h2:2.2.224'
+    compileOnly('org.xerial:sqlite-jdbc:3.44.1.0')
+    compileOnly('org.apache.pdfbox:fontbox:3.0.5')
+    compileOnly('com.fasterxml.jackson.core:jackson-databind:2.17.0')
+    compileOnly('com.fasterxml.jackson.core:jackson-core:2.17.0')
+    compileOnly 'org.mongodb:mongodb-driver-sync:5.0.0'
+    compileOnly 'redis.clients:jedis:5.1.2'
+    compileOnly 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
+    compileOnly 'org.postgresql:postgresql:42.7.3'
+    compileOnly 'com.h2database:h2:2.2.224'
 
     compileOnly('com.magmaguy:ResourcePackManager:1.7.1')
     compileOnly 'me.clip:placeholderapi:2.11.7'

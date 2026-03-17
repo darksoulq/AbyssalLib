@@ -60,16 +60,25 @@ public class CustomTranslator implements Translator {
     /**
      * Retrieves the raw string format from the bundle bypassing {@link MessageFormat} parsing.
      * This prevents unintended alteration of formatting characters such as single quotes and brackets.
+     * Falls back to the Locale.US bundle if the key is missing in the target locale.
      *
      * @param key    The translation key to look up.
      * @param locale The target {@link Locale} for the translation.
      * @return The raw, unparsed localized string, or {@code null} if missing.
      */
     public @Nullable String getRawTranslation(@NotNull String key, @NotNull Locale locale) {
-        ResourceBundle bundle = getBundle(locale);
+        ResourceBundle bundle = bundles.get(locale);
         if (bundle != null && bundle.containsKey(key)) {
             return bundle.getString(key);
         }
+
+        if (!locale.equals(Locale.US)) {
+            ResourceBundle fallbackBundle = bundles.get(Locale.US);
+            if (fallbackBundle != null && fallbackBundle.containsKey(key)) {
+                return fallbackBundle.getString(key);
+            }
+        }
+
         return null;
     }
 

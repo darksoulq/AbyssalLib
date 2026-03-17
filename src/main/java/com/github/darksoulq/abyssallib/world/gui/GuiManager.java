@@ -3,13 +3,10 @@ package com.github.darksoulq.abyssallib.world.gui;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryView;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
