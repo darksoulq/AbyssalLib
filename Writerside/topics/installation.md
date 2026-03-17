@@ -1,5 +1,4 @@
 # Installation
-<secondary-label ref="wip"/>
 <link-summary>Guide to adding AbyssalLib dependencies to your project and paper-plugin.yml</link-summary>
 
 Integrating AbyssalLib into your plugin is straightforward and similar to using any other API. This guide will walk you through adding the necessary build dependencies and updating your plugin descriptor.
@@ -9,7 +8,7 @@ To get started, you will need to complete 2 steps:
 2. Adding the `paper-plugin.yml` dependency so the server loads AbyssalLib first.
 
 <note>
-If you plan to use the built-in resource pack features, also check out the <a href="configuration.md">Configuration</a> page to enable resource pack hosting.
+If you plan to use the built-in resource pack features, also check out the <a href="configuration.md"/> page to enable resource pack hosting.
 </note>
 
 ### Adding the Build Dependency

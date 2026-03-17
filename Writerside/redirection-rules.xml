@@ -6,4 +6,8 @@
         <accepts>page.html</accepts>
     </rule>
     -->
+    <rule id="7ed5cc95">
+        <description>Created after removal of "Translation Providers" from AbyssalLib</description>
+        <accepts>translation-providers.html</accepts>
+    </rule>
 </rules>

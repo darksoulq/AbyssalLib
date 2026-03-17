@@ -19,7 +19,7 @@ Changes to the configuration usually require a full server restart to take effec
 </tr>
 <tr>
 <td>metrics</td>
-<td>Whether to enable BStats for anonymous usage tracking.</td>
+<td>Whether to enable FastStats for anonymous usage tracking.</td>
 <td><code>true</code></td>
 </tr>
 <tr>

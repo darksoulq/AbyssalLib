@@ -1,5 +1,4 @@
 # Custom Data Components
-<secondary-label ref="wip"/>
 <link-summary>Guide to creating and storing persistent custom data on items</link-summary>
 
 As you create more advanced items, you will inevitably need to store dynamic data directly on the item itself (like an item's level, owner, etc). For this AbyssalLib allows you to create custom `DataComponent`s.
@@ -41,7 +40,7 @@ Before diving into creating custom components, it is helpful to know how to inte
 
 ### Creating a custom data component
 <tip>
-You can easily utilize Data Components to drive custom, dynamically updating Lore lines on your items [WIP]
+You can easily utilize Data Components to drive custom, dynamically updating Lore lines on your items using <a href="ssr.md"></a>
 </tip>
 
 To start, you will need to extend the `DataComponent<T>` class, where `T` is the type of data you want to store.

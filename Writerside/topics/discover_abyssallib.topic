@@ -22,5 +22,10 @@
             <card href="item-interactions.md" summary="Add custom behaviour to your items.">
             </card>
         </primary>
+        <secondary>
+            <title>Misc</title>
+            <card href="ssr.md" summary="Dynamic Server-Side Translations.">
+            </card>
+        </secondary>
     </section-starting-page>
 </topic>

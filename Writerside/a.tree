@@ -5,18 +5,18 @@
 <instance-profile id="a" name="AbyssalLib" start-page="discover_abyssallib.topic">
 
     <toc-element topic="discover_abyssallib.topic"/>
-    <toc-element toc-title="Developers">
-        <toc-element topic="installation.md"/>
-        <toc-element toc-title="Items">
-            <toc-element topic="first-item.md">
-                <toc-element topic="food-item.md"/>
-            </toc-element>
-            <toc-element topic="item-categories.md"/>
-            <toc-element topic="item-interactions.md"/>
-            <toc-element topic="data-components.md"/>
+    <toc-element topic="installation.md"/>
+    <toc-element topic="configuration.md"/>
+    <toc-element toc-title="Items">
+        <toc-element topic="first-item.md">
+            <toc-element topic="food-item.md"/>
         </toc-element>
+        <toc-element topic="item-categories.md"/>
+        <toc-element topic="item-interactions.md"/>
+        <toc-element topic="data-components.md"/>
     </toc-element>
-    <toc-element toc-title="Server Owners">
-        <toc-element topic="configuration.md"/>
+    <toc-element toc-title="Other">
+        <toc-element topic="ssr.md"/>
+        <toc-element topic="events.md"/>
     </toc-element>
 </instance-profile>
