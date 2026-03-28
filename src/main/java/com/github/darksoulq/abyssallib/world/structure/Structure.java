@@ -140,8 +140,7 @@ public class Structure {
                                               @NotNull StructureRotation rotation, @NotNull Mirror mirror,
                                               float integrity, int blocksPerTick) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        Vector center = calculateCenter();
-        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future, center).runTaskTimer(plugin, 0L, 1L);
+        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).runTaskTimer(plugin, 0L, 1L);
         return future;
     }
 
@@ -155,10 +154,9 @@ public class Structure {
      */
     public void place(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
-        Vector center = calculateCenter();
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-            placeBlock(origin.getWorld(), origin, sb, rotation, mirror, center);
+            placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
         }
     }
 
@@ -173,30 +171,10 @@ public class Structure {
      */
     public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
-        Vector center = calculateCenter();
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-            placeBlock(level, origin, sb, rotation, mirror, center);
+            placeBlock(level, origin, sb, rotation, mirror);
         }
-    }
-
-    /**
-     * Calculates the horizontal center of the structure for rotation math.
-     *
-     * @return A vector representing the horizontal pivot point.
-     */
-    private Vector calculateCenter() {
-        if (blocks.isEmpty()) return new Vector(0, 0, 0);
-        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
-        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
-
-        for (StructureBlock b : blocks) {
-            if (b.x < minX) minX = b.x;
-            if (b.x > maxX) maxX = b.x;
-            if (b.z < minZ) minZ = b.z;
-            if (b.z > maxZ) maxZ = b.z;
-        }
-        return new Vector((minX + maxX) / 2.0, 0, (minZ + maxZ) / 2.0);
     }
 
     /**
@@ -216,13 +194,12 @@ public class Structure {
      * @param sb           The structure block data.
      * @param rotation     The applied rotation.
      * @param mirror       The applied mirror.
-     * @param center       The rotation center pivot.
      */
-    private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror, Vector center) {
+    private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror) {
         if (sb.stateIndex < 0 || sb.stateIndex >= palette.size()) return;
 
         Vector relativePos = new Vector(sb.x, sb.y, sb.z);
-        Vector transformedPos = transform(relativePos, mirror, rotation, center);
+        Vector transformedPos = transform(relativePos, mirror, rotation);
         Location target = origin.clone().add(transformedPos);
         PaletteEntry entry = palette.get(sb.stateIndex);
 
@@ -309,37 +286,42 @@ public class Structure {
      * @param pos      The initial relative position.
      * @param mirror   The mirroring mode.
      * @param rotation The rotation mode.
-     * @param center   The pivot center for rotation.
      * @return The transformed position vector.
      */
-    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation, Vector center) {
-        double x = pos.getX() - center.getX();
-        double z = pos.getZ() - center.getZ();
+    private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
+        int x = pos.getBlockX();
+        int y = pos.getBlockY();
+        int z = pos.getBlockZ();
+
+        int sizeX = size.getBlockX();
+        int sizeZ = size.getBlockZ();
 
         switch (mirror) {
-            case LEFT_RIGHT -> z = -z;
-            case FRONT_BACK -> x = -x;
+            case LEFT_RIGHT -> z = sizeZ - 1 - z;
+            case FRONT_BACK -> x = sizeX - 1 - x;
+            case NONE -> {}
         }
 
-        double newX = x;
-        double newZ = z;
+        int newX = x;
+        int newZ = z;
 
         switch (rotation) {
+            case NONE -> {}
             case CLOCKWISE_90 -> {
-                newX = -z;
+                newX = sizeZ - 1 - z;
                 newZ = x;
             }
             case CLOCKWISE_180 -> {
-                newX = -x;
-                newZ = -z;
+                newX = sizeX - 1 - x;
+                newZ = sizeZ - 1 - z;
             }
             case COUNTERCLOCKWISE_90 -> {
                 newX = z;
-                newZ = -x;
+                newZ = sizeX - 1 - x;
             }
         }
 
-        return new Vector(Math.round(newX + center.getX()), pos.getY(), Math.round(newZ + center.getZ()));
+        return new Vector(newX, y, newZ);
     }
 
     /**
@@ -435,7 +417,6 @@ public class Structure {
         private final int limit;
         private final CompletableFuture<Void> future;
         private final Iterator<StructureBlock> iterator;
-        private final Vector center;
 
         /**
          * Constructs the paster task.
@@ -446,15 +427,13 @@ public class Structure {
          * @param integrity Placement probability.
          * @param limit     Blocks to place per tick.
          * @param future    Completable future to notify of completion.
-         * @param center    Transformation pivot.
          */
-        public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future, Vector center) {
+        public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future) {
             this.origin = origin;
             this.rotation = rotation;
             this.mirror = mirror;
             this.limit = limit;
             this.future = future;
-            this.center = center;
             this.iterator = blocks.iterator();
 
             if (integrity < 1.0f) {
@@ -470,7 +449,7 @@ public class Structure {
             int count = 0;
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
-                placeBlock(origin.getWorld(), origin, sb, rotation, mirror, center);
+                placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
                 count++;
             }
             if (!iterator.hasNext()) {
