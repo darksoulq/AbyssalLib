@@ -48,5 +48,7 @@ public final class BlockAdapterRegistry {
         Adapter.register("height", new MossyCarpetHeightAdapter());
         Adapter.register("crafting", new CrafterStateAdapter());
         Adapter.register("triggered", new CrafterPowerAdapter());
+        Adapter.register("part", new BedPartAdapter());
+        Adapter.register("occupied", new BedOccupiedAdapter());
     }
 }

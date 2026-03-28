@@ -13,7 +13,6 @@ import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.nms.NMSWorldGenAccess;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
-import com.github.darksoulq.abyssallib.world.structure.processor.impl.IntegrityProcessor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -38,17 +37,19 @@ import java.util.concurrent.CompletableFuture;
  * and AbyssalLib's {@link CustomBlock} system, including tile entity data.
  */
 public class Structure {
-    /** The current data version for serialization compatibility. */
-    private static final int DATA_VERSION = 1;
+
     /** Factory for creating JSON nodes during serialization. */
     private static final JsonNodeFactory FACTORY = JsonNodeFactory.instance;
 
     /** The unique collection of block states used in this structure. */
     private final List<PaletteEntry> palette = new ArrayList<>();
+
     /** The individual blocks making up the structure. */
     private final List<StructureBlock> blocks = new ArrayList<>();
+
     /** Pipeline of processors applied during the placement phase. */
     private final List<StructureProcessor> processors = new ArrayList<>();
+
     /** The bounding box dimensions of the structure. */
     private Vector size;
 
@@ -80,8 +81,8 @@ public class Structure {
 
         Map<PaletteEntry, Integer> paletteLookup = new HashMap<>();
 
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     Block block = corner1.getWorld().getBlockAt(x, y, z);
                     if (block.getType() == Material.STRUCTURE_VOID) continue;
@@ -228,7 +229,7 @@ public class Structure {
             } else {
                 current = processor.process((org.bukkit.World) worldOrLevel, origin, current, original);
             }
-            return;
+            if (current == null) return;
         }
 
         try {
@@ -331,7 +332,6 @@ public class Structure {
      */
     public ObjectNode serialize() {
         ObjectNode root = FACTORY.objectNode();
-        root.put("DataVersion", DATA_VERSION);
         root.putPOJO("size", new int[]{size.getBlockX(), size.getBlockY(), size.getBlockZ()});
 
         ArrayNode paletteArray = root.putArray("palette");
@@ -414,9 +414,11 @@ public class Structure {
         private final Location origin;
         private final StructureRotation rotation;
         private final Mirror mirror;
+        private final float integrity;
         private final int limit;
         private final CompletableFuture<Void> future;
         private final Iterator<StructureBlock> iterator;
+        private final Random random = new Random();
 
         /**
          * Constructs the paster task.
@@ -432,13 +434,10 @@ public class Structure {
             this.origin = origin;
             this.rotation = rotation;
             this.mirror = mirror;
+            this.integrity = integrity;
             this.limit = limit;
             this.future = future;
             this.iterator = blocks.iterator();
-
-            if (integrity < 1.0f) {
-                addProcessor(new IntegrityProcessor(integrity));
-            }
         }
 
         /**
@@ -449,6 +448,10 @@ public class Structure {
             int count = 0;
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
+                if (integrity < 1.0f && random.nextFloat() > integrity) {
+                    count++;
+                    continue;
+                }
                 placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
                 count++;
             }

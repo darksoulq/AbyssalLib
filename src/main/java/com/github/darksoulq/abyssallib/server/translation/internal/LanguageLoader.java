@@ -23,6 +23,7 @@ import java.util.stream.Stream;
  * with the provided {@link CustomTranslator}.
  */
 public class LanguageLoader {
+
     /** The directory path where external language files are stored. */
     public static final Path LANG_FOLDER = AbyssalLib.getInstance().getDataFolder().toPath().resolve("lang");
 
@@ -58,6 +59,7 @@ public class LanguageLoader {
     public static void loadFile(Path path, CustomTranslator translator) {
         try (InputStream in = Files.newInputStream(path)) {
             loadStream(in, path.getFileName().toString(), translator);
+            AbyssalLib.LOGGER.info("Loaded language file " + path);
         } catch (IOException e) {
             AbyssalLib.getInstance().getLogger().warning("Failed to load language file: " + path + " - " + e.getMessage());
         }
@@ -82,6 +84,7 @@ public class LanguageLoader {
             if (fileName.contains("\\")) fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
             loadStream(in, fileName, translator);
+            AbyssalLib.LOGGER.info("Loaded language file " + fileName);
         } catch (IOException e) {
             AbyssalLib.getInstance().getLogger().warning("Failed to load language resource: " + resourcePath + " - " + e.getMessage());
         }
