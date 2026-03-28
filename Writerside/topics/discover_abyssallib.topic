@@ -16,10 +16,12 @@
             </card>
         </spotlight>
         <primary>
-            <title>Items</title>
+            <title>Main Features</title>
             <card href="first-item.md" summary="Register your first item.">
             </card>
             <card href="item-interactions.md" summary="Add custom behaviour to your items.">
+            </card>
+            <card href="first-gui.md" summary="Create your first GUI.">
             </card>
         </primary>
         <secondary>

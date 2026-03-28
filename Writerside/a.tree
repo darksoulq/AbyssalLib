@@ -15,6 +15,13 @@
         <toc-element topic="item-interactions.md"/>
         <toc-element topic="data-components.md"/>
     </toc-element>
+    <toc-element toc-title="GUI">
+        <toc-element topic="first-gui.md">
+        </toc-element>
+        <toc-element topic="paged-gui.md"/>
+        <toc-element topic="custom-gui-elements.md"/>
+        <toc-element topic="custom-gui-layers.md"/>
+    </toc-element>
     <toc-element toc-title="Other">
         <toc-element topic="ssr.md"/>
         <toc-element topic="events.md"/>
