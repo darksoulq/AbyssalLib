@@ -46,14 +46,6 @@ public class PlayerEvents {
         if (AbyssalLib.PERMISSION_MANAGER != null) {
             AbyssalLib.PERMISSION_MANAGER.handleJoin(event.getPlayer());
         }
-        ItemStack st = new ItemStack(Material.PAPER);
-        st.editMeta(meta -> {
-            meta.setItemModel(new NamespacedKey("test", "test"));
-            CustomModelDataComponent comp = meta.getCustomModelDataComponent();
-            comp.setFloats(List.of(0f, 1f));
-            meta.setCustomModelDataComponent(comp);
-        });
-        event.getPlayer().give(st);
     }
 
     @SubscribeEvent(ignoreCancelled = false)
