@@ -18,7 +18,8 @@ import java.util.stream.Stream;
  * <p>
  * This modifier iterates vertically from the input position, searching for a solid block.
  * Depending on the configuration, it can scan upwards to find a ceiling or downwards
- * to find a floor, adjusting the final vector to sit on or under that surface.
+ * to find a floor, adjusting the final placement vector to sit perfectly on or under
+ * that discovered surface.
  */
 public class EnvironmentScanModifier extends PlacementModifier {
 
@@ -26,14 +27,15 @@ public class EnvironmentScanModifier extends PlacementModifier {
      * The codec used for serializing and deserializing the environment scan modifier.
      */
     public static final Codec<EnvironmentScanModifier> CODEC = new Codec<>() {
+
         /**
          * Decodes the modifier from a serialized map.
          *
          * @param ops   The dynamic operations logic.
          * @param input The serialized input.
          * @param <D>   The data format type.
-         * @return A new instance of {@link EnvironmentScanModifier}.
-         * @throws CodecException If "max_steps" or "up" fields are missing or invalid.
+         * @return A new instance of the environment scan modifier.
+         * @throws CodecException If the max_steps or up fields are missing or invalid.
          */
         @Override
         public <D> EnvironmentScanModifier decode(DynamicOps<D> ops, D input) throws CodecException {
@@ -69,13 +71,13 @@ public class EnvironmentScanModifier extends PlacementModifier {
     /** The maximum number of blocks to scan in the specified direction. */
     private final int maxSteps;
 
-    /** Whether to scan upwards (true) or downwards (false). */
+    /** Determines the scan direction; true to scan upwards, false to scan downwards. */
     private final boolean up;
 
     /**
      * Constructs a new EnvironmentScanModifier.
      *
-     * @param maxSteps The range of the vertical scan.
+     * @param maxSteps The maximum range of the vertical scan.
      * @param up       True to find a ceiling, false to find a floor.
      */
     public EnvironmentScanModifier(int maxSteps, boolean up) {
@@ -84,14 +86,14 @@ public class EnvironmentScanModifier extends PlacementModifier {
     }
 
     /**
-     * Maps each input position to the nearest solid surface found within the scan range.
+     * Maps each input position to the nearest empty space adjacent to a solid surface.
      * <p>
      * The method iterates through the Y-axis starting at the input coordinate. If a
-     * solid block is encountered within the {@code maxSteps} range, the position is
-     * updated. If the scan is upward, it returns the position of the air block
-     * immediately above the surface; if downward, it returns the surface position itself.
+     * solid block is encountered within the scanning range, the position is updated.
+     * If the scan is upward, it returns the position of the air block immediately
+     * below the ceiling. If downward, it returns the position immediately above the floor.
      *
-     * @param context   The current {@link PlacementContext}.
+     * @param context   The current placement context providing world bounds and data.
      * @param positions The incoming stream of potential placement vectors.
      * @return A stream of vectors adjusted to the discovered surfaces.
      */
@@ -105,13 +107,18 @@ public class EnvironmentScanModifier extends PlacementModifier {
 
             for (int i = 0; i < maxSteps; i++) {
                 int checkY = y + (i * step);
-                if (checkY < context.getMinBuildHeight() || checkY >= context.getHeight()) break;
+                
+                if (checkY < context.getMinBuildHeight() || checkY >= context.getHeight()) {
+                    break;
+                }
 
                 Material m = context.level().getType(x, checkY, z);
+                
                 if (m.isSolid()) {
-                    return new Vector(x, checkY + (up ? 1 : 0), z);
+                    return new Vector(x, checkY + (up ? -1 : 1), z);
                 }
             }
+            
             return pos;
         });
     }
@@ -119,7 +126,7 @@ public class EnvironmentScanModifier extends PlacementModifier {
     /**
      * Retrieves the specific type definition for this modifier.
      *
-     * @return The {@link PlacementModifierType} associated with {@link EnvironmentScanModifier}.
+     * @return The placement modifier type associated with this environment scan modifier.
      */
     @Override
     public PlacementModifierType<?> getType() {

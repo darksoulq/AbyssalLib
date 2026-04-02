@@ -1,81 +1,97 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
+import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
-import org.bukkit.Location;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * A world generation feature that places a single isolated block.
- * <p>
- * This feature simply places the targeted block at the specified origin, with an
- * optional restriction to only replace certain existing block types.
+ * A fundamental world generation feature that places a single block state dynamically.
  */
 public class SimpleBlockFeature extends Feature<SimpleBlockFeature.Config> {
 
     /**
-     * Constructs a new SimpleBlockFeature with the associated configuration codec.
+     * Constructs a new SimpleBlockFeature with its associated configuration codec.
      */
     public SimpleBlockFeature() {
         super(Config.CODEC);
     }
 
     /**
-     * Executes the placement logic for the single block.
+     * Executes the placement of the single block at the origin coordinate.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, and configuration.
-     * @return {@code true} if the block was successfully placed; {@code false} if validation failed.
+     * @param context The feature place context providing world access and configuration.
+     * @return True if the block was successfully placed.
      */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
-        Location origin = context.origin();
-
-        if (!context.config().replace.isEmpty()) {
-            if (!WorldGenUtils.isValidBlock(context.level(), origin, context.config().replace)) {
-                return false;
-            }
+        BlockInfo stateToPlace = context.config().stateProvider().getState(context.random(), context.origin());
+        if (stateToPlace != null) {
+            WorldGenUtils.placeBlock(context.level(), context.origin(), stateToPlace);
+            return true;
         }
-
-        WorldGenUtils.placeBlock(context.level(), origin, context.config().toPlace);
-        return true;
+        return false;
     }
 
     /**
-     * Configuration record for {@link SimpleBlockFeature}.
+     * Specifies the procedural generation phase in which this feature executes.
      *
-     * @param toPlace The {@link BlockInfo} representing the block state to be generated.
-     * @param replace A {@link List} of block IDs allowed to be replaced by this block.
+     * @return The VEGETAL_DECORATION generation phase.
      */
-    public record Config(BlockInfo toPlace, List<String> replace) implements FeatureConfig {
+    @Override
+    public GenerationPhase getPhase(Config config) {
+        return GenerationPhase.VEGETAL_DECORATION;
+    }
+
+    /**
+     * Configuration record for the simple block feature.
+     *
+     * @param stateProvider The dynamic provider supplying the block to be placed.
+     */
+    public record Config(BlockStateProvider stateProvider) implements FeatureConfig {
 
         /**
-         * The codec for serializing and deserializing {@link Config}.
+         * The codec for serializing and deserializing the configuration.
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
+            /**
+             * Decodes the configuration from a map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param input The serialized input.
+             * @param <D>   The data format type.
+             * @return A new configuration instance.
+             * @throws CodecException If the state provider field is missing.
+             */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo block = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("block")));
-                List<String> replace = new ArrayList<>();
-                if (map.containsKey(ops.createString("replace"))) {
-                    replace = Codecs.STRING.list().decode(ops, map.get(ops.createString("replace")));
-                }
-                return new Config(block, replace);
+                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
+                return new Config(stateProvider);
             }
 
+            /**
+             * Encodes the configuration into a map.
+             *
+             * @param ops   The dynamic operations logic.
+             * @param value The configuration instance.
+             * @param <D>   The data format type.
+             * @return The encoded data object.
+             * @throws CodecException If serialization fails.
+             */
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.toPlace));
-                map.put(ops.createString("replace"), Codecs.STRING.list().encode(ops, value.replace));
+                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
                 return ops.createMap(map);
             }
         };

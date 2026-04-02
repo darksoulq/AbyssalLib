@@ -11,33 +11,60 @@ import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNetworkT
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNodeAddEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNodeRemoveEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.block.BlockFace;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The central manager for all energy-related operations.
- * Handles energy distribution across connected nodes, persistence to SQLite,
- * and the main tick loop for energy transfers.
+ * Central manager responsible for handling all energy node interactions.
+ * <p>
+ * This includes:
+ * <ul>
+ *     <li>Registration and lifecycle management of nodes</li>
+ *     <li>Energy distribution across connected graphs</li>
+ *     <li>Persistence and restoration of node state</li>
+ * </ul>
+ *
+ * <p>
+ * The distribution system uses a breadth-first traversal to locate valid sinks
+ * and distribute energy evenly across them.
  */
 public final class EnergyNetwork {
 
     private EnergyNetwork() {}
 
-    /** Shared Jackson ObjectMapper for JSON processing. */
+    /**
+     * Shared JSON mapper used for persistence.
+     */
     public static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-    /** Set of all registered nodes in the network. */
-    private static final Set<EnergyNode> NODES = new CopyOnWriteArraySet<>();
-    /** Subset of nodes currently capable of providing or receiving energy. */
-    private static final Set<EnergyNode> ACTIVE_NODES = new CopyOnWriteArraySet<>();
-    /** Internal database for persisting energy node states. */
+
+    /**
+     * All registered energy nodes.
+     */
+    private static final Set<EnergyNode> NODES = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Nodes that are currently active (able to send or receive energy).
+     */
+    private static final Set<EnergyNode> ACTIVE_NODES = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Backing database used for persistence.
+     */
     private static final Database DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "energy_network.db"));
 
     /**
-     * Initializes the energy network.
-     * Sets up distribution tasks, periodic saving, and the SQLite database schema.
+     * Thread-local pools used to avoid allocations during traversal.
+     */
+    private static final ThreadLocal<Set<EnergyNode>> VISITED_POOL = ThreadLocal.withInitial(HashSet::new);
+    private static final ThreadLocal<Queue<EnergyNode>> QUEUE_POOL = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<Map<EnergyNode, BlockFace>> SINK_POOL = ThreadLocal.withInitial(HashMap::new);
+
+    /**
+     * Initializes the network scheduler and database.
      */
     public static void init() {
         new BukkitRunnable() {
@@ -65,108 +92,182 @@ public final class EnergyNetwork {
 
     /**
      * Registers a node into the network.
-     * @param node The {@link EnergyNode} to register.
+     *
+     * @param node the node to register
      */
     public static void register(EnergyNode node) {
         EnergyNodeAddEvent event = new EnergyNodeAddEvent(node, node.getUnit(), !Bukkit.isPrimaryThread());
         EventBus.post(event);
         if (event.isCancelled()) return;
+
         NODES.add(node);
-        if (node.canProvide() || node.canReceive()) ACTIVE_NODES.add(node);
+
+        if (node.canProvide(null) || node.canReceive(null)) {
+            ACTIVE_NODES.add(node);
+        }
     }
 
     /**
-     * Removes a node from the network and disconnects all its connections.
-     * @param node The {@link EnergyNode} to unregister.
+     * Unregisters a node and disconnects it from all neighbors.
+     *
+     * @param node the node to remove
      */
     public static void unregister(EnergyNode node) {
         EnergyNodeRemoveEvent event = new EnergyNodeRemoveEvent(node, node.getUnit(), !Bukkit.isPrimaryThread());
         EventBus.post(event);
         if (event.isCancelled()) return;
+
         NODES.remove(node);
         ACTIVE_NODES.remove(node);
-        node.getConnections().forEach(n -> n.disconnect(node));
+
+        node.getConnections().forEach((face, connected) ->
+            connected.disconnect(face != null ? face.getOppositeFace() : null, node, face)
+        );
     }
 
-    /** @return An unmodifiable view of all registered nodes. */
-    public static Set<EnergyNode> getNodes() { return NODES; }
+    /**
+     * @return all registered nodes
+     */
+    public static Set<EnergyNode> getNodes() {
+        return NODES;
+    }
 
     /**
-     * Updates a node's presence in the active set based on its energy levels.
-     * @param node The node to evaluate.
+     * Updates whether a node should be considered active.
+     *
+     * @param node the node to evaluate
      */
     public static void markActive(EnergyNode node) {
-        if (node.canProvide() || node.canReceive()) ACTIVE_NODES.add(node);
-        else ACTIVE_NODES.remove(node);
-    }
-
-    /**
-     * The core distribution logic. Iterates through active nodes and attempts to
-     * balance energy between connected nodes, handling unit conversion and events.
-     */
-    public static void distribute() {
-        if (ACTIVE_NODES.isEmpty()) return;
-        Set<EnergyNode> processed = new CopyOnWriteArraySet<>(ACTIVE_NODES);
-        for (EnergyNode source : processed) {
-            if (source.getEnergy() <= 0) {
-                ACTIVE_NODES.remove(source);
-                continue;
-            }
-
-            double available = source.getEnergy();
-            for (EnergyNode target : source.getConnections()) {
-                if (target.getEnergy() >= target.getCapacity()) continue;
-
-                double spaceTarget = target.getCapacity() - target.getEnergy();
-                double spaceInSourceUnit = target.getUnit().convert(spaceTarget, source.getUnit());
-
-                double toTransfer = Math.min(available, spaceInSourceUnit);
-                if (toTransfer <= 0) continue;
-
-                EnergyNetworkTransferEvent event = new EnergyNetworkTransferEvent(source, target, source.getUnit(), toTransfer, !Bukkit.isPrimaryThread());
-                EventBus.post(event);
-                if (event.isCancelled()) continue;
-
-                toTransfer = event.getAmount();
-                double extracted = source.extract(toTransfer);
-                double convertedInsert = source.getUnit().convert(extracted, target.getUnit());
-                double inserted = target.insert(convertedInsert);
-
-                if (inserted < convertedInsert) {
-                    double refund = target.getUnit().convert(convertedInsert - inserted, source.getUnit());
-                    source.insert(refund);
-                    available -= (extracted - refund);
-                } else {
-                    available -= extracted;
-                }
-
-                markActive(target);
-                if (available <= 0) break;
-            }
-            markActive(source);
+        if (node.canProvide(null) || node.canReceive(null)) {
+            ACTIVE_NODES.add(node);
+        } else {
+            ACTIVE_NODES.remove(node);
         }
     }
 
     /**
-     * Serializes all registered nodes and saves them to the database asynchronously.
+     * Performs energy distribution across the network.
+     * <p>
+     * Uses BFS traversal to locate sinks and evenly distribute energy.
+     */
+    public static void distribute() {
+        if (ACTIVE_NODES.isEmpty()) return;
+
+        Set<EnergyNode> visited = VISITED_POOL.get();
+        Queue<EnergyNode> queue = QUEUE_POOL.get();
+        Map<EnergyNode, BlockFace> sinks = SINK_POOL.get();
+
+        for (EnergyNode source : ACTIVE_NODES) {
+            if (!source.canProvide(null)) {
+                ACTIVE_NODES.remove(source);
+                continue;
+            }
+
+            double available = source.extract(null, source.getMaxExtract(), Action.SIMULATE);
+            if (available <= 0) continue;
+
+            visited.clear();
+            queue.clear();
+            sinks.clear();
+
+            visited.add(source);
+            queue.add(source);
+
+            while (!queue.isEmpty()) {
+                EnergyNode current = queue.poll();
+
+                for (Map.Entry<BlockFace, EnergyNode> entry : current.getConnections().entrySet()) {
+                    EnergyNode neighbor = entry.getValue();
+                    BlockFace faceToNeighbor = entry.getKey();
+                    BlockFace faceFromNeighbor =
+                        faceToNeighbor != null ? faceToNeighbor.getOppositeFace() : null;
+
+                    if (visited.add(neighbor)) {
+                        if (neighbor instanceof EnergyConductor) {
+                            queue.add(neighbor);
+                        } else if (neighbor.canReceive(faceFromNeighbor)) {
+                            sinks.put(neighbor, faceFromNeighbor);
+                        }
+                    }
+                }
+            }
+
+            if (sinks.isEmpty()) continue;
+
+            double energyPerSink = available / sinks.size();
+            double totalExtracted = 0;
+
+            for (Map.Entry<EnergyNode, BlockFace> entry : sinks.entrySet()) {
+                EnergyNode sink = entry.getKey();
+                BlockFace face = entry.getValue();
+
+                double simulatedInsertSpace =
+                    sink.insert(face, sink.getMaxInsert(), Action.SIMULATE);
+
+                double spaceInSourceUnit =
+                    sink.getUnit().convert(simulatedInsertSpace, source.getUnit());
+
+                double toTransfer = Math.min(energyPerSink, spaceInSourceUnit);
+
+                if (toTransfer > 0) {
+                    EnergyNetworkTransferEvent event =
+                        new EnergyNetworkTransferEvent(source, sink, source.getUnit(),
+                            toTransfer, !Bukkit.isPrimaryThread());
+
+                    EventBus.post(event);
+                    if (event.isCancelled()) continue;
+
+                    toTransfer = event.getAmount();
+
+                    double extracted =
+                        source.extract(null, toTransfer, Action.EXECUTE);
+
+                    double convertedInsert =
+                        source.getUnit().convert(extracted, sink.getUnit());
+
+                    sink.insert(face, convertedInsert, Action.EXECUTE);
+
+                    totalExtracted += extracted;
+                    markActive(sink);
+                }
+            }
+
+            if (totalExtracted > 0) {
+                markActive(source);
+            } else if (!(source instanceof EnergyConductor)) {
+                ACTIVE_NODES.remove(source);
+            }
+        }
+    }
+
+    /**
+     * Saves all nodes asynchronously to the database.
      */
     public static void save() {
-        BatchQuery batch = DATABASE.executor().table("energy_nodes").batch("id", "json").replace();
+        BatchQuery batch = DATABASE.executor()
+            .table("energy_nodes")
+            .batch("id", "json")
+            .replace();
+
         for (EnergyNode node : NODES) {
             try {
                 String id = node.getClass().getName() + "@" + node.hashCode();
                 JsonNode json = EnergyNode.CODEC.encode(JsonOps.INSTANCE, node);
                 batch.add(id, json.toString());
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+
         batch.executeAsync().exceptionally(e -> {
-            AbyssalLib.getInstance().getLogger().severe("Failed to save energy network: " + e.getMessage());
+            AbyssalLib.getInstance().getLogger()
+                .severe("Failed to save energy network: " + e.getMessage());
             return 0;
         });
     }
 
     /**
-     * Loads energy nodes from the database and registers them back into the network.
+     * Loads nodes from persistent storage.
      */
     public static void load() {
         DATABASE.executor().table("energy_nodes").selectAsync(rs -> {
@@ -174,9 +275,13 @@ public final class EnergyNetwork {
                 String jsonStr = rs.getString("json");
                 JsonNode nodeJson = JSON_MAPPER.readTree(jsonStr);
                 return EnergyNode.CODEC.decode(JsonOps.INSTANCE, nodeJson);
-            } catch (Exception e) { return null; }
+            } catch (Exception e) {
+                return null;
+            }
         }).thenAccept(loadedNodes -> {
-            for (EnergyNode node : loadedNodes) if (node != null) register(node);
+            for (EnergyNode node : loadedNodes) {
+                if (node != null) register(node);
+            }
         });
     }
 }

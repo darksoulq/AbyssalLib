@@ -17,6 +17,7 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
+import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.dialog.DialogContent;
@@ -48,15 +49,21 @@ import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static com.github.darksoulq.abyssallib.server.resource.ResourcePack.HASH_MAP;
@@ -97,6 +104,15 @@ public class InternalCommand {
                     })
                 )
             )
+        ).then(Commands.literal("loot")
+            .requires(DefaultConditions.hasPerm(PluginPermissions.LOOT_SET))
+            .then(Commands.literal("set")
+                .then(Commands.argument("location", ArgumentTypes.finePosition(false))
+                    .then(Commands.argument("table", RegistryEntryArgument.registryEntry(Registries.LOOT_TABLES))
+                        .executes(InternalCommand::setLootTableExecutor)
+                    )
+                )
+            )
         ).then(Commands.literal("statistics")
             .then(Commands.literal("get")
                 .requires(DefaultConditions.hasAnyPerm(PluginPermissions.STATISTICS_VIEW_SELF, PluginPermissions.STATISTICS_VIEW_ALL))
@@ -112,7 +128,7 @@ public class InternalCommand {
                     .requires(ctx -> {
                         org.bukkit.entity.Entity sender = isEntity(ctx);
                         if (sender == null) return false;
-                        return sender.hasPermission(PluginPermissions.STATISTICS_MENU_ALL.get().getNode());
+                        return sender.hasPermission(PluginPermissions.STATISTICS_MENU_ALL.getNode());
                     })
                     .executes(InternalCommand::getOtherStatisticsMenu))
             )
@@ -469,6 +485,31 @@ public class InternalCommand {
         entity.clone().spawn(loc, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
 
         return Command.SUCCESS;
+    }
+
+    private static int setLootTableExecutor(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
+        org.bukkit.entity.Entity sender = isEntity(ctx.getSource());
+        if (sender == null) return 0;
+
+        Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
+        Block block = loc.getBlock();
+
+        if (block.getState() instanceof Container container) {
+            LootTable table = ctx.getArgument("table", LootTable.class);
+            String tableId = Registries.LOOT_TABLES.getId(table);
+
+            PersistentDataContainer pdc = container.getPersistentDataContainer();
+            pdc.set(new NamespacedKey("abyssallib", "loot_table"), PersistentDataType.STRING, tableId);
+            pdc.set(new NamespacedKey("abyssallib", "loot_seed"), PersistentDataType.LONG, ThreadLocalRandom.current().nextLong());
+            container.update();
+
+            reply(ctx, "<green>Loot table injected into container successfully.</green>");
+            return Command.SUCCESS;
+        }
+
+        reply(ctx, "<red>Target block is not a valid container.</red>");
+        return 0;
     }
 
     private static int sendStats(CommandContext<CommandSourceStack> ctx, Player target) {

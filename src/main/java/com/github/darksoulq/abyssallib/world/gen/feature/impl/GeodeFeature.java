@@ -5,39 +5,32 @@ import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.util.Vector;
-import org.bukkit.util.noise.SimplexOctaveGenerator;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
- * A world generation feature that creates multi-layered geode structures.
- * <p>
- * The geode is generated using a distance-based algorithm distorted by simplex noise
- * to create an organic shape. It consists of an outer shell, a middle layer, an
- * inner layer, and a hollow or fluid-filled interior containing potential crystals.
+ * A world generation feature that generates a concentric, layered geode structure.
  */
 public class GeodeFeature extends Feature<GeodeFeature.Config> {
 
     /**
-     * Constructs a new GeodeFeature with the associated configuration codec.
+     * Constructs a new GeodeFeature with its associated configuration codec.
      */
     public GeodeFeature() {
         super(Config.CODEC);
     }
 
     /**
-     * Executes the placement logic for a geode.
-     * <p>
-     * The process validates the origin, calculates a randomized radius, and iterates
-     * through a cubic volume. For each point, it calculates a noise-distorted distance
-     * from the center to determine which layer (outer, middle, inner, or hollow)
-     * should be placed. Finally, it attempts to seed crystals on the inner surface.
+     * Executes the generation logic for the geode cluster.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
-     * @return {@code true} if the geode was successfully placed; {@code false} otherwise.
+     * @param context The feature place context providing world access and configuration.
+     * @return True if the geode was successfully generated.
      */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
@@ -45,60 +38,69 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
         Config config = context.config();
         Random random = context.random();
 
-        if (!WorldGenUtils.isValidBlock(context.level(), origin, config.invalidBlocks)) {
+        if (!WorldGenUtils.isValidBlock(context.level(), origin, config.invalidBlocks())) {
             return false;
         }
 
-        int radius = config.outerRadius + random.nextInt(config.radiusRange);
-        int innerRadius = radius - config.layerThickness;
+        int minHeight = context.level().getWorld().getMinHeight();
+        int maxHeight = context.level().getWorld().getMaxHeight();
 
-        if (innerRadius < 2) return false;
+        int nodeCount = random.nextInt(4) + 3;
+        Vector[] nodes = new Vector[nodeCount];
 
-        SimplexOctaveGenerator noise = new SimplexOctaveGenerator(new Random(context.level().getWorld().getSeed()), 1);
-        noise.setScale(config.noiseScale);
+        for (int i = 0; i < nodeCount; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0;
+            double elevation = random.nextDouble() * Math.PI;
+            double distance = random.nextDouble() * config.maxRadius() * 0.5;
 
-        List<Vector> potentialCrystals = new ArrayList<>();
+            double dx = Math.sin(elevation) * Math.cos(angle) * distance;
+            double dy = Math.cos(elevation) * distance;
+            double dz = Math.sin(elevation) * Math.sin(angle) * distance;
 
-        for (int x = -radius; x <= radius; x++) {
-            for (int y = -radius; y <= radius; y++) {
-                for (int z = -radius; z <= radius; z++) {
-                    double dist = Math.sqrt(x * x + y * y + z * z);
-                    if (dist > radius) continue;
-
-                    Location current = origin.clone().add(x, y, z);
-                    if (current.getY() < context.level().getWorld().getMinHeight() || current.getY() >= context.level().getWorld().getMaxHeight()) continue;
-
-                    if (!WorldGenUtils.isValidBlock(context.level(), current, config.replaceable)) continue;
-
-                    double n = noise.noise(current.getX(), current.getY(), current.getZ(), 0.5, 0.5);
-                    double distortedDist = dist + (n * config.noiseMultiplier);
-
-                    if (distortedDist <= innerRadius - 1) {
-                        if (random.nextFloat() < config.fillChance) {
-                            WorldGenUtils.placeBlock(context.level(), current, config.fillBlock);
-                        } else {
-                            WorldGenUtils.placeBlock(context.level(), current, config.innerBlock);
-                            if (distortedDist > innerRadius - 2) {
-                                potentialCrystals.add(new Vector(x, y, z));
-                            }
-                        }
-                    } else if (distortedDist <= innerRadius) {
-                        WorldGenUtils.placeBlock(context.level(), current, config.innerLayer);
-                    } else if (distortedDist <= innerRadius + 1) {
-                        WorldGenUtils.placeBlock(context.level(), current, config.middleLayer);
-                    } else {
-                        WorldGenUtils.placeBlock(context.level(), current, config.outerLayer);
-                    }
-                }
-            }
+            nodes[i] = new Vector(origin.getBlockX() + dx, origin.getBlockY() + dy, origin.getBlockZ() + dz);
         }
 
-        for (Vector pos : potentialCrystals) {
-            if (random.nextFloat() < config.crystalChance) {
-                Location crystalLoc = origin.clone().add(pos);
-                if (context.level().getType(crystalLoc.getBlockX(), crystalLoc.getBlockY(), crystalLoc.getBlockZ()) == Material.AIR) {
-                    BlockInfo crystal = config.crystals.get(random.nextInt(config.crystals.size()));
-                    WorldGenUtils.placeBlock(context.level(), crystalLoc, crystal);
+        int bounds = config.maxRadius() + 2;
+
+        for (int x = origin.getBlockX() - bounds; x <= origin.getBlockX() + bounds; x++) {
+            for (int y = origin.getBlockY() - bounds; y <= origin.getBlockY() + bounds; y++) {
+                if (y < minHeight || y >= maxHeight) continue;
+
+                for (int z = origin.getBlockZ() - bounds; z <= origin.getBlockZ() + bounds; z++) {
+                    double minDistance = Double.MAX_VALUE;
+
+                    for (Vector node : nodes) {
+                        double distSq = Math.pow(x - node.getX(), 2) + Math.pow(y - node.getY(), 2) + Math.pow(z - node.getZ(), 2);
+                        if (distSq < minDistance) {
+                            minDistance = distSq;
+                        }
+                    }
+
+                    double distance = Math.sqrt(minDistance);
+                    Location currentLoc = new Location(context.level().getWorld(), x, y, z);
+
+                    if (distance > config.maxRadius()) continue;
+
+                    if (distance <= config.minRadius() - 1.5) {
+                        BlockInfo fill = config.fillingProvider().getState(random, currentLoc);
+                        if (fill != null) WorldGenUtils.placeBlock(context.level(), currentLoc, fill);
+                    } else if (distance <= config.minRadius() - 0.5) {
+                        if (random.nextDouble() < 0.1 && config.innerPlacementsProvider() != null) {
+                            BlockInfo placement = config.innerPlacementsProvider().getState(random, currentLoc);
+                            if (placement != null) {
+                                WorldGenUtils.placeBlock(context.level(), currentLoc, placement);
+                            }
+                        } else {
+                            BlockInfo inner = config.innerWallProvider().getState(random, currentLoc);
+                            if (inner != null) WorldGenUtils.placeBlock(context.level(), currentLoc, inner);
+                        }
+                    } else if (distance <= config.minRadius() + 0.5) {
+                        BlockInfo middle = config.middleWallProvider().getState(random, currentLoc);
+                        if (middle != null) WorldGenUtils.placeBlock(context.level(), currentLoc, middle);
+                    } else if (distance <= config.maxRadius()) {
+                        BlockInfo outer = config.outerWallProvider().getState(random, currentLoc);
+                        if (outer != null) WorldGenUtils.placeBlock(context.level(), currentLoc, outer);
+                    }
                 }
             }
         }
@@ -107,84 +109,67 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
     }
 
     /**
-     * Configuration record for {@link GeodeFeature}.
+     * Configuration record for the geode feature.
      *
-     * @param outerLayer      Block used for the outermost shell.
-     * @param middleLayer     Block used for the middle shell.
-     * @param innerLayer      Block used for the innermost shell.
-     * @param fillBlock       Block used to fill the hollow center (e.g., Water or Air).
-     * @param innerBlock      Block used for the hollow air/interior space.
-     * @param crystals        List of potential crystal {@link BlockInfo}s to place inside.
-     * @param replaceable     List of block IDs that the geode can overwrite.
-     * @param invalidBlocks   List of block IDs that prevent the geode from starting at a location.
-     * @param outerRadius     The base radius of the entire structure.
-     * @param radiusRange     Random variance added to the base radius.
-     * @param layerThickness  Thickness of the combined shells.
-     * @param fillChance      Probability of a center block being replaced by {@code fillBlock}.
-     * @param crystalChance   Probability of a crystal growing on a valid inner surface.
-     * @param noiseScale      Scale of the simplex noise distortion.
-     * @param noiseMultiplier Strength of the noise distortion.
+     * @param outerWallProvider        The block provider for the outermost protective shell.
+     * @param middleWallProvider       The block provider for the intermediate transition layer.
+     * @param innerWallProvider        The block provider for the inner geode crust.
+     * @param fillingProvider          The block provider used to fill the hollow center.
+     * @param innerPlacementsProvider  The block provider used for random crystal attachments on the inner wall.
+     * @param invalidBlocks            A list of block info structures that will abort generation if encountered at the origin.
+     * @param minRadius                The baseline radius of the inner geode cavity.
+     * @param maxRadius                The absolute maximum radius of the geode's outermost shell.
      */
     public record Config(
-        BlockInfo outerLayer,
-        BlockInfo middleLayer,
-        BlockInfo innerLayer,
-        BlockInfo fillBlock,
-        BlockInfo innerBlock,
-        List<BlockInfo> crystals,
-        List<String> replaceable,
-        List<String> invalidBlocks,
-        int outerRadius,
-        int radiusRange,
-        int layerThickness,
-        double fillChance,
-        double crystalChance,
-        double noiseScale,
-        double noiseMultiplier
+            BlockStateProvider outerWallProvider,
+            BlockStateProvider middleWallProvider,
+            BlockStateProvider innerWallProvider,
+            BlockStateProvider fillingProvider,
+            BlockStateProvider innerPlacementsProvider,
+            List<BlockInfo> invalidBlocks,
+            int minRadius,
+            int maxRadius
     ) implements FeatureConfig {
 
         /**
-         * The codec for serializing and deserializing the geode configuration.
+         * The codec for serializing and deserializing the configuration.
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
             /**
-             * Decodes the configuration from a complex map structure.
+             * Decodes the configuration from a map.
              *
              * @param ops   The dynamic operations logic.
              * @param input The serialized input.
              * @param <D>   The data format type.
-             * @return A new {@link Config} instance.
-             * @throws CodecException If required fields are missing or invalid.
+             * @return A new configuration instance.
+             * @throws CodecException If required fields are missing.
              */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
 
-                BlockInfo outer = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("outer_layer")));
-                BlockInfo middle = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("middle_layer")));
-                BlockInfo inner = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("inner_layer")));
-                BlockInfo fill = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("fill_block")));
-                BlockInfo inside = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("inner_block")));
+                BlockStateProvider outerWall = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("outer_wall_provider")));
+                BlockStateProvider middleWall = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("middle_wall_provider")));
+                BlockStateProvider innerWall = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("inner_wall_provider")));
+                BlockStateProvider filling = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("filling_provider")));
+                
+                BlockStateProvider innerPlacements = null;
+                D innerPlacementsNode = map.get(ops.createString("inner_placements_provider"));
+                if (innerPlacementsNode != null) {
+                    innerPlacements = BlockStateProvider.CODEC.decode(ops, innerPlacementsNode);
+                }
 
-                List<BlockInfo> crystals = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("crystals")));
-                List<String> replaceable = Codecs.STRING.list().decode(ops, map.get(ops.createString("replaceable")));
-                List<String> invalid = Codecs.STRING.list().decode(ops, map.get(ops.createString("invalid_blocks")));
+                List<BlockInfo> invalidBlocks = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("invalid_blocks")));
+                
+                int minRadius = Codecs.INT.decode(ops, map.get(ops.createString("min_radius")));
+                int maxRadius = Codecs.INT.decode(ops, map.get(ops.createString("max_radius")));
 
-                int r = Codecs.INT.decode(ops, map.get(ops.createString("outer_radius")));
-                int range = Codecs.INT.decode(ops, map.get(ops.createString("radius_range")));
-                int th = Codecs.INT.decode(ops, map.get(ops.createString("layer_thickness")));
-
-                double fc = Codecs.DOUBLE.decode(ops, map.get(ops.createString("fill_chance")));
-                double cc = Codecs.DOUBLE.decode(ops, map.get(ops.createString("crystal_chance")));
-                double ns = Codecs.DOUBLE.decode(ops, map.get(ops.createString("noise_scale")));
-                double nm = Codecs.DOUBLE.decode(ops, map.get(ops.createString("noise_multiplier")));
-
-                return new Config(outer, middle, inner, fill, inside, crystals, replaceable, invalid, r, range, th, fc, cc, ns, nm);
+                return new Config(outerWall, middleWall, innerWall, filling, innerPlacements, invalidBlocks, minRadius, maxRadius);
             }
 
             /**
-             * Encodes the configuration into a serialized map.
+             * Encodes the configuration into a map.
              *
              * @param ops   The dynamic operations logic.
              * @param value The configuration instance.
@@ -195,21 +180,21 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("outer_layer"), ExtraCodecs.BLOCK_INFO.encode(ops, value.outerLayer));
-                map.put(ops.createString("middle_layer"), ExtraCodecs.BLOCK_INFO.encode(ops, value.middleLayer));
-                map.put(ops.createString("inner_layer"), ExtraCodecs.BLOCK_INFO.encode(ops, value.innerLayer));
-                map.put(ops.createString("fill_block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.fillBlock));
-                map.put(ops.createString("inner_block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.innerBlock));
-                map.put(ops.createString("crystals"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.crystals));
-                map.put(ops.createString("replaceable"), Codecs.STRING.list().encode(ops, value.replaceable));
-                map.put(ops.createString("invalid_blocks"), Codecs.STRING.list().encode(ops, value.invalidBlocks));
-                map.put(ops.createString("outer_radius"), Codecs.INT.encode(ops, value.outerRadius));
-                map.put(ops.createString("radius_range"), Codecs.INT.encode(ops, value.radiusRange));
-                map.put(ops.createString("layer_thickness"), Codecs.INT.encode(ops, value.layerThickness));
-                map.put(ops.createString("fill_chance"), Codecs.DOUBLE.encode(ops, value.fillChance));
-                map.put(ops.createString("crystal_chance"), Codecs.DOUBLE.encode(ops, value.crystalChance));
-                map.put(ops.createString("noise_scale"), Codecs.DOUBLE.encode(ops, value.noiseScale));
-                map.put(ops.createString("noise_multiplier"), Codecs.DOUBLE.encode(ops, value.noiseMultiplier));
+
+                map.put(ops.createString("outer_wall_provider"), BlockStateProvider.CODEC.encode(ops, value.outerWallProvider));
+                map.put(ops.createString("middle_wall_provider"), BlockStateProvider.CODEC.encode(ops, value.middleWallProvider));
+                map.put(ops.createString("inner_wall_provider"), BlockStateProvider.CODEC.encode(ops, value.innerWallProvider));
+                map.put(ops.createString("filling_provider"), BlockStateProvider.CODEC.encode(ops, value.fillingProvider));
+                
+                if (value.innerPlacementsProvider != null) {
+                    map.put(ops.createString("inner_placements_provider"), BlockStateProvider.CODEC.encode(ops, value.innerPlacementsProvider));
+                }
+
+                map.put(ops.createString("invalid_blocks"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.invalidBlocks));
+                
+                map.put(ops.createString("min_radius"), Codecs.INT.encode(ops, value.minRadius));
+                map.put(ops.createString("max_radius"), Codecs.INT.encode(ops, value.maxRadius));
+
                 return ops.createMap(map);
             }
         };

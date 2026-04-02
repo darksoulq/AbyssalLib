@@ -6,7 +6,6 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.permission.PermissionManager;
 import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebServer;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
-import com.github.darksoulq.abyssallib.world.gui.GuiManager;
 import dev.faststats.bukkit.BukkitMetrics;
 import dev.faststats.core.ErrorTracker;
 import dev.faststats.core.Metrics;
@@ -35,7 +34,7 @@ public final class AbyssalLib extends JavaPlugin {
         LOGGER = getLogger();
 
         FileSetup.init(this);
-        ContentRegistry.registerAll();
+        ContentRegistry.init();
 
         CONFIG = new PluginConfig();
         CONFIG.cfg.save();

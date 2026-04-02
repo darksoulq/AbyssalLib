@@ -13,7 +13,12 @@ import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.data.tag.TagType;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
+import com.github.darksoulq.abyssallib.world.gen.feature.tree.decorator.TreeDecoratorType;
+import com.github.darksoulq.abyssallib.world.gen.feature.tree.foliage.FoliagePlacerType;
+import com.github.darksoulq.abyssallib.world.gen.feature.tree.root.RootPlacerType;
+import com.github.darksoulq.abyssallib.world.gen.feature.tree.trunk.TrunkPlacerType;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviderType;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
@@ -42,6 +47,12 @@ public class Registries {
     public static final Registry<StructureProcessorType<?>> PROCESSOR_TYPES = new Registry<>();
     public static final Registry<Feature<?>> FEATURES = new Registry<>();
     public static final Registry<PlacementModifierType<?>> PLACEMENT_MODIFIERS = new Registry<>();
+    public static final Registry<BlockStateProviderType<?>> BLOCK_STATE_PROVIDERS = new Registry<>();
+
+    public static final Registry<TrunkPlacerType<?>> TRUNK_PLACERS = new Registry<>();
+    public static final Registry<FoliagePlacerType<?>> FOLIAGE_PLACERS = new Registry<>();
+    public static final Registry<TreeDecoratorType<?>> TREE_DECORATORS = new Registry<>();
+    public static final Registry<RootPlacerType<?>> ROOT_PLACERS = new Registry<>();
 
     public static final Registry<LootTable> LOOT_TABLES = new Registry<>();
     public static final Registry<LootFunctionType<?>> LOOT_FUNCTIONS = new Registry<>();

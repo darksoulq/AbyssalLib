@@ -8,7 +8,6 @@ import com.github.darksoulq.abyssallib.common.serialization.MinecraftBlockSerial
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
-import com.github.darksoulq.abyssallib.world.gen.nms.NMSWorldGenAccess;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
@@ -21,63 +20,78 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Internal utility class for managing block placement and validation during world generation.
- * <p>
- * This class provides methods to safely place serialized block information, handling
- * complex transformations such as rotation and mirroring for both vanilla and AbyssalLib
- * {@link CustomBlock}s.
+ * Utility class for managing block placement and validation logic during world generation.
  */
 public class WorldGenUtils {
 
     /**
-     * Validates if a block at a specific location matches a list of allowed identifiers.
-     * <p>
-     * Supports both vanilla IDs (e.g., "minecraft:stone") and {@link CustomBlock} IDs.
+     * Validates if a block at a specific location matches an allowed target.
      *
-     * @param level    The world generation accessor.
-     * @param loc      The {@link Location} to check.
-     * @param validIds A {@link List} of namespaced identifiers. If null or empty, returns true.
-     * @return {@code true} if the block matches an allowed ID or the list is empty.
+     * @param level        The world generation accessor, or null for direct Bukkit access.
+     * @param loc          The location to check.
+     * @param validTargets A list of valid block targets. Returns true if empty or null.
+     * @return True if the block matches an allowed target.
      */
-    public static boolean isValidBlock(WorldGenAccess level, Location loc, List<String> validIds) {
-        if (validIds == null || validIds.isEmpty()) return true;
+    public static boolean isValidBlock(WorldGenAccess level, Location loc, List<BlockInfo> validTargets) {
+        if (validTargets == null || validTargets.isEmpty()) return true;
 
-        Material mat = level.getType(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
-        String vanillaId = "minecraft:" + mat.name().toLowerCase();
-
-        if (validIds.contains(vanillaId)) return true;
-
-        CustomBlock cb = CustomBlock.resolve(loc.getBlock());
-        if (cb != null) {
-            return validIds.contains(cb.getId().toString());
+        for (BlockInfo target : validTargets) {
+            if (matchesTarget(level, loc, target)) {
+                return true;
+            }
         }
 
         return false;
     }
 
     /**
-     * Places a block based on {@link BlockInfo} with default orientation.
+     * Checks if the block at the specified location matches a specific block target, avoiding chunk load deadlocks.
+     *
+     * @param level  The world generation accessor.
+     * @param loc    The location to check.
+     * @param target The target block info.
+     * @return True if the location matches the target criteria.
+     */
+    private static boolean matchesTarget(WorldGenAccess level, Location loc, BlockInfo target) {
+        Material mat = level != null ? level.getType(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()) : loc.getBlock().getType();
+        String vanillaId = "minecraft:" + mat.name().toLowerCase();
+
+        CustomBlock cb = CustomBlock.resolve(loc);
+        String currentId = cb != null ? cb.getId().toString() : vanillaId;
+
+        if (!target.getAsString().equals(currentId)) {
+            return false;
+        }
+
+        if (target.combinedData() != null) {
+            BlockData currentData = level != null ? level.getBlockData(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()) : loc.getBlock().getBlockData();
+            if (target.block() instanceof BlockData targetData) {
+                return currentData.matches(targetData);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Places a block into the world using its default orientation and no mirroring.
      *
      * @param level    The world generation accessor.
-     * @param location The {@link Location} to place the block.
-     * @param info     The {@link BlockInfo} containing block data and NBT.
+     * @param location The location to place the block.
+     * @param info     The block information to place.
      */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info) {
         placeBlock(level, location, info, StructureRotation.NONE, Mirror.NONE);
     }
 
     /**
-     * Places a block with specific transformations applied.
-     * <p>
-     * This method handles the logic for {@link CustomBlock} cloning, {@link BlockData}
-     * deserialization, and NBT application. It automatically detects if
-     * {@link NMSWorldGenAccess} is being used for optimized placement.
+     * Places a block into the world applying the specified structural transformations.
      *
-     * @param level    The world generation accessor.
-     * @param location The {@link Location} to place the block.
-     * @param info     The {@link BlockInfo} structure.
-     * @param rotation The {@link StructureRotation} to apply.
-     * @param mirror   The {@link Mirror} transformation to apply.
+     * @param level    The world generation accessor, or null to place directly via Bukkit.
+     * @param location The absolute world location.
+     * @param info     The block information structure.
+     * @param rotation The rotation transformation to apply.
+     * @param mirror   The mirror transformation to apply.
      */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info, StructureRotation rotation, Mirror mirror) {
         Object blockObject = info.block();
@@ -96,13 +110,15 @@ public class WorldGenUtils {
 
                 applyTransform(bd, mirror, rotation);
 
-                if (level instanceof NMSWorldGenAccess nmsLevel) {
-                    nmsLevel.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone, bd);
-                } else if (level != null) {
-                    if (location.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                    level.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), bd);
-                    clone.place(location.getBlock(), false);
+                if (level != null) {
+                    if (level.getType(location.getBlockX(), location.getBlockY(), location.getBlockZ()) == Material.WATER && bd instanceof Waterlogged wl) {
+                        wl.setWaterlogged(true);
+                    }
+                    level.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone, bd);
                 } else {
+                    if (location.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) {
+                        wl.setWaterlogged(true);
+                    }
                     location.getBlock().setBlockData(bd, false);
                     clone.place(location.getBlock(), false);
                 }
@@ -122,16 +138,19 @@ public class WorldGenUtils {
 
                 applyTransform(clone, mirror, rotation);
 
-                if (level instanceof NMSWorldGenAccess nmsLevel) {
-                    nmsLevel.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone);
-                } else if (level != null) {
-                    if (location.getBlock().getType() == Material.WATER && clone instanceof Waterlogged wl) wl.setWaterlogged(true);
+                if (level != null) {
+                    if (level.getType(location.getBlockX(), location.getBlockY(), location.getBlockZ()) == Material.WATER && clone instanceof Waterlogged wl) {
+                        wl.setWaterlogged(true);
+                    }
                     level.setBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ(), clone);
                 } else {
+                    if (location.getBlock().getType() == Material.WATER && clone instanceof Waterlogged wl) {
+                        wl.setWaterlogged(true);
+                    }
                     location.getBlock().setBlockData(clone, false);
                 }
 
-                if (nbt != null) {
+                if (nbt != null && level == null) {
                     Map<JsonNode, JsonNode> nbtMap = JsonOps.INSTANCE.getMap(nbt).orElse(null);
                     if (nbtMap != null) MinecraftBlockSerializer.deserializeTile(location.getBlock(), nbtMap, JsonOps.INSTANCE);
                 }
@@ -142,11 +161,11 @@ public class WorldGenUtils {
     }
 
     /**
-     * Internal helper to apply mirror and rotation to block data.
+     * Applies directional mirror and rotation state modifications to a BlockData instance.
      *
-     * @param bd       The {@link BlockData} to transform.
-     * @param mirror   The {@link Mirror} type.
-     * @param rotation The {@link StructureRotation} type.
+     * @param bd       The block data to mutate.
+     * @param mirror   The mirror type.
+     * @param rotation The rotation type.
      */
     private static void applyTransform(BlockData bd, Mirror mirror, StructureRotation rotation) {
         if (mirror != Mirror.NONE) bd.mirror(mirror);

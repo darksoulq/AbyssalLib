@@ -11,13 +11,12 @@ import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
-import com.github.darksoulq.abyssallib.world.gen.nms.NMSWorldGenAccess;
+import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.plugin.Plugin;
@@ -31,10 +30,6 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a saved structure that can be captured from or placed into the world.
- * <p>
- * Structures consist of a palette of unique block states and a list of block positions
- * referencing that palette. This implementation handles both standard Minecraft blocks
- * and AbyssalLib's {@link CustomBlock} system, including tile entity data.
  */
 public class Structure {
 
@@ -55,13 +50,10 @@ public class Structure {
 
     /**
      * Captures a region of the world into this structure instance.
-     * <p>
-     * It scans the area defined by two corners, serializing block types, states,
-     * and tile data (inventories, signs, etc.) relative to a provided origin point.
      *
      * @param corner1 The first corner of the region.
      * @param corner2 The second corner of the region.
-     * @param origin  The location used as the (0,0,0) reference for saved blocks.
+     * @param origin  The location used as the reference for saved blocks.
      */
     public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin) {
         palette.clear();
@@ -181,7 +173,7 @@ public class Structure {
     /**
      * Registers a processor to the structure's placement pipeline.
      *
-     * @param processor The {@link StructureProcessor} to add.
+     * @param processor The structure processor to add.
      */
     public void addProcessor(StructureProcessor processor) {
         processors.add(processor);
@@ -197,31 +189,28 @@ public class Structure {
      * @param mirror       The applied mirror.
      */
     private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror) {
-        if (sb.stateIndex < 0 || sb.stateIndex >= palette.size()) return;
+        if (sb.stateIndex() < 0 || sb.stateIndex() >= palette.size()) return;
 
-        Vector relativePos = new Vector(sb.x, sb.y, sb.z);
+        Vector relativePos = new Vector(sb.x(), sb.y(), sb.z());
         Vector transformedPos = transform(relativePos, mirror, rotation);
-        Location target = origin.clone().add(transformedPos);
-        PaletteEntry entry = palette.get(sb.stateIndex);
+        PaletteEntry entry = palette.get(sb.stateIndex());
 
         Object blockObject = null;
-        if (entry.id.startsWith("minecraft:")) {
-            String matName = entry.id.substring("minecraft:".length()).toUpperCase();
+        if (entry.id().startsWith("minecraft:")) {
+            String matName = entry.id().substring(10).toUpperCase();
             try {
                 Material mat = Material.valueOf(matName);
                 if (mat.isBlock()) blockObject = mat.createBlockData();
             } catch (IllegalArgumentException ignored) {}
         } else {
-            CustomBlock base = Registries.BLOCKS.get(entry.id);
+            CustomBlock base = Registries.BLOCKS.get(entry.id());
             if (base != null) blockObject = base.clone();
         }
 
         if (blockObject == null) return;
 
-        ObjectNode nbt = sb.nbt;
-        ObjectNode combinedData = entry.stateData;
-        BlockInfo original = new BlockInfo(relativePos, blockObject, combinedData, nbt);
-        BlockInfo current = new BlockInfo(transformedPos, blockObject, combinedData, nbt);
+        BlockInfo original = new BlockInfo(relativePos, blockObject, entry.stateData(), sb.nbt());
+        BlockInfo current = new BlockInfo(transformedPos, blockObject, entry.stateData(), sb.nbt());
 
         for (StructureProcessor processor : processors) {
             if (worldOrLevel instanceof WorldGenAccess level) {
@@ -232,53 +221,13 @@ public class Structure {
             if (current == null) return;
         }
 
-        try {
-            blockObject = current.block();
-            nbt = current.nbt();
-            combinedData = current.combinedData();
+        Vector finalPos = current.pos();
+        if (finalPos == null) return;
 
-            ObjectNode fullData = combinedData != null ? combinedData.deepCopy() : FACTORY.objectNode();
-            if (nbt != null) {
-                nbt.fields().forEachRemaining(f -> fullData.set(f.getKey(), f.getValue()));
-            }
-            Map<JsonNode, JsonNode> mapData = JsonOps.INSTANCE.getMap(fullData).orElse(Collections.emptyMap());
+        Location target = origin.clone().add(finalPos);
+        WorldGenAccess level = worldOrLevel instanceof WorldGenAccess wga ? wga : null;
 
-            if (blockObject instanceof CustomBlock cb) {
-                BlockData bd = cb.getMaterial().createBlockData();
-                AbyssalLibBlockSerializer.deserializeBlockData(mapData, JsonOps.INSTANCE, bd);
-                if (mirror != Mirror.NONE) bd.mirror(mirror);
-                if (rotation != StructureRotation.NONE) bd.rotate(rotation);
-
-                if (worldOrLevel instanceof NMSWorldGenAccess level) {
-                    level.setBlock(target.getBlockX(), target.getBlockY(), target.getBlockZ(), cb, bd);
-                } else {
-                    if (target.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                    target.getBlock().setBlockData(bd, false);
-                    cb.place(target.getBlock(), false);
-                }
-
-                AbyssalLibBlockSerializer.deserializeEntity(cb, mapData, JsonOps.INSTANCE);
-                cb.onLoad();
-
-            } else if (blockObject instanceof BlockData bd) {
-                MinecraftBlockSerializer.deserialize(bd, mapData, JsonOps.INSTANCE);
-                if (mirror != Mirror.NONE) bd.mirror(mirror);
-                if (rotation != StructureRotation.NONE) bd.rotate(rotation);
-
-                if (worldOrLevel instanceof NMSWorldGenAccess level) {
-                    level.setBlock(target.getBlockX(), target.getBlockY(), target.getBlockZ(), bd);
-                } else {
-                    if (target.getBlock().getType() == Material.WATER && bd instanceof Waterlogged wl) wl.setWaterlogged(true);
-                    target.getBlock().setBlockData(bd, false);
-
-                    if (nbt != null) {
-                        JsonOps.INSTANCE.getMap(nbt).ifPresent(nbtMap -> MinecraftBlockSerializer.deserializeTile(target.getBlock(), nbtMap, JsonOps.INSTANCE));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        WorldGenUtils.placeBlock(level, target, current, rotation, mirror);
     }
 
     /**
@@ -328,7 +277,7 @@ public class Structure {
     /**
      * Serializes the structure into a JSON object.
      *
-     * @return The {@link ObjectNode} representing the structure data.
+     * @return The object node representing the structure data.
      */
     public ObjectNode serialize() {
         ObjectNode root = FACTORY.objectNode();
@@ -337,16 +286,16 @@ public class Structure {
         ArrayNode paletteArray = root.putArray("palette");
         for (PaletteEntry entry : palette) {
             ObjectNode node = paletteArray.addObject();
-            node.put("Name", entry.id);
-            if (!entry.stateData.isEmpty()) node.set("Properties", entry.stateData);
+            node.put("Name", entry.id());
+            if (!entry.stateData().isEmpty()) node.set("Properties", entry.stateData());
         }
 
         ArrayNode blockArray = root.putArray("blocks");
         for (StructureBlock sb : blocks) {
             ObjectNode b = blockArray.addObject();
-            b.putArray("pos").add(sb.x).add(sb.y).add(sb.z);
-            b.put("state", sb.stateIndex);
-            if (sb.nbt != null) b.set("nbt", sb.nbt);
+            b.putArray("pos").add(sb.x()).add(sb.y()).add(sb.z());
+            b.put("state", sb.stateIndex());
+            if (sb.nbt() != null) b.set("nbt", sb.nbt());
         }
 
         if (!processors.isEmpty()) {
@@ -365,7 +314,7 @@ public class Structure {
      * Deserializes a structure from a JSON object.
      *
      * @param root The structure data.
-     * @return A new {@link Structure} instance.
+     * @return A new structure instance.
      */
     public static Structure deserialize(JsonNode root) {
         Structure structure = new Structure();
@@ -403,7 +352,6 @@ public class Structure {
                 e.printStackTrace();
             }
         }
-
         return structure;
     }
 
@@ -441,7 +389,7 @@ public class Structure {
         }
 
         /**
-         * Runs the placement loop for a single server tick.
+         * Dispatches the iterative cycle constrained by the defined temporal limits mapped to the main thread.
          */
         @Override
         public void run() {
@@ -449,7 +397,6 @@ public class Structure {
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
                 if (integrity < 1.0f && random.nextFloat() > integrity) {
-                    count++;
                     continue;
                 }
                 placeBlock(origin.getWorld(), origin, sb, rotation, mirror);

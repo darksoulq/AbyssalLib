@@ -4,7 +4,9 @@ import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
+import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -14,140 +16,145 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * A world generation feature that creates patches of specific ground blocks and overlaying vegetation.
+ * A sophisticated world generation feature that alters the terrain surface and places
+ * vegetation on top of the newly altered ground.
  * <p>
- * This feature searches for valid surfaces within a horizontal radius and replaces the top layers
- * of the terrain with a specified ground block. It then optionally places vegetation on top.
- * The feature is designed to follow terrain height fluctuations within a specified depth range.
+ * This is used for generating biomes like Lush Caves or Mossy patches, where the
+ * stone/dirt must first be converted into a base block (e.g., Moss) before
+ * vegetation (e.g., Azaleas) is scattered across it.
  */
 public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Config> {
 
     /**
-     * Constructs a new VegetationPatchFeature with the associated configuration codec.
+     * Constructs a new VegetationPatchFeature with its associated configuration codec.
      */
     public VegetationPatchFeature() {
         super(Config.CODEC);
     }
 
     /**
-     * Executes the placement logic for the vegetation patch.
-     * <p>
-     * The algorithm iterates through an elliptical area. For each X/Z coordinate, it performs
-     * a vertical search to locate a surface block that matches the replaceable criteria.
-     * If found, it replaces the surface and subsequent blocks down to the configured depth
-     * with the "ground" block, and rolls a random chance to place "vegetation" on the surface.
+     * Executes the terrain alteration and vegetation placement logic.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
-     * @return {@code true} if at least one block was successfully modified; {@code false} otherwise.
+     * @param context The feature place context providing world access and configuration.
+     * @return True if at least one ground block was replaced.
      */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
         Location origin = context.origin();
         Config config = context.config();
         Random random = context.random();
+        int placedCount = 0;
 
-        if (!WorldGenUtils.isValidBlock(context.level(), origin, config.replaceable)) return false;
+        int radius = config.radius();
+        int radiusSq = radius * radius;
 
-        int radiusX = config.radius + random.nextInt(config.radius + 1);
-        int radiusZ = config.radius + random.nextInt(config.radius + 1);
-        boolean placed = false;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (dx * dx + dz * dz > radiusSq) {
+                    continue;
+                }
 
-        for (int x = -radiusX; x <= radiusX; x++) {
-            for (int z = -radiusZ; z <= radiusZ; z++) {
-                if (x * x + z * z <= radiusX * radiusZ) {
-                    Location pos = origin.clone().add(x, 0, z);
+                Location currentColumn = origin.clone().add(dx, 0, dz);
+                boolean replacedGround = false;
+                Location highestReplaced = null;
 
-                    if (context.level().getType(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()) == Material.AIR) {
-                        for (int i = 0; i < config.depth * 2; i++) {
-                            pos.subtract(0, 1, 0);
-                            if (WorldGenUtils.isValidBlock(context.level(), pos, config.replaceable)) {
-                                break;
+                for (int yOffset = 0; yOffset >= -config.depth(); yOffset--) {
+                    Location target = currentColumn.clone().add(0, yOffset, 0);
+                    
+                    if (WorldGenUtils.isValidBlock(context.level(), target, config.replaceableGround())) {
+                        BlockInfo groundState = config.groundProvider().getState(random, target);
+                        if (groundState != null) {
+                            WorldGenUtils.placeBlock(context.level(), target, groundState);
+                            replacedGround = true;
+                            if (highestReplaced == null) {
+                                highestReplaced = target.clone();
                             }
+                            placedCount++;
                         }
-                    } else if (!WorldGenUtils.isValidBlock(context.level(), pos, config.replaceable)) {
-                        for (int i = 0; i < config.depth * 2; i++) {
-                            pos.add(0, 1, 0);
-                            if (WorldGenUtils.isValidBlock(context.level(), pos, config.replaceable) &&
-                                context.level().getType(pos.getBlockX(), pos.getBlockY() + 1, pos.getBlockZ()) == Material.AIR) {
-                                break;
-                            }
-                        }
+                    } else if (replacedGround) {
+                        break;
                     }
+                }
 
-                    if (WorldGenUtils.isValidBlock(context.level(), pos, config.replaceable)) {
-                        WorldGenUtils.placeBlock(context.level(), pos, config.ground);
-
-                        Location vegPos = pos.clone().add(0, 1, 0);
-                        if (context.level().getType(vegPos.getBlockX(), vegPos.getBlockY(), vegPos.getBlockZ()) == Material.AIR) {
-                            if (random.nextFloat() < config.vegetationChance) {
-                                WorldGenUtils.placeBlock(context.level(), vegPos, config.vegetation);
-                            }
+                if (highestReplaced != null && random.nextInt(config.vegetationChance()) == 0) {
+                    Location plantLoc = highestReplaced.clone().add(0, 1, 0);
+                    Material currentMat = context.level().getType(plantLoc.getBlockX(), plantLoc.getBlockY(), plantLoc.getBlockZ());
+                    
+                    if (currentMat == Material.AIR || currentMat == Material.CAVE_AIR) {
+                        BlockInfo vegState = config.vegetationProvider().getState(random, plantLoc);
+                        if (vegState != null) {
+                            WorldGenUtils.placeBlock(context.level(), plantLoc, vegState);
                         }
-
-                        for (int d = 1; d < config.depth; d++) {
-                            Location below = pos.clone().subtract(0, d, 0);
-                            if (WorldGenUtils.isValidBlock(context.level(), below, config.replaceable)) {
-                                WorldGenUtils.placeBlock(context.level(), below, config.ground);
-                            }
-                        }
-                        placed = true;
                     }
                 }
             }
         }
-        return placed;
+
+        return placedCount > 0;
     }
 
     /**
-     * Configuration record for {@link VegetationPatchFeature}.
+     * Specifies the procedural generation phase in which this feature executes.
      *
-     * @param replaceable      A {@link List} of block identifiers that the patch can replace.
-     * @param ground           The {@link BlockInfo} representing the block state used for the patch's ground.
-     * @param vegetation       The {@link BlockInfo} representing the vegetation state placed on top.
-     * @param radius           The base horizontal radius of the elliptical patch.
-     * @param depth            The vertical thickness of the replaced ground blocks.
-     * @param vegetationChance The probability (0.0 to 1.0) of vegetation spawning on a surface block.
+     * @return The VEGETAL_DECORATION generation phase.
+     */
+    @Override
+    public GenerationPhase getPhase(Config config) {
+        return GenerationPhase.VEGETAL_DECORATION;
+    }
+
+    /**
+     * Configuration record for the vegetation patch feature.
+     *
+     * @param groundProvider      The block state provider defining the new ground terrain.
+     * @param vegetationProvider  The block state provider defining the plants scattered on top.
+     * @param radius              The horizontal radius of the terrain alteration patch.
+     * @param depth               The vertical depth to which the ground will be replaced.
+     * @param vegetationChance    The 1-in-X probability of placing a plant on an altered surface column.
+     * @param replaceableGround   The list of blocks that are allowed to be converted into the new ground.
      */
     public record Config(
-        List<String> replaceable,
-        BlockInfo ground,
-        BlockInfo vegetation,
-        int radius,
-        int depth,
-        float vegetationChance
+            BlockStateProvider groundProvider,
+            BlockStateProvider vegetationProvider,
+            int radius,
+            int depth,
+            int vegetationChance,
+            List<BlockInfo> replaceableGround
     ) implements FeatureConfig {
 
         /**
-         * The codec for serializing and deserializing the {@link Config}.
+         * The codec for serializing and deserializing the configuration.
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
             /**
-             * Decodes the configuration from a map structure.
+             * Decodes the configuration from a map.
              *
              * @param ops   The dynamic operations logic.
              * @param input The serialized input.
              * @param <D>   The data format type.
-             * @return A new {@link Config} instance.
-             * @throws CodecException If required fields are missing or invalid.
+             * @return A new configuration instance.
+             * @throws CodecException If required fields are missing.
              */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                List<String> rep = Codecs.STRING.list().decode(ops, map.get(ops.createString("replaceable")));
-                BlockInfo g = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("ground")));
-                BlockInfo v = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("vegetation")));
-                int r = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
-                int d = Codecs.INT.decode(ops, map.get(ops.createString("depth")));
-                float c = Codecs.FLOAT.decode(ops, map.get(ops.createString("vegetation_chance")));
-                return new Config(rep, g, v, r, d, c);
+                
+                BlockStateProvider groundProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("ground_provider")));
+                BlockStateProvider vegetationProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("vegetation_provider")));
+                int radius = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
+                int depth = Codecs.INT.decode(ops, map.get(ops.createString("depth")));
+                int vegetationChance = Codecs.INT.decode(ops, map.get(ops.createString("vegetation_chance")));
+                List<BlockInfo> replaceableGround = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("replaceable_ground")));
+
+                return new Config(groundProvider, vegetationProvider, radius, depth, vegetationChance, replaceableGround);
             }
 
             /**
-             * Encodes the configuration into a map structure.
+             * Encodes the configuration into a map.
              *
              * @param ops   The dynamic operations logic.
-             * @param value The configuration instance to encode.
+             * @param value The configuration instance.
              * @param <D>   The data format type.
              * @return The encoded data object.
              * @throws CodecException If serialization fails.
@@ -155,12 +162,14 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("replaceable"), Codecs.STRING.list().encode(ops, value.replaceable));
-                map.put(ops.createString("ground"), ExtraCodecs.BLOCK_INFO.encode(ops, value.ground));
-                map.put(ops.createString("vegetation"), ExtraCodecs.BLOCK_INFO.encode(ops, value.vegetation));
+                
+                map.put(ops.createString("ground_provider"), BlockStateProvider.CODEC.encode(ops, value.groundProvider));
+                map.put(ops.createString("vegetation_provider"), BlockStateProvider.CODEC.encode(ops, value.vegetationProvider));
                 map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
                 map.put(ops.createString("depth"), Codecs.INT.encode(ops, value.depth));
-                map.put(ops.createString("vegetation_chance"), Codecs.FLOAT.encode(ops, value.vegetationChance));
+                map.put(ops.createString("vegetation_chance"), Codecs.INT.encode(ops, value.vegetationChance));
+                map.put(ops.createString("replaceable_ground"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.replaceableGround));
+
                 return ops.createMap(map);
             }
         };

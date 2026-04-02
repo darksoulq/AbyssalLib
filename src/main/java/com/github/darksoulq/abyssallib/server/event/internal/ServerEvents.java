@@ -21,27 +21,41 @@ import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.entity.internal.NaturalSpawnRegistry;
-import com.github.darksoulq.abyssallib.world.gen.WorldGenLoader;
+import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenLoader;
+import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenManager;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import com.github.darksoulq.abyssallib.world.structure.StructureLoader;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.LootGenerateEvent;
+import org.bukkit.event.world.WorldInitEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
+import java.util.Random;
 
 public class ServerEvents {
+
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerLoad(ServerLoadEvent e) {
         if (e.getType() == ServerLoadEvent.LoadType.STARTUP) {
@@ -140,8 +154,7 @@ public class ServerEvents {
                 LootContext.Builder builder = LootContext.builder(e.getEntity().getLocation()).victim(e.getEntity());
 
                 if (killer != null) {
-                    builder.looter(killer)
-                        .killer(killer);
+                    builder.looter(killer).killer(killer);
                     if (killer instanceof LivingEntity livingEntity) builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
                 }
 
@@ -149,5 +162,54 @@ public class ServerEvents {
                 e.getDrops().addAll(generated);
             }
         }
+    }
+
+    @SubscribeEvent(ignoreCancelled = true)
+    public void onPlayerInteract(PlayerInteractEvent e) {
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null) {
+            checkAndGenerateLoot(e.getClickedBlock(), e.getPlayer());
+        }
+    }
+
+    @SubscribeEvent(ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent e) {
+        checkAndGenerateLoot(e.getBlock(), e.getPlayer());
+    }
+
+    private void checkAndGenerateLoot(Block block, @Nullable Player looter) {
+        if (block.getState() instanceof Container container) {
+            PersistentDataContainer pdc = container.getPersistentDataContainer();
+            NamespacedKey tableKey = new NamespacedKey("abyssallib", "loot_table");
+
+            if (pdc.has(tableKey, PersistentDataType.STRING)) {
+                String tableId = pdc.get(tableKey, PersistentDataType.STRING);
+                pdc.remove(tableKey);
+
+                NamespacedKey seedKey = new NamespacedKey("abyssallib", "loot_seed");
+                long seed = pdc.getOrDefault(seedKey, PersistentDataType.LONG, new Random().nextLong());
+                pdc.remove(seedKey);
+
+                container.update();
+
+                LootTable table = Registries.LOOT_TABLES.get(tableId);
+                if (table != null) {
+                    Random random = new Random(seed);
+                    LootContext.Builder builder = LootContext.builder(block.getLocation()).random(random);
+                    if (looter != null) builder.looter(looter);
+
+                    table.fill(container.getInventory(), builder.build());
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onWorldInit(WorldInitEvent e) {
+        WorldGenManager.inject(e.getWorld());
+    }
+
+    @SubscribeEvent
+    public void onWorldLoad(WorldLoadEvent e) {
+        WorldGenManager.inject(e.getWorld());
     }
 }

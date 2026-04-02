@@ -3,31 +3,39 @@ package com.github.darksoulq.abyssallib.world.data.loot;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * Represents a complete loot table that can generate a list of items based on a provided context.
- * <p>
- * A loot table consists of multiple {@link LootPool}s. It can also be configured to
- * override or merge with a vanilla Minecraft loot table identifier.
+ * Represents a complete loot table capable of synthesizing item collections and intelligently
+ * populating external containers using context-driven probability logic.
  */
 public class LootTable {
-    /** The list of loot pools that make up this table. */
+
+    /**
+     * The internal collection of configured loot pools dictating sequential evaluation phases.
+     */
     private final List<LootPool> pools;
-    /** The strategy used when this table interacts with other loot tables. */
+
+    /**
+     * The targeted configuration strategy resolving potential overlap when mirroring vanilla namespace identities.
+     */
     private final MergeStrategy mergeStrategy;
-    /** The optional vanilla loot table ID this table targets (e.g., "minecraft:chests/simple_dungeon"). */
+
+    /**
+     * The optional designated string identifier establishing native parity overrides.
+     */
     private final String vanillaId;
 
     /**
-     * Constructs a new LootTable.
+     * Constructs a new LootTable incorporating probability pools and structural overrides.
      *
-     * @param pools         The list of {@link LootPool}s to evaluate.
-     * @param mergeStrategy The {@link MergeStrategy} for table composition.
-     * @param vanillaId     The optional vanilla identifier, may be {@code null}.
+     * @param pools         The collection of functional pools generating drops.
+     * @param mergeStrategy The conflict resolution strategy mapped against vanilla identifiers.
+     * @param vanillaId     The targeted namespace mapping dictating override bounds.
      */
     public LootTable(List<LootPool> pools, MergeStrategy mergeStrategy, @Nullable String vanillaId) {
         this.pools = pools;
@@ -36,10 +44,10 @@ public class LootTable {
     }
 
     /**
-     * Generates a list of items by evaluating all pools within this table.
+     * Evaluates probabilistic algorithms to materialize a discrete list of items.
      *
-     * @param context The {@link LootContext} containing environment and player data.
-     * @return A {@link List} of generated {@link ItemStack}s.
+     * @param context The functional environment encompassing actors and mathematical modifiers.
+     * @return A list of items synthesized across all constituent pools.
      */
     public List<ItemStack> generate(LootContext context) {
         List<ItemStack> items = new ArrayList<>();
@@ -49,18 +57,56 @@ public class LootTable {
         return items;
     }
 
-    /** @return The strategy used for merging loot data. */
+    /**
+     * Generates and distributes physical loot dynamically across a target inventory, strictly
+     * adhering to mathematical slot availability thresholds.
+     *
+     * @param inventory The operational inventory target receiving the synthesized payload.
+     * @param context   The functional environment governing generation variables.
+     */
+    public void fill(Inventory inventory, LootContext context) {
+        List<ItemStack> items = generate(context);
+        if (items.isEmpty()) return;
+
+        List<Integer> availableSlots = new ArrayList<>();
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack current = inventory.getItem(i);
+            if (current == null || current.getType().isAir()) {
+                availableSlots.add(i);
+            }
+        }
+
+        Collections.shuffle(availableSlots, context.random());
+        Iterator<Integer> slotIterator = availableSlots.iterator();
+
+        for (ItemStack item : items) {
+            if (!slotIterator.hasNext()) break;
+            inventory.setItem(slotIterator.next(), item);
+        }
+    }
+
+    /**
+     * Retrieves the conflict resolution strategy bridging procedural and structural overlaps.
+     *
+     * @return The operational merge strategy configuration.
+     */
     public MergeStrategy getMergeStrategy() {
         return mergeStrategy;
     }
 
-    /** @return The targeted vanilla loot ID, or {@code null} if none. */
+    /**
+     * Retrieves the linked internal namespace key utilized by vanilla parity overlays.
+     *
+     * @return The targeted string identifier, or null.
+     */
     @Nullable
     public String getVanillaId() {
         return vanillaId;
     }
 
-    /** Codec for serializing and deserializing {@link LootTable} instances. */
+    /**
+     * The codec managing the serialization conversion linking active memory representations to storage payloads.
+     */
     public static final Codec<LootTable> CODEC = new Codec<>() {
         @Override
         public <D> LootTable decode(DynamicOps<D> ops, D input) throws CodecException {

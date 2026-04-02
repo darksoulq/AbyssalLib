@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.block
 
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry
-import com.github.darksoulq.abyssallib.server.registry.`object`.Holder
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
 

@@ -13,44 +13,43 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * A placement modifier that shifts each position by a random offset in three dimensions.
+ * A placement modifier that slightly shifts the incoming position randomly
+ * along all three axes based on the defined spread values.
  * <p>
- * This modifier applies a random displacement within a box defined by the XZ and Y spread
- * values. It is useful for adding organic variation to feature placement or for
- * scattering sub-features around a central point.
+ * This is commonly used in conjunction with the InSquareModifier to add vertical
+ * or localized horizontal scattering to features.
  */
 public class RandomOffsetModifier extends PlacementModifier {
 
     /**
      * The codec used for serializing and deserializing the random offset modifier.
-     * <p>
-     * Requires "xz_spread" and "y_spread" integer fields to define the jitter radius.
      */
     public static final Codec<RandomOffsetModifier> CODEC = new Codec<>() {
+
         /**
-         * Decodes a RandomOffsetModifier from the provided serialized data.
+         * Decodes the modifier from a serialized map.
          *
          * @param ops   The dynamic operations logic.
-         * @param input The serialized input data.
+         * @param input The serialized input.
          * @param <D>   The data format type.
-         * @return A new instance of {@link RandomOffsetModifier}.
-         * @throws CodecException If the spread fields are missing or invalid.
+         * @return A new instance of the random offset modifier.
+         * @throws CodecException If fields are missing.
          */
         @Override
         public <D> RandomOffsetModifier decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int x = Codecs.INT.decode(ops, map.get(ops.createString("xz_spread")));
-            int y = Codecs.INT.decode(ops, map.get(ops.createString("y_spread")));
-            return new RandomOffsetModifier(x, y);
+            int xzSpread = Codecs.INT.decode(ops, map.get(ops.createString("xz_spread")));
+            int ySpread = Codecs.INT.decode(ops, map.get(ops.createString("y_spread")));
+            return new RandomOffsetModifier(xzSpread, ySpread);
         }
 
         /**
-         * Encodes the random offset modifier into a serialized format.
+         * Encodes the modifier into a serialized map.
          *
          * @param ops   The dynamic operations logic.
          * @param value The modifier instance to encode.
          * @param <D>   The data format type.
-         * @return A map containing the xz_spread and y_spread values.
+         * @return The encoded data object.
          * @throws CodecException If serialization fails.
          */
         @Override
@@ -67,48 +66,44 @@ public class RandomOffsetModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<RandomOffsetModifier> TYPE = () -> CODEC;
 
-    /** The maximum horizontal displacement in the X and Z directions. */
+    /** The maximum horizontal distance (positive or negative) to offset the position. */
     private final int xzSpread;
-
-    /** The maximum vertical displacement in the Y direction. */
+    
+    /** The maximum vertical distance (positive or negative) to offset the position. */
     private final int ySpread;
 
     /**
      * Constructs a new RandomOffsetModifier.
      *
-     * @param xzSpread The radius for horizontal jitter.
-     * @param ySpread  The radius for vertical jitter.
+     * @param xzSpread The bounds for X and Z coordinate randomization.
+     * @param ySpread  The bounds for Y coordinate randomization.
      */
     public RandomOffsetModifier(int xzSpread, int ySpread) {
-        this.xzSpread = xzSpread;
-        this.ySpread = ySpread;
+        this.xzSpread = Math.max(0, xzSpread);
+        this.ySpread = Math.max(0, ySpread);
     }
 
     /**
-     * Maps each position in the stream to a new position with a random 3D offset.
-     * <p>
-     * For every incoming vector, a random displacement is calculated in the range
-     * [-spread, +spread] for each axis. A new vector is returned with these offsets
-     * added to the original coordinates.
+     * Shifts each incoming position by a random amount within the configured spread bounds.
      *
-     * @param context   The current {@link PlacementContext}.
+     * @param context   The current placement context.
      * @param positions The incoming stream of potential placement vectors.
-     * @return A stream of vectors shifted by random 3D offsets.
+     * @return A stream of vectors shifted by the random offsets.
      */
     @Override
     public Stream<Vector> getPositions(PlacementContext context, Stream<Vector> positions) {
         return positions.map(pos -> {
-            int dx = context.random().nextInt(xzSpread * 2 + 1) - xzSpread;
-            int dy = context.random().nextInt(ySpread * 2 + 1) - ySpread;
-            int dz = context.random().nextInt(xzSpread * 2 + 1) - xzSpread;
-            return pos.clone().add(new Vector(dx, dy, dz));
+            int dx = xzSpread > 0 ? context.random().nextInt(xzSpread * 2 + 1) - xzSpread : 0;
+            int dy = ySpread > 0 ? context.random().nextInt(ySpread * 2 + 1) - ySpread : 0;
+            int dz = xzSpread > 0 ? context.random().nextInt(xzSpread * 2 + 1) - xzSpread : 0;
+            return new Vector(pos.getBlockX() + dx, pos.getBlockY() + dy, pos.getBlockZ() + dz);
         });
     }
 
     /**
      * Retrieves the specific type definition for this modifier.
      *
-     * @return The {@link PlacementModifierType} associated with {@link RandomOffsetModifier}.
+     * @return The placement modifier type associated with this random offset modifier.
      */
     @Override
     public PlacementModifierType<?> getType() {

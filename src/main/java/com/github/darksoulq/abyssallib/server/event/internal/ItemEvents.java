@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.destroystokyo.paper.event.inventory.PrepareResultEvent;
-import com.github.darksoulq.abyssallib.bootstrap.PackSetup;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.ClickType;
 import com.github.darksoulq.abyssallib.server.event.InventoryClickType;

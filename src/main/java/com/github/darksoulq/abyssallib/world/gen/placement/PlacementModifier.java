@@ -10,31 +10,22 @@ import java.util.stream.Stream;
 
 /**
  * The base class for all placement logic transformations in the world generation pipeline.
- * Placement modifiers take an input stream of {@link Vector} positions and return
- * a new stream, allowing for operations such as duplication, coordinate offsetting,
- * or spatial filtering based on environmental conditions.
  */
 public abstract class PlacementModifier {
 
     /**
      * Polymorphic codec for serializing and deserializing any placement modifier implementation.
-     * This codec utilizes a "type" field to resolve the specific implementation from
-     * the {@link Registries#PLACEMENT_MODIFIERS} registry during decoding.
      */
     public static final Codec<PlacementModifier> CODEC = new Codec<>() {
+
         /**
          * Decodes a specific PlacementModifier based on its registered type identifier.
          *
-         * @param <D>
-         * The type of the serialized data.
-         * @param ops
-         * The dynamic operations logic used to parse the input.
-         * @param input
-         * The serialized input data representing the modifier.
-         * @return
-         * The decoded {@link PlacementModifier} instance.
-         * @throws CodecException
-         * If the type is missing, unknown, or the data structure is invalid.
+         * @param ops   The dynamic operations logic used to parse the input.
+         * @param input The serialized input data representing the modifier.
+         * @param <D>   The type of the serialized data.
+         * @return The decoded placement modifier instance.
+         * @throws CodecException If the type is missing or unknown.
          */
         @Override
         public <D> PlacementModifier decode(DynamicOps<D> ops, D input) throws CodecException {
@@ -56,16 +47,11 @@ public abstract class PlacementModifier {
         /**
          * Encodes a PlacementModifier, injecting its registered type ID into the resulting data.
          *
-         * @param <D>
-         * The target type for the serialized data.
-         * @param ops
-         * The dynamic operations logic used to construct the output.
-         * @param value
-         * The modifier instance to encode.
-         * @return
-         * The encoded data object containing both modifier data and its type identifier.
-         * @throws CodecException
-         * If the modifier type is not registered or the codec fails to return a map.
+         * @param ops   The dynamic operations logic used to construct the output.
+         * @param value The modifier instance to encode.
+         * @param <D>   The target type for the serialized data.
+         * @return The encoded data object containing both modifier data and its type identifier.
+         * @throws CodecException If the modifier type is not registered.
          */
         @Override
         @SuppressWarnings("unchecked")
@@ -86,20 +72,16 @@ public abstract class PlacementModifier {
     /**
      * Transforms the stream of positions according to the specific modifier logic.
      *
-     * @param context
-     * The current {@link PlacementContext} providing world and environmental data.
-     * @param positions
-     * The input {@link Stream} of potential placement {@link Vector} coordinates.
-     * @return
-     * A modified {@link Stream} of vectors after application of the modifier logic.
+     * @param context   The current placement context providing world and environmental data.
+     * @param positions The input stream of potential placement vector coordinates.
+     * @return A modified stream of vectors after application of the modifier logic.
      */
     public abstract Stream<Vector> getPositions(PlacementContext context, Stream<Vector> positions);
 
     /**
      * Retrieves the placement modifier type used for identifying this specific implementation.
      *
-     * @return
-     * The {@link PlacementModifierType} associated with this instance.
+     * @return The placement modifier type associated with this instance.
      */
     public abstract PlacementModifierType<?> getType();
 }

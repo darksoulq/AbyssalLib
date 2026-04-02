@@ -4,7 +4,9 @@ import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
+import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
@@ -15,10 +17,6 @@ import java.util.Random;
 
 /**
  * A world generation feature that generates clusters of ore veins.
- * <p>
- * This feature uses the standard Minecraft ore generation algorithm, creating a
- * "worm" or "blob" of blocks between two points. It supports multiple replacement
- * targets, allowing an ore cluster to behave differently when hitting different materials.
  */
 public class OreFeature extends Feature<OreFeature.Config> {
 
@@ -31,13 +29,9 @@ public class OreFeature extends Feature<OreFeature.Config> {
 
     /**
      * Executes the placement logic for the ore cluster.
-     * <p>
-     * The algorithm defines a linear path based on the config size, calculates
-     * spheres of varying diameters along that path, and fills the intersection
-     * of those spheres with the world grid.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
-     * @return {@code true} if the feature was triggered (always true for this implementation).
+     * @param context The feature place context providing world access, origin, random source, and configuration.
+     * @return True if the feature was successfully triggered.
      */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
@@ -45,47 +39,57 @@ public class OreFeature extends Feature<OreFeature.Config> {
         Vector origin = context.origin().toVector();
         int size = context.config().size;
 
-        float f = random.nextFloat() * 3.1415927F;
-        float f1 = (float)size / 8.0F;
-        double d0 = origin.getX() + Math.sin(f) * f1;
-        double d1 = origin.getX() - Math.sin(f) * f1;
-        double d2 = origin.getZ() + Math.cos(f) * f1;
-        double d3 = origin.getZ() - Math.cos(f) * f1;
-        double d4 = origin.getY() + random.nextInt(3) - 2;
-        double d5 = origin.getY() + random.nextInt(3) - 2;
+        float angle = random.nextFloat() * (float) Math.PI;
+        float radius = (float) size / 8.0F;
 
-        for(int l = 0; l < size; ++l) {
-            float f2 = (float)l / (float)size;
-            double d6 = d0 + (d1 - d0) * f2;
-            double d7 = d4 + (d5 - d4) * f2;
-            double d8 = d2 + (d3 - d2) * f2;
-            double d9 = random.nextDouble() * size / 16.0D;
-            double d10 = (Math.sin(3.1415927F * f2) + 1.0F) * d9 + 1.0D;
-            double d11 = (Math.sin(3.1415927F * f2) + 1.0F) * d9 + 1.0D;
-            int i1 = (int)Math.floor(d6 - d10 / 2.0D);
-            int j1 = (int)Math.floor(d7 - d11 / 2.0D);
-            int k1 = (int)Math.floor(d8 - d10 / 2.0D);
-            int l1 = (int)Math.floor(d6 + d10 / 2.0D);
-            int i2 = (int)Math.floor(d7 + d11 / 2.0D);
-            int j2 = (int)Math.floor(d8 + d10 / 2.0D);
+        double startX = origin.getX() + Math.sin(angle) * radius;
+        double endX = origin.getX() - Math.sin(angle) * radius;
+        double startZ = origin.getZ() + Math.cos(angle) * radius;
+        double endZ = origin.getZ() - Math.cos(angle) * radius;
+        double startY = origin.getY() + random.nextInt(3) - 2;
+        double endY = origin.getY() + random.nextInt(3) - 2;
 
-            for(int k2 = i1; k2 <= l1; ++k2) {
-                double d12 = ((double)k2 + 0.5D - d6) / (d10 / 2.0D);
-                if (d12 * d12 < 1.0D) {
-                    for(int l2 = j1; l2 <= i2; ++l2) {
-                        double d13 = ((double)l2 + 0.5D - d7) / (d11 / 2.0D);
-                        if (d12 * d12 + d13 * d13 < 1.0D) {
-                            for(int i3 = k1; i3 <= j2; ++i3) {
-                                double d14 = ((double)i3 + 0.5D - d8) / (d10 / 2.0D);
-                                if (d12 * d12 + d13 * d13 + d14 * d14 < 1.0D && context.level().getWorld().getMinHeight() <= l2 && l2 < context.level().getWorld().getMaxHeight()) {
+        int minHeight = context.level().getWorld().getMinHeight();
+        int maxHeight = context.level().getWorld().getMaxHeight();
 
-                                    Location loc = new Location(context.level().getWorld(), k2, l2, i3);
-                                    for (Target target : context.config().targets) {
-                                        if (WorldGenUtils.isValidBlock(context.level(), loc, target.target)) {
-                                            WorldGenUtils.placeBlock(context.level(), loc, target.state);
-                                            break;
-                                        }
+        for (int l = 0; l < size; ++l) {
+            float progress = (float) l / (float) size;
+            double currentX = startX + (endX - startX) * progress;
+            double currentY = startY + (endY - startY) * progress;
+            double currentZ = startZ + (endZ - startZ) * progress;
+
+            double spread = random.nextDouble() * size / 16.0D;
+            double widthMod = (Math.sin(Math.PI * progress) + 1.0F) * spread + 1.0D;
+            double heightMod = (Math.sin(Math.PI * progress) + 1.0F) * spread + 1.0D;
+
+            int minXBound = (int) Math.floor(currentX - widthMod / 2.0D);
+            int minYBound = (int) Math.floor(currentY - heightMod / 2.0D);
+            int minZBound = (int) Math.floor(currentZ - widthMod / 2.0D);
+            int maxXBound = (int) Math.floor(currentX + widthMod / 2.0D);
+            int maxYBound = (int) Math.floor(currentY + heightMod / 2.0D);
+            int maxZBound = (int) Math.floor(currentZ + widthMod / 2.0D);
+
+            for (int x = minXBound; x <= maxXBound; ++x) {
+                double xDist = ((double) x + 0.5D - currentX) / (widthMod / 2.0D);
+                if (xDist * xDist >= 1.0D) continue;
+
+                for (int y = minYBound; y <= maxYBound; ++y) {
+                    double yDist = ((double) y + 0.5D - currentY) / (heightMod / 2.0D);
+                    if (xDist * xDist + yDist * yDist >= 1.0D) continue;
+
+                    for (int z = minZBound; z <= maxZBound; ++z) {
+                        double zDist = ((double) z + 0.5D - currentZ) / (widthMod / 2.0D);
+
+                        if (xDist * xDist + yDist * yDist + zDist * zDist < 1.0D && minHeight <= y && y < maxHeight) {
+                            Location loc = new Location(context.level().getWorld(), x, y, z);
+                            
+                            for (Target target : context.config().targets) {
+                                if (WorldGenUtils.isValidBlock(context.level(), loc, target.target)) {
+                                    BlockInfo stateToPlace = target.stateProvider().getState(random, loc);
+                                    if (stateToPlace != null) {
+                                        WorldGenUtils.placeBlock(context.level(), loc, stateToPlace);
                                     }
+                                    break;
                                 }
                             }
                         }
@@ -97,15 +101,25 @@ public class OreFeature extends Feature<OreFeature.Config> {
     }
 
     /**
+     * Specifies the procedural generation phase in which this feature executes.
+     *
+     * @return The UNDERGROUND_ORES generation phase.
+     */
+    @Override
+    public GenerationPhase getPhase(Config config) {
+        return GenerationPhase.UNDERGROUND_ORES;
+    }
+
+    /**
      * A record representing a specific replacement rule for the ore feature.
      *
-     * @param target A list of block IDs that should be replaced if encountered.
-     * @param state  The {@link BlockInfo} to place when a target is matched.
+     * @param target        A list of block info targets that should be replaced if encountered.
+     * @param stateProvider The dynamic provider supplying the blocks to replace the target with.
      */
-    public record Target(List<String> target, BlockInfo state) {
+    public record Target(List<BlockInfo> target, BlockStateProvider stateProvider) {
 
         /**
-         * The codec for serializing and deserializing a {@link Target} rule.
+         * The codec for serializing and deserializing a target rule.
          */
         public static final Codec<Target> CODEC = new Codec<>() {
 
@@ -115,15 +129,15 @@ public class OreFeature extends Feature<OreFeature.Config> {
              * @param ops   The dynamic operations logic.
              * @param input The serialized input.
              * @param <D>   The data format type.
-             * @return A new {@link Target} instance.
+             * @return A new target instance.
              * @throws CodecException If the map structure is invalid.
              */
             @Override
             public <D> Target decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                List<String> target = Codecs.STRING.list().decode(ops, map.get(ops.createString("target")));
-                BlockInfo state = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("state")));
-                return new Target(target, state);
+                List<BlockInfo> target = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("target")));
+                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
+                return new Target(target, stateProvider);
             }
 
             /**
@@ -138,23 +152,23 @@ public class OreFeature extends Feature<OreFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Target value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("target"), Codecs.STRING.list().encode(ops, value.target));
-                map.put(ops.createString("state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.state));
+                map.put(ops.createString("target"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.target));
+                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
                 return ops.createMap(map);
             }
         };
     }
 
     /**
-     * Configuration record for {@link OreFeature}.
+     * Configuration record for the ore feature.
      *
-     * @param targets A {@link List} of {@link Target} rules defining what to replace and with what.
-     * @param size    The relative size/volume of the ore vein.
+     * @param targets A list of target rules defining what to replace and with what.
+     * @param size    The relative size and volume bounds of the ore vein.
      */
     public record Config(List<Target> targets, int size) implements FeatureConfig {
 
         /**
-         * The codec for serializing and deserializing the {@link Config}.
+         * The codec for serializing and deserializing the configuration.
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
@@ -164,7 +178,7 @@ public class OreFeature extends Feature<OreFeature.Config> {
              * @param ops   The dynamic operations logic.
              * @param input The serialized input.
              * @param <D>   The data format type.
-             * @return A new {@link Config} instance.
+             * @return A new configuration instance.
              * @throws CodecException If required fields are missing.
              */
             @Override

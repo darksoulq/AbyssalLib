@@ -37,10 +37,10 @@ public final class DefaultConditions {
         };
     }
 
-    public static Predicate<CommandSourceStack> hasPerm(Holder<PermissionNode> permission) {
+    public static Predicate<CommandSourceStack> hasPerm(PermissionNode permission) {
         return src -> {
             if (!(src.getExecutor() instanceof Entity entity)) return false;
-            return entity.hasPermission(permission.get().getNode());
+            return entity.hasPermission(permission.getNode());
         };
     }
 
@@ -52,11 +52,10 @@ public final class DefaultConditions {
         };
     }
 
-    @SafeVarargs
-    public static Predicate<CommandSourceStack> hasAnyPerm(Holder<PermissionNode>... permissions) {
+    public static Predicate<CommandSourceStack> hasAnyPerm(PermissionNode... permissions) {
         return src -> {
             if (!(src.getExecutor() instanceof Entity entity)) return false;
-            for (Holder<PermissionNode> perm : permissions) if (entity.hasPermission(perm.get().getNode())) return true;
+            for (PermissionNode perm : permissions) if (entity.hasPermission(perm.getNode())) return true;
             return false;
         };
     }

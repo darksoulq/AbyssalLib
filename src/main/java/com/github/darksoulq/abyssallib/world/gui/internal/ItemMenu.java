@@ -132,7 +132,7 @@ public class ItemMenu {
         List<GuiElement> elements = new ArrayList<>();
         for (Item item : category.getItems()) {
             elements.add(GuiButton.of(item.getStack().asOne(), ctx -> {
-                if (!PluginPermissions.ITEMS_GIVE.get().has(player)) return;
+                if (!PluginPermissions.ITEMS_GIVE.has(player)) return;
                 player.getInventory().addItem(item.getStack().asOne());
             }));
         }

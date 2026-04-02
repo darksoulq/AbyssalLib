@@ -7,9 +7,6 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bed;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class BedOccupiedAdapter extends Adapter<Bed> {
     private static final Codec<Boolean> CODEC = Codecs.BOOLEAN;
     @Override

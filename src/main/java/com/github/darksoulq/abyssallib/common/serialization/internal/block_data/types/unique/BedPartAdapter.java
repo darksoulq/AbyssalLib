@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.unique;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bed;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class BedPartAdapter extends Adapter<Bed> {
     private static final Codec<Bed.Part> CODEC = Codec.enumCodec(Bed.Part.class);

@@ -6,35 +6,26 @@ import org.bukkit.Location;
 import java.util.Random;
 
 /**
- * A record representing a {@link Feature} paired with a specific {@link FeatureConfig}.
- * While a Feature defines the "how" (e.g., "how to build an ore vein"), a
- * ConfiguredFeature defines the "what" (e.g., "an iron ore vein of size 9").
+ * Represents a world generation feature strictly bound to its specific configuration.
+ * <p>
+ * This wrapper unites the stateless procedural logic of a {@link Feature} with the
+ * data-driven parameters of a {@link FeatureConfig}, creating an executable unit
+ * ready for placement in the world.
  *
- * @param <FC>
- * The configuration type that extends {@link FeatureConfig}.
- * @param <F>
- * The feature type that extends {@link Feature} using configuration {@code FC}.
- * @param feature
- * The stateless feature logic used for generation.
- * @param config
- * The specific parameters and data used by the feature logic.
+ * @param feature The base feature logic.
+ * @param config  The parameters governing the feature's behavior.
+ * @param <C>     The specific configuration type.
+ * @param <F>     The specific feature type.
  */
-public record ConfiguredFeature<FC extends FeatureConfig, F extends Feature<FC>>(
-    F feature,
-    FC config
-) {
+public record ConfiguredFeature<C extends FeatureConfig, F extends Feature<C>>(F feature, C config) {
 
     /**
-     * Wraps the provided parameters into a context and triggers the underlying feature placement.
+     * Executes the feature's placement logic at the specified origin.
      *
-     * @param level
-     * The {@link WorldGenAccess} providing thread-safe world modification during generation.
-     * @param origin
-     * The {@link Location} where the feature should start its generation logic.
-     * @param random
-     * The {@link Random} source used to ensure procedural variety.
-     * @return
-     * True if the generation was successful at the specified location, false otherwise.
+     * @param level  The world generation accessor.
+     * @param origin The absolute starting location for the feature.
+     * @param random The deterministic random source.
+     * @return True if the feature was successfully placed.
      */
     public boolean place(WorldGenAccess level, Location origin, Random random) {
         return feature.place(new FeaturePlaceContext<>(level, origin, random, config));

@@ -190,7 +190,7 @@ public abstract class AbstractBarLayer implements GuiLayer {
         ModelData modelDataComponent = item.getData(ModelData.TYPE);
         CustomModelData data = modelDataComponent != null ? modelDataComponent.getValue() : null;
 
-        if (data != null && data.strings() != null) {
+        if (data != null) {
             current.addAll(data.strings());
         }
 

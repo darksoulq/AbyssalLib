@@ -3,23 +3,20 @@ package com.github.darksoulq.abyssallib.common.energy;
 import net.kyori.adventure.key.Key;
 
 /**
- * A record defining an energy measurement unit with its own identifier,
- * symbol, and conversion rate relative to the base unit.
+ * Represents a unit of energy with a conversion rate relative to a base unit.
  *
- * @param id             Unique identifier for this unit.
- * @param symbol         Short display name (e.g., "PE", "FE").
- * @param conversionRate The multiplier used to convert this unit into the base unit.
+ * @param id             unique identifier of the unit
+ * @param symbol         display symbol (e.g. FE, RF)
+ * @param conversionRate multiplier relative to the base unit
  */
 public record EnergyUnit(Key id, String symbol, double conversionRate) {
-    /** The default unit for AbyssalLib (Paper Energy). */
-    public static final EnergyUnit PE = new EnergyUnit(Key.key("abyssallib", "pe"), "PE", 1.0);
 
     /**
-     * Converts an amount from this unit to another unit.
+     * Converts an amount from this unit into another unit.
      *
-     * @param amount The quantity in this unit.
-     * @param to     The target unit.
-     * @return The converted quantity.
+     * @param amount the value in this unit
+     * @param to     the target unit
+     * @return converted value in the target unit
      */
     public double convert(double amount, EnergyUnit to) {
         if (this.equals(to)) return amount;
@@ -27,20 +24,20 @@ public record EnergyUnit(Key id, String symbol, double conversionRate) {
     }
 
     /**
-     * Converts an amount from this unit to the base unit.
+     * Converts a value into the base unit.
      *
-     * @param amount The quantity in this unit.
-     * @return The base unit equivalent.
+     * @param amount value in this unit
+     * @return value in base unit
      */
     public double toBase(double amount) {
         return amount * conversionRate;
     }
 
     /**
-     * Converts an amount from the base unit into this unit.
+     * Converts a value from the base unit into this unit.
      *
-     * @param amount The quantity in the base unit.
-     * @return The local unit equivalent.
+     * @param amount value in base unit
+     * @return value in this unit
      */
     public double fromBase(double amount) {
         return amount / conversionRate;

@@ -4,114 +4,131 @@ import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
+import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * A world generation feature that creates single-block fluid springs (water, lava, etc.).
- * <p>
- * This feature validates the surrounding environment to ensure the spring is enclosed
- * by exactly five solid/valid neighbors and has no more than one open neighbor. This
- * logic typically generates springs in cave walls or cliffsides.
+ * A world generation feature responsible for creating isolated liquid source blocks (springs).
  */
 public class SpringFeature extends Feature<SpringFeature.Config> {
 
+    /** The standard array of 6 adjacent block faces used for boundary calculation. */
+    private static final BlockFace[] FACES = {
+        BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST
+    };
+
     /**
-     * Constructs a new SpringFeature with the associated configuration codec.
+     * Constructs a new SpringFeature with its associated configuration codec.
      */
     public SpringFeature() {
         super(Config.CODEC);
     }
 
     /**
-     * Executes the placement logic for the spring.
-     * <p>
-     * The method checks the six cardinal directions surrounding the origin. It calculates
-     * the number of "solid" neighbors (based on the provided valid blocks list) and
-     * "open" neighbors (air or cave air). The fluid is placed only if the origin is air
-     * and the enclosure requirements are met.
+     * Executes the strict boundary evaluation and potential placement of the spring block.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, and configuration.
-     * @return {@code true} if the spring was successfully placed; {@code false} otherwise.
+     * @param context The feature place context providing world access and configuration.
+     * @return True if the surrounding geography matched the config and the spring was placed.
      */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
-        Location pos = context.origin();
-        int x = pos.getBlockX();
-        int y = pos.getBlockY();
-        int z = pos.getBlockZ();
+        Location origin = context.origin();
+        Config config = context.config();
 
-        if (context.level().getType(x, y, z) != Material.AIR && context.level().getType(x, y, z) != Material.CAVE_AIR) return false;
-        if (context.config().requiresBlockBelow && context.level().getType(x, y - 1, z) == Material.AIR) return false;
+        if (!WorldGenUtils.isValidBlock(context.level(), origin, config.rock())) {
+            return false;
+        }
 
-        int solidNeighbors = 0;
-        int openNeighbors = 0;
+        Location blockBelow = origin.clone().add(0, -1, 0);
+        if (config.requiresBlockBelow() && !WorldGenUtils.isValidBlock(context.level(), blockBelow, config.rock())) {
+            return false;
+        }
 
-        int[][] dirs = {{1,0,0}, {-1,0,0}, {0,0,1}, {0,0,-1}, {0,1,0}, {0,-1,0}};
-        for (int[] d : dirs) {
-            Location check = pos.clone().add(d[0], d[1], d[2]);
-            Material m = context.level().getType(check.getBlockX(), check.getBlockY(), check.getBlockZ());
+        int rockCount = 0;
+        int holeCount = 0;
 
-            if (WorldGenUtils.isValidBlock(context.level(), check, context.config().validBlocks)) {
-                solidNeighbors++;
-            } else if (m == Material.AIR || m == Material.CAVE_AIR) {
-                openNeighbors++;
+        for (BlockFace face : FACES) {
+            Location neighbor = origin.clone().add(face.getModX(), face.getModY(), face.getModZ());
+            
+            if (WorldGenUtils.isValidBlock(context.level(), neighbor, config.rock())) {
+                rockCount++;
+            } else if (context.level().getType(neighbor.getBlockX(), neighbor.getBlockY(), neighbor.getBlockZ()) == Material.AIR) {
+                holeCount++;
             }
         }
 
-        if (solidNeighbors == 5 && openNeighbors <= 1) {
-            WorldGenUtils.placeBlock(context.level(), pos, context.config().fluid);
-            return true;
+        if (rockCount == config.validNeighbors() && holeCount == config.holeCount()) {
+            BlockInfo stateToPlace = config.stateProvider().getState(context.random(), origin);
+            if (stateToPlace != null) {
+                WorldGenUtils.placeBlock(context.level(), origin, stateToPlace);
+                return true;
+            }
         }
+
         return false;
     }
 
     /**
-     * Configuration record for {@link SpringFeature}.
+     * Specifies the procedural generation phase in which this feature executes.
      *
-     * @param fluid               The {@link BlockInfo} representing the fluid state to place.
-     * @param requiresBlockBelow  Whether the spring must have a solid block directly beneath it.
-     * @param validBlocks         A {@link List} of block identifiers considered "solid" for enclosure checks.
+     * @return The FLUID_SPRINGS generation phase.
      */
-    public record Config(BlockInfo fluid, boolean requiresBlockBelow, List<String> validBlocks) implements FeatureConfig {
+    @Override
+    public GenerationPhase getPhase(Config config) {
+        return GenerationPhase.FLUID_SPRINGS;
+    }
+
+    /**
+     * Configuration record for the spring feature.
+     *
+     * @param stateProvider       The dynamic block provider representing the core liquid to place.
+     * @param rock                The list of target blocks considered valid encasing materials.
+     * @param requiresBlockBelow  Flag dictating if the block directly beneath the origin must be rock.
+     * @param holeCount           The exact number of adjacent blocks that must be air for placement.
+     * @param validNeighbors      The exact number of adjacent blocks that must be rock for placement.
+     */
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> rock, boolean requiresBlockBelow, int holeCount, int validNeighbors) implements FeatureConfig {
 
         /**
-         * The codec for serializing and deserializing the {@link Config}.
+         * The codec for serializing and deserializing the configuration.
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
             /**
-             * Decodes the configuration from a map structure.
+             * Decodes the configuration from a map.
              *
              * @param ops   The dynamic operations logic.
              * @param input The serialized input.
              * @param <D>   The data format type.
-             * @return A new {@link Config} instance.
-             * @throws CodecException If required fields are missing or invalid.
+             * @return A new configuration instance.
+             * @throws CodecException If required fields are missing.
              */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo fluid = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("fluid")));
-                boolean req = Codecs.BOOLEAN.decode(ops, map.get(ops.createString("requires_block_below")));
-                List<String> valid = new ArrayList<>();
-                if (map.containsKey(ops.createString("valid_blocks"))) {
-                    valid = Codecs.STRING.list().decode(ops, map.get(ops.createString("valid_blocks")));
-                }
-                return new Config(fluid, req, valid);
+                
+                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
+                List<BlockInfo> rock = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("rock")));
+                boolean requiresBlockBelow = Codecs.BOOLEAN.decode(ops, map.get(ops.createString("requires_block_below")));
+                int holeCount = Codecs.INT.decode(ops, map.get(ops.createString("hole_count")));
+                int validNeighbors = Codecs.INT.decode(ops, map.get(ops.createString("valid_neighbors")));
+                
+                return new Config(stateProvider, rock, requiresBlockBelow, holeCount, validNeighbors);
             }
 
             /**
-             * Encodes the configuration into a map structure.
+             * Encodes the configuration into a map.
              *
              * @param ops   The dynamic operations logic.
-             * @param value The configuration instance to encode.
+             * @param value The configuration instance.
              * @param <D>   The data format type.
              * @return The encoded data object.
              * @throws CodecException If serialization fails.
@@ -119,9 +136,13 @@ public class SpringFeature extends Feature<SpringFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("fluid"), ExtraCodecs.BLOCK_INFO.encode(ops, value.fluid));
+                
+                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
+                map.put(ops.createString("rock"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.rock));
                 map.put(ops.createString("requires_block_below"), Codecs.BOOLEAN.encode(ops, value.requiresBlockBelow));
-                map.put(ops.createString("valid_blocks"), Codecs.STRING.list().encode(ops, value.validBlocks));
+                map.put(ops.createString("hole_count"), Codecs.INT.encode(ops, value.holeCount));
+                map.put(ops.createString("valid_neighbors"), Codecs.INT.encode(ops, value.validNeighbors));
+                
                 return ops.createMap(map);
             }
         };

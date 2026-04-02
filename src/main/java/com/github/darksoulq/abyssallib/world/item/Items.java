@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.world.item;
 
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import org.bukkit.Material;
 
 public class Items {
     public static final DeferredRegistry<Item> ITEMS = DeferredRegistry.create(Registries.ITEMS, "abyssallib");

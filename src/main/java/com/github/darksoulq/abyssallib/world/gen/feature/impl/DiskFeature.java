@@ -5,106 +5,113 @@ import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * A world generation feature that generates a disk-shaped volume of blocks.
+ * A world generation feature that generates a flat, circular disk dynamically.
  * <p>
- * This feature is typically used to generate circular patches of materials like sand,
- * gravel, or clay in riverbeds or on the surface. It replaces specific target
- * blocks within a cylindrical radius and a vertical half-height range.
+ * Upgraded to utilize the Block State Provider API, enabling features like
+ * mixed gravel and sand ocean floors.
  */
 public class DiskFeature extends Feature<DiskFeature.Config> {
 
     /**
-     * Constructs a new DiskFeature with the associated configuration codec.
+     * Constructs a new DiskFeature with its associated configuration codec.
      */
     public DiskFeature() {
         super(Config.CODEC);
     }
 
     /**
-     * Executes the placement logic for the disk feature.
-     * <p>
-     * The algorithm iterates through a cubic volume defined by the radius and half-height.
-     * It uses the Euclidean distance formula (x² + z²) to constrain placement within a
-     * circular disk. Blocks are only placed if the existing block at the location
-     * matches the criteria defined in the configuration's target list.
+     * Executes the circular placement logic centered on the given origin.
      *
-     * @param context The {@link FeaturePlaceContext} providing world access, origin, random source, and configuration.
-     * @return {@code true} if at least one block was successfully placed; {@code false} otherwise.
+     * @param context The feature place context providing world access and configuration.
+     * @return True if at least one block was successfully placed.
      */
     @Override
     public boolean place(FeaturePlaceContext<Config> context) {
-        boolean placed = false;
-        int radius = context.config().radius;
-        int ySize = context.config().halfHeight;
         Location origin = context.origin();
+        Config config = context.config();
+        int placedCount = 0;
 
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                if (x * x + z * z <= radius * radius) {
-                    for (int y = -ySize; y <= ySize; y++) {
-                        Location loc = origin.clone().add(x, y, z);
-                        if (WorldGenUtils.isValidBlock(context.level(), loc, context.config().targets)) {
-                            WorldGenUtils.placeBlock(context.level(), loc, context.config().toPlace);
-                            placed = true;
+        int minHeight = context.level().getWorld().getMinHeight();
+        int maxHeight = context.level().getWorld().getMaxHeight();
+
+        int radius = config.radius();
+        int halfHeight = config.halfHeight();
+        int radiusSq = radius * radius;
+
+        for (int x = origin.getBlockX() - radius; x <= origin.getBlockX() + radius; x++) {
+            for (int z = origin.getBlockZ() - radius; z <= origin.getBlockZ() + radius; z++) {
+                int dx = x - origin.getBlockX();
+                int dz = z - origin.getBlockZ();
+
+                if (dx * dx + dz * dz <= radiusSq) {
+                    for (int y = origin.getBlockY() - halfHeight; y <= origin.getBlockY() + halfHeight; y++) {
+                        if (y < minHeight || y >= maxHeight) continue;
+
+                        Location target = new Location(context.level().getWorld(), x, y, z);
+                        
+                        if (WorldGenUtils.isValidBlock(context.level(), target, config.targets())) {
+                            BlockInfo stateToPlace = config.stateProvider().getState(context.random(), target);
+                            if (stateToPlace != null) {
+                                WorldGenUtils.placeBlock(context.level(), target, stateToPlace);
+                                placedCount++;
+                            }
                         }
                     }
                 }
             }
         }
-        return placed;
+
+        return placedCount > 0;
     }
 
     /**
-     * Configuration record for {@link DiskFeature}.
+     * Configuration record for the disk feature.
      *
-     * @param toPlace    The {@link BlockInfo} representing the block state to be generated.
-     * @param radius     The horizontal radius of the disk.
-     * @param halfHeight The vertical distance to extend above and below the origin (total height = 2h + 1).
-     * @param targets    A {@link List} of block identifiers that are allowed to be replaced by this feature.
+     * @param stateProvider The dynamic provider supplying the blocks for the disk.
+     * @param radius        The horizontal radius of the disk.
+     * @param halfHeight    The vertical thickness offset applied above and below the origin Y.
+     * @param targets       The list of allowed block info targets that the disk can replace.
      */
-    public record Config(BlockInfo toPlace, int radius, int halfHeight, List<String> targets) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, int radius, int halfHeight, List<BlockInfo> targets) implements FeatureConfig {
 
         /**
-         * The codec for serializing and deserializing {@link Config}.
+         * The codec for serializing and deserializing the configuration.
          */
         public static final Codec<Config> CODEC = new Codec<>() {
 
             /**
-             * Decodes the configuration from a serialized map.
+             * Decodes the configuration from a map.
              *
              * @param ops   The dynamic operations logic.
              * @param input The serialized input.
              * @param <D>   The data format type.
-             * @return A new {@link Config} instance.
-             * @throws CodecException If required fields are missing or invalid.
+             * @return A new configuration instance.
+             * @throws CodecException If required fields are missing.
              */
             @Override
             public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
                 Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo block = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("block")));
-                int r = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
-                int h = Codecs.INT.decode(ops, map.get(ops.createString("half_height")));
+                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
+                int radius = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
+                int halfHeight = Codecs.INT.decode(ops, map.get(ops.createString("half_height")));
+                List<BlockInfo> targets = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("targets")));
 
-                List<String> targets = new ArrayList<>();
-                if (map.containsKey(ops.createString("targets"))) {
-                    targets = Codecs.STRING.list().decode(ops, map.get(ops.createString("targets")));
-                }
-                return new Config(block, r, h, targets);
+                return new Config(stateProvider, radius, halfHeight, targets);
             }
 
             /**
-             * Encodes the configuration into a serialized map.
+             * Encodes the configuration into a map.
              *
              * @param ops   The dynamic operations logic.
-             * @param value The configuration instance to encode.
+             * @param value The configuration instance.
              * @param <D>   The data format type.
              * @return The encoded data object.
              * @throws CodecException If serialization fails.
@@ -112,10 +119,11 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
             @Override
             public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("block"), ExtraCodecs.BLOCK_INFO.encode(ops, value.toPlace));
+                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
                 map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
                 map.put(ops.createString("half_height"), Codecs.INT.encode(ops, value.halfHeight));
-                map.put(ops.createString("targets"), Codecs.STRING.list().encode(ops, value.targets));
+                map.put(ops.createString("targets"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.targets));
+
                 return ops.createMap(map);
             }
         };

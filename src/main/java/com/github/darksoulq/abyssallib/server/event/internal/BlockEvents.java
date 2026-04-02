@@ -13,7 +13,6 @@ import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
-import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlock;
 import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlockEntity;
 import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlockMenu;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
@@ -80,7 +79,6 @@ public class BlockEvents {
     @SubscribeEvent
     public void onInteractStructure(BlockInteractionEvent e) {
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        if (!(e.getBlock() instanceof StructureBlock)) return;
 
         if (e.getBlock().getEntity() instanceof StructureBlockEntity sbe) {
             e.setCancelled(true);

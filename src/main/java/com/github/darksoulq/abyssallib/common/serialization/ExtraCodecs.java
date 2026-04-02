@@ -452,7 +452,7 @@ public class ExtraCodecs {
 
             String id = Codecs.STRING.decode(ops, map.get(ops.createString("id")));
 
-            Vector pos = new Vector(0, 0, 0);
+            Vector pos = null;
             D posObj = map.get(ops.createString("pos"));
             if (posObj != null) {
                 pos = Codecs.VECTOR_I.decode(ops, posObj);
@@ -488,14 +488,14 @@ public class ExtraCodecs {
             if (blockObject instanceof BlockData bd) {
                 D states = map.get(ops.createString("states"));
                 if (states != null) {
-                    Map<D, D> statesMap = ops.getMap(states).orElse(Collections.emptyMap());
+                    Map<D, D> statesMap = ops.getMap(states).orElse(java.util.Collections.emptyMap());
                     MinecraftBlockSerializer.deserialize(bd, statesMap, ops);
                 }
             } else if (blockObject instanceof CustomBlock cb) {
                 if (combinedData != null && combinedData.has("states")) {
                     D states = map.get(ops.createString("states"));
                     if (states != null) {
-                        Map<D, D> statesMap = ops.getMap(states).orElse(Collections.emptyMap());
+                        Map<D, D> statesMap = ops.getMap(states).orElse(java.util.Collections.emptyMap());
                         BlockData tempData = cb.getMaterial().createBlockData();
                         MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
                     }
@@ -539,6 +539,7 @@ public class ExtraCodecs {
             }
 
             map.put(ops.createString("id"), Codecs.STRING.encode(ops, id));
+
             if (value.pos() != null) {
                 map.put(ops.createString("pos"), Codecs.VECTOR_I.encode(ops, value.pos()));
             }

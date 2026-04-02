@@ -24,7 +24,7 @@ public class PermissionNamespace {
     /**
      * Internal map tracking registered paths and their corresponding PermissionNode holders.
      */
-    private final Map<String, Holder<PermissionNode>> entries = new LinkedHashMap<>();
+    private final Map<String, PermissionNode> entries = new LinkedHashMap<>();
 
     /**
      * Private constructor for internal factory use.
@@ -53,12 +53,12 @@ public class PermissionNamespace {
      * @return A {@link Holder} for the registered node.
      * @throws IllegalStateException If the path has already been registered.
      */
-    public Holder<PermissionNode> register(String path, Function<String, PermissionNode> supplier) {
+    public PermissionNode register(String path, Function<String, PermissionNode> supplier) {
         if (entries.containsKey(path)) {
             throw new IllegalStateException("Duplicate permission registration: " + pluginId + "." + path);
         }
         String nodeStr = pluginId + "." + path;
-        Holder<PermissionNode> holder = new Holder<>(() -> supplier.apply(nodeStr));
+        PermissionNode holder = supplier.apply(nodeStr);
         entries.put(path, holder);
         return holder;
     }
@@ -71,8 +71,8 @@ public class PermissionNamespace {
      */
     public void apply() {
         PluginManager pm = Bukkit.getPluginManager();
-        for (Map.Entry<String, Holder<PermissionNode>> entry : entries.entrySet()) {
-            PermissionNode node = entry.getValue().get();
+        for (Map.Entry<String, PermissionNode> entry : entries.entrySet()) {
+            PermissionNode node = entry.getValue();
             Registries.PERMISSIONS.register(node.getNode(), node);
 
             if (pm.getPermission(node.getNode()) == null) {
@@ -85,7 +85,7 @@ public class PermissionNamespace {
     /**
      * @return An unmodifiable collection of all permission holders in this namespace.
      */
-    public Collection<Holder<PermissionNode>> getEntries() {
+    public Collection<PermissionNode> getEntries() {
         return Collections.unmodifiableCollection(entries.values());
     }
 
