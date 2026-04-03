@@ -4,4 +4,7 @@
     <term name="storage_type">
         "sqlite", "mysql", "mariadb", "postgres", "h2", "mongodb", "redis"
     </term>
+    <term name="identifier">
+        A key in the namespace:path format
+    </term>
 </terms>

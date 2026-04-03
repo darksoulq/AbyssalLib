@@ -1,0 +1,62 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-04-04T01:09:21.7190151"><title>Creating Your First Feature | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-a-feature_json","level":0,"title":"Creating a feature","anchor":"#creating-a-feature_json"},{"id":"creating-a-feature_code","level":0,"title":"Creating a feature","anchor":"#creating-a-feature_code"},{"id":"blockinfo-format","level":0,"title":"BlockInfo format","anchor":"#blockinfo-format"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating Your First Feature | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/first-feature.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating Your First Feature | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/first-feature.html#webpage",
+    "url": "writerside-documentation/first-feature.html",
+    "name": "Creating Your First Feature | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="first-feature" data-main-title="Creating Your First Feature" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Worldgen Features" data-section-switcher="[JSON;Code]" data-sections-label="In"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="first-feature" data-annotation-ids="wip" id="first-feature.md">Creating Your First Feature</h1><p id="-zaekda_4">Features allow you to generate blocks into the world naturally, like trees, ores, structures and so on.</p><section class="chapter" data-section="JSON"><h2 id="creating-a-feature_json" data-toc="creating-a-feature_json">Creating a feature</h2><p id="-zaekda_8">To create a feature, navigate to <span class="filepath" id="-zaekda_13">plugins/AbyssalLib/worldgen/features/</span> then make a namespace folder (used for the namespace part of feature ID) next make a JSON file with the name of the feature. (e.g gold_block_ore.json)</p><p id="-zaekda_9">The JSON file consists of three parts:</p><ol class="list _decimal" id="-zaekda_10" type="1"><li class="list__item" id="-zaekda_14"><p id="-zaekda_17">&quot;type&quot;: this defines what feature type to use.</p></li><li class="list__item" id="-zaekda_15"><p id="-zaekda_18">&quot;config&quot;: this is used to configure the feature.</p></li><li class="list__item" id="-zaekda_16"><p id="-zaekda_19">&quot;worlds&quot;: this defines which worlds the feature should apply to, if it is empty, the feature wont be applied to any world.</p></li></ol><div class="code-block" data-lang="json">
+{
+  &quot;type&quot;: &quot;abyssallib:ore&quot;,
+  &quot;config&quot;: {
+    &quot;targets&quot;: [
+      {
+        &quot;target&quot;: [
+          {
+            &quot;id&quot;: &quot;minecraft:stone&quot;
+          },
+          {
+            &quot;id&quot;: &quot;minecraft:deepslate&quot;
+          }
+        ],
+        &quot;state_provider&quot;: {
+          &quot;type&quot;: &quot;simple&quot;,
+          &quot;state&quot;: {
+            &quot;id&quot;: &quot;minecraft:gold_block&quot;
+          }
+        }
+      }
+    ],
+    &quot;size&quot;: 9
+  },
+  &quot;placement&quot;: [
+    {
+      &quot;type&quot;: &quot;count&quot;,
+      &quot;count&quot;: 12
+    },
+    {
+      &quot;type&quot;: &quot;in_square&quot;
+    },
+    {
+      &quot;type&quot;: &quot;height_range&quot;,
+      &quot;min_inclusive&quot;: {
+        &quot;absolute&quot;: -64
+      },
+      &quot;max_inclusive&quot;: {
+        &quot;absolute&quot;: 32
+      }
+    }
+  ],
+  &quot;worlds&quot;: [
+    &quot;world&quot;
+  ]
+}
+</div><p id="-zaekda_12">The config for all default placement modifiers is present at [], for all features at [] and for all state providers at [].</p></section><section class="chapter" data-section="Code"><h2 id="creating-a-feature_code" data-toc="creating-a-feature_code">Creating a feature</h2></section><section class="chapter" data-section="JSON"><h2 id="blockinfo-format" data-toc="blockinfo-format">BlockInfo format</h2><p id="-zaekda_20">&quot;id&quot; -&gt; the identifier of the block to use (&quot;minecraft:stone&quot;, &quot;someplugin:someblock&quot;) &quot;pos&quot; -&gt; optional, used for tile entities like chests &quot;states&quot; -&gt; vanilla block states map (covered states available at []) &quot;properties&quot; -&gt; CustomBlock properties (only for abyssallib blocks)</p></section><div class="last-modified">03 April 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="custom-gui-layers.html" class="navigation-links__prev">Custom GuiLayers</a><a href="structures.html" class="navigation-links__next">Structures</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

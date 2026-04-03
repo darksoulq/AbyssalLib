@@ -22,7 +22,11 @@
         <toc-element topic="custom-gui-elements.md"/>
         <toc-element topic="custom-gui-layers.md"/>
     </toc-element>
+    <toc-element toc-title="Worldgen Features">
+        <toc-element topic="first-feature.md"/>
+    </toc-element>
     <toc-element toc-title="Other">
+        <toc-element topic="structures.md"/>
         <toc-element topic="ssr.md"/>
         <toc-element topic="events.md"/>
     </toc-element>

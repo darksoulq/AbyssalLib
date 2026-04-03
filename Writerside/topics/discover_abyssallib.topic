@@ -28,6 +28,8 @@
             <title>Misc</title>
             <card href="ssr.md" summary="Dynamic Server-Side Translations.">
             </card>
+            <card href="structures.md" summary="Create custom structures.">
+            </card>
         </secondary>
     </section-starting-page>
 </topic>
