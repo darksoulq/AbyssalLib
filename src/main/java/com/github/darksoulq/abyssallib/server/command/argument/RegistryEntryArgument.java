@@ -13,7 +13,6 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.NamespacedKey;
-import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Locale;
@@ -37,19 +36,14 @@ public class RegistryEntryArgument<T> implements CustomArgumentType<T, Namespace
     }
 
     @Override
-    public T parse(@NotNull StringReader reader) throws CommandSyntaxException {
+    public T parse(StringReader reader) throws CommandSyntaxException {
         final int start = reader.getCursor();
         while (reader.canRead() && isAllowedCharacter(reader.peek())) {
             reader.skip();
         }
         final String id = reader.getString().substring(start, reader.getCursor());
 
-        T value = registry.get(id);
-        if (value == null) {
-            reader.setCursor(start);
-            throw ERROR_UNKNOWN_ENTRY.createWithContext(reader, id);
-        }
-        return value;
+        return registry.get(id);
     }
 
     @Override
@@ -61,11 +55,32 @@ public class RegistryEntryArgument<T> implements CustomArgumentType<T, Namespace
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         String remaining = builder.getRemainingLowerCase();
         for (String id : registry.getAll().keySet()) {
-            if (id.toLowerCase(Locale.ROOT).startsWith(remaining)) {
+            if (matchesSubStr(remaining, id.toLowerCase(Locale.ROOT))) {
                 builder.suggest(id);
             }
         }
         return builder.buildFuture();
+    }
+
+    private boolean matchesSubStr(String remaining, String candidate) {
+        if (candidate.startsWith(remaining)) {
+            return true;
+        }
+
+        int colonIndex = candidate.indexOf(':');
+        if (colonIndex >= 0 && candidate.startsWith(remaining, colonIndex + 1)) {
+            return true;
+        }
+
+        int underscoreIndex = candidate.indexOf('_');
+        while (underscoreIndex >= 0) {
+            if (candidate.startsWith(remaining, underscoreIndex + 1)) {
+                return true;
+            }
+            underscoreIndex = candidate.indexOf('_', underscoreIndex + 1);
+        }
+
+        return false;
     }
 
     private static boolean isAllowedCharacter(final char c) {

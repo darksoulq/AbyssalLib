@@ -28,7 +28,9 @@ public final class ContentRegistry {
         Items.ITEMS.apply();
         TagTypes.TAG_TYPES.apply();
 
-        BlockAdapterRegistry.register();
+        BlockAdapters.register();
+        TileAdapters.register();
+        EntityAdapters.register();
 
         BlockStateProviders.BLOCK_STATE_PROVIDERS.apply();
         StructureProcessors.STRUCTURE_PROCESSORS.apply();

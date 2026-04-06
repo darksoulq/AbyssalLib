@@ -3,38 +3,43 @@ package com.github.darksoulq.abyssallib.world.gen;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
 /**
- * Provides standard Bukkit API access for modifying the world during execution outside chunk populators.
+ * Standard {@link WorldGenAccess} implementation using the Bukkit API.
+ *
+ * <p>This implementation is intended for use outside of chunk generation,
+ * where full Bukkit world access is safe and unrestricted.</p>
+ *
+ * <p>Unlike {@link NMSWorldGenAccess}, this class does not rely on internal
+ * server mechanics and instead operates directly on live world data.</p>
  */
 public class BukkitWorldGenAccess implements WorldGenAccess {
 
-    /**
-     * The Bukkit world to modify.
-     */
+    /** Target Bukkit world. */
     private final World world;
 
-    /**
-     * The random instance for procedural generation.
-     */
+    /** Random instance for generation logic. */
     private final Random random;
 
     /**
-     * Constructs a new standard world generation accessor.
+     * Creates a new Bukkit-based world access wrapper.
      *
-     * @param world  The target Bukkit world.
-     * @param random The random instance to use.
+     * @param world  Target world
+     * @param random Random instance for generation
      */
     public BukkitWorldGenAccess(@NotNull World world, @NotNull Random random) {
         this.world = world;
@@ -42,12 +47,12 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Sets the block at the specified coordinates to the provided material.
+     * Sets a block using a {@link Material}.
      *
-     * @param x        The X coordinate.
-     * @param y        The Y coordinate.
-     * @param z        The Z coordinate.
-     * @param material The material to place.
+     * @param x        X coordinate
+     * @param y        Y coordinate
+     * @param z        Z coordinate
+     * @param material Material to place
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull Material material) {
@@ -55,12 +60,12 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Sets the block at the specified coordinates to the provided block data.
+     * Sets a block using {@link BlockData}.
      *
-     * @param x    The X coordinate.
-     * @param y    The Y coordinate.
-     * @param z    The Z coordinate.
-     * @param data The block data to place.
+     * @param x    X coordinate
+     * @param y    Y coordinate
+     * @param z    Z coordinate
+     * @param data Block data to apply
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull BlockData data) {
@@ -68,12 +73,12 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Places a custom block at the specified coordinates using its default material.
+     * Places a {@link CustomBlock} using its default state.
      *
-     * @param x     The X coordinate.
-     * @param y     The Y coordinate.
-     * @param z     The Z coordinate.
-     * @param block The custom block to place.
+     * @param x     X coordinate
+     * @param y     Y coordinate
+     * @param z     Z coordinate
+     * @param block Custom block instance
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull CustomBlock block) {
@@ -81,13 +86,13 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Places a custom block at the specified coordinates with specific block data.
+     * Places a {@link CustomBlock} with explicit {@link BlockData}.
      *
-     * @param x     The X coordinate.
-     * @param y     The Y coordinate.
-     * @param z     The Z coordinate.
-     * @param block The custom block to place.
-     * @param data  The block data to apply.
+     * @param x     X coordinate
+     * @param y     Y coordinate
+     * @param z     Z coordinate
+     * @param block Custom block instance
+     * @param data  Block data to apply
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data) {
@@ -96,13 +101,13 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Spawns an entity of the specified type at the given coordinates.
+     * Spawns a vanilla entity.
      *
-     * @param x    The X coordinate.
-     * @param y    The Y coordinate.
-     * @param z    The Z coordinate.
-     * @param type The entity type to spawn.
-     * @return The spawned entity.
+     * @param x    X coordinate
+     * @param y    Y coordinate
+     * @param z    Z coordinate
+     * @param type Entity type
+     * @return Spawned entity
      */
     @Override
     public @NotNull Entity addEntity(double x, double y, double z, @NotNull EntityType type) {
@@ -110,12 +115,12 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Spawns a custom entity at the specified coordinates natively.
+     * Spawns a {@link CustomEntity}.
      *
-     * @param x      The X coordinate.
-     * @param y      The Y coordinate.
-     * @param z      The Z coordinate.
-     * @param entity The custom entity to spawn.
+     * @param x      X coordinate
+     * @param y      Y coordinate
+     * @param z      Z coordinate
+     * @param entity Custom entity instance
      */
     @Override
     public void addEntity(double x, double y, double z, @NotNull CustomEntity<?> entity) {
@@ -124,12 +129,26 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the material type of the block at the specified coordinates.
+     * Spawns a {@link SavedEntity}.
      *
-     * @param x The X coordinate.
-     * @param y The Y coordinate.
-     * @param z The Z coordinate.
-     * @return The material type.
+     * @param x      X coordinate
+     * @param y      Y coordinate
+     * @param z      Z coordinate
+     * @param entity Saved entity definition
+     * @return Spawned entity or {@code null} if failed
+     */
+    @Override
+    public @Nullable Entity addEntity(double x, double y, double z, @NotNull SavedEntity entity) {
+        return entity.spawn(this, new Location(world, x, y, z));
+    }
+
+    /**
+     * Gets the material at a position.
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Material
      */
     @Override
     public @NotNull Material getType(int x, int y, int z) {
@@ -137,12 +156,12 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the block data of the block at the specified coordinates.
+     * Gets the {@link BlockData} at a position.
      *
-     * @param x The X coordinate.
-     * @param y The Y coordinate.
-     * @param z The Z coordinate.
-     * @return The block data.
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Block data
      */
     @Override
     public @NotNull BlockData getBlockData(int x, int y, int z) {
@@ -150,12 +169,27 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the biome at the specified coordinates.
+     * Gets the full {@link BlockState}.
      *
-     * @param x The X coordinate.
-     * @param y The Y coordinate.
-     * @param z The Z coordinate.
-     * @return The biome.
+     * <p>Includes tile entity data such as inventories, names, etc.</p>
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Block state snapshot
+     */
+    @Override
+    public @NotNull BlockState getBlockState(int x, int y, int z) {
+        return world.getBlockAt(x, y, z).getState();
+    }
+
+    /**
+     * Gets the biome at a position.
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Biome
      */
     @Override
     public @NotNull Biome getBiome(int x, int y, int z) {
@@ -163,12 +197,12 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the highest block Y coordinate at the specified X and Z coordinates based on a heightmap.
+     * Gets the highest Y coordinate using a {@link HeightMap}.
      *
-     * @param x         The X coordinate.
-     * @param z         The Z coordinate.
-     * @param heightMap The heightmap to use.
-     * @return The highest Y coordinate.
+     * @param x         X coordinate
+     * @param z         Z coordinate
+     * @param heightMap Heightmap type
+     * @return Highest Y value
      */
     @Override
     public int getHighestBlockY(int x, int z, HeightMap heightMap) {
@@ -176,9 +210,9 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the world associated with this generation access.
+     * Gets the Bukkit world.
      *
-     * @return The world.
+     * @return World instance
      */
     @Override
     public @NotNull World getWorld() {
@@ -186,9 +220,9 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the random instance associated with this generation access.
+     * Gets the random instance used for generation.
      *
-     * @return The random instance.
+     * @return Random instance
      */
     @Override
     public @NotNull Random getRandom() {

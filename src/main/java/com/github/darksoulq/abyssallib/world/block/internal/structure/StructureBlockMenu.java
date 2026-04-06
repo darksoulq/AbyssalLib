@@ -18,9 +18,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.bukkit.Material;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
 
 import java.util.Arrays;
@@ -114,6 +116,17 @@ public class StructureBlockMenu {
                 ctx.view().render();
             },
             Component.text("Click to toggle visibility", NamedTextColor.GRAY)
+        ));
+
+        boolean incEnt = tile.includeEntities.get();
+        gui.getElements().put(SlotPosition.top(8), makeButton(new Item(new ItemStack(Material.ZOMBIE_HEAD)),
+            Component.text("Include Entities: ", NamedTextColor.GRAY).append(Component.text(incEnt ? "ON" : "OFF", incEnt ? NamedTextColor.GREEN : NamedTextColor.RED)),
+            ctx -> {
+                tile.includeEntities.set(!incEnt);
+                refresh(gui, player);
+                ctx.view().render();
+            },
+            Component.text("Click to toggle saving entities", NamedTextColor.GRAY)
         ));
     }
 

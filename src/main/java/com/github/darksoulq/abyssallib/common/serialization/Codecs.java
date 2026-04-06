@@ -14,10 +14,17 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.*;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.recipe.CookingBookCategory;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.*;
 
@@ -102,6 +109,86 @@ public class Codecs {
             return ops.createBoolean(value);
         }
     };
+    public static final Codec<Byte> BYTE = INT.xmap(Integer::byteValue, Byte::intValue);
+    public static final Codec<Color> COLOR = INT.xmap(Color::fromARGB, Color::asARGB);
+
+    public static final Codec<Vector3f> VECTOR3F = new Codec<>() {
+        @Override
+        public <D> Vector3f decode(DynamicOps<D> ops, D input) throws CodecException {
+            List<D> list = ops.getList(input).orElseThrow(() -> new CodecException("Expected List for Vector3f"));
+            return new Vector3f(
+                ops.getFloatValue(list.get(0)).orElseThrow(),
+                ops.getFloatValue(list.get(1)).orElseThrow(),
+                ops.getFloatValue(list.get(2)).orElseThrow()
+            );
+        }
+        @Override
+        public <D> D encode(DynamicOps<D> ops, Vector3f value) throws CodecException {
+            return ops.createList(List.of(
+                ops.createFloat(value.x()), ops.createFloat(value.y()), ops.createFloat(value.z())
+            ));
+        }
+    };
+
+    public static final Codec<Quaternionf> QUATERNIONF = new Codec<>() {
+        @Override
+        public <D> Quaternionf decode(DynamicOps<D> ops, D input) throws CodecException {
+            List<D> list = ops.getList(input).orElseThrow(() -> new CodecException("Expected List for Quaternionf"));
+            return new Quaternionf(
+                ops.getFloatValue(list.get(0)).orElseThrow(),
+                ops.getFloatValue(list.get(1)).orElseThrow(),
+                ops.getFloatValue(list.get(2)).orElseThrow(),
+                ops.getFloatValue(list.get(3)).orElseThrow()
+            );
+        }
+        @Override
+        public <D> D encode(DynamicOps<D> ops, Quaternionf value) throws CodecException {
+            return ops.createList(List.of(
+                ops.createFloat(value.x()), ops.createFloat(value.y()),
+                ops.createFloat(value.z()), ops.createFloat(value.w())
+            ));
+        }
+    };
+
+    public static final Codec<Matrix4f> MATRIX4F = new Codec<>() {
+        @Override
+        public <D> Matrix4f decode(DynamicOps<D> ops, D input) throws CodecException {
+            List<D> list = ops.getList(input).orElseThrow(() -> new CodecException("Expected List for Matrix4f"));
+            return new Matrix4f(
+                ops.getFloatValue(list.get(0)).orElseThrow(), ops.getFloatValue(list.get(1)).orElseThrow(), ops.getFloatValue(list.get(2)).orElseThrow(), ops.getFloatValue(list.get(3)).orElseThrow(),
+                ops.getFloatValue(list.get(4)).orElseThrow(), ops.getFloatValue(list.get(5)).orElseThrow(), ops.getFloatValue(list.get(6)).orElseThrow(), ops.getFloatValue(list.get(7)).orElseThrow(),
+                ops.getFloatValue(list.get(8)).orElseThrow(), ops.getFloatValue(list.get(9)).orElseThrow(), ops.getFloatValue(list.get(10)).orElseThrow(), ops.getFloatValue(list.get(11)).orElseThrow(),
+                ops.getFloatValue(list.get(12)).orElseThrow(), ops.getFloatValue(list.get(13)).orElseThrow(), ops.getFloatValue(list.get(14)).orElseThrow(), ops.getFloatValue(list.get(15)).orElseThrow()
+            );
+        }
+        @Override
+        public <D> D encode(DynamicOps<D> ops, Matrix4f value) throws CodecException {
+            return ops.createList(List.of(
+                ops.createFloat(value.m00()), ops.createFloat(value.m01()), ops.createFloat(value.m02()), ops.createFloat(value.m03()),
+                ops.createFloat(value.m10()), ops.createFloat(value.m11()), ops.createFloat(value.m12()), ops.createFloat(value.m13()),
+                ops.createFloat(value.m20()), ops.createFloat(value.m21()), ops.createFloat(value.m22()), ops.createFloat(value.m23()),
+                ops.createFloat(value.m30()), ops.createFloat(value.m31()), ops.createFloat(value.m32()), ops.createFloat(value.m33())
+            ));
+        }
+    };
+
+    public static final Codec<Transformation> TRANSFORMATION = RecordCodecBuilder.create(
+        VECTOR3F.fieldOf("translation", Transformation::getTranslation),
+        QUATERNIONF.fieldOf("left_rotation", Transformation::getLeftRotation),
+        VECTOR3F.fieldOf("scale", Transformation::getScale),
+        QUATERNIONF.fieldOf("right_rotation", Transformation::getRightRotation),
+        Transformation::new
+    );
+
+    public static final Codec<Display.Brightness> DISPLAY_BRIGHTNESS = RecordCodecBuilder.create(
+        INT.fieldOf("block_light", Display.Brightness::getBlockLight),
+        INT.fieldOf("sky_light", Display.Brightness::getSkyLight),
+        Display.Brightness::new
+    );
+
+    public static final Codec<Display.Billboard> BILLBOARD = Codec.enumCodec(Display.Billboard.class);
+    public static final Codec<ItemDisplay.ItemDisplayTransform> ITEM_DISPLAY_TRANSFORM = Codec.enumCodec(ItemDisplay.ItemDisplayTransform.class);
+    public static final Codec<TextDisplay.TextAlignment> TEXT_ALIGNMENT = Codec.enumCodec(TextDisplay.TextAlignment.class);
 
     // Extra
     public static final Codec<Vector> VECTOR_I = new Codec<Vector>() {

@@ -33,69 +33,78 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /**
- * Serves as the foundational blueprint for injecting sophisticated custom entity definitions
- * into the standard Bukkit environment, strictly encapsulating behavioral goals, attributes, and precise spawn logic.
+ * Represents a fully configurable wrapper around a Bukkit {@link LivingEntity},
+ * providing extended behavior, attributes, data components, and lifecycle control.
  *
- * @param <T> The native Bukkit living entity interface defining the fundamental morphological base representation.
+ * <p>This abstraction enables:
+ * <ul>
+ *     <li>Custom AI goals via {@link Goal}</li>
+ *     <li>Attribute and modifier control</li>
+ *     <li>Persistent data via {@link ComponentMap}, {@link PDCTag}, and {@link CTag}</li>
+ *     <li>Custom spawning pipelines and lifecycle hooks</li>
+ *     <li>Integration with internal registries and event systems</li>
+ * </ul>
+ *
+ * @param <T> the concrete {@link LivingEntity} type backing this custom entity
  */
 public class CustomEntity<T extends LivingEntity> implements Cloneable {
 
     /**
-     * The persistent runtime universally unique identifier seamlessly binding the logic instance to an actively spawned entity in the world.
+     * Unique identifier linking this wrapper to a live entity instance.
      */
     public UUID uuid = null;
 
     /**
-     * The strictly validated namespace key registering and identifying this entity framework within the global registry.
+     * Unique registry identifier for this entity.
      */
     private Key id;
 
     /**
-     * The underlying native Bukkit EntityType strictly enforcing fundamental physical behaviors and model parameters.
+     * Base Bukkit {@link EntityType} used for spawning.
      */
     private EntityType baseType;
 
     /**
-     * The structural spawning category bracket explicitly determining the organic generation rules applied to this entity.
+     * Spawn category defining grouping and distribution rules.
      */
     private SpawnCategory category;
 
     /**
-     * The comprehensive configuration parameters determining autonomous structural generation logic bounds.
+     * Optional spawn configuration settings.
      */
     private SpawnSettings spawnSettings;
 
     /**
-     * The ordered associative mapping detailing deterministic pathfinding intelligence routines.
+     * Registered pathfinding goals mapped by priority.
      */
     private final Map<Integer, Function<T, Goal>> pathfinderGoals = new LinkedHashMap<>();
 
     /**
-     * The ordered associative mapping detailing deterministic targeting intelligence routines.
+     * Registered targeting goals mapped by priority.
      */
     private final Map<Integer, Function<T, Goal>> targetGoals = new LinkedHashMap<>();
 
     /**
-     * The mapped configuration explicitly enforcing absolute statistical boundaries upon instantiation.
+     * Base attribute values applied on spawn.
      */
     private final Map<Attribute, Double> attributes = new LinkedHashMap<>();
 
     /**
-     * The mapped tracking infrastructure actively persisting specialized data components across execution states.
+     * Component map storing persistent custom data.
      */
     private ComponentMap componentMap;
 
     /**
-     * The dynamically aggregated collection of additive and multiplicative mathematical modifiers actively manipulating base statistics.
+     * Attribute modifiers applied on spawn.
      */
     private final Map<Attribute, List<AttributeModifier>> modifiers = new LinkedHashMap<>();
 
     /**
-     * Instantiates a fully functional entity wrapper tying complex behavioral constraints strictly to a categorical definition.
+     * Creates a new custom entity definition.
      *
-     * @param id        The strict namespace identifier formally registering this entity framework.
-     * @param baseType  The underlying native Bukkit EntityType defining the core physical rendering capabilities natively safely.
-     * @param category  The structural spawn bracket determining global organic generation limitations.
+     * @param id       the unique registry identifier
+     * @param baseType the base {@link EntityType}
+     * @param category the spawn category
      */
     public CustomEntity(Key id, EntityType baseType, SpawnCategory category) {
         this.id = id;
@@ -104,78 +113,77 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Embeds a fully deterministic pathfinding logic routine directly into the top-level behavioral hierarchy mapping.
+     * Registers a pathfinding goal.
      *
-     * @param priority The strict numerical priority dynamically determining operational execution overrides (lower values guarantee higher precedence).
-     * @param goal     The functional lambda supplier actively generating native NMS operational goal instances.
+     * @param priority execution priority (lower = higher priority)
+     * @param goal     goal factory
      */
     public void addGoal(int priority, Function<T, Goal> goal) {
         pathfinderGoals.put(priority, goal);
     }
 
     /**
-     * Embeds a fully deterministic targeting logic routine defining aggressive or passive entity acquisition behaviors.
+     * Registers a targeting goal.
      *
-     * @param priority The strict numerical priority dynamically determining operational execution overrides (lower values guarantee higher precedence).
-     * @param goal     The functional lambda supplier actively generating native NMS operational goal instances.
+     * @param priority execution priority
+     * @param goal     goal factory
      */
     public void addTargetGoal(int priority, Function<T, Goal> goal) {
         targetGoals.put(priority, goal);
     }
 
     /**
-     * Overrides and explicitly modifies the foundational base statistical limits physically bounded to the entity upon instantiation execution.
+     * Sets a base attribute value.
      *
-     * @param attribute The strict Bukkit attribute definition directly targeted for manipulation.
-     * @param value     The absolute numerical limit to enforce natively upon the base entity architecture.
+     * @param attribute the attribute
+     * @param value     the value
      */
     public void setAttribute(Attribute attribute, double value) {
         attributes.put(attribute, value);
     }
 
     /**
-     * Appends an active additive or multiplicative modifier functionally manipulating the base statistical limits indefinitely.
+     * Adds an attribute modifier.
      *
-     * @param attribute The strict Bukkit attribute definition directly targeted for manipulation.
-     * @param modifier  The formulated mathematical operator payload modifying the statistic.
+     * @param attribute the attribute
+     * @param modifier  the modifier
      */
     public void addAttributeModifier(Attribute attribute, AttributeModifier modifier) {
         modifiers.computeIfAbsent(attribute, k -> new ArrayList<>()).add(modifier);
     }
 
     /**
-     * Caches the comprehensive procedural bounds guiding completely autonomous organic world generation operations.
+     * Sets spawn configuration.
      *
-     * @param settings The formally configured environmental spawn constraint record.
+     * @param settings the spawn settings
      */
     public void setSpawnSettings(SpawnSettings settings) {
         this.spawnSettings = settings;
     }
 
     /**
-     * Retrieves the structural and environmental constraints dictating autonomous procedural generation logic boundaries.
+     * Gets spawn configuration.
      *
-     * @return The formally cached spawning parameters, or null entirely if generation is deliberately unsupported.
+     * @return the spawn settings or {@code null}
      */
     public @Nullable SpawnSettings getSpawnSettings() {
         return spawnSettings;
     }
 
     /**
-     * Materializes the defined entity template directly into the physical world space immediately utilizing standard operational hooks.
+     * Spawns this entity at a location using plugin reason.
      *
-     * @param loc The precise Cartesian coordinate anchor designating the spawning origin point.
+     * @param loc the spawn location
      */
-    @SuppressWarnings("unchecked")
     public void spawn(Location loc) {
         spawn(loc, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
     }
 
     /**
-     * Materializes the defined entity template completely into the physical world space, strictly citing a specific operational catalytic origin.
+     * Spawns this entity at a location.
      *
-     * @param loc    The precise Cartesian coordinate anchor designating the spawning origin point.
-     * @param reason The strictly classified procedural origin formally initiating this spawning execution request.
+     * @param loc    the spawn location
+     * @param reason the spawn reason
      */
     @SuppressWarnings("unchecked")
     public void spawn(Location loc, CustomEntitySpawnEvent.SpawnReason reason) {
@@ -198,19 +206,19 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Actively captures an already existing physical entity instantiation and forcibly overrides its internal operational state with this specific custom wrapper.
+     * Attaches this wrapper to an existing entity.
      *
-     * @param entity The actively living physical entity reference targeted for behavioral capture.
+     * @param entity the entity
      */
     public void spawn(T entity) {
         spawn(entity, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
     }
 
     /**
-     * Actively captures an already existing physical entity instantiation and forcibly overrides its internal operational state, citing a specific operational cause.
+     * Attaches this wrapper to an existing entity.
      *
-     * @param entity The actively living physical entity reference targeted for behavioral capture.
-     * @param reason The strictly classified procedural origin formally initiating this behavioral takeover request.
+     * @param entity the entity
+     * @param reason the spawn reason
      */
     public void spawn(T entity, CustomEntitySpawnEvent.SpawnReason reason) {
         if (uuid != null) return;
@@ -227,11 +235,10 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Safely executes all standard spawning configuration pipelines natively utilizing a completely pre-resolved raw entity instance footprint.
+     * Initializes this wrapper from a raw entity instance.
      *
-     * @param nativeEntity The underlying raw Bukkit entity instance functionally deployed by the internal chunk engine.
+     * @param nativeEntity the entity
      */
-    @SuppressWarnings("unchecked")
     public void spawnFromInstance(Entity nativeEntity) {
         if (uuid != null) return;
         this.uuid = nativeEntity.getUniqueId();
@@ -247,46 +254,46 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Safely applies a persistent data parameter masking natively into the actively tracked entity component mapping.
+     * Sets a data component.
      *
-     * @param component The fully structured data segment formally mapped into the persistent runtime environment.
+     * @param component the component
      */
     public void setData(DataComponent<?> component) {
         componentMap.setData(component);
     }
 
     /**
-     * Actively interrogates and retrieves dynamic persistent data presently mapped directly into the internal runtime footprint.
+     * Gets a data component.
      *
-     * @param type The definitive identification reference key explicitly requesting the data fragment.
-     * @param <C>  The specifically explicit typed return format constraint restricting data bounds.
-     * @return The safely retrieved data component, resolving cleanly into standard default boundaries if entirely absent.
+     * @param type the component type
+     * @param <C>  component type
+     * @return the component
      */
     public <C extends DataComponent<?>> C getData(DataComponentType<C> type) {
         return componentMap.getData(type);
     }
 
     /**
-     * Safely evaluates whether a explicitly designated data segment is presently firmly bound to the active entity profile representation.
+     * Checks if a component exists.
      *
-     * @param type The definitive identification reference key explicitly requesting the data fragment.
-     * @return True if the targeted data is actively bound within the current execution scope, otherwise explicitly false.
+     * @param type the component type
+     * @return true if present
      */
     public boolean hasData(DataComponentType<?> type) {
         return componentMap.hasData(type);
     }
 
     /**
-     * Destructively deletes an actively mapped component instance completely from the functional operational profile boundary.
+     * Removes a component.
      *
-     * @param type The definitive identification reference key explicitly targeting the doomed data fragment.
+     * @param type the component type
      */
     public void unsetData(DataComponentType<?> type) {
         componentMap.removeData(type);
     }
 
     /**
-     * Actively injects all properly registered internal intelligence logic arrays straight into the fundamental base Native Minecraft Server AI controller algorithms.
+     * Applies all registered goals.
      */
     public void applyGoals() {
         T entity = getBaseEntity().orElseThrow(() -> new IllegalStateException("Base entity is null"));
@@ -302,7 +309,7 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Sequentially iterates all internal mathematical property mappings and securely enforces all calculated statistical boundaries directly to the active physical instance state.
+     * Applies attributes and modifiers.
      */
     public void applyAttributes() {
         T entity = getBaseEntity().orElseThrow(() -> new IllegalStateException("Base entity is null"));
@@ -324,34 +331,65 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Dispatches internal localized component instantiation operations immediately synchronizing defined properties cleanly to the active living model architecture.
+     * Initializes the component map.
      */
     public void applyComponents() {
         componentMap = new ComponentMap(this);
     }
 
     /**
-     * Retrieves the formalized structural namespace identifier directly mapping the definition to the central configuration registries.
-     *
-     * @return The specific, formally registered plugin namespace key.
+     * @return the entity identifier
      */
     public Key getId() {
         return id;
     }
 
     /**
-     * Retrieves the strictly native morphological Bukkit EntityType securely bound seamlessly acting precisely generating correct native physical parameters natively.
-     *
-     * @return The structurally validated core API underlying target type enum defining entity limitations cleanly natively.
+     * @return the base entity type
      */
     public EntityType getBaseType() {
         return baseType;
     }
 
     /**
-     * Extracts an actively hooked interface cleanly interfacing the native Bukkit PersistentDataContainer internal implementation structure.
+     * @return the component map
+     */
+    public ComponentMap getComponentMap() {
+        return componentMap;
+    }
+
+    /**
+     * @return attribute map
+     */
+    public Map<Attribute, Double> getAttributes() {
+        return attributes;
+    }
+
+    /**
+     * @return modifiers map
+     */
+    public Map<Attribute, List<AttributeModifier>> getModifiers() {
+        return modifiers;
+    }
+
+    /**
+     * @return target goals
+     */
+    public Map<Integer, Function<T, Goal>> getTargetGoals() {
+        return targetGoals;
+    }
+
+    /**
+     * @return pathfinder goals
+     */
+    public Map<Integer, Function<T, Goal>> getPathfinderGoals() {
+        return pathfinderGoals;
+    }
+
+    /**
+     * Gets wrapped persistent data container.
      *
-     * @return The wrapped data container API payload wrapper, or strictly empty if currently completely disconnected from any active instantiation.
+     * @return optional PDC wrapper
      */
     public Optional<PDCTag> getData() {
         if (uuid == null) return Optional.empty();
@@ -364,9 +402,9 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Deeply interrogates and cleanly isolates all underlying vanilla CustomData Native Binary Tag fragments dynamically directly from active underlying server engine memory banks.
+     * Gets underlying NBT custom data.
      *
-     * @return A thoroughly unified, modifiable compound data map structure encompassing entity internals.
+     * @return custom tag or null
      */
     public CTag getCTag() {
         if (uuid == null) return null;
@@ -388,9 +426,9 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Actively synchronizes and completely overwrites the local virtual NBT metadata maps directly deep into the central engine memory block handling runtime rendering.
+     * Sets underlying NBT custom data.
      *
-     * @param container The active modified state container dictating the complete required serialization formats.
+     * @param container the tag
      */
     public void setCTag(CTag container) {
         if (uuid == null) return;
@@ -407,9 +445,9 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Securely polls the core Bukkit thread architecture actively attempting to safely locate and bind the live physical entity representation executing the custom logic.
+     * Resolves the live entity.
      *
-     * @return The actively functional native API wrapper interface encapsulating runtime states.
+     * @return optional base entity
      */
     @SuppressWarnings("unchecked")
     public Optional<T> getBaseEntity() {
@@ -417,51 +455,49 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Identifies the explicitly defined categorical constraints strictly governing procedural distribution and background spawn deployment mechanics.
-     *
-     * @return The natively associated logical grouping bracket spanning general distribution constraints.
+     * @return spawn category
      */
     public SpawnCategory getCategory() {
         return category;
     }
 
     /**
-     * Internal lifecycle hook triggered precisely upon the immediate conclusion of a successful entity deployment operation into physical space.
+     * Called after spawn.
      */
     public void onSpawn() {}
 
     /**
-     * Internal lifecycle hook triggered precisely upon the absolute termination of the entity's functional lifespan terminating physical rendering.
+     * Called on entity death.
      *
-     * @param event The Bukkit death event payload encapsulating the final functional runtime parameters.
-     * @return The explicit action result dictating event finalization overrides.
+     * @param event the death event
+     * @return action result
      */
     public ActionResult onDeath(EntityDeathEvent event) { return ActionResult.PASS; }
 
     /**
-     * Internal lifecycle hook triggered precisely when the chunk enclosing the specific physical entity formally vacates active server memory banks.
+     * Called when entity unloads.
      */
     public void onUnload() {}
 
     /**
-     * Internal lifecycle hook triggered precisely when the physical entity is actively reconstructed directly from persistent server memory disk sectors.
+     * Called when entity loads.
      */
     public void onLoad() {}
 
     /**
-     * Translates an arbitrary base Bukkit entity reference rapidly back into a safely managed active custom logic shell wrapper environment.
+     * Resolves a custom entity wrapper.
      *
-     * @param entity The living physical entity reference queried against the active entity registry system.
-     * @return The actively functional customized wrapper interface, or entirely null if strictly unmanaged by the plugin framework.
+     * @param entity the entity
+     * @return custom entity or null
      */
     public static CustomEntity<? extends LivingEntity> resolve(org.bukkit.entity.Entity entity) {
         return EntityManager.get(entity.getUniqueId());
     }
 
     /**
-     * Executes a precise deep clone operation fully replicating all intrinsic properties, goals, attributes, and operational parameters safely into an entirely independent framework shell.
+     * Creates a deep clone of this entity definition.
      *
-     * @return A comprehensively cloned distinct copy of the initial customized entity definition framework.
+     * @return cloned entity
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -488,56 +524,56 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Structurally encapsulates all conditional logic rules, topographical filters, and probability boundaries explicitly governing procedural world generation spawning mechanics.
+     * Defines spawn configuration.
      */
     public static class SpawnSettings {
 
-        /** The base functional probability weight factoring into algorithmic generation distributions. */
+        /** Spawn weight. */
         public int weight;
 
-        /** The absolute minimal guaranteed instantiation boundary dictating isolated pack clustering numbers. */
+        /** Minimum pack size. */
         public int minPack;
 
-        /** The absolute maximal permitted instantiation boundary dictating isolated pack clustering numbers. */
+        /** Maximum pack size. */
         public int maxPack;
 
-        /** The foundational floor limiting the vertical spatial height allowed for autonomous generation execution. */
+        /** Minimum Y level. */
         public int minY = ServerLevel.MIN_ENTITY_SPAWN_Y;
 
-        /** The upper structural ceiling limiting the vertical spatial height allowed for autonomous generation execution. */
+        /** Maximum Y level. */
         public int maxY = ServerLevel.MAX_ENTITY_SPAWN_Y;
 
-        /** The absolute minimal registered photoluminesence boundary determining valid location selection. */
+        /** Minimum light level. */
         public int minLight = 0;
 
-        /** The absolute maximal registered photoluminesence boundary determining valid location selection. */
+        /** Maximum light level. */
         public int maxLight = 15;
 
-        /** Dictates an absolute systemic requirement ensuring native block skylight access reads precisely zero. */
+        /** Requires darkness. */
         public boolean requireSkyDarkness;
 
-        /** Dictates an absolute systemic requirement ensuring an unobstructed vertical trace completely to the world height limit. */
+        /** Requires sky access. */
         public boolean requireSkyAccess;
 
-        /** Establishes the core geometrical medium defining acceptable locational bounding box insertions. */
+        /** Spawn placement type. */
         public SpawnPlacement placement;
 
-        /** Actively bounds structural path tracing targeting routines to definitively locate optimal top-level spawning coordinates. */
+        /** Heightmap type. */
         public HeightMap heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES;
 
-        /** Defines the extremely specific restricted array of allowed biomes authorizing the completion of generation checks. */
+        /** Allowed biomes. */
         public Set<NamespacedKey> biomes = new HashSet<>();
 
-        /** Provides an open external lambda hook seamlessly evaluating final bespoke logical requirements preventing spatial deployment. */
+        /** Custom spawn predicate. */
         public BiPredicate<World, Location> canSpawn;
 
         /**
-         * Systematically instantiates the completely restricted settings wrapper defining standard deployment boundaries.
+         * Creates new spawn settings.
          *
-         * @param weight    The assigned probability distribution fraction weight.
-         * @param minPack   The lowest valid instantiation spawn cluster parameter.
-         * @param maxPack   The uppermost valid instantiation spawn cluster parameter.
-         * @param placement The fundamental geometric collision rules framing locational insertion capabilities.
+         * @param weight    spawn weight
+         * @param minPack   min pack
+         * @param maxPack   max pack
+         * @param placement placement type
          */
         private SpawnSettings(int weight, int minPack, int maxPack, SpawnPlacement placement) {
             this.weight = Math.max(0, weight);
@@ -547,172 +583,77 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
         }
 
         /**
-         * Initializes a structural builder pipeline sequentially generating comprehensive configurations ensuring fluid integration.
-         *
-         * @return An entirely clean state configuration builder framework payload.
+         * @return new builder
          */
         public static Builder builder() {
             return new Builder();
         }
 
         /**
-         * Orchestrates the fluid systematic chaining defining individual generation parameters rapidly culminating within an immutable settings framework.
+         * Builder for {@link SpawnSettings}.
          */
         public static class Builder {
 
-            /** Internal temporary weight parameter cache. */
             private int weight = 1;
-
-            /** Internal temporary minimum pack size parameter cache. */
             private int minPack = 1;
-
-            /** Internal temporary maximum pack size parameter cache. */
             private int maxPack = 1;
-
-            /** Internal temporary minimum structural Y bounds parameter cache. */
             private int minY = ServerLevel.MIN_ENTITY_SPAWN_Y;
-
-            /** Internal temporary maximum structural Y bounds parameter cache. */
             private int maxY = ServerLevel.MAX_ENTITY_SPAWN_Y;
-
-            /** Internal temporary minimum luminance bounds parameter cache. */
             private int minLight = 0;
-
-            /** Internal temporary maximum luminance bounds parameter cache. */
             private int maxLight = 15;
-
-            /** Internal temporary required darkness parameter cache. */
             private boolean requireSkyDarkness;
-
-            /** Internal temporary required sky tracing parameter cache. */
             private boolean requireSkyAccess;
-
-            /** Internal temporary collision and medium state requirement parameter cache. */
             private SpawnPlacement placement = SpawnPlacement.ON_GROUND;
-
-            /** Internal temporary target height mapping parameter cache. */
             private HeightMap heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES;
-
-            /** Internal temporary accepted biome keys array parameter cache. */
             private final Set<NamespacedKey> biomes = new HashSet<>();
-
-            /** Internal temporary lambda filter payload parameter cache. */
             private BiPredicate<World, Location> canSpawn;
 
-            /**
-             * Sets the fundamental mathematical distribution probability actively increasing frequency during selection routines.
-             *
-             * @param weight The formulated integer scaling factor applied to distribution tables.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param weight spawn weight */
             public Builder weight(int weight) { this.weight = weight; return this; }
 
-            /**
-             * Defines the strictly bounded minimum and maximal instantiation cluster values resulting upon successful localization selections.
-             *
-             * @param min The absolute lowest volume bounding spawn clusters natively generated.
-             * @param max The absolute highest volume bounding spawn clusters natively generated.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param min min pack @param max max pack */
             public Builder pack(int min, int max) { this.minPack = min; this.maxPack = max; return this; }
 
-            /**
-             * Specifically designates the underlying spatial geometrical structure strictly required accommodating the bounding boxes footprint natively.
-             *
-             * @param placement The mandated operational placement mode formatting collision checks correctly.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param placement placement */
             public Builder placement(SpawnPlacement placement) { this.placement = placement; return this; }
 
-            /**
-             * Enforces absolute physical elevation coordinate restrictions bounding the specific allowed limits of execution attempts natively.
-             *
-             * @param minY The extreme lowest accepted geographical location point limit bounds restricting placement.
-             * @param maxY The extreme highest accepted geographical location point limit bounds restricting placement.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param minY min Y @param maxY max Y */
             public Builder heightRange(int minY, int maxY) { this.minY = minY; this.maxY = maxY; return this; }
 
-            /**
-             * Installs specific topological tracing instructions ensuring raycasting bounds calculate structural elevation maps perfectly utilizing predefined engine states.
-             *
-             * @param map The strict predefined Native Minecraft Server topographical tracing execution map mode.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param map heightmap */
             public Builder heightMap(HeightMap map) { this.heightMap = map; return this; }
 
-            /**
-             * Implements the strict required ambient environmental photoluminesence constraints determining fundamental valid physical spawn deployment conditions natively.
-             *
-             * @param min The extreme minimum allowable illumination emission detection bounds dictating execution operations.
-             * @param max The extreme maximum allowable illumination emission detection bounds dictating execution operations.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param min min light @param max max light */
             public Builder light(int min, int max) { this.minLight = min; this.maxLight = max; return this; }
 
-            /**
-             * Flips strict internal execution parameters bounding operational capacity to inherently restrict physical manifestations actively towards nocturnal or subterranean lighting contexts exclusively.
-             *
-             * @return The current unbroken chained builder phase.
-             */
+            /** Enables night-only spawning */
             public Builder nightOnly() { this.requireSkyDarkness = true; this.maxLight = Math.min(this.maxLight, 7); return this; }
 
-            /**
-             * Implements an absolute physical geometrical requirement enforcing unobstructed vertical path traces verifying clear exposures to open upper atmospheric spatial boundaries explicitly.
-             *
-             * @return The current unbroken chained builder phase.
-             */
+            /** Requires sky access */
             public Builder requireSkyAccess() { this.requireSkyAccess = true; return this; }
 
-            /**
-             * Specifically links a completely restricted external procedural biome identifier natively into the operative generation allowed execution array natively ensuring strict deployment zones.
-             *
-             * @param biome The targeted strictly registered namespaced mapping identifier native within the engine bounds.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param biome biome key */
             public Builder biome(NamespacedKey biome) { this.biomes.add(biome); return this; }
 
-            /**
-             * Concatenates an extensive structured array bounding procedural execution identifiers natively directly into the allowed operational execution array seamlessly natively expanding deployment boundaries comprehensively.
-             *
-             * @param biomes The full structural list enclosing active registered namespaced identifier bounds.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param biomes biome keys */
             public Builder biomes(Collection<NamespacedKey> biomes) { this.biomes.addAll(biomes); return this; }
 
-            /**
-             * Implements a totally unbounded execution lambda parameter cleanly inserting highly bespoke operational programmatic requirements restricting standard native spawn algorithms fluidly.
-             *
-             * @param predicate The fully programmed custom functional structural boundary evaluation script evaluating dynamic coordinate bounds precisely.
-             * @return The current unbroken chained builder phase.
-             */
+            /** @param predicate spawn predicate */
             public Builder canSpawn(BiPredicate<World, Location> predicate) { this.canSpawn = predicate; return this; }
 
-            /**
-             * Swiftly adjusts configuration templates mapping strictly to standardized terrestrial generation boundaries implementing standard gravity and collision states dynamically.
-             *
-             * @return The current unbroken chained builder phase.
-             */
+            /** Ground preset */
             public Builder groundMob() { this.placement = SpawnPlacement.ON_GROUND; this.heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES; return this; }
 
-            /**
-             * Swiftly adjusts configuration templates mapping strictly to standardized aquatic generation boundaries implementing standard displacement and oceanic height map collision states dynamically natively.
-             *
-             * @return The current unbroken chained builder phase.
-             */
+            /** Water preset */
             public Builder waterMob() { this.placement = SpawnPlacement.IN_WATER; this.heightMap = HeightMap.OCEAN_FLOOR; return this; }
 
-            /**
-             * Swiftly adjusts configuration templates mapping strictly to standardized igneous generation boundaries implementing standard lava displacement collision states actively natively seamlessly.
-             *
-             * @return The current unbroken chained builder phase.
-             */
+            /** Lava preset */
             public Builder lavaMob() { this.placement = SpawnPlacement.IN_LAVA; this.heightMap = HeightMap.MOTION_BLOCKING; return this; }
 
             /**
-             * Translates the currently staged internal mutable structural parameters completely into an inherently safe immutable finalized physical execution settings record utilized fundamentally by generation algorithms natively.
+             * Builds settings.
              *
-             * @return The entirely fully integrated formal native entity functional settings constraints snapshot completely finalized.
+             * @return settings
              */
             public SpawnSettings build() {
                 SpawnSettings s = new SpawnSettings(weight, minPack, maxPack, placement);
@@ -731,17 +672,17 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     }
 
     /**
-     * Enumerates the strict environmental collision geometry bounds utilized universally to map entity footprints into defined physical mediums flawlessly natively.
+     * Defines spawn placement type.
      */
     public enum SpawnPlacement {
 
-        /** Defines the physical geometry completely executing utilizing standard opaque horizontal collision bounding box intersections specifically natively. */
+        /** Ground placement */
         ON_GROUND,
 
-        /** Defines the physical geometry completely executing utilizing fully liquid water-based completely unobstructed block intersection limits natively securely. */
+        /** Water placement */
         IN_WATER,
 
-        /** Defines the physical geometry completely executing utilizing fully liquid lava-based strictly heat-resistant block intersection restrictions comprehensively natively. */
+        /** Lava placement */
         IN_LAVA
     }
 }

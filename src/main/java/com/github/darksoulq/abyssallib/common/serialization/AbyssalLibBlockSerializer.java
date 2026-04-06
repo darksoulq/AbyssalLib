@@ -8,35 +8,39 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Handles serialization and deserialization for AbyssalLib {@link CustomBlock} objects.
- * <p>
- * This utility bridges standard Minecraft visual states with AbyssalLib's custom
- * property system, allowing for the persistence of custom block logic and metadata.
+ * Utility class responsible for serializing and deserializing {@link CustomBlock}
+ * state and associated {@link BlockEntity} data.
+ *
+ * <p>This serializer handles two distinct layers:</p>
+ * <ul>
+ *     <li><b>Block states</b> — the visual {@link BlockData}</li>
+ *     <li><b>Block entity data</b> — custom persistent logic</li>
+ * </ul>
+ *
+ * <p>All operations are performed using {@link DynamicOps} to remain format-agnostic.</p>
  */
-public class AbyssalLibBlockSerializer {
+public final class AbyssalLibBlockSerializer {
+
+    private AbyssalLibBlockSerializer() {}
 
     /**
-     * Serializes a {@link CustomBlock} into a dynamic map structure.
-     * <p>
-     * The process captures two distinct datasets:
-     * <ul>
-     * <li><b>States:</b> Standard Bukkit {@link BlockData} properties (e.g., rotation).</li>
-     * <li><b>Properties:</b> The serialized data from the associated {@link BlockEntity}.</li>
-     * </ul>
+     * Serializes the current {@link BlockData} state of a {@link CustomBlock}.
      *
-     * @param block The custom block instance to serialize.
-     * @param ops   The {@link DynamicOps} instance for data conversion.
-     * @param <D>   The data format type.
-     * @return A map containing both standard block states and custom properties.
+     * <p>If the block is placed in the world, the live {@link BlockData} from the
+     * world is used. Otherwise, the default material state is used.</p>
+     *
+     * @param block the custom block instance
+     * @param ops   the dynamic operations instance used for encoding
+     * @param <D>   the encoded data type
+     * @return a map containing serialized block state properties, never null
      */
-    public static <D> Map<D, D> serialize(CustomBlock block, DynamicOps<D> ops) {
-        Map<D, D> map = new HashMap<>();
+    public static <D> Map<D, D> serializeStates(CustomBlock block, DynamicOps<D> ops) {
         BlockData bd = block.getMaterial().createBlockData();
         Location loc = block.getLocation();
+
         if (loc != null) {
             Block placed = loc.getBlock();
             if (!placed.isEmpty()) {
@@ -44,62 +48,74 @@ public class AbyssalLibBlockSerializer {
             }
         }
 
-        Map<D, D> statesMap = Adapter.save(ops, bd);
-        map.put(ops.createString("states"), ops.createMap(statesMap));
+        return Adapter.save(ops, bd);
+    }
 
+    /**
+     * Serializes the associated {@link BlockEntity} of a {@link CustomBlock}.
+     *
+     * <p>If no entity exists, {@code null} is returned.</p>
+     *
+     * @param block the custom block instance
+     * @param ops   the dynamic operations instance used for encoding
+     * @param <D>   the encoded data type
+     * @return the serialized entity data, or {@code null} if no entity is present
+     */
+    public static <D> D serializeProperties(CustomBlock block, DynamicOps<D> ops) {
         if (block.getEntity() != null) {
             try {
-                D entityData = block.getEntity().serialize(ops);
-                map.put(ops.createString("properties"), entityData);
+                return block.getEntity().serialize(ops);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        return map;
+        return null;
     }
 
     /**
-     * Extracts and applies standard block states from a serialized data map.
+     * Applies serialized block state data onto an existing {@link BlockData} instance.
      *
-     * @param data       The serialized data map.
-     * @param ops        The {@link DynamicOps} instance.
-     * @param targetData The {@link BlockData} instance to populate.
-     * @param <D>        The data format type.
+     * <p>If the provided data is {@code null}, this method does nothing.</p>
+     *
+     * @param data       the serialized block state map
+     * @param ops        the dynamic operations instance used for decoding
+     * @param targetData the target block data to mutate
+     * @param <D>        the encoded data type
      */
     public static <D> void deserializeBlockData(Map<D, D> data, DynamicOps<D> ops, BlockData targetData) {
         if (data == null) return;
-        Map<D, D> states = ops.getMap(data.get(ops.createString("states"))).orElse(Collections.emptyMap());
-        Adapter.load(ops, states, targetData);
+        Adapter.load(ops, data, targetData);
     }
 
     /**
-     * Extracts and applies custom entity properties to a {@link CustomBlock}.
-     * <p>
-     * This method ensures that the block has an associated {@link BlockEntity}
-     * before delegating the property restoration to the entity's own deserialization logic.
+     * Deserializes and applies block entity data onto a {@link CustomBlock}.
      *
-     * @param block The custom block instance to update.
-     * @param data  The serialized data map.
-     * @param ops   The {@link DynamicOps} instance.
-     * @param <D>   The data format type.
+     * <p>If the block does not currently have a {@link BlockEntity}, one will be created
+     * via {@link CustomBlock#createBlockEntity(Location)}.</p>
+     *
+     * <p>If {@code props} is {@code null}, this method does nothing.</p>
+     *
+     * @param block the target custom block
+     * @param props the serialized entity data
+     * @param ops   the dynamic operations instance used for decoding
+     * @param <D>   the encoded data type
      */
-    public static <D> void deserializeEntity(CustomBlock block, Map<D, D> data, DynamicOps<D> ops) {
-        if (data == null) return;
-        D props = data.get(ops.createString("properties"));
-        if (props != null) {
-            try {
-                BlockEntity entity = block.getEntity();
-                if (entity == null) {
-                    entity = block.createBlockEntity(null);
-                    block.setEntity(entity);
-                }
+    public static <D> void deserializeEntity(CustomBlock block, D props, DynamicOps<D> ops) {
+        if (props == null) return;
 
-                if (entity != null) {
-                    entity.deserialize(ops, props);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+        try {
+            BlockEntity entity = block.getEntity();
+
+            if (entity == null) {
+                entity = block.createBlockEntity(null);
+                block.setEntity(entity);
             }
+
+            if (entity != null) {
+                entity.deserialize(ops, props);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

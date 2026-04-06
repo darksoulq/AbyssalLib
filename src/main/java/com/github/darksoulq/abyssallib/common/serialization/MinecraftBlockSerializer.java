@@ -1,167 +1,123 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
-import net.kyori.adventure.text.Component;
-import org.bukkit.block.*;
+import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.sign.Side;
-import org.bukkit.block.sign.SignSide;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Handles serialization and deserialization of Bukkit BlockData and TileStates.
- * <p>
- * This serializer bridges the gap between live world blocks and AbyssalLib's
- * dynamic data format, specifically handling inventories via Base64 and
- * sign text via Adventure components.
+ * Provides a complete utility layer for serializing and deserializing native Bukkit
+ * {@link BlockData} and {@link TileState} instances into generic data representations
+ * via {@link DynamicOps}.
+ *
+ * <p>This class acts as a low-level bridge between Minecraft's internal block state
+ * system and AbyssalLib's abstract serialization framework, enabling:
+ * <ul>
+ *     <li>Conversion of block states into generic map-based formats</li>
+ *     <li>Reconstruction of block states from serialized data</li>
+ *     <li>Extraction and restoration of tile entity (NBT-like) metadata</li>
+ * </ul>
+ *
+ * <p>All operations are stateless and thread-safe provided the underlying
+ * {@link DynamicOps} implementation is thread-safe.
  */
 public class MinecraftBlockSerializer {
 
     /**
-     * Serializes standard block state properties.
+     * Serializes a {@link BlockData} instance into a generic key-value map using
+     * the provided {@link DynamicOps} format.
      *
-     * @param data The {@link BlockData} containing properties like rotation or age.
-     * @param ops  The {@link DynamicOps} instance for data conversion.
-     * @param <D>  The data format type.
-     * @return A map of serialized block properties.
+     * <p>This includes all block state properties such as:
+     * <ul>
+     *     <li>Facing direction</li>
+     *     <li>Power levels</li>
+     *     <li>Waterlogged state</li>
+     *     <li>Any other block-specific properties</li>
+     * </ul>
+     *
+     * @param data The {@link BlockData} instance to serialize. Must not be null.
+     * @param ops  The {@link DynamicOps} implementation defining the output format
+     *             (e.g., JSON, NBT-like structures).
+     * @param <D>  The generic data type used by the {@link DynamicOps} instance.
+     *
+     * @return A map representing the serialized block state. Never null, but may be empty
+     *         if the block has no configurable properties.
      */
     public static <D> Map<D, D> serialize(BlockData data, DynamicOps<D> ops) {
         return Adapter.save(ops, data);
     }
 
     /**
-     * Loads serialized properties back into a BlockData instance.
+     * Applies serialized block state data onto an existing {@link BlockData} instance.
      *
-     * @param data The target {@link BlockData} to update.
-     * @param map  The map containing serialized properties.
-     * @param ops  The {@link DynamicOps} instance for data conversion.
-     * @param <D>  The data format type.
+     * <p>This method mutates the provided {@code data} object by applying all properties
+     * found in the given map. Any missing properties are left unchanged.
+     *
+     * @param data The target {@link BlockData} instance to modify. Must not be null.
+     * @param map  The serialized property map previously produced by {@link #serialize}.
+     *             May be null or empty, in which case no changes are applied.
+     * @param ops  The {@link DynamicOps} instance used to interpret the map values.
+     * @param <D>  The generic data type used by the {@link DynamicOps} instance.
      */
     public static <D> void deserialize(BlockData data, Map<D, D> map, DynamicOps<D> ops) {
+        if (map == null || map.isEmpty()) return;
         Adapter.load(ops, map, data);
     }
 
     /**
-     * Serializes a block's Tile Entity data (TileState).
-     * <p>
-     * Currently supports:
+     * Serializes tile entity data (block entity / NBT-like metadata) from a {@link BlockState}.
+     *
+     * <p>This method only operates on instances of {@link TileState}. If the provided
+     * state is not a tile entity, this method returns {@code null}.
+     *
+     * <p>Examples of supported tile states include:
      * <ul>
-     * <li><b>Containers:</b> Inventories (Base64) and Custom Names.</li>
-     * <li><b>Signs:</b> Front-side text lines as Adventure components.</li>
+     *     <li>Chests</li>
+     *     <li>Furnaces</li>
+     *     <li>Signs</li>
+     *     <li>Containers with persistent metadata</li>
      * </ul>
      *
-     * @param block The world {@link Block} to check for tile data.
-     * @param ops   The {@link DynamicOps} instance for data conversion.
-     * @param <D>   The data format type.
-     * @return A map containing tile-specific data, or null if no tile data exists.
+     * @param state The {@link BlockState} to extract tile data from.
+     * @param ops   The {@link DynamicOps} implementation defining the output format.
+     * @param <D>   The generic data type used by the {@link DynamicOps} instance.
+     *
+     * @return A map containing serialized tile data, or {@code null} if:
+     *         <ul>
+     *             <li>The state is not a {@link TileState}</li>
+     *             <li>The tile contains no serializable data</li>
+     *         </ul>
      */
-    public static <D> Map<D, D> serializeTile(Block block, DynamicOps<D> ops) {
-        BlockState state = block.getState();
-        if (!(state instanceof TileState)) return null;
+    public static <D> Map<D, D> serializeTile(BlockState state, DynamicOps<D> ops) {
+        if (!(state instanceof TileState tileState)) return null;
 
-        Map<D, D> tileMap = new HashMap<>();
-
-        if (state instanceof Container container) {
-            tileMap.put(ops.createString("type"), ops.createString("container"));
-            tileMap.put(ops.createString("items"), ops.createString(toBase64(container.getInventory())));
-            if (container.customName() != null) {
-                D nameData = Try.of(() -> Codecs.TEXT_COMPONENT.encode(ops, container.customName())).orElseThrow(e -> new RuntimeException(e.getMessage()));
-                tileMap.put(ops.createString("custom_name"), nameData);
-            }
-        } else if (state instanceof Sign sign) {
-            tileMap.put(ops.createString("type"), ops.createString("sign"));
-            List<D> lines = new ArrayList<>();
-            SignSide side = sign.getSide(Side.FRONT);
-            for (int i = 0; i < 4; i++) {
-                Component line = side.line(i);
-                if (line.equals(Component.empty())) {
-                    lines.add(Try.of(() -> Codecs.TEXT_COMPONENT.encode(ops, Component.empty())).orElseThrow(e -> new RuntimeException(e.getMessage())));
-                } else {
-                    lines.add(Try.of(() -> Codecs.TEXT_COMPONENT.encode(ops, line)).orElseThrow(e -> new RuntimeException(e.getMessage())));
-                }
-            }
-            tileMap.put(ops.createString("lines"), ops.createList(lines));
-        }
-
-        return tileMap.isEmpty() ? null : tileMap;
+        Map<D, D> mapped = TileAdapter.save(ops, tileState);
+        return mapped.isEmpty() ? null : mapped;
     }
 
     /**
-     * Applies serialized tile data back to a block in the world.
+     * Restores tile entity data onto a {@link BlockState} from a serialized map.
      *
-     * @param block The target world {@link Block}.
-     * @param data  The map containing serialized tile information.
-     * @param ops   The {@link DynamicOps} instance for data conversion.
-     * @param <D>   The data format type.
+     * <p>This method only applies to {@link TileState} instances. If the provided
+     * state is not a tile entity, the method safely exits without performing any action.
+     *
+     * <p>The provided data should originate from {@link #serializeTile(BlockState, DynamicOps)}
+     * to ensure compatibility.
+     *
+     * @param state The target {@link BlockState} to apply tile data to.
+     * @param data  The serialized tile data map. May be null or empty, in which case
+     *              no changes are applied.
+     * @param ops   The {@link DynamicOps} instance used to interpret the serialized values.
+     * @param <D>   The generic data type used by the {@link DynamicOps} instance.
      */
-    public static <D> void deserializeTile(Block block, Map<D, D> data, DynamicOps<D> ops) {
+    public static <D> void deserializeTile(BlockState state, Map<D, D> data, DynamicOps<D> ops) {
         if (data == null || data.isEmpty()) return;
-        BlockState state = block.getState();
-        String type = ops.getStringValue(data.get(ops.createString("type"))).orElse("");
+        if (!(state instanceof TileState tileState)) return;
 
-        if ("container".equals(type) && state instanceof Container container) {
-            ops.getStringValue(data.get(ops.createString("items"))).ifPresent(b64 -> {
-                try { fromBase64(b64, container.getInventory()); } catch (Exception e) { e.printStackTrace(); }
-            });
-            D nameData = data.get(ops.createString("custom_name"));
-            if (nameData != null) {
-                Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, nameData)).onSuccess(container::customName);
-            }
-        } else if ("sign".equals(type) && state instanceof Sign sign) {
-            ops.getList(data.get(ops.createString("lines"))).ifPresent(list -> {
-                SignSide side = sign.getSide(Side.FRONT);
-                for (int i = 0; i < 4 && i < list.size(); i++) {
-                    int finalI = i;
-                    Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, list.get(finalI))).onSuccess(line -> side.line(finalI, line));
-                }
-            });
-        }
-        state.update(true, false);
-    }
-
-    /**
-     * Converts an inventory's contents to a Base64 encoded string.
-     *
-     * @param inventory The {@link Inventory} to serialize.
-     * @return A Base64 string representing the item contents.
-     */
-    private static String toBase64(Inventory inventory) {
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            org.bukkit.util.io.BukkitObjectOutputStream dataOutput = new org.bukkit.util.io.BukkitObjectOutputStream(outputStream);
-            dataOutput.writeInt(inventory.getSize());
-            for (int i = 0; i < inventory.getSize(); i++) {
-                dataOutput.writeObject(inventory.getItem(i));
-            }
-            dataOutput.close();
-            return Base64Coder.encodeLines(outputStream.toByteArray());
-        } catch (Exception e) { throw new RuntimeException(e); }
-    }
-
-    /**
-     * Reconstructs an inventory from a Base64 encoded string.
-     *
-     * @param data      The Base64 string.
-     * @param inventory The target {@link Inventory} to populate.
-     * @throws Exception If deserialization or reading fails.
-     */
-    private static void fromBase64(String data, Inventory inventory) throws Exception {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
-        org.bukkit.util.io.BukkitObjectInputStream dataInput = new org.bukkit.util.io.BukkitObjectInputStream(inputStream);
-        int size = dataInput.readInt();
-        for (int i = 0; i < size; i++) {
-            inventory.setItem(i, (ItemStack) dataInput.readObject());
-        }
-        dataInput.close();
+        TileAdapter.load(ops, data, tileState);
+        tileState.update(true, false);
     }
 }

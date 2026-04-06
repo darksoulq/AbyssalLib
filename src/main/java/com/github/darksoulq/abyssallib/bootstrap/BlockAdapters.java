@@ -4,7 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.unique.*;
 
-public final class BlockAdapterRegistry {
+public final class BlockAdapters {
 
     public static void register() {
         Adapter.register("age", new AgeableAdapter());

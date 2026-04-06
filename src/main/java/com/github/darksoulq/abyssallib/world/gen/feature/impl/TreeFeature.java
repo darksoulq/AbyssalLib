@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
@@ -19,11 +20,13 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -211,6 +214,11 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          */
         @Override public void addEntity(double x, double y, double z, @NotNull CustomEntity<?> entity) { delegate.addEntity(x, y, z, entity); }
 
+        @Override
+        public @Nullable Entity addEntity(double x, double y, double z, @NotNull SavedEntity entity) {
+            return delegate.addEntity(x, y, z, entity);
+        }
+
         /**
          * Retrieves the material at the coordinate unmodified by the tracker.
          *
@@ -230,6 +238,11 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @return The block data.
          */
         @Override public @NotNull BlockData getBlockData(int x, int y, int z) { return delegate.getBlockData(x, y, z); }
+
+        @Override
+        public @NotNull BlockState getBlockState(int x, int y, int z) {
+            return delegate.getBlockState(x, y, z);
+        }
 
         /**
          * Retrieves the biome at the coordinate unmodified by the tracker.

@@ -235,7 +235,7 @@ public class CustomBlock implements Cloneable {
             AbyssalLib.getInstance().getLogger().severe("Unknown tag: " + id);
             return false;
         }
-        BlockInfo blockInfo = new BlockInfo(null, this, null, null);
+        BlockInfo blockInfo = new BlockInfo(null, this, null, null, null);
         return tag.contains(blockInfo);
     }
 

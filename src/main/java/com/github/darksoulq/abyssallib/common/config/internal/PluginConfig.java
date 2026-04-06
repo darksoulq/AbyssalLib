@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.config.internal;
 
 import com.github.darksoulq.abyssallib.common.config.Config;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ public class PluginConfig {
 
     public static class ResourcePack {
         public Config.Value<Boolean> enabled;
+        public Config.Value<SendPhase> sendPhase;
         public Config.Value<String> protocol;
         public Config.Value<String> ip;
         public Config.Value<Integer> port;
@@ -45,6 +47,8 @@ public class PluginConfig {
         public ResourcePack(Config cfg) {
             enabled = cfg.value("resource-pack.enabled", false)
                 .withComment("Whether autohosting is enabled; in case set to false and ResourcePackManager is installed, RSPM will be used.");
+            sendPhase = cfg.value("resource-pack.send_at", SendPhase.JOIN, Codec.enumCodec(SendPhase.class))
+                .withComment("When to send the resource-pack (either CONFIGURATION or JOIN)");
             protocol = cfg.value("resource-pack.protocol", "http")
                 .withComment("The protocol to use for the resource pack server (http or https).");
             ip = cfg.value("resource-pack.ip", "127.0.0.1")
@@ -100,5 +104,9 @@ public class PluginConfig {
             webPort = cfg.value("permissions.web.port", 8081)
                 .withComment("The port to bind the web editor to.");
         }
+    }
+
+    public enum SendPhase {
+        CONFIGURATION, JOIN
     }
 }

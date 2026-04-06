@@ -2,138 +2,200 @@ package com.github.darksoulq.abyssallib.world.gen;
 
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
 import org.bukkit.HeightMap;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
 /**
- * A unified interface providing access to world modification and interrogation
- * during the generation and population phases.
+ * Provides a unified abstraction layer for interacting with the world during
+ * generation and population phases.
+ *
+ * <p>This interface is designed to safely expose block and entity manipulation
+ * in contexts where direct Bukkit API usage may be unsafe or restricted
+ * (such as async chunk generation or custom world pipelines).</p>
+ *
+ * <p>Implementations may:
+ * <ul>
+ *     <li>Buffer writes instead of applying them immediately</li>
+ *     <li>Bypass Bukkit thread restrictions</li>
+ *     <li>Operate on custom world representations</li>
+ * </ul>
+ *
+ * <p>All coordinates are expected to be in absolute world space unless otherwise stated.</p>
  */
 public interface WorldGenAccess {
 
     /**
-     * Sets the block at the specified coordinates to a standard Material.
+     * Sets a block at the given coordinates using a {@link Material}.
      *
-     * @param x        The absolute X coordinate.
-     * @param y        The absolute Y coordinate.
-     * @param z        The absolute Z coordinate.
-     * @param material The material to place.
+     * <p>This replaces any existing block at the target position.</p>
+     *
+     * @param x        The absolute X coordinate
+     * @param y        The absolute Y coordinate
+     * @param z        The absolute Z coordinate
+     * @param material The material to place (must represent a valid block)
      */
     void setBlock(int x, int y, int z, @NotNull Material material);
 
     /**
-     * Sets the block at the specified coordinates using specific BlockData.
+     * Sets a block at the given coordinates using full {@link BlockData}.
      *
-     * @param x    The absolute X coordinate.
-     * @param y    The absolute Y coordinate.
-     * @param z    The absolute Z coordinate.
-     * @param data The block data containing state information.
+     * <p>This allows specifying block states such as orientation, waterlogging, etc.</p>
+     *
+     * @param x    The absolute X coordinate
+     * @param y    The absolute Y coordinate
+     * @param z    The absolute Z coordinate
+     * @param data The block data to apply
      */
     void setBlock(int x, int y, int z, @NotNull BlockData data);
 
     /**
-     * Sets the block at the specified coordinates to a CustomBlock.
+     * Places a {@link CustomBlock} at the given coordinates.
      *
-     * @param x     The absolute X coordinate.
-     * @param y     The absolute Y coordinate.
-     * @param z     The absolute Z coordinate.
-     * @param block The custom block instance to place.
+     * <p>The implementation is responsible for correctly initializing any associated
+     * custom logic, metadata, or block entities.</p>
+     *
+     * @param x     The absolute X coordinate
+     * @param y     The absolute Y coordinate
+     * @param z     The absolute Z coordinate
+     * @param block The custom block instance to place
      */
     void setBlock(int x, int y, int z, @NotNull CustomBlock block);
 
     /**
-     * Sets a CustomBlock with specific BlockData at the specified coordinates.
+     * Places a {@link CustomBlock} with explicit {@link BlockData}.
      *
-     * @param x     The absolute X coordinate.
-     * @param y     The absolute Y coordinate.
-     * @param z     The absolute Z coordinate.
-     * @param block The custom block instance.
-     * @param data  The block data state to apply.
+     * <p>This allows combining custom logic with a specific visual or state configuration.</p>
+     *
+     * @param x     The absolute X coordinate
+     * @param y     The absolute Y coordinate
+     * @param z     The absolute Z coordinate
+     * @param block The custom block instance
+     * @param data  The block data defining its visual/state configuration
      */
     void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data);
 
     /**
-     * Safely dispatches standard vanilla entity spawning operations respecting the rigid
-     * thread-locks imposed during procedural chunk population.
+     * Spawns a vanilla {@link Entity} at the given coordinates.
      *
-     * @param x    The absolute decimal X coordinate.
-     * @param y    The absolute decimal Y coordinate.
-     * @param z    The absolute decimal Z coordinate.
-     * @param type The categorical entity type target.
-     * @return The initialized entity reference.
+     * <p>Implementations must ensure this operation is safe within the generation
+     * context (e.g. deferred execution if required by threading constraints).</p>
+     *
+     * @param x    The absolute X coordinate (double precision)
+     * @param y    The absolute Y coordinate (double precision)
+     * @param z    The absolute Z coordinate (double precision)
+     * @param type The {@link EntityType} to spawn
+     * @return The created entity instance
      */
     @NotNull Entity addEntity(double x, double y, double z, @NotNull EntityType type);
 
     /**
-     * Safely deploys a customized entity instance directly into the procedural generation environment,
-     * ensuring internal hooks and physics calculations bypass thread-lock boundaries.
+     * Spawns a {@link CustomEntity} at the given coordinates.
      *
-     * @param x      The absolute decimal X coordinate.
-     * @param y      The absolute decimal Y coordinate.
-     * @param z      The absolute decimal Z coordinate.
-     * @param entity The custom entity template to instantiate.
+     * <p>The provided entity acts as a template and should be instantiated
+     * according to its internal logic.</p>
+     *
+     * @param x      The absolute X coordinate (double precision)
+     * @param y      The absolute Y coordinate (double precision)
+     * @param z      The absolute Z coordinate (double precision)
+     * @param entity The custom entity template
      */
     void addEntity(double x, double y, double z, @NotNull CustomEntity<?> entity);
 
     /**
-     * Retrieves the Material type at the specified coordinates.
+     * Spawns a {@link SavedEntity} at the given coordinates.
      *
-     * @param x The absolute X coordinate.
-     * @param y The absolute Y coordinate.
-     * @param z The absolute Z coordinate.
-     * @return The material at the position.
+     * <p>This typically restores an entity from serialized data (NBT or similar).</p>
+     *
+     * @param x      The absolute X coordinate (double precision)
+     * @param y      The absolute Y coordinate (double precision)
+     * @param z      The absolute Z coordinate (double precision)
+     * @param entity The saved entity definition
+     * @return The spawned entity instance, or {@code null} if spawning failed
+     */
+    @Nullable Entity addEntity(double x, double y, double z, @NotNull SavedEntity entity);
+
+    /**
+     * Retrieves the {@link Material} at the given coordinates.
+     *
+     * @param x The absolute X coordinate
+     * @param y The absolute Y coordinate
+     * @param z The absolute Z coordinate
+     * @return The material at the specified position
      */
     @NotNull Material getType(int x, int y, int z);
 
     /**
-     * Retrieves the full BlockData at the specified coordinates.
+     * Retrieves the {@link BlockData} at the given coordinates.
      *
-     * @param x The absolute X coordinate.
-     * @param y The absolute Y coordinate.
-     * @param z The absolute Z coordinate.
-     * @return The block data at the position.
+     * @param x The absolute X coordinate
+     * @param y The absolute Y coordinate
+     * @param z The absolute Z coordinate
+     * @return The block data at the specified position
      */
     @NotNull BlockData getBlockData(int x, int y, int z);
 
     /**
-     * Retrieves the Biome at the specified coordinates.
+     * Retrieves a snapshot {@link BlockState} at the given coordinates.
      *
-     * @param x The absolute X coordinate.
-     * @param y The absolute Y coordinate.
-     * @param z The absolute Z coordinate.
-     * @return The biome at the position.
+     * <p>This includes tile entity data where applicable.</p>
+     *
+     * @param x The absolute X coordinate
+     * @param y The absolute Y coordinate
+     * @param z The absolute Z coordinate
+     * @return The block state snapshot
+     */
+    @NotNull BlockState getBlockState(int x, int y, int z);
+
+    /**
+     * Retrieves the {@link Biome} at the given coordinates.
+     *
+     * @param x The absolute X coordinate
+     * @param y The absolute Y coordinate
+     * @param z The absolute Z coordinate
+     * @return The biome at the specified position
      */
     @NotNull Biome getBiome(int x, int y, int z);
 
     /**
-     * Retrieves the Y-coordinate of the highest block based on height map criteria.
+     * Retrieves the highest Y coordinate at the given X/Z position based on a {@link HeightMap}.
      *
-     * @param x         The absolute X coordinate.
-     * @param z         The absolute Z coordinate.
-     * @param heightMap The height map type to use.
-     * @return The highest Y coordinate found.
+     * <p>The result depends on the selected heightmap type (e.g. surface, ocean floor).</p>
+     *
+     * @param x         The absolute X coordinate
+     * @param z         The absolute Z coordinate
+     * @param heightMap The height map type to query
+     * @return The highest Y coordinate matching the height map criteria
      */
     int getHighestBlockY(int x, int z, HeightMap heightMap);
 
     /**
-     * Retrieves the world currently being generated.
+     * Returns the backing {@link World} instance.
      *
-     * @return The Bukkit world context.
+     * <p>Note that direct interaction with the returned world may not always be safe
+     * depending on the implementation context.</p>
+     *
+     * @return The world associated with this generation access
      */
     @NotNull World getWorld();
 
     /**
-     * Retrieves the random source for the generation pass.
+     * Returns the {@link Random} instance used for this generation pass.
      *
-     * @return The random source.
+     * <p>This should be preferred over creating new random instances to ensure
+     * deterministic generation when required.</p>
+     *
+     * @return The random source
      */
     @NotNull Random getRandom();
 }

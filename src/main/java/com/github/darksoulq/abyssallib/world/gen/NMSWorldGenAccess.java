@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.gen;
 
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.WorldGenLevel;
@@ -11,6 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.block.CraftBiome;
 import org.bukkit.craftbukkit.block.data.CraftBlockData;
@@ -19,45 +21,43 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.generator.LimitedRegion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
 /**
- * Provides highly optimized world generation access utilizing internal Native Minecraft Server (NMS) methods.
+ * Implementation of {@link WorldGenAccess} backed by NMS (Native Minecraft Server).
+ *
+ * <p>This class provides high-performance world access during chunk generation by
+ * interacting directly with {@link WorldGenLevel}, while maintaining thread safety
+ * through the use of {@link LimitedRegion}.</p>
+ *
+ * <p>It is designed specifically for use in terrain generation, structure placement,
+ * and other population phases where standard Bukkit API access is restricted.</p>
  */
 public class NMSWorldGenAccess implements WorldGenAccess {
 
-    /**
-     * The internal NMS world generation level.
-     */
+    /** Underlying NMS world generation level. */
     private final WorldGenLevel level;
 
-    /**
-     * The thread-safe Bukkit region bounded to the generating chunk.
-     */
+    /** Thread-safe region representing the currently generating chunk. */
     private final LimitedRegion region;
 
-    /**
-     * The Bukkit world being generated.
-     */
+    /** Bukkit world reference. */
     private final World world;
 
-    /**
-     * The random instance tied to the generation pass.
-     */
+    /** Random instance tied to this generation pass. */
     private final Random random;
 
-    /**
-     * A reusable mutable block position to minimize memory allocation.
-     */
+    /** Reusable mutable position to reduce object allocation. */
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
     /**
-     * Constructs a new NMS world generation accessor.
+     * Creates a new NMS-backed world generation access instance.
      *
-     * @param region The bounded region for the chunk populator.
-     * @param world  The target Bukkit world.
-     * @param random The random instance for this pass.
+     * @param region The limited region for safe block/entity access
+     * @param world  The Bukkit world being generated
+     * @param random The random instance for this generation pass
      */
     public NMSWorldGenAccess(LimitedRegion region, World world, Random random) {
         this.region = region;
@@ -67,12 +67,12 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Sets the block at the specified coordinates to the provided material.
+     * Sets a block using a {@link Material}.
      *
-     * @param x        The X coordinate.
-     * @param y        The Y coordinate.
-     * @param z        The Z coordinate.
-     * @param material The material to place.
+     * @param x        X coordinate
+     * @param y        Y coordinate
+     * @param z        Z coordinate
+     * @param material Material to place
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull Material material) {
@@ -81,12 +81,12 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Sets the block at the specified coordinates to the provided block data.
+     * Sets a block using {@link BlockData}.
      *
-     * @param x    The X coordinate.
-     * @param y    The Y coordinate.
-     * @param z    The Z coordinate.
-     * @param data The block data to place.
+     * @param x    X coordinate
+     * @param y    Y coordinate
+     * @param z    Z coordinate
+     * @param data Block data to apply
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull BlockData data) {
@@ -96,12 +96,12 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Places a custom block at the specified coordinates using its default material.
+     * Places a {@link CustomBlock} using its default block data.
      *
-     * @param x     The X coordinate.
-     * @param y     The Y coordinate.
-     * @param z     The Z coordinate.
-     * @param block The custom block to place.
+     * @param x     X coordinate
+     * @param y     Y coordinate
+     * @param z     Z coordinate
+     * @param block Custom block instance
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull CustomBlock block) {
@@ -109,13 +109,15 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Places a custom block at the specified coordinates with specific block data.
+     * Places a {@link CustomBlock} with explicit {@link BlockData}.
      *
-     * @param x     The X coordinate.
-     * @param y     The Y coordinate.
-     * @param z     The Z coordinate.
-     * @param block The custom block to place.
-     * @param data  The block data to apply.
+     * <p>The base block is placed first, then custom logic is applied via a virtual wrapper.</p>
+     *
+     * @param x     X coordinate
+     * @param y     Y coordinate
+     * @param z     Z coordinate
+     * @param block Custom block instance
+     * @param data  Block data to apply
      */
     @Override
     public void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data) {
@@ -125,13 +127,13 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Spawns an entity of the specified type at the given coordinates.
+     * Spawns a vanilla entity safely within the generation region.
      *
-     * @param x    The X coordinate.
-     * @param y    The Y coordinate.
-     * @param z    The Z coordinate.
-     * @param type The entity type to spawn.
-     * @return The spawned entity.
+     * @param x    X coordinate
+     * @param y    Y coordinate
+     * @param z    Z coordinate
+     * @param type Entity type
+     * @return Spawned entity
      */
     @Override
     public @NotNull Entity addEntity(double x, double y, double z, @NotNull EntityType type) {
@@ -139,12 +141,12 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Spawns a custom entity at the specified coordinates.
+     * Spawns a {@link CustomEntity} at the given coordinates.
      *
-     * @param x      The X coordinate.
-     * @param y      The Y coordinate.
-     * @param z      The Z coordinate.
-     * @param entity The custom entity to spawn.
+     * @param x      X coordinate
+     * @param y      Y coordinate
+     * @param z      Z coordinate
+     * @param entity Custom entity instance
      */
     @Override
     public void addEntity(double x, double y, double z, @NotNull CustomEntity<?> entity) {
@@ -154,12 +156,26 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the material type of the block at the specified coordinates.
+     * Spawns a {@link SavedEntity}.
      *
-     * @param x The X coordinate.
-     * @param y The Y coordinate.
-     * @param z The Z coordinate.
-     * @return The material type.
+     * @param x      X coordinate
+     * @param y      Y coordinate
+     * @param z      Z coordinate
+     * @param entity Saved entity definition
+     * @return Spawned entity or {@code null} if failed
+     */
+    @Override
+    public @Nullable Entity addEntity(double x, double y, double z, @NotNull SavedEntity entity) {
+        return entity.spawn(this, new Location(world, x, y, z));
+    }
+
+    /**
+     * Gets the material at a position.
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Material at location
      */
     @Override
     public @NotNull Material getType(int x, int y, int z) {
@@ -168,12 +184,12 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the block data of the block at the specified coordinates.
+     * Gets the {@link BlockData} at a position.
      *
-     * @param x The X coordinate.
-     * @param y The Y coordinate.
-     * @param z The Z coordinate.
-     * @return The block data.
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Block data
      */
     @Override
     public @NotNull BlockData getBlockData(int x, int y, int z) {
@@ -182,12 +198,25 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the biome at the specified coordinates.
+     * Retrieves the full {@link BlockState} using the safe {@link LimitedRegion}.
      *
-     * @param x The X coordinate.
-     * @param y The Y coordinate.
-     * @param z The Z coordinate.
-     * @return The biome.
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Block state snapshot
+     */
+    @Override
+    public @NotNull BlockState getBlockState(int x, int y, int z) {
+        return region.getBlockState(x, y, z);
+    }
+
+    /**
+     * Gets the biome at a position.
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @return Biome
      */
     @Override
     public @NotNull Biome getBiome(int x, int y, int z) {
@@ -197,12 +226,12 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the highest block Y coordinate at the specified X and Z coordinates based on a heightmap.
+     * Gets the highest Y value at a position using a {@link HeightMap}.
      *
-     * @param x         The X coordinate.
-     * @param z         The Z coordinate.
-     * @param heightMap The heightmap to use.
-     * @return The highest Y coordinate.
+     * @param x         X coordinate
+     * @param z         Z coordinate
+     * @param heightMap Heightmap type
+     * @return Highest Y coordinate
      */
     @Override
     public int getHighestBlockY(int x, int z, HeightMap heightMap) {
@@ -219,9 +248,9 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the world associated with this generation access.
+     * Gets the Bukkit world.
      *
-     * @return The world.
+     * @return World instance
      */
     @Override
     public @NotNull World getWorld() {
@@ -229,9 +258,9 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
-     * Gets the random instance associated with this generation access.
+     * Gets the random instance used for generation.
      *
-     * @return The random instance.
+     * @return Random instance
      */
     @Override
     public @NotNull Random getRandom() {

@@ -40,9 +40,9 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
         @Override
         public <D> RotatedBlockStateProvider decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            
+
             BlockStateProvider baseProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("base_provider")));
-            
+
             Axis axis = null;
             D axisNode = map.get(ops.createString("axis"));
             if (axisNode != null) {
@@ -76,9 +76,9 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
         @Override
         public <D> D encode(DynamicOps<D> ops, RotatedBlockStateProvider value) throws CodecException {
             Map<D, D> map = new HashMap<>();
-            
+
             map.put(ops.createString("base_provider"), BlockStateProvider.CODEC.encode(ops, value.baseProvider));
-            
+
             if (value.axis != null) {
                 map.put(ops.createString("axis"), Codec.enumCodec(Axis.class).encode(ops, value.axis));
             }
@@ -88,7 +88,7 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
             if (value.rotation != null) {
                 map.put(ops.createString("rotation"), Codecs.INT.encode(ops, value.rotation));
             }
-            
+
             return ops.createMap(map);
         }
     };
@@ -137,19 +137,11 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
         BlockInfo base = baseProvider.getState(random, location);
         if (base == null) return null;
 
-        ObjectNode combinedData = base.combinedData();
-        if (combinedData == null) {
-            combinedData = JsonNodeFactory.instance.objectNode();
-        } else {
-            combinedData = combinedData.deepCopy();
-        }
-
-        ObjectNode statesNode;
-        if (combinedData.has("states")) {
-            statesNode = (ObjectNode) combinedData.get("states");
-        } else {
+        ObjectNode statesNode = base.states();
+        if (statesNode == null) {
             statesNode = JsonNodeFactory.instance.objectNode();
-            combinedData.set("states", statesNode);
+        } else {
+            statesNode = statesNode.deepCopy();
         }
 
         if (axis != null) {
@@ -162,7 +154,7 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
             statesNode.put("rotation", String.valueOf(rotation));
         }
 
-        return new BlockInfo(base.pos(), base.block(), combinedData, base.nbt());
+        return new BlockInfo(base.pos(), base.block(), statesNode, base.properties(), base.nbt());
     }
 
     /**

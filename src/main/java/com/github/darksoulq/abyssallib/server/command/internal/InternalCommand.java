@@ -144,7 +144,7 @@ public class InternalCommand {
                 .executes(ctx -> {
                     refreshInternalPacks();
                     List<ResourcePackInfo> rps = new ArrayList<>();
-                    loadRPInfos(rps);
+                    loadRPInfos(rps, true);
                     if (!rps.isEmpty()) {
                         Bukkit.getServer().sendResourcePacks(ResourcePackRequest.resourcePackRequest()
                             .packs(rps)
@@ -387,8 +387,8 @@ public class InternalCommand {
         );
     }
 
-    public static void loadRPInfos(List<ResourcePackInfo> rps) {
-        AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
+    public static void loadRPInfos(List<ResourcePackInfo> rps, boolean reload) {
+        if (reload) AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
         for (String pluginId : AbyssalLib.PACK_SERVER.registeredPluginIDs()) {
             rps.add(ResourcePackInfo.resourcePackInfo()
                 .id(UUID_MAP.get(pluginId))

@@ -4,8 +4,12 @@ import com.destroystokyo.paper.profile.ProfileProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
+import com.github.darksoulq.abyssallib.common.util.Either;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.block.BlockPredicate;
 import io.papermc.paper.datacomponent.item.*;
 import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
@@ -21,16 +25,28 @@ import io.papermc.paper.registry.tag.TagKey;
 import io.papermc.paper.text.Filtered;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.util.TriState;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.block.entity.BeehiveBlockEntity;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.block.Beehive;
 import org.bukkit.block.BlockType;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Creaking;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemType;
@@ -71,6 +87,9 @@ public class ExtraCodecs {
     );
     public static final Codec<ItemType> ITEM_TYPE = Codecs.KEY.xmap(Registry.ITEM::getOrThrow, ItemType::getKey);
     public static final Codec<EntityType> ENTITY_TYPE = Codecs.KEY.xmap(Registry.ENTITY_TYPE::getOrThrow, EntityType::getKey);
+    public static final Codec<net.minecraft.world.entity.EntityType<?>> NMS_ENTITY_TYPE = Codecs.STRING.xmap(
+        s -> BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.parse(s)),
+        e -> BuiltInRegistries.ENTITY_TYPE.getKey(e).toString());
     // Banner
     public static final Codec<PatternType> BANNER_PATTERN_TYPE = Codecs.KEY.xmap(
             RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN)::get,
@@ -446,6 +465,7 @@ public class ExtraCodecs {
     );
 
     public static final Codec<BlockInfo> BLOCK_INFO = new Codec<>() {
+
         @Override
         public <D> BlockInfo decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
@@ -469,86 +489,89 @@ public class ExtraCodecs {
                 blockObject = base.clone();
             }
 
-            ObjectNode combinedData = null;
+            ObjectNode states = null;
+            ObjectNode properties = null;
             ObjectNode nbt = null;
 
             if (ops instanceof JsonOps && input instanceof JsonNode jsonInput) {
-                if (jsonInput.has("states") || jsonInput.has("properties")) {
-                    combinedData = (ObjectNode) jsonInput.deepCopy();
-                    combinedData.remove("id");
-                    combinedData.remove("pos");
-                    combinedData.remove("nbt");
-                }
-
-                if (jsonInput.has("nbt")) {
-                    nbt = (ObjectNode) jsonInput.get("nbt");
-                }
+                if (jsonInput.has("states")) states = (ObjectNode) jsonInput.get("states");
+                if (jsonInput.has("properties")) properties = (ObjectNode) jsonInput.get("properties");
+                if (jsonInput.has("nbt")) nbt = (ObjectNode) jsonInput.get("nbt");
             }
 
-            if (blockObject instanceof BlockData bd) {
-                D states = map.get(ops.createString("states"));
-                if (states != null) {
-                    Map<D, D> statesMap = ops.getMap(states).orElse(java.util.Collections.emptyMap());
+            if (states != null) {
+                Map<D, D> statesMap = ops.getMap((D) states).orElse(Collections.emptyMap());
+                if (blockObject instanceof BlockData bd) {
                     MinecraftBlockSerializer.deserialize(bd, statesMap, ops);
-                }
-            } else if (blockObject instanceof CustomBlock cb) {
-                if (combinedData != null && combinedData.has("states")) {
-                    D states = map.get(ops.createString("states"));
-                    if (states != null) {
-                        Map<D, D> statesMap = ops.getMap(states).orElse(java.util.Collections.emptyMap());
-                        BlockData tempData = cb.getMaterial().createBlockData();
-                        MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
-                    }
+                } else if (blockObject instanceof CustomBlock cb) {
+                    BlockData tempData = cb.getMaterial().createBlockData();
+                    MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
                 }
             }
 
-            return new BlockInfo(pos, blockObject, combinedData, nbt);
+            return new BlockInfo(pos, blockObject, states, properties, nbt);
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public <D> D encode(DynamicOps<D> ops, BlockInfo value) throws CodecException {
             Map<D, D> map = new HashMap<>();
-            String id;
-            Map<D, D> nbtMap = new HashMap<>();
 
-            if (value.nbt() != null) {
-                Map<D, D> existing = (Map<D, D>) ops.getMap((D) value.nbt()).orElse(null);
-                if (existing != null) nbtMap.putAll(existing);
-            }
-
-            if (value.block() instanceof CustomBlock cb) {
-                id = cb.getId().asString();
-                Map<D, D> serialized = AbyssalLibBlockSerializer.serialize(cb, ops);
-
-                if (serialized.containsKey(ops.createString("states"))) {
-                    map.put(ops.createString("states"), serialized.get(ops.createString("states")));
-                }
-
-                if (serialized.containsKey(ops.createString("properties"))) {
-                    nbtMap.put(ops.createString("properties"), serialized.get(ops.createString("properties")));
-                }
-            } else {
-                BlockData bd = (BlockData) value.block();
-                id = "minecraft:" + bd.getMaterial().name().toLowerCase();
-
-                Map<D, D> states = MinecraftBlockSerializer.serialize(bd, ops);
-                if (!states.isEmpty()) {
-                    map.put(ops.createString("states"), ops.createMap(states));
-                }
-            }
-
-            map.put(ops.createString("id"), Codecs.STRING.encode(ops, id));
+            map.put(ops.createString("id"), Codecs.STRING.encode(ops, value.getAsString()));
 
             if (value.pos() != null) {
                 map.put(ops.createString("pos"), Codecs.VECTOR_I.encode(ops, value.pos()));
             }
 
-            if (!nbtMap.isEmpty()) {
-                map.put(ops.createString("nbt"), ops.createMap(nbtMap));
+            if (value.states() != null && !value.states().isEmpty()) {
+                map.put(ops.createString("states"), (D) value.states());
+            }
+
+            if (value.properties() != null && !value.properties().isEmpty()) {
+                map.put(ops.createString("properties"), (D) value.properties());
+            }
+
+            if (value.nbt() != null && !value.nbt().isEmpty()) {
+                map.put(ops.createString("nbt"), (D) value.nbt());
             }
 
             return ops.createMap(map);
+        }
+    };
+
+    public static final Codec<CompoundTag> COMPOUND_TAG = Codecs.STRING.xmap(
+        str -> {
+            try {
+                return TagParser.parseCompoundFully(str);
+            } catch (CommandSyntaxException e) {
+                throw new Codec.CodecException("Failed to create compound tag", e);
+            }
+        },
+        CompoundTag::toString
+    );
+
+    public static final Codec<SavedEntity> SAVED_ENTITY = new Codec<>() {
+        @Override
+        public <D>SavedEntity decode(DynamicOps<D> ops, D input) throws CodecException {
+            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map for SavedEntity"));
+            String idStr = Codecs.STRING.decode(ops, map.get(ops.createString("id")));
+
+            Either<EntityType, CustomEntity<? extends LivingEntity>> type;
+            if (idStr.startsWith("minecraft:")) {
+                type = Either.left(EntityType.valueOf(idStr.substring(10).toUpperCase()));
+            } else {
+                CustomEntity<?> custom = Registries.ENTITIES.get(idStr);
+                if (custom == null) throw new CodecException("Unknown custom entity: " + idStr);
+                type = Either.right(custom);
+            }
+
+            return new SavedEntity(type, input, ops);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <D> D encode(DynamicOps<D> ops, SavedEntity value) throws CodecException {
+            return (D) value.getRawData();
         }
     };
 }

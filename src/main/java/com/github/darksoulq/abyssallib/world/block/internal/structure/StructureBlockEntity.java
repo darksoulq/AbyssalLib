@@ -34,6 +34,7 @@ public class StructureBlockEntity extends BlockEntity {
     public final Property<Integer> sizeZ = new Property<>(Codecs.INT, 5);
     public final Property<Float> integrity = new Property<>(Codecs.FLOAT, 1.0f);
     public final Property<Boolean> showBoundingBox = new Property<>(Codecs.BOOLEAN, true);
+    public final Property<Boolean> includeEntities = new Property<>(Codecs.BOOLEAN, true);
 
     public Property<StructureMode> mode = new Property<>(Codec.enumCodec(StructureMode.class), StructureMode.LOAD);
     public Property<StructureRotation> rotation = new Property<>(Codec.enumCodec(StructureRotation.class), StructureRotation.NONE);
@@ -115,7 +116,7 @@ public class StructureBlockEntity extends BlockEntity {
         Location corner2 = corner1.clone().add(sizeX.get() - 1, sizeY.get() - 1, sizeZ.get() - 1);
 
         Structure structure = new Structure();
-        structure.fill(corner1, corner2, corner1);
+        structure.fill(corner1, corner2, corner1, includeEntities.get());
 
         Registries.STRUCTURES.remove(id.toString());
         Registries.STRUCTURES.register(id.toString(), structure);
