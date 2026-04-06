@@ -22,10 +22,6 @@ public class HookConstants {
     public enum Plugin {
         /** Integration with ResourcePackManager. */
         RSPM("ResourcePackManager"),
-        /** Integration with the Nexo items/mechanics plugin. */
-        NEXO("Nexo"),
-        /** Integration with the ItemsAdder custom items plugin. */
-        IA("ItemsAdder"),
         /** Integration with the PlaceholderAPI string expansion utility. */
         PLACEHOLDER_API("PlaceholderAPI");
 
