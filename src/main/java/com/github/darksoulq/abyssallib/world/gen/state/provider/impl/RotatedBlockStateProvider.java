@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.gen.state.provider;
+package com.github.darksoulq.abyssallib.world.gen.state.provider.impl;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -6,6 +6,8 @@ import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
+import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviderType;
 import org.bukkit.Axis;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
