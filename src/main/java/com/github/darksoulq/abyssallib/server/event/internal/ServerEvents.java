@@ -10,6 +10,9 @@ import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEven
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.PacketTranslator;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
+import com.github.darksoulq.abyssallib.world.advancement.Advancement;
+import com.github.darksoulq.abyssallib.world.advancement.AdvancementLoader;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
@@ -26,11 +29,21 @@ import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenManager;
 import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import com.github.darksoulq.abyssallib.world.structure.StructureLoader;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.AdvancementTree;
+import net.minecraft.advancements.TreeNodePosition;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerAdvancementManager;
+import net.minecraft.server.level.ServerPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -51,8 +64,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class ServerEvents {
 
@@ -78,11 +90,13 @@ public class ServerEvents {
                     NaturalSpawnRegistry.load();
                     StructureLoader.load();
                     WorldGenLoader.load();
+                    AdvancementLoader.load();
                     AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         } else {
-            RecipeLoader.reload();
+            TaskUtil.delayedTask(AbyssalLib.getInstance(), 1, RecipeLoader::reload);
+            reloadAdvancements();
         }
     }
 
@@ -211,5 +225,53 @@ public class ServerEvents {
     @SubscribeEvent
     public void onWorldLoad(WorldLoadEvent e) {
         WorldGenManager.inject(e.getWorld());
+    }
+
+    private static void reloadAdvancements() {
+        List<AdvancementHolder> newAdvancements = new ArrayList<>();
+        Map<AdvancementHolder, Advancement> customAdvancementMap = new HashMap<>();
+
+        for (Advancement adv : Registries.ADVANCEMENTS.getAll().values()) {
+            AdvancementHolder holder = adv.toNMSHolder();
+            newAdvancements.add(holder);
+            customAdvancementMap.put(holder, adv);
+
+            ServerAdvancementManager manager = MinecraftServer.getServer().getAdvancements();
+            Map<Identifier, AdvancementHolder> mutableAdvancements = new HashMap<>(manager.advancements);
+            mutableAdvancements.put(holder.id(), holder);
+            manager.advancements = mutableAdvancements;
+        }
+
+        applyAdvancementLayout(newAdvancements, customAdvancementMap);
+    }
+
+    public static void applyAdvancementLayout(List<AdvancementHolder> newAdvancements, Map<AdvancementHolder, Advancement> customAdvancementMap) {
+        if (!newAdvancements.isEmpty()) {
+            ServerAdvancementManager manager = MinecraftServer.getServer().getAdvancements();
+            AdvancementTree tree = manager.tree();
+            tree.addAll(newAdvancements);
+
+            for (AdvancementNode root : tree.roots()) {
+                if (root.advancement().display().isPresent()) {
+                    TreeNodePosition.run(root);
+                }
+            }
+
+            for (AdvancementHolder holder : newAdvancements) {
+                Advancement customAdv = customAdvancementMap.get(holder);
+                if (customAdv != null && customAdv.getDisplay() != null) {
+                    float customX = customAdv.getDisplay().getX();
+                    float customY = customAdv.getDisplay().getY();
+                    if (!Float.isNaN(customX) && !Float.isNaN(customY)) {
+                        holder.value().display().ifPresent(info -> info.setLocation(customX, customY));
+                    }
+                }
+            }
+
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                ServerPlayer sp = ((CraftPlayer) player).getHandle();
+                sp.getAdvancements().reload(manager);
+            }
+        }
     }
 }

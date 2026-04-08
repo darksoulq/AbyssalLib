@@ -2,19 +2,30 @@ package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyEvent;
+import com.github.darksoulq.abyssallib.server.event.internal.ServerEvents;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
+import com.github.darksoulq.abyssallib.world.advancement.Advancement;
+import com.github.darksoulq.abyssallib.world.advancement.AdvancementDisplay;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
+import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.key.Key;
+import net.minecraft.advancements.*;
+import net.minecraft.advancements.criterion.ImpossibleTrigger;
+import net.minecraft.core.ClientAsset;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerAdvancementManager;
+import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -109,6 +120,9 @@ public final class DeferredRegistry<T> {
             return;
         }
 
+        List<AdvancementHolder> newAdvancements = new ArrayList<>();
+        Map<AdvancementHolder, Advancement> customAdvancementMap = new HashMap<>();
+
         for (Map.Entry<String, Holder<T>> entry : entries.entrySet()) {
             T value = entry.getValue().get();
             String idString = pluginId + ":" + entry.getKey();
@@ -127,7 +141,20 @@ public final class DeferredRegistry<T> {
                     .value(new CustomMarker(Key.key(idString)))
                     .build());
             }
+
+            if (value instanceof Advancement customAdv) {
+                AdvancementHolder holder = customAdv.toNMSHolder();
+                newAdvancements.add(holder);
+                customAdvancementMap.put(holder, customAdv);
+
+                ServerAdvancementManager manager = MinecraftServer.getServer().getAdvancements();
+                Map<Identifier, AdvancementHolder> mutableAdvancements = new HashMap<>(manager.advancements);
+                mutableAdvancements.put(holder.id(), holder);
+                manager.advancements = mutableAdvancements;
+            }
         }
+
+        ServerEvents.applyAdvancementLayout(newAdvancements, customAdvancementMap);
 
         entries.clear();
     }

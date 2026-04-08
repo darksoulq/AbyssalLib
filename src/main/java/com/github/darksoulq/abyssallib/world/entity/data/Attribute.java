@@ -176,4 +176,3 @@ public final class Attribute<T extends Number> {
                 type == BigDecimal.class;
     }
 }
-

@@ -7,8 +7,11 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
+import com.github.darksoulq.abyssallib.server.event.EventBus;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -19,28 +22,29 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages the collection of statistics for a specific player.
- * <p>
- * This class handles asynchronous database I/O, caching, and synchronization
- * between registered statistic templates and persistent player data.
+ * Manages the collection and persistence of statistics for a specific player.
+ * This class handles asynchronous database I/O, event dispatching for value changes,
+ * and maintains a local cache for performance.
  */
 public class PlayerStatistics {
-    /** Global cache of loaded player statistics. */
+
+    /** Cache of loaded statistics indexed by player UUID. */
     private static final Map<UUID, PlayerStatistics> CACHE = new ConcurrentHashMap<>();
 
-    /** The SQLite database instance for statistics storage. */
+    /** The database instance used for persistent storage of player data. */
     private static final Database DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "player_statistics.db"));
 
-    /** The unique ID of the player owning these statistics. */
+    /** The unique identifier of the player being managed. */
     private final UUID uuid;
 
-    /** The map of identifiers to active statistic instances. */
-    private final Map<Key, Statistic> stats = new ConcurrentHashMap<>();
+    /** Thread-safe map of active statistics for this player. */
+    private final Map<Key, Statistic<?>> stats = new ConcurrentHashMap<>();
 
     /**
-     * Private constructor to initiate statistic loading for a player.
+     * Private constructor for initializing a player's statistics container.
      *
-     * @param uuid the player's UUID
+     * @param uuid
+     * The {@link UUID} of the player.
      */
     private PlayerStatistics(UUID uuid) {
         this.uuid = uuid;
@@ -48,7 +52,7 @@ public class PlayerStatistics {
     }
 
     /**
-     * Initializes the database connection and creates the statistics table if necessary.
+     * Initializes the global statistics database and its required tables.
      */
     public static void init() {
         Try.run(() -> {
@@ -58,61 +62,86 @@ public class PlayerStatistics {
     }
 
     /**
-     * Gets or creates the PlayerStatistics container for a Bukkit player.
+     * Retrieves the statistics container for a specific player.
      *
-     * @param player the player
-     * @return the player's statistics container
+     * @param player
+     * The {@link Player} instance.
+     * @return
+     * The associated {@link PlayerStatistics} manager.
      */
     public static PlayerStatistics of(Player player) {
         return of(player.getUniqueId());
     }
 
     /**
-     * Gets or creates the PlayerStatistics container for a UUID.
+     * Retrieves the statistics container for a specific UUID.
      *
-     * @param uuid the player's UUID
-     * @return the statistics container
+     * @param uuid
+     * The {@link UUID} of the target player.
+     * @return
+     * The associated {@link PlayerStatistics} manager.
      */
     public static PlayerStatistics of(UUID uuid) {
         return CACHE.computeIfAbsent(uuid, PlayerStatistics::new);
     }
 
     /**
-     * Retrieves a specific statistic by its identifier.
+     * Retrieves a cloned instance of a specific statistic by its Key.
      *
-     * @param id the identifier of the statistic
-     * @return a clone of the statistic, or null if not found
+     * @param id
+     * The {@link Key} of the statistic to find.
+     * @return
+     * A copy of the {@link Statistic}, or null if not found.
      */
-    public Statistic get(Key id) {
-        Statistic stat = stats.get(id);
+    public Statistic<?> get(Key id) {
+        Statistic<?> stat = stats.get(id);
         return stat != null ? stat.clone() : null;
     }
 
     /**
-     * Updates or inserts a statistic and triggers an asynchronous save.
+     * Updates a player's statistic, triggering a change event and saving to the database.
      *
-     * @param stat the statistic to set
+     * @param <T>
+     * The value type of the statistic.
+     * @param stat
+     * The new {@link Statistic} instance to set.
      */
-    public void set(Statistic stat) {
+    @SuppressWarnings("unchecked")
+    public <T> void set(Statistic<T> stat) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) {
+            Statistic<T> oldStat = (Statistic<T>) stats.get(stat.getId());
+            T oldValue = oldStat != null ? oldStat.getValue() : null;
+            T newValue = stat.getValue();
+
+            PlayerStatisticChangeEvent<T> event = EventBus.post(new PlayerStatisticChangeEvent<>(player, stat, oldValue, newValue));
+            if (event.isCancelled()) {
+                return;
+            }
+            stat.setValue(event.getNewValue());
+        }
+
         stats.put(stat.getId(), stat.clone());
         save(stat);
     }
 
     /**
-     * Gets all statistics currently held for this player.
+     * Retrieves an immutable list of all statistics currently tracked for this player.
      *
-     * @return a list of statistics
+     * @return
+     * A {@link List} containing all player {@link Statistic} instances.
      */
-    public List<Statistic> get() {
+    public List<Statistic<?>> get() {
         return stats.values().stream().toList();
     }
 
     /**
-     * Triggers an asynchronous database REPLACE query for a single statistic.
+     * Asynchronously saves a specific statistic to the database.
      *
-     * @param stat the statistic to save
+     * @param stat
+     * The {@link Statistic} to save.
      */
-    private void save(Statistic stat) {
+    private void save(Statistic<?> stat) {
         DATABASE.executor().table("player_statistics").replace()
             .value("uuid", uuid.toString())
             .value("key", stat.getId().toString())
@@ -125,18 +154,16 @@ public class PlayerStatistics {
     }
 
     /**
-     * Asynchronously loads all statistics from the database.
-     * <p>
-     * After loading existing rows, it compares them with {@link Registries#STATISTICS}
-     * and initializes missing defaults.
+     * Internal logic to load player statistics from the database and populate defaults.
      */
+    @SuppressWarnings("unchecked")
     private void load() {
         DATABASE.executor().table("player_statistics")
             .where("uuid = ?", uuid.toString())
             .selectAsync(rs -> Map.entry(rs.getString("key"), rs.getString("value")))
             .thenAccept(rows -> {
-                Map<Key, Statistic> tempStats = new ConcurrentHashMap<>();
-                List<Statistic> newDefaultsToSave = new ArrayList<>();
+                Map<Key, Statistic<?>> tempStats = new ConcurrentHashMap<>();
+                List<Statistic<?>> newDefaultsToSave = new ArrayList<>();
                 for (var entry : rows) {
                     Key id = Key.key(entry.getKey());
 
@@ -145,7 +172,7 @@ public class PlayerStatistics {
                         continue;
                     }
 
-                    Statistic template = Registries.STATISTICS.get(id.toString()).clone();
+                    Statistic<Object> template = (Statistic<Object>) Registries.STATISTICS.get(id.toString()).clone();
 
                     Object value = Try.of(() -> (Object) Codec.oneOf(Codecs.INT, Codecs.FLOAT, Codecs.BOOLEAN)
                             .decode(StringOps.INSTANCE, entry.getValue()))
@@ -158,7 +185,7 @@ public class PlayerStatistics {
                 Registries.STATISTICS.getAll().forEach((key, template) -> {
                     Key id = Key.key(key);
                     if (!tempStats.containsKey(id)) {
-                        Statistic clone = template.clone();
+                        Statistic<?> clone = template.clone();
                         tempStats.put(id, clone);
                         newDefaultsToSave.add(clone);
                     }
@@ -176,18 +203,21 @@ public class PlayerStatistics {
     }
 
     /**
-     * Efficiently saves a list of new default statistics using a batch query.
+     * Batches multiple new statistics into a single database insertion for efficiency.
      *
-     * @param newStats the list of default statistics to insert
+     * @param newStats
+     * The list of {@link Statistic} instances to batch.
      */
-    private void saveDefaultsBatch(List<Statistic> newStats) {
-        if (newStats.isEmpty()) return;
+    private void saveDefaultsBatch(List<Statistic<?>> newStats) {
+        if (newStats.isEmpty()) {
+            return;
+        }
 
         BatchQuery batch = DATABASE.executor().table("player_statistics")
             .batch("uuid", "key", "value")
             .insertIgnore();
 
-        for (Statistic stat : newStats) {
+        for (Statistic<?> stat : newStats) {
             batch.add(uuid.toString(), stat.getId().toString(), stat.getValue().toString());
         }
 
@@ -198,7 +228,7 @@ public class PlayerStatistics {
     }
 
     /**
-     * Internal method to create the database schema.
+     * Creates the necessary SQLite table structure for statistics storage.
      */
     private static void initTable() {
         DATABASE.executor().create("player_statistics")

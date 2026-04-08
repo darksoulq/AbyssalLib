@@ -4,6 +4,9 @@ import com.github.darksoulq.abyssallib.common.energy.EnergyNodeType;
 import com.github.darksoulq.abyssallib.common.energy.EnergyUnit;
 import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
 import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
+import com.github.darksoulq.abyssallib.world.advancement.Advancement;
+import com.github.darksoulq.abyssallib.world.advancement.criterion.CriterionType;
+import com.github.darksoulq.abyssallib.world.advancement.reward.RewardType;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.loot.LootConditionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
@@ -36,6 +39,10 @@ public class Registries {
 
     public static final Registry<DataComponentType<?>> DATA_COMPONENT_TYPES = new Registry<>();
     public static final Registry<Statistic> STATISTICS = new Registry<>();
+
+    public static final Registry<Advancement> ADVANCEMENTS = new Registry<>();
+    public static final Registry<CriterionType<?>> CRITERION = new Registry<>();
+    public static final Registry<RewardType<?>> REWARDS = new Registry<>();
 
     public static final Registry<Item> ITEMS = new Registry<>();
     public static final Registry<ItemCategory> ITEM_CATEGORIES = new Registry<>();

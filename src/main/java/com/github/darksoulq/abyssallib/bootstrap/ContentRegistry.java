@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.bootstrap;
 
 import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
+import com.github.darksoulq.abyssallib.world.advancement.criterion.Criterions;
+import com.github.darksoulq.abyssallib.world.advancement.reward.Rewards;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.data.loot.LootDefaults;
 import com.github.darksoulq.abyssallib.world.data.tag.TagTypes;
@@ -46,5 +48,8 @@ public final class ContentRegistry {
 
         ItemCategories.ITEM_CATEGORIES.apply();
         PluginPermissions.NAMESPACE.apply();
+
+        Criterions.CRITERION.apply();
+        Rewards.REWARDS.apply();
     }
 }

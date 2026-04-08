@@ -2,6 +2,12 @@ package com.github.darksoulq.abyssallib.world.entity.data;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
+import com.github.darksoulq.abyssallib.server.event.EventBus;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityAttributeChangeEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityAttributeModifierAddEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityAttributeModifierRemoveEvent;
+import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 
 import java.io.File;
@@ -9,14 +15,33 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Manages custom attributes and modifiers for entities with persistent storage support.
+ * This class provides a bridge between raw database values and functional {@link Attribute}
+ * objects, allowing for complex arithmetic modifications and event-driven updates.
+ */
 public class EntityAttributes {
+
+    /** Cache of loaded attribute containers indexed by entity UUID. */
     private static final Map<UUID, EntityAttributes> CACHE = new ConcurrentHashMap<>();
+
+    /** The unique identifier of the entity being managed. */
     private final UUID uuid;
+
+    /** Map of raw attribute keys to their string-serialized values. */
     private final Map<String, String> rawValues = new ConcurrentHashMap<>();
+
+    /** The database instance used for persistent storage of entity attributes. */
     private static final Database DATABASE = new Database(
         new File(AbyssalLib.getInstance().getDataFolder(), "entity_data.db")
     );
 
+    /**
+     * Initializes the global attribute database and ensures the table structure exists.
+     *
+     * @throws RuntimeException
+     * If the database connection or table initialization fails.
+     */
     public static void init() {
         try {
             DATABASE.connect();
@@ -27,9 +52,10 @@ public class EntityAttributes {
     }
 
     /**
-     * Private constructor. Use {@link #of(UUID)} to create or fetch a PlayerData instance.
+     * Private constructor for initializing an entity's attribute container.
      *
-     * @param uuid the UUID of the player
+     * @param uuid
+     * The {@link UUID} of the target entity.
      */
     private EntityAttributes(UUID uuid) {
         this.uuid = uuid;
@@ -37,98 +63,193 @@ public class EntityAttributes {
     }
 
     /**
-     * Gets the EntityAttributes for the given {@link Entity} instance.
+     * Retrieves the attribute container for a specific entity.
      *
-     * @param entity the entity
-     * @return the entity's data wrapper
+     * @param entity
+     * The {@link Entity} instance.
+     * @return
+     * The associated {@link EntityAttributes} manager.
      */
     public static EntityAttributes of(Entity entity) {
         return of(entity.getUniqueId());
     }
 
     /**
-     * Gets the EntityAttributes for the given entity UUID, loading from memory or creating a new instance.
+     * Retrieves the attribute container for a specific UUID.
      *
-     * @param uuid the entity's UUID
-     * @return the EntityAttributes instance
+     * @param uuid
+     * The {@link UUID} of the target entity.
+     * @return
+     * The associated {@link EntityAttributes} manager.
      */
     public static EntityAttributes of(UUID uuid) {
         return CACHE.computeIfAbsent(uuid, EntityAttributes::new);
     }
 
     /**
-     * Stores a value for a given attribute and persists it to the database.
+     * Sets the base value of an attribute, triggering a change event and updating the database.
      *
-     * @param attr  the attribute to store
-     * @param value the value to assign
-     * @param <T>   the type of the attribute
+     * @param <T>
+     * The numeric type of the attribute.
+     * @param attr
+     * The {@link Attribute} definition to update.
+     * @param value
+     * The new base value to assign.
      */
     public <T extends Number> void set(Attribute<T> attr, T value) {
+        Entity entity = Bukkit.getEntity(uuid);
+        if (entity != null) {
+            T oldBase = getBaseValue(attr);
+            EntityAttributeChangeEvent<T> event = EventBus.post(new EntityAttributeChangeEvent<>(entity, attr, oldBase, value));
+            if (event.isCancelled()) {
+                return;
+            }
+            value = event.getNewValue();
+        }
+
         rawValues.put(attr.key(), value.toString());
         save(attr.key(), value.toString());
     }
 
     /**
-     * Checks whether this player has stored a value for the given attribute.
+     * Adds a modifier to an attribute, allowing for event-driven logic to override the application.
      *
-     * @param attr the attribute to check
-     * @return true if the attribute exists, false otherwise
+     * @param <T>
+     * The numeric type of the attribute and modifier.
+     * @param attr
+     * The {@link Attribute} instance to modify.
+     * @param id
+     * The unique {@link Key} identifying this specific modifier.
+     * @param modifier
+     * The value of the modifier.
+     * @param operation
+     * The {@link AttributeOperation} determining how the modifier is applied.
+     */
+    public <T extends Number> void addModifier(Attribute<T> attr, Key id, T modifier, AttributeOperation operation) {
+        Entity entity = Bukkit.getEntity(uuid);
+        AttributeModifier<T> modObj = new AttributeModifier<>(modifier, operation);
+        if (entity != null) {
+            EntityAttributeModifierAddEvent<T> event = EventBus.post(new EntityAttributeModifierAddEvent<>(entity, attr, id, modObj));
+            if (event.isCancelled()) {
+                return;
+            }
+            modObj = event.getModifier();
+        }
+        attr.addModifier(id, modObj.getValue(), modObj.getOperation());
+    }
+
+    /**
+     * Removes a specific modifier from an attribute based on its unique Key.
+     *
+     * @param <T>
+     * The numeric type of the attribute.
+     * @param attr
+     * The {@link Attribute} instance to update.
+     * @param id
+     * The unique {@link Key} of the modifier to remove.
+     */
+    public <T extends Number> void removeModifier(Attribute<T> attr, Key id) {
+        Entity entity = Bukkit.getEntity(uuid);
+        AttributeModifier<T> existing = attr.getModifiers().get(id);
+        if (existing == null) {
+            return;
+        }
+
+        if (entity != null) {
+            EntityAttributeModifierRemoveEvent<T> event = EventBus.post(new EntityAttributeModifierRemoveEvent<>(entity, attr, id, existing));
+            if (event.isCancelled()) {
+                return;
+            }
+        }
+        attr.removeModifier(id);
+    }
+
+    /**
+     * Checks if a specific attribute has been defined or loaded for this entity.
+     *
+     * @param attr
+     * The {@link Attribute} to check for.
+     * @return
+     * True if the attribute key exists in the local data map.
      */
     public boolean has(Attribute<?> attr) {
         return rawValues.containsKey(attr.key());
     }
 
     /**
-     * Gets the base (unmodified) value of the specified attribute.
-     * Returns {@code null} if the value is not stored.
+     * Retrieves the raw base value of an attribute without applying any modifiers.
      *
-     * @param attr the attribute to fetch
-     * @param <T>  the type of the attribute
-     * @return the raw stored value without modifiers, or {@code null} if not present
+     * @param <T>
+     * The numeric type of the attribute.
+     * @param attr
+     * The {@link Attribute} to retrieve.
+     * @return
+     * The deserialized base value, or null if not found.
      */
     public <T extends Number> T getBaseValue(Attribute<T> attr) {
         String raw = rawValues.get(attr.key());
-        if (raw == null) return null;
+        if (raw == null) {
+            return null;
+        }
         return deserialize(raw, attr.type());
     }
 
     /**
-     * Retrieves the value for the given attribute, applying any registered modifiers.
-     * If no value is stored, returns {@code null}.
+     * Retrieves the final calculated value of an attribute after applying all modifiers.
      *
-     * @param attr the attribute to fetch
-     * @param <T>  the type of the attribute
-     * @return the stored and modified value, or {@code null} if none
+     * @param <T>
+     * The numeric type of the attribute.
+     * @param attr
+     * The {@link Attribute} to retrieve.
+     * @return
+     * The final calculated value, or null if the base value is missing.
      */
     public <T extends Number> T get(Attribute<T> attr) {
         String raw = rawValues.get(attr.key());
-        if (raw == null) return null;
+        if (raw == null) {
+            return null;
+        }
         T base = deserialize(raw, attr.type());
         return attr.applyModifiers(base);
     }
 
     /**
-     * Retrieves all the Attributes that are currently on the entity.
+     * Retrieves a map containing all raw attribute keys and values for this entity.
      *
-     * @return Map of all attributes
+     * @return
+     * A {@link Map} of string-serialized attribute data.
      */
     public Map<String, String> getAllAttributes() {
         return rawValues;
     }
 
     /**
-     * Deserializes a string value into the specified type.
+     * Internal logic for deserializing raw database strings into numeric types.
      *
-     * @param <T>   the generic type
-     * @param value the raw string value
-     * @param type  the expected Java class
-     * @return the parsed value, or fallback if invalid
+     * @param <T>
+     * The target type.
+     * @param value
+     * The raw string value.
+     * @param type
+     * The target class type.
+     * @return
+     * The deserialized object, or null if parsing fails.
      */
+    @SuppressWarnings("unchecked")
     private <T> T deserialize(String value, Class<T> type) {
         try {
-            if (type == Integer.class) return type.cast(Integer.parseInt(value));
-            if (type == Double.class) return type.cast(Double.parseDouble(value));
-            if (type == String.class) return type.cast(value);
+            if (type == Integer.class) {
+                return (T) Integer.valueOf(value);
+            }
+            if (type == Double.class) {
+                return (T) Double.valueOf(value);
+            }
+            if (type == Float.class) {
+                return (T) Float.valueOf(value);
+            }
+            if (type == Long.class) {
+                return (T) Long.valueOf(value);
+            }
         } catch (Exception e) {
             return null;
         }
@@ -136,7 +257,7 @@ public class EntityAttributes {
     }
 
     /**
-     * Loads all attribute data for this entity asynchronously from the database.
+     * Asynchronously loads all attribute data for this entity from the database.
      */
     public void load() {
         DATABASE.executor().table("entity_data")
@@ -157,11 +278,12 @@ public class EntityAttributes {
     }
 
     /**
-     * Persists a key-value attribute pair to the database asynchronously.
-     * Uses replace (UPSERT) logic to handle both inserts and updates.
+     * Asynchronously saves an attribute's raw value to the database.
      *
-     * @param key   the attribute key
-     * @param value the attribute value as string
+     * @param key
+     * The attribute key string.
+     * @param value
+     * The string-serialized value.
      */
     private void save(String key, String value) {
         DATABASE.executor().table("entity_data").replace()
@@ -176,7 +298,7 @@ public class EntityAttributes {
     }
 
     /**
-     * Initializes the entity_data database table with required schema if it doesn't already exist.
+     * Initializes the SQLite table used for persistent attribute storage.
      */
     public static void initTable() {
         DATABASE.executor().create("entity_data")
