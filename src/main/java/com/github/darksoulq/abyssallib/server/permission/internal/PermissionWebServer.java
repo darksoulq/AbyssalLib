@@ -41,7 +41,7 @@ public class PermissionWebServer {
     public void start(String protocol, String host, int port) {
         try {
             if ("https".equalsIgnoreCase(protocol)) {
-                HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(host, port), 0);
+                HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(port), 0);
                 try {
                     SSLContext sslContext = SSLContext.getDefault();
                     httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
@@ -51,7 +51,7 @@ public class PermissionWebServer {
                     return;
                 }
             } else {
-                server = HttpServer.create(new InetSocketAddress(host, port), 0);
+                server = HttpServer.create(new InetSocketAddress(port), 0);
             }
 
             server.createContext("/", exchange -> {

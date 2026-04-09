@@ -67,7 +67,8 @@ public class GuiManager {
      */
     public static void remove(GuiView view) {
         OPEN_VIEWS.remove(view.getInventoryView());
-        TICK_VIEWS.remove(view);
+        BukkitTask task = TICK_VIEWS.remove(view);
+        if (task != null) task.cancel();
     }
 
     /**

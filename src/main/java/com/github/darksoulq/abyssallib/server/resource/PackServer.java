@@ -33,7 +33,7 @@ public class PackServer {
             this.port = port;
 
             if ("https".equalsIgnoreCase(protocol)) {
-                HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(host, port), 0);
+                HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(port), 0);
                 try {
                     SSLContext sslContext = SSLContext.getDefault();
                     httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
@@ -43,7 +43,7 @@ public class PackServer {
                     return;
                 }
             } else {
-                server = HttpServer.create(new InetSocketAddress(host, port), 0);
+                server = HttpServer.create(new InetSocketAddress(port), 0);
             }
 
             server.createContext("/", exchange -> {
