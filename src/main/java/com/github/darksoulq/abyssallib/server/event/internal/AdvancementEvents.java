@@ -16,6 +16,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
@@ -72,6 +73,11 @@ public class AdvancementEvents {
         if (event.hasChangedBlock()) {
             checkAdvancements(event.getPlayer(), event);
         }
+    }
+
+    @SubscribeEvent
+    public void onJoin(PlayerJoinEvent event) {
+        checkAdvancements(event.getPlayer(), event);
     }
 
     private void checkAdvancements(Player player, Event event) {

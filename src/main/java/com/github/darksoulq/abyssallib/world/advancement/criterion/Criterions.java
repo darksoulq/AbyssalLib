@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 public class Criterions {
     public static final DeferredRegistry<CriterionType<?>> CRITERION = DeferredRegistry.create(Registries.CRITERION, AbyssalLib.PLUGIN_ID);
 
+    public static final CriterionType<?> AUTO_GRANT = CRITERION.register("auto_grant", id -> AutoGrantCriterion.TYPE);
     public static final CriterionType<?> HAS_ITEM = CRITERION.register("has_item", id -> ItemHasCriterion.TYPE);
     public static final CriterionType<?> STATISTIC = CRITERION.register("statistic", id -> StatisticCriterion.TYPE);
     public static final CriterionType<?> LEVEL = CRITERION.register("level", id -> LevelCriterion.TYPE);
