@@ -1,19 +1,20 @@
----
-switcher-label: In
----
 # Creating Your First Feature
-<secondary-label ref="wip"/>
+<link-summary>Guide to generating custom world features</link-summary>
 
-Features allow you to generate blocks into the world naturally, like trees, ores, structures and so on.
+Features allow you to generate blocks naturally into the world during chunk generation, such as custom trees, ores, or structures.
 
-### Creating a feature {switcher-key=JSON id="creating-a-feature_json"}
-To create a feature, navigate to <path>plugins/AbyssalLib/worldgen/features/</path> then make a namespace folder (used for the namespace part of feature ID)
-next make a JSON file with the name of the feature. (e.g gold_block_ore.json)
+### Creating a feature
+To create a new feature, navigate to your server's plugin directory and create a JSON file at the following path:
+<path>plugins/AbyssalLib/worldgen/features/&lt;namespace&gt;/&lt;feature_name&gt;.json</path>
 
-The JSON file consists of three parts:
-1. "type": this defines what feature type to use.
-2. "config": this is used to configure the feature.
-3. "worlds": this defines which worlds the feature should apply to, if it is empty, the feature wont be applied to any world.
+*(For example: `plugins/AbyssalLib/worldgen/features/abyssallib_example/gold_block_ore.json`)*
+
+The feature JSON file consists of four primary sections:
+
+1. `"type"`: Defines the base feature logic to use (e.g., an ore vein or a tree).
+2. `"config"`: Holds the specific configuration parameters required by the chosen feature type.
+3. `"placement"`: Defines the rules and modifiers that dictate where, how often, and at what altitudes the feature generates within a chunk.
+4. `"worlds"`: A list of world names where this feature is permitted to generate. If this array is empty, the feature will not generate anywhere.
 
 ```JSON
 {
@@ -30,7 +31,7 @@ The JSON file consists of three parts:
           }
         ],
         "state_provider": {
-          "type": "simple",
+          "type": "abyssallib:simple",
           "state": {
             "id": "minecraft:gold_block"
           }
@@ -41,20 +42,16 @@ The JSON file consists of three parts:
   },
   "placement": [
     {
-      "type": "count",
+      "type": "abyssallib:count",
       "count": 12
     },
     {
-      "type": "in_square"
+      "type": "abyssallib:in_square"
     },
     {
-      "type": "height_range",
-      "min_inclusive": {
-        "absolute": -64
-      },
-      "max_inclusive": {
-        "absolute": 32
-      }
+      "type": "abyssallib:height_range",
+      "min_inclusive": -64,
+      "max_inclusive": 32
     }
   ],
   "worlds": [
@@ -63,13 +60,39 @@ The JSON file consists of three parts:
 }
 ```
 
-The config for all default placement modifiers is present at [], for all features at [] and for all state providers at [].
+<note>
+For comprehensive lists of available generation options, refer to the following resources:
+<list>
+<li><a href="default-features.md"/></li>
+<li><a href="default-placement-modifiers.md"/></li>
+<li><a href="default-state-providers.md"/></li>
+</list>
+</note>
 
-### Creating a feature {switcher-key=Code id="creating-a-feature_code"}
+---
 
-### BlockInfo format {switcher-key=JSON}
+### BlockInfo Format
+When defining blocks inside your configuration (such as the `"target"` blocks to replace, or the `"state"` block to place), AbyssalLib uses a specific `BlockInfo` JSON object format.
 
-"id" -> the identifier of the block to use ("minecraft:stone", "someplugin:someblock")
-"pos" -> optional, used for tile entities like chests
-"states" -> vanilla block states map (covered states available at [])
-"properties" -> CustomBlock properties (only for abyssallib blocks)
+<table>
+<tr>
+<th>Key</th>
+<th>Information</th>
+</tr>
+<tr>
+<td><code>"id"</code></td>
+<td>The namespace identifier of the block (e.g., <code>"minecraft:stone"</code>, <code>"abyssallib_example:custom_ore"</code>).</td>
+</tr>
+<tr>
+<td><code>"states"</code></td>
+<td>A key-value map defining standard vanilla block states (e.g., <code>"facing": "north"</code>).</td>
+</tr>
+<tr>
+<td><code>"properties"</code></td>
+<td>A key-value map defining custom properties specific to AbyssalLib custom blocks.</td>
+</tr>
+<tr>
+<td><code>"nbt"</code></td>
+<td>A JSON object defining TileEntity data for vanilla blocks.</td>
+</tr>
+</table>

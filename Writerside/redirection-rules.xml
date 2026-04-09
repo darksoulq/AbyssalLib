@@ -10,4 +10,12 @@
         <description>Created after removal of "Translation Providers" from AbyssalLib</description>
         <accepts>translation-providers.html</accepts>
     </rule>
+    <rule id="1efb43ef">
+        <description>Created after removal of "Default BlockStates" from AbyssalLib</description>
+        <accepts>default-block_states.html</accepts>
+    </rule>
+    <rule id="34d86473">
+        <description>Created after removal of "Default Tile NBT" from AbyssalLib</description>
+        <accepts>default-tile-nbt.html</accepts>
+    </rule>
 </rules>

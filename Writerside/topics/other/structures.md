@@ -106,7 +106,7 @@ To apply processors to an in-game structure, you must manually edit the generate
   "palette": [ 
     {
       "Name": "minecraft:oak_log",
-      "Properties": {
+      "States": {
         "axis": "Y"
       }
     }
