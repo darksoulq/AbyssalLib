@@ -12,4 +12,5 @@ public class Rewards {
     public static final RewardType<?> COMMAND = REWARDS.register("command", id -> CommandReward.TYPE);
     public static final RewardType<?> POTION_EFFECT = REWARDS.register("potion_effect", id -> PotionEffectReward.TYPE);
     public static final RewardType<?> LOOT_TABLE = REWARDS.register("loot_table", id -> LootTableReward.TYPE);
+    public static final RewardType<?> CUSTOM_LOOT_TABLE = REWARDS.register("custom_loot_table", id -> CustomLootTableReward.TYPE);
 }
