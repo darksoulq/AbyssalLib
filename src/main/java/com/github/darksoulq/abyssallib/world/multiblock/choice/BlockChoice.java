@@ -10,7 +10,9 @@ import java.util.List;
  * <p>
  * This choice allows a multiblock pattern to require either a single specific
  * {@link CustomBlock} or any block from a provided list of valid custom blocks.
+ * @deprecated will be removed in v2.0.0-mc1.21.11 to reduce bloat
  */
+@Deprecated(forRemoval = true)
 public class BlockChoice extends MultiblockChoice {
 
     /**

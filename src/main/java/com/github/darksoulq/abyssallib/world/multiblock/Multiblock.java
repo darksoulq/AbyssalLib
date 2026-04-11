@@ -23,7 +23,10 @@ import java.util.Objects;
  * Multiblocks are complex arrangements of blocks that behave as a single logic unit.
  * This class handles pattern matching across four rotations and optional mirroring,
  * coordinate transformations, and life-cycle events.
+ *
+ * @deprecated will be removed in v2.0.0-mc1.21.11 to reduce bloat
  */
+@Deprecated(forRemoval = true)
 public abstract class Multiblock implements Cloneable {
 
     /** The unique identifier for this multiblock type. */

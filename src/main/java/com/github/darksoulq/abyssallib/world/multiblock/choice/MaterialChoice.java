@@ -12,7 +12,9 @@ import java.util.List;
  * This choice is used when a multiblock pattern requires standard Minecraft blocks
  * rather than custom AbyssalLib blocks. It supports matching against a single
  * material or a list of multiple valid materials.
+ * @deprecated will be removed in v2.0.0-mc1.21.11 to reduce bloat
  */
+@Deprecated(forRemoval = true)
 public class MaterialChoice extends MultiblockChoice {
 
     /**

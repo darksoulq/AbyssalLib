@@ -150,31 +150,63 @@ public class ServerEvents {
 
     @SubscribeEvent
     public void onEntityDeath(EntityDeathEvent e) {
-        NamespacedKey entityKey = e.getEntityType().getKey();
-        String vanillaTableKey = "minecraft:entities/" + entityKey.getKey();
+        Entity entity = e.getEntity();
+        NamespacedKey customTableKey = new NamespacedKey("abyssallib", "custom_loot_table");
+        boolean usedCustom = false;
 
-        for (LootTable table : Registries.LOOT_TABLES.getAll().values()) {
-            if (table.getVanillaId() != null && table.getVanillaId().equals(vanillaTableKey)) {
-                if (table.getMergeStrategy() == MergeStrategy.NONE) continue;
+        if (entity.getPersistentDataContainer().has(customTableKey, PersistentDataType.STRING)) {
+            String tableId = entity.getPersistentDataContainer().get(customTableKey, PersistentDataType.STRING);
+            LootTable table = Registries.LOOT_TABLES.get(tableId);
 
-                if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
-                    e.getDrops().clear();
-                }
+            if (table != null && table.getMergeStrategy() == MergeStrategy.NONE) {
+                e.getDrops().clear();
 
-                EntityDamageEvent damageEvent = e.getEntity().getLastDamageCause();
+                EntityDamageEvent damageEvent = entity.getLastDamageCause();
                 Entity killer = null;
                 if (damageEvent instanceof EntityDamageByEntityEvent edev) {
                     killer = edev.getDamager();
                 }
-                LootContext.Builder builder = LootContext.builder(e.getEntity().getLocation()).victim(e.getEntity());
 
+                LootContext.Builder builder = LootContext.builder(entity.getLocation()).victim(entity);
                 if (killer != null) {
                     builder.looter(killer).killer(killer);
-                    if (killer instanceof LivingEntity livingEntity) builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
+                    if (killer instanceof LivingEntity livingEntity) {
+                        builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
+                    }
                 }
 
-                List<ItemStack> generated = table.generate(builder.build());
-                e.getDrops().addAll(generated);
+                e.getDrops().addAll(table.generate(builder.build()));
+                usedCustom = true;
+            }
+        }
+
+        if (!usedCustom) {
+            NamespacedKey entityKey = e.getEntityType().getKey();
+            String vanillaTableKey = "minecraft:entities/" + entityKey.getKey();
+
+            for (LootTable table : Registries.LOOT_TABLES.getAll().values()) {
+                if (table.getVanillaId() != null && table.getVanillaId().equals(vanillaTableKey)) {
+                    if (table.getMergeStrategy() == MergeStrategy.NONE) continue;
+
+                    if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
+                        e.getDrops().clear();
+                    }
+
+                    EntityDamageEvent damageEvent = e.getEntity().getLastDamageCause();
+                    Entity killer = null;
+                    if (damageEvent instanceof EntityDamageByEntityEvent edev) {
+                        killer = edev.getDamager();
+                    }
+                    LootContext.Builder builder = LootContext.builder(e.getEntity().getLocation()).victim(e.getEntity());
+
+                    if (killer != null) {
+                        builder.looter(killer).killer(killer);
+                        if (killer instanceof LivingEntity livingEntity) builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
+                    }
+
+                    List<ItemStack> generated = table.generate(builder.build());
+                    e.getDrops().addAll(generated);
+                }
             }
         }
     }

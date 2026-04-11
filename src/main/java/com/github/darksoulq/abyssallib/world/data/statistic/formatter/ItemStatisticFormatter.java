@@ -20,14 +20,16 @@ public class ItemStatisticFormatter implements StatisticFormatter {
             return new DefaultStatisticFormatter().formatDialog(stat, value);
         }
 
-        String langKey = "<lang:item.%s.%s>".formatted(stat.target().namespace(), stat.target().value());
+        String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase()).isBlock() ? "block" : "item";
+        String langKey = "<lang:%s.%s.%s>".formatted(type, stat.target().namespace(), stat.target().value());
         return DialogContent.item(stack, DialogContent.text(TextUtil.parse("<green>" + langKey + "</green> <gray>=</gray> <yellow>" + value + "</yellow>")));
     }
 
     @Override
     public Component formatChat(Statistic stat, int value) {
-        String catKey = "<lang:%s.stat_type.%s>".formatted(stat.type().id().namespace(), stat.type().id().value());
-        String langKey = "<lang:item.%s.%s>".formatted(stat.target().namespace(), stat.target().value());
+        String catKey = "<lang:stat_type.%s.%s>".formatted(stat.type().id().namespace(), stat.type().id().value());
+        String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase()).isBlock() ? "block" : "item";
+        String langKey = "<lang:%s.%s.%s>".formatted(type, stat.target().namespace(), stat.target().value());
         
         ItemStack stack = getItem(stat);
         if (stack == null || stack.getType().isAir()) {

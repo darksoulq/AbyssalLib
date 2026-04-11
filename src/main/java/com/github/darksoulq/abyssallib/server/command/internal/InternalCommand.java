@@ -52,6 +52,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -105,6 +106,11 @@ public class InternalCommand {
         ).then(Commands.literal("loot")
             .requires(DefaultConditions.hasPerm(PluginPermissions.LOOT_SET))
             .then(Commands.literal("set")
+                .then(Commands.argument("table", RegistryEntryArgument.registryEntry(Registries.LOOT_TABLES))
+                    .executes(InternalCommand::setLootTableLookingExecutor)
+                )
+            )
+            .then(Commands.literal("at")
                 .then(Commands.argument("location", ArgumentTypes.finePosition(false))
                     .then(Commands.argument("table", RegistryEntryArgument.registryEntry(Registries.LOOT_TABLES))
                         .executes(InternalCommand::setLootTableExecutor)
@@ -123,11 +129,7 @@ public class InternalCommand {
                 .requires(DefaultConditions.hasAnyPerm(PluginPermissions.STATISTICS_MENU_SELF, PluginPermissions.STATISTICS_MENU_ALL))
                 .executes(InternalCommand::getSelfStatisticsMenu)
                 .then(Commands.argument("player", ArgumentTypes.player())
-                    .requires(ctx -> {
-                        org.bukkit.entity.Entity sender = isEntity(ctx);
-                        if (sender == null) return false;
-                        return sender.hasPermission(PluginPermissions.STATISTICS_MENU_ALL.getNode());
-                    })
+                    .requires(DefaultConditions.hasPerm(PluginPermissions.STATISTICS_VIEW_ALL))
                     .executes(InternalCommand::getOtherStatisticsMenu))
             )
         ).then(Commands.literal("reload")
@@ -475,7 +477,7 @@ public class InternalCommand {
     @SuppressWarnings("unchecked")
     public int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
         FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
-        org.bukkit.entity.Entity sender = isEntity(ctx.getSource());
+        Entity sender = isEntity(ctx.getSource());
         if (sender == null) return Command.SUCCESS;
         Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
 
@@ -485,28 +487,66 @@ public class InternalCommand {
         return Command.SUCCESS;
     }
 
-    private static int setLootTableExecutor(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
-        FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
-        org.bukkit.entity.Entity sender = isEntity(ctx.getSource());
-        if (sender == null) return 0;
+    private static int setLootTableLookingExecutor(CommandContext<CommandSourceStack> ctx) {
+        if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+            reply(ctx, "<red>Only players can use this command without specifying a location.</red>");
+            return 0;
+        }
 
-        Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
-        Block block = loc.getBlock();
+        LootTable table = ctx.getArgument("table", LootTable.class);
+        String tableId = Registries.LOOT_TABLES.getId(table);
 
-        if (block.getState() instanceof Container container) {
-            LootTable table = ctx.getArgument("table", LootTable.class);
-            String tableId = Registries.LOOT_TABLES.getId(table);
+        Entity targetEntity = player.getTargetEntity(10);
+        if (targetEntity != null) {
+            PersistentDataContainer pdc = targetEntity.getPersistentDataContainer();
+            pdc.set(new NamespacedKey("abyssallib", "custom_loot_table"), PersistentDataType.STRING, tableId);
+            reply(ctx, "<green>Loot table injected into entity successfully.</green>");
+            return Command.SUCCESS;
+        }
 
+        Block block = player.getTargetBlockExact(10);
+        if (block != null && block.getState() instanceof Container container) {
             PersistentDataContainer pdc = container.getPersistentDataContainer();
             pdc.set(new NamespacedKey("abyssallib", "loot_table"), PersistentDataType.STRING, tableId);
             pdc.set(new NamespacedKey("abyssallib", "loot_seed"), PersistentDataType.LONG, ThreadLocalRandom.current().nextLong());
             container.update();
-
             reply(ctx, "<green>Loot table injected into container successfully.</green>");
             return Command.SUCCESS;
         }
 
-        reply(ctx, "<red>Target block is not a valid container.</red>");
+        reply(ctx, "<red>You are not looking at a valid container or entity.</red>");
+        return 0;
+    }
+
+    private static int setLootTableExecutor(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
+        Entity sender = isEntity(ctx.getSource());
+        if (sender == null) return 0;
+
+        Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
+        LootTable table = ctx.getArgument("table", LootTable.class);
+        String tableId = Registries.LOOT_TABLES.getId(table);
+
+        Block block = loc.getBlock();
+        if (block.getState() instanceof Container container) {
+            PersistentDataContainer pdc = container.getPersistentDataContainer();
+            pdc.set(new NamespacedKey("abyssallib", "loot_table"), PersistentDataType.STRING, tableId);
+            pdc.set(new NamespacedKey("abyssallib", "loot_seed"), PersistentDataType.LONG, ThreadLocalRandom.current().nextLong());
+            container.update();
+            reply(ctx, "<green>Loot table injected into container successfully.</green>");
+            return Command.SUCCESS;
+        }
+
+        Collection<Entity> entities = loc.getWorld().getNearbyEntities(loc, 0.5, 0.5, 0.5);
+        if (!entities.isEmpty()) {
+            Entity target = entities.iterator().next();
+            PersistentDataContainer pdc = target.getPersistentDataContainer();
+            pdc.set(new NamespacedKey("abyssallib", "custom_loot_table"), PersistentDataType.STRING, tableId);
+            reply(ctx, "<green>Loot table injected into entity successfully.</green>");
+            return Command.SUCCESS;
+        }
+
+        reply(ctx, "<red>Target block is not a valid container, and no entity was found.</red>");
         return 0;
     }
 
@@ -598,9 +638,9 @@ public class InternalCommand {
         return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
 
-    private static org.bukkit.entity.Entity isEntity(CommandSourceStack ctx) {
+    private static Entity isEntity(CommandSourceStack ctx) {
         CommandSender sender = ctx.getExecutor() == null ? ctx.getSender() : ctx.getExecutor();
-        if (!(sender instanceof org.bukkit.entity.Entity entity)) return null;
+        if (!(sender instanceof Entity entity)) return null;
         return entity;
     }
 

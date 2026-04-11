@@ -12,6 +12,7 @@ import java.util.Objects;
  * @param y The relative Y coordinate.
  * @param z The relative Z coordinate.
  */
+@Deprecated(forRemoval = true)
 public record RelativeBlockPos(int x, int y, int z) {
 
     /**

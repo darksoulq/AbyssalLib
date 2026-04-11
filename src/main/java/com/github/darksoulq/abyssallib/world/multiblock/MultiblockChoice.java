@@ -8,7 +8,9 @@ import org.bukkit.block.Block;
  * <p>
  * Implementations define whether a specific {@link Block} in the world satisfies the
  * condition required by the multiblock layout at that location.
+ * @deprecated will be removed in v2.0.0-mc1.21.11 to reduce bloat
  */
+@Deprecated(forRemoval = true)
 public abstract class MultiblockChoice {
 
     /**

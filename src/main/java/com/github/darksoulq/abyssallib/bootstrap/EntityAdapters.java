@@ -30,6 +30,7 @@ public class EntityAdapters {
         EntityAdapter.register(new FireballEntityAdapter());
         EntityAdapter.register(new LeashableEntityAdapter());
         EntityAdapter.register(new LootableEntityAdapter());
+        EntityAdapter.register(new CustomLootableEntityAdapter());
         EntityAdapter.register(new MobEntityAdapter());
         EntityAdapter.register(new PiglinAbstractEntityAdapter());
         EntityAdapter.register(new ProjectileEntityAdapter());

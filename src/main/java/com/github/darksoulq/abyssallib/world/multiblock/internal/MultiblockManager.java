@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated(forRemoval = true)
 public class MultiblockManager {
     private static Database DATABASE;
 

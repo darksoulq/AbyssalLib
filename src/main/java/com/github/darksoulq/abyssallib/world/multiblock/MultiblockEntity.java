@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.multiblock;
 
 import com.github.darksoulq.abyssallib.world.entity.AbstractPropertyEntity;
 
+@Deprecated(forRemoval = true)
 public abstract class MultiblockEntity extends AbstractPropertyEntity<Multiblock> {
 
     public MultiblockEntity(Multiblock multiblock) {

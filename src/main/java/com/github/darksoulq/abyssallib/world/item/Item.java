@@ -256,7 +256,7 @@ public class Item implements Cloneable {
      */
     public void setTag(ItemTag tag) {
         tag.add(ItemPredicate.builder()
-            .value(new CustomMarker(id))
+            .id(id)
             .build());
     }
 

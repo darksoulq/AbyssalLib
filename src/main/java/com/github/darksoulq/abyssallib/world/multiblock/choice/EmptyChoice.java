@@ -8,7 +8,9 @@ import org.bukkit.block.Block;
  * <p>
  * This is used within multiblock patterns to ensure specific coordinates
  * contain air or are not occupied by solid blocks.
+ * @deprecated will be removed in v2.0.0-mc1.21.11 to reduce bloat
  */
+@Deprecated(forRemoval = true)
 public class EmptyChoice extends MultiblockChoice {
 
     /**

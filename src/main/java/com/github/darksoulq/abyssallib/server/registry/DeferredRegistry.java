@@ -5,7 +5,10 @@ import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyE
 import com.github.darksoulq.abyssallib.server.event.internal.ServerEvents;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
+import com.github.darksoulq.abyssallib.world.block.BlockPredicate;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.EntityPredicate;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
@@ -15,6 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerAdvancementManager;
 import org.bukkit.Bukkit;
+import org.checkerframework.checker.units.qual.K;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -121,16 +125,25 @@ public final class DeferredRegistry<T> {
             registry.register(idString, value);
 
             if (value instanceof CustomBlock block && block.generateItem()) {
+                Registries.BLOCK_PREDICATES.register(idString, BlockPredicate.builder()
+                    .id(Key.key(idString))
+                    .build());
                 Item blockItem = block.getItem().get();
                 Registries.ITEM_PREDICATES.register(idString, ItemPredicate.builder()
-                    .value(new CustomMarker(Key.key(idString)))
+                    .id(Key.key(idString))
                     .build());
                 Registries.ITEMS.register(idString, blockItem);
             }
 
             if (value instanceof Item) {
                 Registries.ITEM_PREDICATES.register(idString, ItemPredicate.builder()
-                    .value(new CustomMarker(Key.key(idString)))
+                    .id(Key.key(idString))
+                    .build());
+            }
+
+            if (value instanceof CustomEntity<?>) {
+                Registries.ENTITY_PREDICATES.register(idString, EntityPredicate.builder()
+                    .id(Key.key(idString))
                     .build());
             }
 
