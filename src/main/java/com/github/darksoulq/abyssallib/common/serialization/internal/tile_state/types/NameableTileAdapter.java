@@ -7,16 +7,18 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.
 import org.bukkit.Nameable;
 import org.bukkit.block.TileState;
 
-
 public class NameableTileAdapter extends TileAdapter<Nameable> {
 
     @Override
     public boolean doesApply(TileState state) {
-        return state instanceof Nameable nameable && nameable.customName() != null;
+        return state instanceof Nameable;
     }
 
     @Override
     public <D> D serialize(DynamicOps<D> ops, Nameable value) throws Codec.CodecException {
+        if (value.customName() == null) {
+            throw new Codec.CodecException("No custom name");
+        }
         return Codecs.TEXT_COMPONENT.encode(ops, value.customName());
     }
 

@@ -50,5 +50,7 @@ public final class BlockAdapters {
         Adapter.register("triggered", new CrafterPowerAdapter());
         Adapter.register("part", new BedPartAdapter());
         Adapter.register("occupied", new BedOccupiedAdapter());
+        Adapter.register("persistent", new LeavesPersistentAdapter());
+        Adapter.register("distance", new LeavesDistanceAdapter());
     }
 }

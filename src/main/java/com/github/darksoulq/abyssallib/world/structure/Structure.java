@@ -18,6 +18,8 @@ import com.github.darksoulq.abyssallib.world.structure.processor.StructureProces
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Leaves;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
@@ -33,71 +35,70 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a fully captured, transformable, and replayable structure definition.
- *
- * <p>This implementation supports:
- * <ul>
- *     <li>Palette-based block storage for deduplication</li>
- *     <li>Relative positioning for blocks and entities</li>
- *     <li>Transformation via {@link StructureRotation} and {@link Mirror}</li>
- *     <li>Synchronous and asynchronous placement</li>
- *     <li>Custom processing via {@link StructureProcessor}</li>
- *     <li>JSON serialization and deserialization</li>
- * </ul>
+ * This implementation supports palette-based block storage for deduplication,
+ * relative positioning for blocks and entities, transformation via rotations and
+ * mirrors, and both synchronous and asynchronous placement routines.
  */
 public class Structure {
 
     /**
-     * Shared {@link JsonNodeFactory} used to construct JSON nodes.
+     * Shared {@link JsonNodeFactory} used to efficiently construct JSON nodes during serialization.
      */
     private static final JsonNodeFactory FACTORY = JsonNodeFactory.instance;
 
     /**
      * Palette of unique block state entries.
-     *
-     * <p>Each entry represents a unique block identifier and optional state data.</p>
+     * Each entry represents a unique block identifier and its optional state data to prevent
+     * redundant data storage across the structure.
      */
     private final List<PaletteEntry> palette = new ArrayList<>();
 
     /**
      * Collection of blocks stored in this structure.
-     *
-     * <p>Each block references an index into {@link #palette}.</p>
+     * Each block acts as a lightweight pointer referencing an index within the {@link #palette}.
      */
     private final List<StructureBlock> blocks = new ArrayList<>();
 
     /**
-     * Collection of entities stored in this structure.
+     * Collection of entities stored in this structure, mapped with relative positions.
      */
     private final List<StructureEntity> entities = new ArrayList<>();
 
     /**
-     * List of processors applied during placement.
+     * List of processors applied sequentially during block placement to alter or filter the layout.
      */
     private final List<StructureProcessor> processors = new ArrayList<>();
 
     /**
-     * Dimensions of the structure (width, height, depth).
+     * Dimensions of the structure encapsulated as width, height, and depth.
      */
     private Vector size;
 
     /**
-     * Captures all blocks within the defined region.
+     * Captures all blocks within the defined region, excluding entities.
      *
-     * @param corner1 the first corner of the region
-     * @param corner2 the opposite corner of the region
-     * @param origin  the origin used for relative positioning
+     * @param corner1
+     * The first corner {@link Location} bounding the region.
+     * @param corner2
+     * The opposite corner {@link Location} bounding the region.
+     * @param origin
+     * The designated origin {@link Location} utilized for relative positioning.
      */
     public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin) {
         fill(corner1, corner2, origin, true);
     }
 
     /**
-     * Captures blocks and optionally entities within the defined region.
+     * Captures blocks and optionally entities within the defined physical region.
      *
-     * @param corner1         the first corner of the region
-     * @param corner2         the opposite corner of the region
-     * @param origin          the origin used for relative positioning
-     * @param includeEntities whether entities should also be captured
+     * @param corner1
+     * The first corner {@link Location} bounding the region.
+     * @param corner2
+     * The opposite corner {@link Location} bounding the region.
+     * @param origin
+     * The origin {@link Location} used for zero-point relative alignment.
+     * @param includeEntities
+     * True if entities within the bounding box should be captured and serialized.
      */
     public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin, boolean includeEntities) {
         palette.clear();
@@ -125,7 +126,9 @@ public class Structure {
 
                     Block block = corner1.getWorld().getBlockAt(x, y, z);
 
-                    if (block.getType() == Material.STRUCTURE_VOID) continue;
+                    if (block.getType() == Material.STRUCTURE_VOID) {
+                        continue;
+                    }
 
                     BlockInfo info = BlockInfo.resolve(block);
                     PaletteEntry entry = new PaletteEntry(info.getAsString(), info.states());
@@ -150,7 +153,9 @@ public class Structure {
         if (includeEntities) {
             BoundingBox box = BoundingBox.of(corner1, corner2);
             for (org.bukkit.entity.Entity entity : corner1.getWorld().getNearbyEntities(box)) {
-                if (entity instanceof Player) continue;
+                if (entity instanceof Player) {
+                    continue;
+                }
                 Vector relativePos = entity.getLocation().toVector().subtract(origin.toVector());
                 SavedEntity savedEntity = SavedEntity.create(entity, JsonOps.INSTANCE);
                 this.entities.add(new StructureEntity(relativePos, savedEntity));
@@ -159,188 +164,309 @@ public class Structure {
     }
 
     /**
-     * Places this structure asynchronously using a scheduled task.
+     * Places this structure asynchronously using a scheduled repeating task to prevent server lag.
      *
-     * @param plugin        the plugin used for scheduling
-     * @param origin        the placement origin
-     * @param rotation      the rotation to apply
-     * @param mirror        the mirror transformation
-     * @param integrity     chance [0–1] for each block to be placed
-     * @param blocksPerTick maximum number of blocks placed per tick
-     * @return a {@link CompletableFuture} that completes when placement finishes
+     * @param plugin
+     * The {@link Plugin} utilized for scheduling the Bukkit task.
+     * @param origin
+     * The target placement origin {@link Location}.
+     * @param rotation
+     * The {@link StructureRotation} to apply.
+     * @param mirror
+     * The {@link Mirror} transformation to apply.
+     * @param integrity
+     * The survival chance [0.0 - 1.0] for each individual block.
+     * @param blocksPerTick
+     * The maximum number of blocks to process per server tick.
+     * @return
+     * A {@link CompletableFuture} that resolves when the entire placement operation completes.
      */
     public CompletableFuture<Void> placeAsync(@NotNull Plugin plugin, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity, int blocksPerTick) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future)
-            .runTaskTimer(plugin, 0L, 1L);
+        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).runTaskTimer(plugin, 0L, 1L);
         return future;
     }
 
     /**
-     * Places this structure synchronously in a Bukkit world.
+     * Places this structure synchronously in a live Bukkit world.
      *
-     * @param origin    the placement origin
-     * @param rotation  the rotation to apply
-     * @param mirror    the mirror transformation
-     * @param integrity chance [0–1] for each block to be placed
+     * @param origin
+     * The target placement origin {@link Location}.
+     * @param rotation
+     * The {@link StructureRotation} to apply.
+     * @param mirror
+     * The {@link Mirror} transformation to apply.
+     * @param integrity
+     * The survival chance [0.0 - 1.0] for each individual block.
      */
     public void place(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
+        BlockData[] bakedData = new BlockData[palette.size()];
+        CustomBlock[] bakedCustom = new CustomBlock[palette.size()];
+        bakePalette(bakedData, bakedCustom, rotation, mirror);
 
         for (StructureBlock sb : blocks) {
-            if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-            Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
-            Location target = origin.clone().add(transformed);
-            if (!target.isChunkLoaded()) target.getChunk().load(true);
-            placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+            if (integrity < 1.0f && random.nextFloat() > integrity) {
+                continue;
+            }
+            processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
         }
-        placeEntities(origin.getWorld(), origin, rotation, mirror, entities);
+        placeEntities(null, origin, rotation, mirror, entities, null);
     }
 
     /**
-     * Places this structure in a {@link WorldGenAccess} context.
+     * Places this structure inside an asynchronous or virtual {@link WorldGenAccess} context.
+     * Handles deferring out-of-bounds placements back to the main thread if strictly required.
      *
-     * @param level     the world generation access
-     * @param origin    the placement origin
-     * @param rotation  the rotation to apply
-     * @param mirror    the mirror transformation
-     * @param integrity chance [0–1] for each block to be placed
+     * @param level
+     * The {@link WorldGenAccess} bridging chunk generation.
+     * @param origin
+     * The target placement origin {@link Location}.
+     * @param rotation
+     * The {@link StructureRotation} to apply.
+     * @param mirror
+     * The {@link Mirror} transformation to apply.
+     * @param integrity
+     * The survival chance [0.0 - 1.0] for each individual block.
      */
     public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
         List<StructureBlock> deferredBlocks = new ArrayList<>();
         List<StructureEntity> deferredEntities = new ArrayList<>();
 
-        boolean isNms = level instanceof NMSWorldGenAccess;
-        NMSWorldGenAccess nmsLevel = isNms ? (NMSWorldGenAccess) level : null;
+        BlockData[] bakedData = new BlockData[palette.size()];
+        CustomBlock[] bakedCustom = new CustomBlock[palette.size()];
+        bakePalette(bakedData, bakedCustom, rotation, mirror);
 
         for (StructureBlock sb : blocks) {
-            if (integrity < 1.0f && random.nextFloat() > integrity) continue;
-
-            Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
-            Location target = origin.clone().add(transformed);
-
-            if (nmsLevel != null && !nmsLevel.isInRegion(target.getBlockX(), target.getBlockY(), target.getBlockZ())) {
-                deferredBlocks.add(sb);
+            if (integrity < 1.0f && random.nextFloat() > integrity) {
                 continue;
             }
-            placeBlock(level, origin, sb, rotation, mirror);
+            processStructureBlock(level, origin, sb, rotation, mirror, bakedData, bakedCustom, deferredBlocks);
         }
 
-        for (StructureEntity se : entities) {
-            Vector transformed = transformEntityPos(se.pos().clone(), mirror, rotation);
-            Location target = origin.clone().add(transformed);
-
-            if (nmsLevel != null && !nmsLevel.isInRegion(target.getBlockX(), target.getBlockY(), target.getBlockZ())) {
-                deferredEntities.add(se);
-                continue;
-            }
-            placeEntities(level, origin, rotation, mirror, List.of(se));
-        }
+        placeEntities(level, origin, rotation, mirror, entities, deferredEntities);
 
         if (!deferredBlocks.isEmpty() || !deferredEntities.isEmpty()) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     for (StructureBlock sb : deferredBlocks) {
-                        Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
-                        Location target = origin.clone().add(transformed);
-                        if (!target.isChunkLoaded()) target.getChunk().load(true);
-                        placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+                        processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
                     }
-                    placeEntities(origin.getWorld(), origin, rotation, mirror, deferredEntities);
+                    placeEntities(null, origin, rotation, mirror, deferredEntities, null);
                 }
             }.runTask(AbyssalLib.getInstance());
         }
     }
 
     /**
-     * Adds a {@link StructureProcessor} to this structure.
+     * Appends a {@link StructureProcessor} to the placement pipeline.
      *
-     * @param processor the processor to add
+     * @param processor
+     * The {@link StructureProcessor} to add.
      */
     public void addProcessor(StructureProcessor processor) {
         processors.add(processor);
     }
 
     /**
-     * Internal logic for placing a single block.
+     * Pre-calculates transformed BlockData instances for every entry in the palette.
+     * This avoids redundant calculations during the placement loop.
      *
-     * @param worldOrLevel the world or generation context
-     * @param origin       the placement origin
-     * @param sb           the structure block definition
-     * @param rotation     the rotation to apply
-     * @param mirror       the mirror transformation
+     * @param dataOut
+     * The output array for baked vanilla {@link BlockData}.
+     * @param customOut
+     * The output array for baked {@link CustomBlock} objects.
+     * @param rotation
+     * The specified {@link StructureRotation}.
+     * @param mirror
+     * The specified {@link Mirror} transform.
      */
-    private void placeBlock(Object worldOrLevel, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror) {
-        if (sb.stateIndex() < 0 || sb.stateIndex() >= palette.size()) return;
+    private void bakePalette(BlockData[] dataOut, CustomBlock[] customOut, StructureRotation rotation, Mirror mirror) {
+        for (int i = 0; i < palette.size(); i++) {
+            PaletteEntry entry = palette.get(i);
+            Object blockObj = null;
+            if (entry.id().startsWith("minecraft:")) {
+                try {
+                    Material mat = Material.valueOf(entry.id().substring(10).toUpperCase());
+                    if (mat.isBlock()) {
+                        blockObj = mat.createBlockData();
+                    }
+                } catch (Exception ignored) {}
+            } else {
+                CustomBlock cb = Registries.BLOCKS.get(entry.id());
+                if (cb != null) {
+                    blockObj = cb.clone();
+                }
+            }
 
-        Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
-        PaletteEntry entry = palette.get(sb.stateIndex());
-
-        Object blockObject = null;
-
-        if (entry.id().startsWith("minecraft:")) {
-            try {
-                Material mat = Material.valueOf(entry.id().substring(10).toUpperCase());
-                if (mat.isBlock()) blockObject = mat.createBlockData();
-            } catch (Exception ignored) {}
-        } else {
-            CustomBlock cb = Registries.BLOCKS.get(entry.id());
-            if (cb != null) blockObject = cb.clone();
+            if (blockObj != null) {
+                BlockInfo temp = new BlockInfo(null, blockObj, entry.states(), null, null);
+                BlockData bd = WorldGenUtils.bakeData(temp, rotation, mirror);
+                if (bd instanceof Leaves leaves) {
+                    leaves.setPersistent(true);
+                }
+                dataOut[i] = bd;
+                if (blockObj instanceof CustomBlock cb) {
+                    customOut[i] = cb;
+                }
+            }
         }
-
-        if (blockObject == null) return;
-
-        BlockInfo original = new BlockInfo(null, blockObject, entry.states(), sb.properties(), sb.nbt());
-        BlockInfo current = new BlockInfo(transformed, blockObject, entry.states(), sb.properties(), sb.nbt());
-
-        for (StructureProcessor processor : processors) {
-            current = (worldOrLevel instanceof WorldGenAccess level)
-                ? processor.process(level, origin, current, original)
-                : processor.process((org.bukkit.World) worldOrLevel, origin, current, original);
-
-            if (current == null) return;
-        }
-
-        if (current.pos() == null) return;
-
-        Location target = origin.clone().add(current.pos());
-        WorldGenAccess level = worldOrLevel instanceof WorldGenAccess w ? w : null;
-
-        WorldGenUtils.placeBlock(level, target, current, rotation, mirror);
     }
 
     /**
-     * Places all stored entities.
+     * Core routine for evaluating, transforming, processing, and executing the placement of a single block.
      *
-     * @param worldOrLevel the world or generation context
-     * @param origin       the placement origin
-     * @param rotation     the rotation to apply
-     * @param mirror       the mirror transformation
-     * @param ents         the entities to place
+     * @param level
+     * The generation context, or null for a live Bukkit world.
+     * @param origin
+     * The absolute origin {@link Location}.
+     * @param sb
+     * The lightweight {@link StructureBlock} reference.
+     * @param rotation
+     * The structural rotation logic.
+     * @param mirror
+     * The structural mirror logic.
+     * @param bakedData
+     * The cached array of vanilla block data.
+     * @param bakedCustom
+     * The cached array of custom block references.
+     * @param deferred
+     * A collection to catch blocks that fall outside safe generation chunk boundaries.
      */
-    private void placeEntities(Object worldOrLevel, Location origin, StructureRotation rotation, Mirror mirror, List<StructureEntity> ents) {
+    private void processStructureBlock(WorldGenAccess level, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror, BlockData[] bakedData, CustomBlock[] bakedCustom, List<StructureBlock> deferred) {
+        if (sb.stateIndex() < 0 || sb.stateIndex() >= palette.size()) {
+            return;
+        }
+        BlockData bd = bakedData[sb.stateIndex()];
+        if (bd == null) {
+            return;
+        }
+
+        Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
+        Location target = origin.clone().add(transformed);
+
+        if (target.getBlockY() < origin.getWorld().getMinHeight() || target.getBlockY() >= origin.getWorld().getMaxHeight()) {
+            return;
+        }
+
+        if (level instanceof NMSWorldGenAccess nmsLevel && !nmsLevel.isInRegion(target.getBlockX(), target.getBlockY(), target.getBlockZ())) {
+            if (deferred != null) {
+                deferred.add(sb);
+            }
+            return;
+        }
+
+        if (processors.isEmpty() && sb.nbt() == null && sb.properties() == null) {
+            if (level == null && !target.isChunkLoaded()) {
+                target.getChunk().load(true);
+            }
+            BlockData current = level != null ? level.getBlockData(target.getBlockX(), target.getBlockY(), target.getBlockZ()) : target.getBlock().getBlockData();
+            if (current.matches(bd)) {
+                return;
+            }
+
+            CustomBlock cb = bakedCustom[sb.stateIndex()];
+            WorldGenUtils.placeBlock(level, target, new BlockInfo(transformed, cb != null ? cb : bd, palette.get(sb.stateIndex()).states(), null, null), bd.clone(), cb != null ? cb.clone() : null);
+        } else {
+            CustomBlock cb = bakedCustom[sb.stateIndex()];
+            BlockInfo original = new BlockInfo(null, cb != null ? cb : bd, palette.get(sb.stateIndex()).states(), sb.properties(), sb.nbt());
+            BlockInfo current = new BlockInfo(transformed, cb != null ? cb : bd, palette.get(sb.stateIndex()).states(), sb.properties(), sb.nbt());
+
+            for (StructureProcessor processor : processors) {
+                current = (level != null) ? processor.process(level, origin, current, original) : processor.process(origin.getWorld(), origin, current, original);
+                if (current == null) {
+                    return;
+                }
+            }
+            if (current.pos() == null) {
+                return;
+            }
+
+            Location finalTarget = origin.clone().add(current.pos());
+            if (finalTarget.getBlockY() < origin.getWorld().getMinHeight() || finalTarget.getBlockY() >= origin.getWorld().getMaxHeight()) {
+                return;
+            }
+
+            if (level instanceof NMSWorldGenAccess nmsLevel && !nmsLevel.isInRegion(finalTarget.getBlockX(), finalTarget.getBlockY(), finalTarget.getBlockZ())) {
+                final BlockInfo finalCurrent = current;
+                new BukkitRunnable() {
+                    public void run() {
+                        if (!finalTarget.isChunkLoaded()) {
+                            finalTarget.getChunk().load(true);
+                        }
+                        BlockData newBd = WorldGenUtils.bakeData(finalCurrent, rotation, mirror);
+                        CustomBlock newCb = finalCurrent.block() instanceof CustomBlock c ? c.clone() : null;
+                        WorldGenUtils.placeBlock(null, finalTarget, finalCurrent, newBd, newCb);
+                    }
+                }.runTask(AbyssalLib.getInstance());
+                return;
+            }
+
+            if (level == null && !finalTarget.isChunkLoaded()) {
+                finalTarget.getChunk().load(true);
+            }
+            BlockData newBd = WorldGenUtils.bakeData(current, rotation, mirror);
+            CustomBlock newCb = current.block() instanceof CustomBlock c ? c.clone() : null;
+            WorldGenUtils.placeBlock(level, finalTarget, current, newBd, newCb);
+        }
+    }
+
+    /**
+     * Transforms and spawns all stored entities tied to the structure.
+     *
+     * @param level
+     * The generation context. Null if live Bukkit placement.
+     * @param origin
+     * The placement origin {@link Location}.
+     * @param rotation
+     * The spatial rotation.
+     * @param mirror
+     * The spatial mirror transform.
+     * @param ents
+     * The source list of {@link StructureEntity} definitions.
+     * @param deferred
+     * Collection to hold entities spawned out of bounds during async generation.
+     */
+    private void placeEntities(WorldGenAccess level, Location origin, StructureRotation rotation, Mirror mirror, List<StructureEntity> ents, List<StructureEntity> deferred) {
         for (StructureEntity se : ents) {
             Vector transformed = transformEntityPos(se.pos().clone(), mirror, rotation);
             Location target = origin.clone().add(transformed);
 
-            if (worldOrLevel instanceof WorldGenAccess level) {
+            if (target.getBlockY() < origin.getWorld().getMinHeight() || target.getBlockY() >= origin.getWorld().getMaxHeight()) {
+                continue;
+            }
+
+            if (level instanceof NMSWorldGenAccess nmsLevel && !nmsLevel.isInRegion(target.getBlockX(), target.getBlockY(), target.getBlockZ())) {
+                if (deferred != null) {
+                    deferred.add(se);
+                }
+                continue;
+            }
+
+            if (level != null) {
                 se.entity().spawn(level, target);
-            } else if (worldOrLevel instanceof org.bukkit.World world) {
-                if (!target.isChunkLoaded()) target.getChunk().load(true);
+            } else {
+                if (!target.isChunkLoaded()) {
+                    target.getChunk().load(true);
+                }
                 se.entity().spawn(target);
             }
         }
     }
 
     /**
-     * Applies mirror and rotation transformations to a block position.
+     * Applies matrix transformations (mirroring and rotation) to a discrete block vector.
      *
-     * @param pos      the original relative position
-     * @param mirror   the mirror transformation
-     * @param rotation the rotation transformation
-     * @return the transformed position
+     * @param pos
+     * The original relative {@link Vector} position.
+     * @param mirror
+     * The applied {@link Mirror}.
+     * @param rotation
+     * The applied {@link StructureRotation}.
+     * @return
+     * The newly calculated offset {@link Vector}.
      */
     private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
         int x = pos.getBlockX();
@@ -377,12 +503,16 @@ public class Structure {
     }
 
     /**
-     * Applies mirror and rotation transformations to an entity position.
+     * Applies floating-point matrix transformations to an entity's relative position.
      *
-     * @param pos      the original relative position
-     * @param mirror   the mirror transformation
-     * @param rotation the rotation transformation
-     * @return the transformed position
+     * @param pos
+     * The original relative {@link Vector} position.
+     * @param mirror
+     * The applied {@link Mirror}.
+     * @param rotation
+     * The applied {@link StructureRotation}.
+     * @return
+     * The newly calculated offset {@link Vector}.
      */
     private Vector transformEntityPos(Vector pos, Mirror mirror, StructureRotation rotation) {
         double x = pos.getX();
@@ -419,9 +549,10 @@ public class Structure {
     }
 
     /**
-     * Serializes this structure into a JSON representation.
+     * Serializes this entire structure into an optimized JSON node tree.
      *
-     * @return the serialized {@link ObjectNode}
+     * @return
+     * The serialized Jackson {@link ObjectNode}.
      */
     public ObjectNode serialize() {
         ObjectNode root = FACTORY.objectNode();
@@ -431,7 +562,9 @@ public class Structure {
         for (PaletteEntry entry : palette) {
             ObjectNode node = paletteArray.addObject();
             node.put("Name", entry.id());
-            if (entry.states() != null) node.set("States", entry.states());
+            if (entry.states() != null) {
+                node.set("States", entry.states());
+            }
         }
 
         ArrayNode blockArray = root.putArray("blocks");
@@ -439,8 +572,12 @@ public class Structure {
             ObjectNode b = blockArray.addObject();
             b.putArray("pos").add(sb.x()).add(sb.y()).add(sb.z());
             b.put("state", sb.stateIndex());
-            if (sb.properties() != null) b.set("properties", sb.properties());
-            if (sb.nbt() != null) b.set("nbt", sb.nbt());
+            if (sb.properties() != null) {
+                b.set("properties", sb.properties());
+            }
+            if (sb.nbt() != null) {
+                b.set("nbt", sb.nbt());
+            }
         }
 
         if (!entities.isEmpty()) {
@@ -458,10 +595,12 @@ public class Structure {
     }
 
     /**
-     * Deserializes a {@link Structure} from JSON.
+     * Deserializes a complete {@link Structure} definition from a JSON node tree.
      *
-     * @param root the root JSON node
-     * @return the reconstructed structure
+     * @param root
+     * The parsed root {@link JsonNode} generated by Jackson.
+     * @return
+     * The reconstructed {@link Structure} instance.
      */
     public static Structure deserialize(JsonNode root) {
         Structure structure = new Structure();
@@ -509,43 +648,56 @@ public class Structure {
     }
 
     /**
-     * Runnable responsible for asynchronous structure placement.
+     * Internal Runnable class responsible for throttling asynchronous structure placement
+     * to avoid stressing the server thread during massive procedural generations.
      */
     private class Paster extends BukkitRunnable {
 
-        /** Placement origin. */
+        /** The base reference location for placement offsets. */
         private final Location origin;
 
-        /** Rotation applied during placement. */
+        /** The spatial rotation requested. */
         private final StructureRotation rotation;
 
-        /** Mirror transformation applied during placement. */
+        /** The spatial mirroring requested. */
         private final Mirror mirror;
 
-        /** Placement integrity value. */
+        /** The probability threshold for placing each block. */
         private final float integrity;
 
-        /** Maximum blocks processed per tick. */
+        /** The maximum number of blocks the task is allowed to place per tick. */
         private final int limit;
 
-        /** Completion future. */
+        /** The future to complete once all blocks and entities are successfully placed. */
         private final CompletableFuture<Void> future;
 
-        /** Iterator over structure blocks. */
+        /** The internal cursor state used across repeating task executions. */
         private final Iterator<StructureBlock> iterator;
 
-        /** Random instance used for integrity checks. */
+        /** Generates pseudo-random numbers to evaluate block integrity loss. */
         private final Random random = new Random();
 
+        /** Internally cached baked vanilla block data to speed up placement logic. */
+        private final BlockData[] bakedData;
+
+        /** Internally cached baked custom block states to speed up placement logic. */
+        private final CustomBlock[] bakedCustom;
+
         /**
-         * Constructs a new asynchronous paster.
+         * Constructs a new chunk-safe, asynchronous structure paster task.
          *
-         * @param origin    the placement origin
-         * @param rotation  the rotation to apply
-         * @param mirror    the mirror transformation
-         * @param integrity the placement chance
-         * @param limit     blocks processed per tick
-         * @param future    completion future
+         * @param origin
+         * The base placement {@link Location}.
+         * @param rotation
+         * The active {@link StructureRotation}.
+         * @param mirror
+         * The active {@link Mirror} transformation.
+         * @param integrity
+         * The placement consistency threshold [0-1].
+         * @param limit
+         * The upper bound on blocks placed per execution slice.
+         * @param future
+         * The {@link CompletableFuture} to signal termination.
          */
         public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future) {
             this.origin = origin;
@@ -555,10 +707,13 @@ public class Structure {
             this.limit = limit;
             this.future = future;
             this.iterator = blocks.iterator();
+            this.bakedData = new BlockData[palette.size()];
+            this.bakedCustom = new CustomBlock[palette.size()];
+            bakePalette(bakedData, bakedCustom, rotation, mirror);
         }
 
         /**
-         * Executes a single tick of placement.
+         * Executes a single time-slice of the placement algorithm.
          */
         @Override
         public void run() {
@@ -566,19 +721,16 @@ public class Structure {
 
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
-                if (integrity < 1.0f && random.nextFloat() > integrity) continue;
+                if (integrity < 1.0f && random.nextFloat() > integrity) {
+                    continue;
+                }
 
-                Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
-                Location target = origin.clone().add(transformed);
-
-                if (!target.isChunkLoaded()) target.getChunk().load(true);
-
-                placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+                processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
                 count++;
             }
 
             if (!iterator.hasNext()) {
-                placeEntities(origin.getWorld(), origin, rotation, mirror, entities);
+                placeEntities(null, origin, rotation, mirror, entities, null);
                 future.complete(null);
                 cancel();
             }
@@ -586,30 +738,40 @@ public class Structure {
     }
 
     /**
-     * Represents a unique palette entry.
+     * A lightweight data record describing a unique combination of block type and properties.
      *
-     * @param id     the block identifier
-     * @param states optional block state data
+     * @param id
+     * The namespaced identifier for the block material or custom implementation.
+     * @param states
+     * Serialized block-states in JSON format (nullable).
      */
     private record PaletteEntry(String id, @Nullable ObjectNode states) {}
 
     /**
-     * Represents a block within the structure.
+     * A structural marker indicating the position and index configuration of a discrete block.
      *
-     * @param x          relative X coordinate
-     * @param y          relative Y coordinate
-     * @param z          relative Z coordinate
-     * @param stateIndex index into the palette
-     * @param properties custom properties
-     * @param nbt        tile entity data
+     * @param x
+     * The relative integer offset on the X axis.
+     * @param y
+     * The relative integer offset on the Y axis.
+     * @param z
+     * The relative integer offset on the Z axis.
+     * @param stateIndex
+     * The pointer index resolving to a definition inside the structure palette.
+     * @param properties
+     * Extra custom NBT-like properties bound directly to the block logic.
+     * @param nbt
+     * Standard vanilla tile-entity data (nullable).
      */
     private record StructureBlock(int x, int y, int z, int stateIndex, @Nullable ObjectNode properties, @Nullable ObjectNode nbt) {}
 
     /**
-     * Represents a stored entity.
+     * A structural marker holding a serialized entity and its exact relative spatial location.
      *
-     * @param pos    relative position
-     * @param entity serialized entity data
+     * @param pos
+     * The floating-point {@link Vector} detailing position offsets.
+     * @param entity
+     * The heavily abstracted {@link SavedEntity} container representing the deserialized mob or object.
      */
     public record StructureEntity(Vector pos, SavedEntity entity) {}
 }

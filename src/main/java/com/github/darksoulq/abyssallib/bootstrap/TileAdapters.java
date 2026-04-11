@@ -7,8 +7,9 @@ public class TileAdapters {
     public static void register() {
         TileAdapter.register("container", new ContainerTileAdapter(), new TileStateInventoryHolderAdapter());
         TileAdapter.register("nameable", new NameableTileAdapter());
-        TileAdapter.register("lockable", new LockableTileAdapter());
         TileAdapter.register("persistent_data", new PDCTileAdapter());
+        TileAdapter.register("locked", new LockableTileAdapter());
+        TileAdapter.register("loot_table", new LootableTileAdapter());
 
         TileAdapter.register("campfire", new CampfireTileAdapter());
         TileAdapter.register("jukebox", new JukeboxTileAdapter());

@@ -4,11 +4,11 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import io.papermc.paper.block.TileStateInventoryHolder;
 import org.bukkit.block.TileState;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.loot.Lootable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +22,13 @@ public class TileStateInventoryHolderAdapter extends TileAdapter<TileStateInvent
 
     @Override
     public <D> D serialize(DynamicOps<D> ops, TileStateInventoryHolder value) throws Codec.CodecException {
-        Inventory inventory = value.getInventory();
         List<D> items = new ArrayList<>();
 
+        if (value instanceof Lootable lootable && lootable.hasLootTable()) {
+            return ops.createList(items);
+        }
+
+        Inventory inventory = value.getInventory();
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack item = inventory.getItem(i);
             if (item != null && !item.isEmpty()) {
@@ -42,18 +46,18 @@ public class TileStateInventoryHolderAdapter extends TileAdapter<TileStateInvent
         if (!(base instanceof TileStateInventoryHolder holder)) return;
         Inventory inventory = holder.getInventory();
 
-        ops.getList(input).ifPresent(list -> {
-            for (int i = 0; i < inventory.getSize() && i < list.size(); i++) {
-                D itemData = list.get(i);
+        List<D> list = ops.getList(input).orElseThrow(() -> new Codec.CodecException("Expected list for InventoryHolder"));
 
-                if (ops.getStringValue(itemData).orElse("").equals("empty")) {
-                    inventory.setItem(i, null);
-                } else {
-                    int finalI = i;
-                    Try.of(() -> Codecs.ITEM_STACK.decode(ops, itemData))
-                       .onSuccess(item -> inventory.setItem(finalI, item));
-                }
+        for (int i = 0; i < inventory.getSize() && i < list.size(); i++) {
+            D itemData = list.get(i);
+
+            if (ops.getStringValue(itemData).orElse("").equals("empty")) {
+                inventory.setItem(i, null);
+            } else {
+                try {
+                    inventory.setItem(i, Codecs.ITEM_STACK.decode(ops, itemData));
+                } catch (Exception ignored) {}
             }
-        });
+        }
     }
 }
