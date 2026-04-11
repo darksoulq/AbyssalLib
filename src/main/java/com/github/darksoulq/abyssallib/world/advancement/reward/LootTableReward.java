@@ -19,15 +19,15 @@ public class LootTableReward implements AdvancementReward {
         @Override
         public <D> LootTableReward decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow();
-            String key = Codecs.STRING.decode(ops, map.get(ops.createString("loot_table")));
-            LootTable table = Bukkit.getLootTable(NamespacedKey.fromString(key));
+            NamespacedKey key = Codecs.NAMESPACED_KEY.decode(ops, map.get(ops.createString("loot_table")));
+            LootTable table = Bukkit.getLootTable(key);
             return new LootTableReward(table);
         }
 
         @Override
         public <D> D encode(DynamicOps<D> ops, LootTableReward value) throws CodecException {
             return ops.createMap(Map.of(
-                ops.createString("loot_table"), Codecs.STRING.encode(ops, value.table.getKey().toString())
+                ops.createString("loot_table"), Codecs.NAMESPACED_KEY.encode(ops, value.table.getKey())
             ));
         }
     };

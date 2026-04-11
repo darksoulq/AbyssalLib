@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
@@ -14,15 +15,14 @@ public class PotionEffectCriterion implements AdvancementCriterion {
         @Override
         public <D> PotionEffectCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow();
-            String name = Codecs.STRING.decode(ops, map.get(ops.createString("effect")));
-            PotionEffectType type = org.bukkit.Registry.POTION_EFFECT_TYPE.get(org.bukkit.NamespacedKey.minecraft(name.toLowerCase()));
+            PotionEffectType type = ExtraCodecs.POTION_EFFECT_TYPE.decode(ops, map.get(ops.createString("effect")));
             return new PotionEffectCriterion(type);
         }
 
         @Override
         public <D> D encode(DynamicOps<D> ops, PotionEffectCriterion value) throws CodecException {
             return ops.createMap(Map.of(
-                ops.createString("effect"), Codecs.STRING.encode(ops, value.effect.getKey().getKey())
+                ops.createString("effect"), ExtraCodecs.POTION_EFFECT_TYPE.encode(ops, value.effect)
             ));
         }
     };
