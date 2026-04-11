@@ -25,6 +25,7 @@
     <toc-element toc-title="Advancements">
         <toc-element topic="first-advancement.md"/>
         <toc-element topic="default-criterion.md"/>
+        <toc-element topic="default-rewards.md"/>
     </toc-element>
     <toc-element toc-title="Worldgen Features">
         <toc-element topic="first-feature.md"/>

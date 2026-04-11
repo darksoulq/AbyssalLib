@@ -2,7 +2,6 @@
 switcher-label: In
 ---
 # Creating Your First Advancement
-<secondary-label ref="wip"/>
 <link-summary>Guide to creating custom advancements with custom rewards and criteria</link-summary>
 
 The Advancement API allows you to add custom advancements to the game. Unlike standard datapack advancements, this API supports custom reward types and criteria directly through your plugin.

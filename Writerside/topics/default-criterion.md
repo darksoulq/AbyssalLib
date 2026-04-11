@@ -1,5 +1,4 @@
 # Default Criterion
-<secondary-label ref="wip"/>
 <link-summary>Reference guide for built-in advancement criteria</link-summary>
 
 Criteria define the specific conditions or actions a player must complete to unlock an advancement. Below is a list of all default criteria included in AbyssalLib.
@@ -83,7 +82,7 @@ Checks the value of a custom statistic against a threshold.
 </tr>
 <tr>
 <td><code>statistic</code></td>
-<td>The custom statistic ID to check.</td>
+<td>The custom statistic ID to check. (in the format: <code>"statistic:type/statistic:id"</code></td>
 </tr>
 <tr>
 <td><code>threshold</code></td>
@@ -116,16 +115,9 @@ Checks the value of a custom attribute against a threshold.
 ---
 
 ### ItemCraftedCriterion
-**ID:** `WIP`
+**ID:** `abyssallib:item_crafted`
 
-*(Work in progress)*
-
----
-
-### EntityKilledCriterion
-**ID:** `abyssallib:entity_killed`
-
-Checks if the player has killed a specified amount of a given entity type.
+Checks if the player has crafted a specified amount of a given item ID.
 
 <table>
 <tr>
@@ -133,12 +125,34 @@ Checks if the player has killed a specified amount of a given entity type.
 <th>Information</th>
 </tr>
 <tr>
-<td><code>entity_type</code></td>
-<td>The ID of the entity to check (currently restricted to vanilla entities, e.g., <code>"minecraft:zombie"</code>).</td>
+<td><code>item</code></td>
+<td>The ID of the item to check (e.g., <code>"minecraft:stick"</code>).</td>
 </tr>
 <tr>
 <td><code>amount</code></td>
-<td>The number of this entity type that must be killed.</td>
+<td>The number of this item ID that must be crafted.</td>
+</tr>
+</table>
+
+---
+
+### EntityKilledCriterion
+**ID:** `abyssallib:entity_killed`
+
+Checks if the player has killed a specified amount of a given entity ID.
+
+<table>
+<tr>
+<th>Parameter</th>
+<th>Information</th>
+</tr>
+<tr>
+<td><code>entity</code></td>
+<td>The ID of the entity to check (e.g., <code>"minecraft:zombie"</code>).</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>The number of this entity ID that must be killed.</td>
 </tr>
 </table>
 
@@ -147,7 +161,7 @@ Checks if the player has killed a specified amount of a given entity type.
 ### BlockMinedCriterion
 **ID:** `abyssallib:block_mined`
 
-Checks if the player has mined a specified amount of a given block material.
+Checks if the player has mined a specified amount of a given block ID.
 
 <table>
 <tr>
@@ -155,12 +169,12 @@ Checks if the player has mined a specified amount of a given block material.
 <th>Information</th>
 </tr>
 <tr>
-<td><code>material</code></td>
-<td>The material of the block to check for (refer to the Paper Javadocs).</td>
+<td><code>block</code></td>
+<td>The ID of the block to check for (e.g, <code>"minecraft:crafting_table"</code>).</td>
 </tr>
 <tr>
 <td><code>amount</code></td>
-<td>The amount of blocks of this material that must be broken.</td>
+<td>The amount of blocks of this ID that must be broken.</td>
 </tr>
 </table>
 
