@@ -93,9 +93,9 @@ public class StructureBlockMenu {
     }
 
     private void setupSaveMode(Gui gui, Player player) {
-        gui.getElements().put(SlotPosition.top(30), makeIntButton(Items.SIZE_X, "Size X", tile.sizeX, gui, player, 1, 48));
-        gui.getElements().put(SlotPosition.top(31), makeIntButton(Items.SIZE_Y, "Size Y", tile.sizeY, gui, player, 1, 48));
-        gui.getElements().put(SlotPosition.top(32), makeIntButton(Items.SIZE_Z, "Size Z", tile.sizeZ, gui, player, 1, 48));
+        gui.getElements().put(SlotPosition.top(30), makeIntButton(Items.SIZE_X, "Size X", tile.sizeX, gui, player, 1, 1028));
+        gui.getElements().put(SlotPosition.top(31), makeIntButton(Items.SIZE_Y, "Size Y", tile.sizeY, gui, player, 1, 1028));
+        gui.getElements().put(SlotPosition.top(32), makeIntButton(Items.SIZE_Z, "Size Z", tile.sizeZ, gui, player, 1, 1028));
 
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("SAVE", NamedTextColor.GREEN, TextDecoration.BOLD),
