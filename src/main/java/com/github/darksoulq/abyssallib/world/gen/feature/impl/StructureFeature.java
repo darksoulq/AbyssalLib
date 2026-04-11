@@ -39,7 +39,6 @@ public class StructureFeature extends Feature<StructureFeature.Config> {
     public boolean place(FeaturePlaceContext<Config> context) {
         Config config = context.config();
         Structure structure = Registries.STRUCTURES.get(config.structureId());
-        AbyssalLib.LOGGER.info("Placing at " + context.origin());
 
         if (structure == null) {
             return false;

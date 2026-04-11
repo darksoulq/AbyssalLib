@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.gen.NMSWorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
@@ -187,9 +189,12 @@ public class Structure {
 
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
+            Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
+            Location target = origin.clone().add(transformed);
+            if (!target.isChunkLoaded()) target.getChunk().load(true);
             placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
         }
-        placeEntities(origin.getWorld(), origin, rotation, mirror);
+        placeEntities(origin.getWorld(), origin, rotation, mirror, entities);
     }
 
     /**
@@ -203,12 +208,50 @@ public class Structure {
      */
     public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
+        List<StructureBlock> deferredBlocks = new ArrayList<>();
+        List<StructureEntity> deferredEntities = new ArrayList<>();
+
+        boolean isNms = level instanceof NMSWorldGenAccess;
+        NMSWorldGenAccess nmsLevel = isNms ? (NMSWorldGenAccess) level : null;
 
         for (StructureBlock sb : blocks) {
             if (integrity < 1.0f && random.nextFloat() > integrity) continue;
+
+            Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
+            Location target = origin.clone().add(transformed);
+
+            if (nmsLevel != null && !nmsLevel.isInRegion(target.getBlockX(), target.getBlockY(), target.getBlockZ())) {
+                deferredBlocks.add(sb);
+                continue;
+            }
             placeBlock(level, origin, sb, rotation, mirror);
         }
-        placeEntities(level, origin, rotation, mirror);
+
+        for (StructureEntity se : entities) {
+            Vector transformed = transformEntityPos(se.pos().clone(), mirror, rotation);
+            Location target = origin.clone().add(transformed);
+
+            if (nmsLevel != null && !nmsLevel.isInRegion(target.getBlockX(), target.getBlockY(), target.getBlockZ())) {
+                deferredEntities.add(se);
+                continue;
+            }
+            placeEntities(level, origin, rotation, mirror, List.of(se));
+        }
+
+        if (!deferredBlocks.isEmpty() || !deferredEntities.isEmpty()) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    for (StructureBlock sb : deferredBlocks) {
+                        Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
+                        Location target = origin.clone().add(transformed);
+                        if (!target.isChunkLoaded()) target.getChunk().load(true);
+                        placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
+                    }
+                    placeEntities(origin.getWorld(), origin, rotation, mirror, deferredEntities);
+                }
+            }.runTask(AbyssalLib.getInstance());
+        }
     }
 
     /**
@@ -275,15 +318,17 @@ public class Structure {
      * @param origin       the placement origin
      * @param rotation     the rotation to apply
      * @param mirror       the mirror transformation
+     * @param ents         the entities to place
      */
-    private void placeEntities(Object worldOrLevel, Location origin, StructureRotation rotation, Mirror mirror) {
-        for (StructureEntity se : entities) {
+    private void placeEntities(Object worldOrLevel, Location origin, StructureRotation rotation, Mirror mirror, List<StructureEntity> ents) {
+        for (StructureEntity se : ents) {
             Vector transformed = transformEntityPos(se.pos().clone(), mirror, rotation);
             Location target = origin.clone().add(transformed);
 
             if (worldOrLevel instanceof WorldGenAccess level) {
                 se.entity().spawn(level, target);
-            } else if (worldOrLevel instanceof org.bukkit.World) {
+            } else if (worldOrLevel instanceof org.bukkit.World world) {
+                if (!target.isChunkLoaded()) target.getChunk().load(true);
                 se.entity().spawn(target);
             }
         }
@@ -521,15 +566,19 @@ public class Structure {
 
             while (iterator.hasNext() && count < limit) {
                 StructureBlock sb = iterator.next();
-
                 if (integrity < 1.0f && random.nextFloat() > integrity) continue;
+
+                Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
+                Location target = origin.clone().add(transformed);
+
+                if (!target.isChunkLoaded()) target.getChunk().load(true);
 
                 placeBlock(origin.getWorld(), origin, sb, rotation, mirror);
                 count++;
             }
 
             if (!iterator.hasNext()) {
-                placeEntities(origin.getWorld(), origin, rotation, mirror);
+                placeEntities(origin.getWorld(), origin, rotation, mirror, entities);
                 future.complete(null);
                 cancel();
             }

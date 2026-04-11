@@ -67,6 +67,18 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     }
 
     /**
+     * Checks if the given coordinate is within this generation region
+     *
+     * @param x        X coordinate
+     * @param y        Y Coordinate
+     * @param z        Z Coordinate
+     * @return         Whether the coordinate is in region or not
+     */
+    public boolean isInRegion(int x, int y, int z) {
+        return region.isInRegion(x, y, z);
+    }
+
+    /**
      * Sets a block using a {@link Material}.
      *
      * @param x        X coordinate

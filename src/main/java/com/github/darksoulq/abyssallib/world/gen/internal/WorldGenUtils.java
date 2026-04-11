@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.MinecraftBlockSerializer;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.gen.NMSWorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -145,6 +146,16 @@ public class WorldGenUtils {
      * @param mirror   The mirror transformation to apply.
      */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info, StructureRotation rotation, Mirror mirror) {
+        if (level instanceof NMSWorldGenAccess nms && !nms.isInRegion(location.getBlockX(), location.getBlockY(), location.getBlockZ())) {
+            new org.bukkit.scheduler.BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (!location.isChunkLoaded()) location.getChunk().load(true);
+                    placeBlock(null, location, info, rotation, mirror);
+                }
+            }.runTask(com.github.darksoulq.abyssallib.AbyssalLib.getInstance());
+            return;
+        }
 
         Object blockObject = info.block();
         ObjectNode states = info.states();
@@ -157,9 +168,7 @@ public class WorldGenUtils {
                 BlockData bd = clone.getMaterial().createBlockData();
 
                 if (states != null) {
-                    Map<JsonNode, JsonNode> mapData =
-                        JsonOps.INSTANCE.getMap(states).orElse(Collections.emptyMap());
-
+                    Map<JsonNode, JsonNode> mapData = JsonOps.INSTANCE.getMap(states).orElse(Collections.emptyMap());
                     AbyssalLibBlockSerializer.deserializeBlockData(mapData, JsonOps.INSTANCE, bd);
                 }
 
@@ -187,9 +196,7 @@ public class WorldGenUtils {
                 BlockData clone = bd.clone();
 
                 if (states != null) {
-                    Map<JsonNode, JsonNode> mapData =
-                        JsonOps.INSTANCE.getMap(states).orElse(Collections.emptyMap());
-
+                    Map<JsonNode, JsonNode> mapData = JsonOps.INSTANCE.getMap(states).orElse(Collections.emptyMap());
                     MinecraftBlockSerializer.deserialize(clone, mapData, JsonOps.INSTANCE);
                 }
 
@@ -220,7 +227,6 @@ public class WorldGenUtils {
                     state.update(true, false);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,0 +1,23 @@
+{
+  "type": "abyssallib:structure",
+  "config": {
+    "structure_id": "battleroyal:spawn",
+    "random_rotation": false,
+    "random_mirror": false,
+    "rotation": "NONE",
+    "mirror": "NONE"
+  },
+  "placement": [
+    {
+      "type": "abyssallib:count",
+      "count": 1
+    },
+    {
+      "type": "abyssallib:fixed_placement",
+      "positions": [[1000, 70, 1000]]
+    }
+  ],
+  "worlds": [
+    "world"
+  ]
+}
