@@ -15,14 +15,13 @@ import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
-import com.github.darksoulq.abyssallib.server.resource.util.TextOffset;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
+import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatisticMenu;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
-import com.github.darksoulq.abyssallib.world.dialog.DialogContent;
-import com.github.darksoulq.abyssallib.world.dialog.Dialogs;
-import com.github.darksoulq.abyssallib.world.dialog.Notice;
+import com.github.darksoulq.abyssallib.world.data.statistic.StatisticFormatter;
+import com.github.darksoulq.abyssallib.world.data.statistic.formatter.DefaultStatisticFormatter;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
@@ -43,10 +42,10 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.FinePositionResolver;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
-import io.papermc.paper.dialog.Dialog;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -64,7 +63,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import static com.github.darksoulq.abyssallib.server.resource.ResourcePack.HASH_MAP;
 import static com.github.darksoulq.abyssallib.server.resource.ResourcePack.UUID_MAP;
@@ -512,66 +510,98 @@ public class InternalCommand {
         return 0;
     }
 
-    private static int sendStats(CommandContext<CommandSourceStack> ctx, Player target) {
-        PlayerStatistics stats = PlayerStatistics.of(target);
-        if (stats.get().isEmpty()) {
-            reply(ctx, "<gray>No statistics found.</gray>");
-            return 0;
+    private static int sendStats(CommandContext<CommandSourceStack> ctx, Player target, int page) {
+        Map<Statistic, Integer> statsMap = PlayerStatistics.of(target).getAll();
+        if (statsMap.isEmpty()) {
+            reply(ctx, "<red>✖</red> <gray>No statistics found for <white>" + target.getName() + "</white>.</gray>");
+            return com.mojang.brigadier.Command.SINGLE_SUCCESS;
         }
 
-        String msg = stats.get().stream()
-            .map(stat -> {
-                String key = "<lang:%s.stat.%s>".formatted(stat.getId().namespace(), stat.getId().value());
-                return "<aqua>%s</aqua> <gray>=</gray> <yellow>%s</yellow>".formatted(key, stat.getValue());
-            })
-            .collect(Collectors.joining("\n"));
+        List<Map.Entry<Statistic, Integer>> entries = new ArrayList<>(statsMap.entrySet());
+        entries.sort(Comparator.comparing((Map.Entry<Statistic, Integer> e) -> e.getKey().type().id().asString())
+            .thenComparing(e -> e.getKey().target().asString()));
 
-        reply(ctx, msg);
-        return Command.SUCCESS;
+        int itemsPerPage = 8;
+        int maxPages = (int) Math.ceil((double) entries.size() / itemsPerPage);
+        page = Math.max(1, Math.min(page, maxPages));
+
+        int start = (page - 1) * itemsPerPage;
+        int end = Math.min(start + itemsPerPage, entries.size());
+
+        Component message = TextUtil.parse("\n<gold><st>      </st></gold> <yellow><b>Statistics:</b> " + target.getName() + "</yellow> <gray>(" + page + "/" + maxPages + ")</gray> <gold><st>      </st></gold>\n");
+
+        for (int i = start; i < end; i++) {
+            Map.Entry<Statistic, Integer> entry = entries.get(i);
+            Statistic stat = entry.getKey();
+
+            StatisticFormatter formatter = Registries.STATISTIC_FORMATTERS.get(stat.type().id().asString());
+            if (formatter == null) {
+                formatter = new DefaultStatisticFormatter();
+            }
+
+            message = message.append(formatter.formatChat(stat, entry.getValue())).append(Component.newline());
+        }
+
+        message = message.append(TextUtil.parse("<gold><st>                                            </st></gold>\n"));
+
+        String footer = "  ";
+        if (page > 1) {
+            footer += "<click:run_command:'/abyssallib statistics get " + target.getName() + " " + (page - 1) + "'><hover:show_text:'<gray>Previous Page'><gold>«</gold> <yellow>Previous</yellow></hover></click>    ";
+        } else {
+            footer += "<dark_gray>« Previous</dark_gray>    ";
+        }
+
+        if (page < maxPages) {
+            footer += "<click:run_command:'/abyssallib statistics get " + target.getName() + " " + (page + 1) + "'><hover:show_text:'<gray>Next Page'><yellow>Next</yellow> <gold>»</gold></hover></click>";
+        } else {
+            footer += "<dark_gray>Next »</dark_gray>";
+        }
+
+        message = message.append(TextUtil.parse(footer + "\n"));
+
+        ctx.getSource().getSender().sendMessage(message);
+        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
 
     public static int getSelfStatistics(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
-        return player == null ? Command.SUCCESS : sendStats(ctx, player);
+        int page = 1;
+        try {
+            page = ctx.getArgument("page", Integer.class);
+        } catch (IllegalArgumentException ignored) {}
+        return player == null ? com.mojang.brigadier.Command.SINGLE_SUCCESS : sendStats(ctx, player, page);
     }
 
     public static int getOtherStatistics(CommandContext<CommandSourceStack> ctx) {
         Player target = resolvePlayer(ctx);
-        return target == null ? Command.SUCCESS : sendStats(ctx, target);
+        int page = 1;
+        try {
+            page = ctx.getArgument("page", Integer.class);
+        } catch (IllegalArgumentException ignored) {}
+        return target == null ? com.mojang.brigadier.Command.SINGLE_SUCCESS : sendStats(ctx, target, page);
     }
 
     public static int getSelfStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
         if (player != null) {
-            player.showDialog(createStatDialog(player));
+            PlayerStatisticMenu.open(player, player);
         }
-        return Command.SUCCESS;
+        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
 
     public static int getOtherStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player target = resolvePlayer(ctx);
         Player viewer = getPlayer(ctx);
         if (target != null && viewer != null) {
-            viewer.showDialog(createStatDialog(target));
+            PlayerStatisticMenu.open(viewer, target);
         }
-        return Command.SUCCESS;
+        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
 
     private static org.bukkit.entity.Entity isEntity(CommandSourceStack ctx) {
         CommandSender sender = ctx.getExecutor() == null ? ctx.getSender() : ctx.getExecutor();
         if (!(sender instanceof org.bukkit.entity.Entity entity)) return null;
         return entity;
-    }
-
-    private static Dialog createStatDialog(Player player) {
-        Notice dialog = Dialogs.notice(TextUtil.parse("Statistics"));
-        PlayerStatistics stats = PlayerStatistics.of(player);
-        if (stats.get().isEmpty()) dialog.body(DialogContent.text(TextUtil.parse("<gray>No statistics found.</gray>")));
-        for (Statistic stat : stats.get()) {
-            String langKey = "<lang:%s.stat.%s>".formatted(stat.getId().namespace(), stat.getId().value());
-            dialog.body(DialogContent.text(TextUtil.parse(TextOffset.getOffsetMinimessage(40) + langKey + " = " + stat.getValue())));
-        }
-        return dialog.build();
     }
 
     private static void reply(CommandContext<CommandSourceStack> ctx, String message) {

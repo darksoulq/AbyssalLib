@@ -16,35 +16,69 @@ import java.util.*;
 import java.util.function.Predicate;
 
 /**
- * A highly configurable {@link Predicate} for matching {@link ItemStack}s.
- * <p>
- * This class supports checking for specific Minecraft {@link Material}s, the presence
- * or absence of {@link DataComponent}s, specific values within components, and
- * recursive nested predicates using boolean logic (Conditions).
+ * A sophisticated predicate used to evaluate and filter {@link ItemStack} instances.
+ * This class allows for complex conditional checks against an item's identity,
+ * the presence or absence of specific data components, exact component values,
+ * and evaluation of nested predicates.
  */
 public class ItemPredicate implements Predicate<ItemStack> {
 
     /**
-     * Internal codec for decoding individual data component entries within a predicate.
+     * Internal codec responsible for serializing and deserializing individual
+     * data component entries used within the predicate's value conditions.
      */
     private static final Codec<DataComponent<?>> COMPONENT_ENTRY_CODEC = new Codec<>() {
+        /**
+         * Decodes a data component entry from a serialized map format.
+         *
+         * @param <D>
+         * The dynamic data type.
+         * @param ops
+         * The dynamic operations logic provider.
+         * @param input
+         * The raw serialized input data.
+         * @return
+         * The decoded {@link DataComponent} instance.
+         * @throws CodecException
+         * If the map is malformed, empty, or the component type is unregistered.
+         */
         @Override
         public <D> DataComponent<?> decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map for component entry"));
-            if (map.isEmpty()) throw new CodecException("Empty component map");
+            if (map.isEmpty()) {
+                throw new CodecException("Empty component map");
+            }
             Map.Entry<D, D> entry = map.entrySet().iterator().next();
             String key = ops.getStringValue(entry.getKey()).orElseThrow(() -> new CodecException("Key must be string"));
 
             DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(key);
-            if (type == null) throw new CodecException("Unknown component type: " + key);
+            if (type == null) {
+                throw new CodecException("Unknown component type: " + key);
+            }
 
             return type.codec().decode(ops, entry.getValue());
         }
 
+        /**
+         * Encodes a data component entry into a serialized map format.
+         *
+         * @param <D>
+         * The dynamic data type.
+         * @param ops
+         * The dynamic operations logic provider.
+         * @param value
+         * The {@link DataComponent} to serialize.
+         * @return
+         * The encoded data map.
+         * @throws CodecException
+         * If the component type is not registered.
+         */
         @Override
         public <D> D encode(DynamicOps<D> ops, DataComponent<?> value) throws CodecException {
             String id = Registries.DATA_COMPONENT_TYPES.getId(value.getType());
-            if (id == null) throw new CodecException("Unregistered component type: " + value.getType());
+            if (id == null) {
+                throw new CodecException("Unregistered component type: " + value.getType());
+            }
 
             return ops.createMap(Map.of(
                 ops.createString(id),
@@ -54,18 +88,32 @@ public class ItemPredicate implements Predicate<ItemStack> {
     };
 
     /**
-     * The primary codec for serializing and deserializing {@link ItemPredicate} instances.
-     * <p>
-     * Can decode from a simple string (looking up registered predicates) or a complex
-     * map object defining custom filter logic.
+     * The primary codec used to serialize and deserialize entire {@link ItemPredicate} instances.
+     * Supports resolving registered predicates by their String ID or parsing full nested objects.
      */
     public static final Codec<ItemPredicate> CODEC = new Codec<>() {
+        /**
+         * Decodes an ItemPredicate from a serialized format.
+         *
+         * @param <D>
+         * The dynamic data type.
+         * @param ops
+         * The dynamic operations logic provider.
+         * @param input
+         * The raw serialized input data.
+         * @return
+         * The decoded {@link ItemPredicate} instance.
+         * @throws CodecException
+         * If the payload is malformed or references unknown registered predicates.
+         */
         @Override
         public <D> ItemPredicate decode(DynamicOps<D> ops, D input) throws CodecException {
             if (ops.getStringValue(input).isPresent()) {
-                String id = ops.getStringValue(input).get();
-                ItemPredicate registered = Registries.PREDICATES.get(id);
-                if (registered == null) throw new CodecException("Unknown predicate: " + id);
+                String idStr = ops.getStringValue(input).get();
+                ItemPredicate registered = Registries.ITEM_PREDICATES.get(idStr);
+                if (registered == null) {
+                    throw new CodecException("Unknown predicate: " + idStr);
+                }
                 return registered;
             }
 
@@ -75,10 +123,10 @@ public class ItemPredicate implements Predicate<ItemStack> {
             List<Condition<Key>> with = new ArrayList<>();
             List<Condition<DataComponent<?>>> valued = new ArrayList<>();
             List<Condition<ItemPredicate>> predicates = new ArrayList<>();
-            Material material = null;
+            Key id = null;
 
-            if (map.containsKey(ops.createString("type"))) {
-                material = Codec.enumCodec(Material.class).decode(ops, map.get(ops.createString("type")));
+            if (map.containsKey(ops.createString("id"))) {
+                id = Codecs.KEY.decode(ops, map.get(ops.createString("id")));
             }
             if (map.containsKey(ops.createString("without"))) {
                 without = Condition.codec(Codecs.KEY).list().decode(ops, map.get(ops.createString("without")));
@@ -93,18 +141,32 @@ public class ItemPredicate implements Predicate<ItemStack> {
                 predicates = Condition.codec(this).list().decode(ops, map.get(ops.createString("predicates")));
             }
 
-            return new ItemPredicate(without, with, valued, predicates, material);
+            return new ItemPredicate(without, with, valued, predicates, id);
         }
 
+        /**
+         * Encodes an ItemPredicate into a serialized format.
+         *
+         * @param <D>
+         * The dynamic data type.
+         * @param ops
+         * The dynamic operations logic provider.
+         * @param value
+         * The {@link ItemPredicate} to serialize.
+         * @return
+         * The encoded data, either as a reference string or a complete definition map.
+         * @throws CodecException
+         * If internal encoding operations fail.
+         */
         @Override
         public <D> D encode(DynamicOps<D> ops, ItemPredicate value) throws CodecException {
-            if (Registries.PREDICATES.getAll().containsValue(value)) {
-                return ops.createString(Registries.PREDICATES.getId(value));
+            if (Registries.ITEM_PREDICATES.getAll().containsValue(value)) {
+                return ops.createString(Registries.ITEM_PREDICATES.getId(value));
             }
 
             Map<D, D> map = new HashMap<>();
-            if (value.material != null) {
-                map.put(ops.createString("type"), Codec.enumCodec(Material.class).encode(ops, value.material));
+            if (value.id != null) {
+                map.put(ops.createString("id"), Codecs.KEY.encode(ops, value.id));
             }
             if (!value.without.isEmpty()) {
                 map.put(ops.createString("without"), Condition.codec(Codecs.KEY).list().encode(ops, value.without));
@@ -122,93 +184,135 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
     };
 
-    /** Conditions defining what component identifiers MUST NOT be present on the item. */
+    /** A list of conditions checking for the strict absence of specific component Keys. */
     private final List<Condition<Key>> without;
-    /** Conditions defining what component identifiers MUST be present on the item. */
+
+    /** A list of conditions checking for the strict presence of specific component Keys. */
     private final List<Condition<Key>> with;
-    /** Conditions defining specific components and values that MUST match on the item. */
+
+    /** A list of conditions checking for exact data matches on specific components. */
     private final List<Condition<DataComponent<?>>> valued;
-    /** Conditions defining nested sub-predicates that MUST evaluate to true. */
+
+    /** A list of nested predicate conditions to evaluate against the item. */
     private final List<Condition<ItemPredicate>> predicates;
-    /** The specific material type to match, or null for any material. */
-    private final Material material;
+
+    /** The specific base identity Key the item must match, if any. */
+    private final Key id;
 
     /**
-     * Internal constructor for building a predicate.
+     * Constructs a new ItemPredicate with the specified conditional rules.
      *
-     * @param without    List of exclusion conditions.
-     * @param with       List of inclusion conditions.
-     * @param valued     List of component value conditions.
-     * @param predicates List of sub-predicate conditions.
-     * @param material   The required {@link Material}.
+     * @param without
+     * The list of exclusionary component conditions.
+     * @param with
+     * The list of inclusionary component conditions.
+     * @param valued
+     * The list of specific value-matching component conditions.
+     * @param predicates
+     * The list of nested predicate conditions.
+     * @param id
+     * The base item Key that must match (nullable for any item).
      */
-    public ItemPredicate(List<Condition<Key>> without,
-                         List<Condition<Key>> with,
-                         List<Condition<DataComponent<?>>> valued,
-                         List<Condition<ItemPredicate>> predicates,
-                         Material material) {
+    public ItemPredicate(List<Condition<Key>> without, List<Condition<Key>> with, List<Condition<DataComponent<?>>> valued, List<Condition<ItemPredicate>> predicates, Key id) {
         this.without = without;
         this.with = with;
         this.valued = valued;
         this.predicates = predicates;
-        this.material = material;
+        this.id = id;
     }
 
     /**
-     * @return A new builder instance for creating an ItemPredicate.
+     * Creates a new fluent builder instance for constructing an ItemPredicate.
+     *
+     * @return
+     * A new {@link Builder} instance.
      */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Compares this predicate against another object for logical equivalence.
+     *
+     * @param o
+     * The object to compare.
+     * @return
+     * True if the object is an identical ItemPredicate.
+     */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ItemPredicate that)) return false;
-        return Objects.equals(material, that.material) &&
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ItemPredicate that)) {
+            return false;
+        }
+        return Objects.equals(id, that.id) &&
             Objects.equals(without, that.without) &&
             Objects.equals(with, that.with) &&
             Objects.equals(valued, that.valued) &&
             Objects.equals(predicates, that.predicates);
     }
 
+    /**
+     * Generates a hash code based on the predicate's underlying conditions.
+     *
+     * @return
+     * The integer hash code.
+     */
     @Override
     public int hashCode() {
-        return Objects.hash(without, with, valued, predicates, material);
+        return Objects.hash(without, with, valued, predicates, id);
     }
 
     /**
-     * Evaluates whether the provided {@link ItemStack} satisfies all conditions of this predicate.
+     * Evaluates an ItemStack against all configured conditions within this predicate.
      *
-     * @param stack The item stack to test.
-     * @return {@code true} if the stack matches all filters; {@code false} otherwise.
+     * @param stack
+     * The {@link ItemStack} to test.
+     * @return
+     * True if the item satisfies all rules; false if it fails any rule or is null/air.
      */
     @Override
     public boolean test(ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return false;
+        }
+
         Item item = Item.resolve(stack);
-        if (item == null) item = new Item(stack);
+        if (item == null) {
+            item = new Item(stack);
+        }
         final Item finalItem = item;
 
-        if (material != null && !material.equals(stack.getType())) return false;
+        if (id != null && !id.equals(finalItem.getId())) {
+            return false;
+        }
 
         for (Condition<Key> condition : without) {
-            if (condition.test(id -> {
-                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id.toString());
+            if (condition.test(compId -> {
+                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(compId.toString());
                 return type != null && finalItem.hasData(type);
-            })) return false;
+            })) {
+                return false;
+            }
         }
 
         for (Condition<Key> condition : with) {
-            if (!condition.test(id -> {
-                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(id.toString());
+            if (!condition.test(compId -> {
+                DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(compId.toString());
                 return type != null && finalItem.hasData(type);
-            })) return false;
+            })) {
+                return false;
+            }
         }
 
         for (Condition<DataComponent<?>> condition : valued) {
             if (!condition.test(comp -> {
                 DataComponentType<?> type = comp.getType();
-                if (!finalItem.hasData(type)) return false;
+                if (!finalItem.hasData(type)) {
+                    return false;
+                }
                 DataComponent<?> other = finalItem.getData(type);
                 return Objects.equals(comp.getValue(), other.getValue());
             })) {
@@ -217,36 +321,57 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         for (Condition<ItemPredicate> condition : predicates) {
-            if (!condition.test(sub -> sub.test(stack))) return false;
+            if (!condition.test(sub -> sub.test(stack))) {
+                return false;
+            }
         }
 
         return true;
     }
 
     /**
-     * A fluent builder for constructing complex {@link ItemPredicate} instances.
+     * A fluent builder pattern class designed to easily construct {@link ItemPredicate} instances.
      */
     public static class Builder {
         private final List<Condition<Key>> without = new ArrayList<>();
         private final List<Condition<Key>> with = new ArrayList<>();
         private final List<Condition<DataComponent<?>>> valued = new ArrayList<>();
         private final List<Condition<ItemPredicate>> predicates = new ArrayList<>();
-        private Material material = null;
+        private Key id = null;
 
         /**
-         * Sets the required material type.
-         * @param material The {@link Material}.
-         * @return This builder.
+         * Mandates that the item matches a specific base Key.
+         *
+         * @param id
+         * The {@link Key} to match.
+         * @return
+         * This builder instance.
          */
-        public Builder material(Material material) {
-            this.material = material;
+        public Builder id(Key id) {
+            this.id = id;
             return this;
         }
 
         /**
-         * Adds a condition that must fail (the item must NOT have these components).
-         * @param condition The exclusion condition.
-         * @return This builder.
+         * Mandates that the item matches a specific vanilla material.
+         *
+         * @param material
+         * The {@link Material} to match.
+         * @return
+         * This builder instance.
+         */
+        public Builder material(Material material) {
+            this.id = Key.key(Key.MINECRAFT_NAMESPACE, material.name().toLowerCase(Locale.ROOT));
+            return this;
+        }
+
+        /**
+         * Adds an exclusionary condition requiring the absence of specific components.
+         *
+         * @param condition
+         * The {@link Condition} wrapping a component Key.
+         * @return
+         * This builder instance.
          */
         public Builder without(Condition<Key> condition) {
             this.without.add(condition);
@@ -254,9 +379,12 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         /**
-         * Adds a condition that must succeed (the item must have these components).
-         * @param condition The inclusion condition.
-         * @return This builder.
+         * Adds an inclusionary condition requiring the presence of specific components.
+         *
+         * @param condition
+         * The {@link Condition} wrapping a component Key.
+         * @return
+         * This builder instance.
          */
         public Builder with(Condition<Key> condition) {
             this.with.add(condition);
@@ -264,9 +392,12 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         /**
-         * Adds a condition that checks specific component values.
-         * @param condition The value-matching condition.
-         * @return This builder.
+         * Adds a value-matching condition requiring exact component equivalence.
+         *
+         * @param condition
+         * The {@link Condition} wrapping a data component instance.
+         * @return
+         * This builder instance.
          */
         public Builder value(Condition<DataComponent<?>> condition) {
             this.valued.add(condition);
@@ -274,9 +405,12 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         /**
-         * Adds a sub-predicate condition for nested logic.
-         * @param condition The sub-predicate condition.
-         * @return This builder.
+         * Adds a nested predicate condition.
+         *
+         * @param condition
+         * The {@link Condition} wrapping a nested predicate.
+         * @return
+         * This builder instance.
          */
         public Builder check(Condition<ItemPredicate> condition) {
             this.predicates.add(condition);
@@ -284,28 +418,38 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         /**
-         * Adds an exclusion for a specific component ID.
-         * @param identifier The component ID.
-         * @return This builder.
+         * Requires the strict absence of a specific component Key.
+         *
+         * @param identifier
+         * The {@link Key} of the component that must be absent.
+         * @return
+         * This builder instance.
          */
         public Builder without(Key identifier) {
             return without(Condition.one(identifier));
         }
 
         /**
-         * Adds a requirement for a specific component ID.
-         * @param identifier The component ID.
-         * @return This builder.
+         * Requires the strict presence of a specific component Key.
+         *
+         * @param identifier
+         * The {@link Key} of the component that must be present.
+         * @return
+         * This builder instance.
          */
         public Builder with(Key identifier) {
             return with(Condition.one(identifier));
         }
 
         /**
-         * Adds a requirement for a component with a specific value.
-         * @param component The component instance with value.
-         * @param <T> The value type.
-         * @return This builder.
+         * Requires an exact value match against a provided data component.
+         *
+         * @param <T>
+         * The data type of the component.
+         * @param component
+         * The {@link DataComponent} to match against.
+         * @return
+         * This builder instance.
          */
         @SuppressWarnings("unchecked")
         public <T> Builder value(DataComponent<T> component) {
@@ -313,36 +457,48 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         /**
-         * Adds a requirement for a specific sub-predicate to pass.
-         * @param predicate The predicate.
-         * @return This builder.
+         * Evaluates a sub-predicate against the item.
+         *
+         * @param predicate
+         * The nested {@link ItemPredicate} to test.
+         * @return
+         * This builder instance.
          */
         public Builder check(ItemPredicate predicate) {
             return check(Condition.one(predicate));
         }
 
         /**
-         * Adds a condition requiring ANY of the provided identifiers to be present.
-         * @param identifiers Varargs of identifiers.
-         * @return This builder.
+         * Requires the presence of at least one of the provided component Keys.
+         *
+         * @param identifiers
+         * The varargs array of component {@link Key}s to check.
+         * @return
+         * This builder instance.
          */
         public Builder withAny(Key... identifiers) {
             return with(Condition.anyOf(Arrays.stream(identifiers).map(Condition::one).toList()));
         }
 
         /**
-         * Adds a condition requiring ANY of the provided identifiers to be present.
-         * @param identifiers Collection of identifiers.
-         * @return This builder.
+         * Requires the presence of at least one of the provided component Keys.
+         *
+         * @param identifiers
+         * The collection of component {@link Key}s to check.
+         * @return
+         * This builder instance.
          */
         public Builder withAny(Collection<Key> identifiers) {
             return with(Condition.anyOf(identifiers.stream().map(Condition::one).toList()));
         }
 
         /**
-         * Adds a condition requiring ANY of the provided component values to match.
-         * @param components Varargs of data components.
-         * @return This builder.
+         * Requires an exact value match against at least one of the provided components.
+         *
+         * @param components
+         * The varargs array of {@link DataComponent} instances to check.
+         * @return
+         * This builder instance.
          */
         @SuppressWarnings("unchecked")
         public Builder valueAny(DataComponent<?>... components) {
@@ -354,20 +510,25 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         /**
-         * Adds a condition requiring ANY of the provided sub-predicates to pass.
-         * @param predicates Varargs of predicates.
-         * @return This builder.
+         * Requires the item to satisfy at least one of the provided sub-predicates.
+         *
+         * @param predicates
+         * The varargs array of nested {@link ItemPredicate}s to check.
+         * @return
+         * This builder instance.
          */
         public Builder checkAny(ItemPredicate... predicates) {
             return check(Condition.anyOf(Arrays.stream(predicates).map(Condition::one).toList()));
         }
 
         /**
-         * Builds the {@link ItemPredicate} instance.
-         * @return The resulting predicate.
+         * Finalizes construction and returns the built ItemPredicate.
+         *
+         * @return
+         * The configured {@link ItemPredicate} instance.
          */
         public ItemPredicate build() {
-            return new ItemPredicate(without, with, valued, predicates, material);
+            return new ItemPredicate(without, with, valued, predicates, id);
         }
     }
 }

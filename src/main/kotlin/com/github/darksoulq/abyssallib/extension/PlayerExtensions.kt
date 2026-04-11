@@ -121,8 +121,10 @@ fun Player.chatInput(inputHandler: Consumer<String>, timeoutTicks: Long) = ChatI
 fun Player.chatInput(inputHandler: Consumer<String>, prompt: Component, timeoutTicks: Long) = ChatInputHandler.await(this, inputHandler, prompt, timeoutTicks)
 fun Player.cancelChatInput() = ChatInputHandler.cancel(this)
 
-fun Player.getStat(id: Key) : Statistic<*>? = PlayerStatistics.of(this).get(id)
-fun Player.setStat(stat: Statistic<*>) = PlayerStatistics.of(this).set(stat)
+fun Player.getStat(stat: Statistic): Int = PlayerStatistics.of(this).get(stat)
+fun Player.setStat(stat: Statistic, value: Int) = PlayerStatistics.of(this).set(stat, value)
+fun Player.incrementStat(stat: Statistic, amount: Int) = PlayerStatistics.of(this).increment(stat, amount)
+fun Player.incrementStat(stat: Statistic) = PlayerStatistics.of(this).increment(stat, 1)
 
 fun Player.hasPerm(perm: PermissionNode) : Boolean = perm.has(this)
 fun Player.hasPerm(perm: Holder<PermissionNode>) : Boolean = perm.get().has(this)

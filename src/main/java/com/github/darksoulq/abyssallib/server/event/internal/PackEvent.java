@@ -7,7 +7,6 @@ import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
-import net.kyori.adventure.resource.ResourcePackStatus;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.ArrayList;

@@ -51,13 +51,7 @@ import java.util.Map;
  * @param nbt        A JSON object representing serialized vanilla tile entity (NBT-like)
  *                   data such as inventories or sign text. May be {@code null}.
  */
-public record BlockInfo(
-    @Nullable Vector pos,
-    Object block,
-    @Nullable ObjectNode states,
-    @Nullable ObjectNode properties,
-    @Nullable ObjectNode nbt
-) {
+public record BlockInfo(@Nullable Vector pos, Object block, @Nullable ObjectNode states, @Nullable ObjectNode properties, @Nullable ObjectNode nbt) {
 
     /**
      * Returns the string identifier of the underlying block.

@@ -6,9 +6,9 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.Collection;
 import java.util.Map;

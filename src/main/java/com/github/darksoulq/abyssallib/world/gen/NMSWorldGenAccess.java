@@ -1,8 +1,8 @@
 package com.github.darksoulq.abyssallib.world.gen;
 
+import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
-import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.WorldGenLevel;

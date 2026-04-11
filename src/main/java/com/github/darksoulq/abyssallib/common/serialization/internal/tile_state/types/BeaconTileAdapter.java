@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;

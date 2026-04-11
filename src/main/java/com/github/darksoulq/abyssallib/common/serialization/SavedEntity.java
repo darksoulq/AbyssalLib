@@ -1,10 +1,9 @@
-package com.github.darksoulq.abyssallib.world.entity;
+package com.github.darksoulq.abyssallib.common.serialization;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
 import com.github.darksoulq.abyssallib.common.util.Either;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
+import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;

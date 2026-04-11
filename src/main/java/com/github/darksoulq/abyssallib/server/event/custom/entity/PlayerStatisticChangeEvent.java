@@ -30,7 +30,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * The statistic container being updated.
      */
-    private final Statistic<T> statistic;
+    private final Statistic statistic;
 
     /**
      * The previous value of the statistic before this change.
@@ -59,10 +59,9 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
      * @param newValue
      * The value proposed for the update.
      */
-    @SuppressWarnings("unchecked")
-    public PlayerStatisticChangeEvent(@NotNull Player player, @NotNull Statistic<?> statistic, T oldValue, T newValue) {
+    public PlayerStatisticChangeEvent(@NotNull Player player, @NotNull Statistic statistic, T oldValue, T newValue) {
         this.player = player;
-        this.statistic = (Statistic<T>) statistic;
+        this.statistic = statistic;
         this.oldValue = oldValue;
         this.newValue = newValue;
     }
@@ -83,7 +82,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
      * @return
      * The {@link Statistic} definition and container.
      */
-    public @NotNull Statistic<T> getStatistic() {
+    public @NotNull Statistic getStatistic() {
         return statistic;
     }
 

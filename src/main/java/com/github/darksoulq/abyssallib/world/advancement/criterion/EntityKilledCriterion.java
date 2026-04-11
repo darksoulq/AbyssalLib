@@ -3,8 +3,10 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import org.bukkit.Statistic;
-import org.bukkit.entity.EntityType;
+import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
+import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
+import com.github.darksoulq.abyssallib.world.data.statistic.Statistics;
+import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
@@ -15,15 +17,15 @@ public class EntityKilledCriterion implements AdvancementCriterion {
         @Override
         public <D> EntityKilledCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
             Map<D, D> map = ops.getMap(input).orElseThrow();
-            EntityType type = Codec.enumCodec(EntityType.class).decode(ops, map.get(ops.createString("entity_type")));
+            Key entityId = Codecs.KEY.decode(ops, map.get(ops.createString("entity")));
             int amount = Codecs.INT.decode(ops, map.get(ops.createString("amount")));
-            return new EntityKilledCriterion(type, amount);
+            return new EntityKilledCriterion(entityId, amount);
         }
 
         @Override
         public <D> D encode(DynamicOps<D> ops, EntityKilledCriterion value) throws CodecException {
             return ops.createMap(Map.of(
-                ops.createString("entity_type"), Codec.enumCodec(EntityType.class).encode(ops, value.type),
+                ops.createString("entity"), Codecs.KEY.encode(ops, value.entityId),
                 ops.createString("amount"), Codecs.INT.encode(ops, value.amount)
             ));
         }
@@ -31,11 +33,11 @@ public class EntityKilledCriterion implements AdvancementCriterion {
 
     public static final CriterionType<EntityKilledCriterion> TYPE = () -> CODEC;
 
-    private final EntityType type;
+    private final Key entityId;
     private final int amount;
 
-    public EntityKilledCriterion(EntityType type, int amount) {
-        this.type = type;
+    public EntityKilledCriterion(Key entityId, int amount) {
+        this.entityId = entityId;
         this.amount = amount;
     }
 
@@ -46,6 +48,7 @@ public class EntityKilledCriterion implements AdvancementCriterion {
 
     @Override
     public boolean isMet(Player player) {
-        return player.getStatistic(Statistic.KILL_ENTITY, type) >= amount;
+        Statistic stat = Statistics.ENTITIES_KILLED.get(entityId);
+        return PlayerStatistics.of(player).get(stat) >= amount;
     }
 }

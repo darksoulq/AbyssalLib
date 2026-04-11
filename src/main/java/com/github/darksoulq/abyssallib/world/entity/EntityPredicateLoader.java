@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.item;
+package com.github.darksoulq.abyssallib.world.entity;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
@@ -14,16 +14,16 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 /**
- * Utility class responsible for loading and parsing data-driven {@link ItemPredicate} definitions.
+ * Utility class responsible for loading and parsing data-driven {@link EntityPredicate} definitions.
  * This loader scans the server's data folder for YAML files, deserializes them using
- * the configured codec, and injects them into the global item predicate registry.
+ * the configured codec, and injects them into the global entity predicate registry.
  */
-public class ItemPredicateLoader {
+public class EntityPredicateLoader {
 
     /**
-     * The root directory where custom item predicate YAML files are stored.
+     * The root directory where custom entity predicate YAML files are stored.
      */
-    private static final Path PREDICATES_FOLDER = new java.io.File(AbyssalLib.getInstance().getDataFolder(), "predicates/item").toPath();
+    private static final Path PREDICATES_FOLDER = new java.io.File(AbyssalLib.getInstance().getDataFolder(), "predicates/entity").toPath();
 
     /**
      * Scans the predicates directory and loads all valid YAML configurations into the registry.
@@ -34,7 +34,7 @@ public class ItemPredicateLoader {
             try {
                 Files.createDirectories(PREDICATES_FOLDER);
             } catch (IOException e) {
-                AbyssalLib.LOGGER.severe("Failed to create predicates folder: " + e.getMessage());
+                AbyssalLib.LOGGER.severe("Failed to create entity predicates folder: " + e.getMessage());
                 return;
             }
         }
@@ -45,14 +45,14 @@ public class ItemPredicateLoader {
                     String name = path.getFileName().toString().toLowerCase();
                     return name.endsWith(".yml") || name.endsWith(".yaml");
                 })
-                .forEach(ItemPredicateLoader::loadSingle);
+                .forEach(EntityPredicateLoader::loadSingle);
         } catch (IOException e) {
-            AbyssalLib.LOGGER.severe("Failed to walk predicates folder: " + e.getMessage());
+            AbyssalLib.LOGGER.severe("Failed to walk entity predicates folder: " + e.getMessage());
         }
     }
 
     /**
-     * Processes a single file path, attempting to parse and register the item predicate.
+     * Processes a single file path, attempting to parse and register the entity predicate.
      *
      * @param path
      * The {@link Path} to the YAML file.
@@ -63,25 +63,25 @@ public class ItemPredicateLoader {
             return;
         }
 
-        ItemPredicate predicate = load(path);
+        EntityPredicate predicate = load(path);
         if (predicate != null) {
-            Registries.ITEM_PREDICATES.register(id.asString(), predicate);
+            Registries.ENTITY_PREDICATES.register(id.asString(), predicate);
         }
     }
 
     /**
-     * Reads a YAML file from the file system and decodes it into an ItemPredicate instance.
+     * Reads a YAML file from the file system and decodes it into an EntityPredicate instance.
      *
      * @param path
      * The {@link Path} to the YAML file to read.
      * @return
-     * The parsed {@link ItemPredicate}, or null if parsing fails.
+     * The parsed {@link EntityPredicate}, or null if parsing fails.
      */
-    public static ItemPredicate load(Path path) {
+    public static EntityPredicate load(Path path) {
         return Try.of(() -> {
             try (InputStream in = Files.newInputStream(path)) {
                 Object root = YamlOps.INSTANCE.parse(in);
-                return ItemPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+                return EntityPredicate.CODEC.decode(YamlOps.INSTANCE, root);
             }
         }).onFailure(e -> e.printStackTrace()).orElse(null);
     }
@@ -94,23 +94,23 @@ public class ItemPredicateLoader {
      * @param resourcePath
      * The internal path to the YAML resource file.
      * @return
-     * The parsed {@link ItemPredicate}, or null if the resource is missing or parsing fails.
+     * The parsed {@link EntityPredicate}, or null if the resource is missing or parsing fails.
      */
-    public static ItemPredicate loadResource(Plugin plugin, String resourcePath) {
+    public static EntityPredicate loadResource(Plugin plugin, String resourcePath) {
         return Try.of(() -> {
             try (InputStream in = plugin.getResource(resourcePath)) {
                 if (in == null) {
                     return null;
                 }
                 Object root = YamlOps.INSTANCE.parse(in);
-                return ItemPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+                return EntityPredicate.CODEC.decode(YamlOps.INSTANCE, root);
             }
         }).onFailure(e -> e.printStackTrace()).orElse(null);
     }
 
     /**
      * Determines the unique Key for a predicate based on its directory structure.
-     * The structure must be {@code predicates/item/<namespace>/<path_to_file>.yml}.
+     * The structure must be {@code predicates/entity/<namespace>/<path_to_file>.yml}.
      *
      * @param file
      * The {@link Path} of the file being evaluated.
@@ -120,7 +120,7 @@ public class ItemPredicateLoader {
     private static Key getPredicateId(Path file) {
         Path relative = PREDICATES_FOLDER.relativize(file);
         if (relative.getNameCount() < 2) {
-            AbyssalLib.LOGGER.warning("Skipping file " + file + ": Must be inside a namespace folder (predicates/<namespace>/<name>.yml)");
+            AbyssalLib.LOGGER.warning("Skipping file " + file + ": Must be inside a namespace folder (predicates/entity/<namespace>/<name>.yml)");
             return null;
         }
 

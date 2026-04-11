@@ -7,8 +7,6 @@ import com.github.darksoulq.abyssallib.common.serialization.internal.entity.type
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific.ZombieEntityAdapter;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits.*;
-import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types.SkullTileAdapter;
-import org.bukkit.entity.CopperGolem;
 
 public class EntityAdapters {
     public static void register() {

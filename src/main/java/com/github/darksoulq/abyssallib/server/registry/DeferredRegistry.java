@@ -5,24 +5,16 @@ import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyE
 import com.github.darksoulq.abyssallib.server.event.internal.ServerEvents;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
-import com.github.darksoulq.abyssallib.world.advancement.AdvancementDisplay;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomMarker;
-import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.key.Key;
-import net.minecraft.advancements.*;
-import net.minecraft.advancements.criterion.ImpossibleTrigger;
-import net.minecraft.core.ClientAsset;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerAdvancementManager;
-import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -130,14 +122,14 @@ public final class DeferredRegistry<T> {
 
             if (value instanceof CustomBlock block && block.generateItem()) {
                 Item blockItem = block.getItem().get();
-                Registries.PREDICATES.register(idString, ItemPredicate.builder()
+                Registries.ITEM_PREDICATES.register(idString, ItemPredicate.builder()
                     .value(new CustomMarker(Key.key(idString)))
                     .build());
                 Registries.ITEMS.register(idString, blockItem);
             }
 
             if (value instanceof Item) {
-                Registries.PREDICATES.register(idString, ItemPredicate.builder()
+                Registries.ITEM_PREDICATES.register(idString, ItemPredicate.builder()
                     .value(new CustomMarker(Key.key(idString)))
                     .build());
             }

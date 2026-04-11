@@ -11,7 +11,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
 import org.bukkit.inventory.meta.FireworkMeta;
 
-import java.util.List;
 import java.util.Map;
 
 public class FireworkEntityAdapter extends EntityAdapter<Firework> {

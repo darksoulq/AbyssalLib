@@ -6,8 +6,8 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.DyeColor;
-import org.bukkit.material.Colorable;
 import org.bukkit.entity.Entity;
+import org.bukkit.material.Colorable;
 
 import java.util.Map;
 

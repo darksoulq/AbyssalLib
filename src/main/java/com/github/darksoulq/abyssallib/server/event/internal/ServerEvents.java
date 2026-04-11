@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
@@ -84,7 +85,7 @@ public class ServerEvents {
                     EntityManager.restoreEntities();
                     EnergyNetwork.load();
                     EntityAttributes.init();
-                    PlayerStatistics.init();
+                    Try.run(PlayerStatistics::init);
                     RecipeLoader.reload();
                     TagLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "tags"));
                     NaturalSpawnRegistry.load();

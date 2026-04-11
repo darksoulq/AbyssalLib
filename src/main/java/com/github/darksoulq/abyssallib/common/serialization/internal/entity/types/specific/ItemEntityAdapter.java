@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.common.serialization.internal.entity.typ
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;

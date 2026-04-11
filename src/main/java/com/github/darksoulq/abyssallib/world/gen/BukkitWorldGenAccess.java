@@ -1,9 +1,9 @@
 package com.github.darksoulq.abyssallib.world.gen;
 
+import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
-import com.github.darksoulq.abyssallib.world.entity.SavedEntity;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;

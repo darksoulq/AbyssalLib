@@ -3,9 +3,13 @@ package com.github.darksoulq.abyssallib.bootstrap;
 import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
 import com.github.darksoulq.abyssallib.world.advancement.criterion.Criterions;
 import com.github.darksoulq.abyssallib.world.advancement.reward.Rewards;
+import com.github.darksoulq.abyssallib.world.block.BlockPredicateLoader;
 import com.github.darksoulq.abyssallib.world.block.Blocks;
 import com.github.darksoulq.abyssallib.world.data.loot.LootDefaults;
+import com.github.darksoulq.abyssallib.world.data.statistic.StatisticFormatters;
+import com.github.darksoulq.abyssallib.world.data.statistic.Statistics;
 import com.github.darksoulq.abyssallib.world.data.tag.TagTypes;
+import com.github.darksoulq.abyssallib.world.entity.EntityPredicateLoader;
 import com.github.darksoulq.abyssallib.world.gen.feature.Features;
 import com.github.darksoulq.abyssallib.world.gen.feature.tree.FoliagePlacers;
 import com.github.darksoulq.abyssallib.world.gen.feature.tree.RootPlacers;
@@ -25,10 +29,14 @@ public final class ContentRegistry {
         Components.DATA_COMPONENTS_VANILLA.apply();
         Components.DATA_COMPONENTS.apply();
         ItemPredicateLoader.loadPredicates();
+        BlockPredicateLoader.loadPredicates();
+        EntityPredicateLoader.loadPredicates();
 
         Blocks.BLOCKS.apply();
         Items.ITEMS.apply();
         TagTypes.TAG_TYPES.apply();
+        Statistics.STATISTIC_TYPES.apply();
+        StatisticFormatters.STATISTIC_FORMATTERS.apply();
 
         BlockAdapters.register();
         TileAdapters.register();

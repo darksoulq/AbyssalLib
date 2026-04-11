@@ -7,14 +7,17 @@ import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
 import com.github.darksoulq.abyssallib.world.advancement.criterion.CriterionType;
 import com.github.darksoulq.abyssallib.world.advancement.reward.RewardType;
+import com.github.darksoulq.abyssallib.world.block.BlockPredicate;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.loot.LootConditionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
-import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
+import com.github.darksoulq.abyssallib.world.data.statistic.StatisticFormatter;
+import com.github.darksoulq.abyssallib.world.data.statistic.StatisticType;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.data.tag.TagType;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
+import com.github.darksoulq.abyssallib.world.entity.EntityPredicate;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.tree.decorator.TreeDecoratorType;
 import com.github.darksoulq.abyssallib.world.gen.feature.tree.foliage.FoliagePlacerType;
@@ -38,7 +41,8 @@ public class Registries {
     public static final Registry<EnergyNodeType<?>> ENERGY_NODE_TYPES = new Registry<>();
 
     public static final Registry<DataComponentType<?>> DATA_COMPONENT_TYPES = new Registry<>();
-    public static final Registry<Statistic> STATISTICS = new Registry<>();
+    public static final Registry<StatisticType> STATISTIC_TYPES = new Registry<>();
+    public static final Registry<StatisticFormatter> STATISTIC_FORMATTERS = new Registry<>();
 
     public static final Registry<Advancement> ADVANCEMENTS = new Registry<>();
     public static final Registry<CriterionType<?>> CRITERION = new Registry<>();
@@ -67,7 +71,9 @@ public class Registries {
 
     public static final Registry<TagType<?, ?>> TAG_TYPES = new Registry<>();
     public static final Registry<Tag<?, ?>> TAGS = new Registry<>();
-    public static final Registry<ItemPredicate> PREDICATES = new Registry<>();
+    public static final Registry<ItemPredicate> ITEM_PREDICATES = new Registry<>();
+    public static final Registry<BlockPredicate> BLOCK_PREDICATES = new Registry<>();
+    public static final Registry<EntityPredicate> ENTITY_PREDICATES = new Registry<>();
 
     public static final Registry<PermissionNode> PERMISSIONS = new Registry<>();
     public static final Registry<PermissionGroup> PERMISSION_GROUPS = new Registry<>();
