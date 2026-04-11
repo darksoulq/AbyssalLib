@@ -25,10 +25,10 @@ import io.papermc.paper.text.Filtered;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.TagParser;
+import net.minecraft.nbt.*;
 import net.minecraft.resources.Identifier;
 import org.bukkit.*;
+import org.bukkit.Tag;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.BlockType;
@@ -531,16 +531,111 @@ public class ExtraCodecs {
         }
     };
 
-    public static final Codec<CompoundTag> COMPOUND_TAG = Codecs.STRING.xmap(
-        str -> {
-            try {
-                return TagParser.parseCompoundFully(str);
-            } catch (CommandSyntaxException e) {
-                throw new Codec.CodecException("Failed to create compound tag", e);
+    public static final Codec<CompoundTag> COMPOUND_TAG = new Codec<>() {
+        @Override
+        public <D> CompoundTag decode(DynamicOps<D> ops, D input) throws CodecException {
+            net.minecraft.nbt.Tag tag = decodeTag(ops, input);
+            if (tag instanceof CompoundTag ct) {
+                return ct;
             }
-        },
-        CompoundTag::toString
-    );
+            throw new CodecException("Input is not a CompoundTag structure");
+        }
+
+        @Override
+        public <D> D encode(DynamicOps<D> ops, CompoundTag value) throws CodecException {
+            return encodeTag(ops, value);
+        }
+    };
+
+    private static <D> net.minecraft.nbt.Tag decodeTag(DynamicOps<D> ops, D input) {
+        if (ops.getMap(input).isPresent()) {
+            CompoundTag tag = new CompoundTag();
+            ops.getMap(input).get().forEach((k, v) ->
+                ops.getStringValue(k).ifPresent(keyStr -> tag.put(keyStr, decodeTag(ops, v)))
+            );
+            return tag;
+        }
+        if (ops.getList(input).isPresent()) {
+            ListTag list = new ListTag();
+            ops.getList(input).get().forEach(e -> list.add(decodeTag(ops, e)));
+            return list;
+        }
+        if (ops.getStringValue(input).isPresent()) {
+            return StringTag.valueOf(ops.getStringValue(input).get());
+        }
+        if (ops.getBooleanValue(input).isPresent()) {
+            return ByteTag.valueOf(ops.getBooleanValue(input).get());
+        }
+        if (ops.getIntValue(input).isPresent()) {
+            return IntTag.valueOf(ops.getIntValue(input).get());
+        }
+        if (ops.getLongValue(input).isPresent()) {
+            return LongTag.valueOf(ops.getLongValue(input).get());
+        }
+        if (ops.getFloatValue(input).isPresent()) {
+            return FloatTag.valueOf(ops.getFloatValue(input).get());
+        }
+        if (ops.getDoubleValue(input).isPresent()) {
+            return DoubleTag.valueOf(ops.getDoubleValue(input).get());
+        }
+
+        return new CompoundTag();
+    }
+
+    private static <D> D encodeTag(DynamicOps<D> ops, net.minecraft.nbt.Tag tag) {
+        if (tag == null) return ops.empty();
+
+        switch (tag.getId()) {
+            case net.minecraft.nbt.Tag.TAG_COMPOUND:
+                CompoundTag ct = (CompoundTag) tag;
+                Map<D, D> map = new LinkedHashMap<>();
+                for (String key : ct.keySet()) {
+                    map.put(ops.createString(key), encodeTag(ops, ct.get(key)));
+                }
+                return ops.createMap(map);
+            case net.minecraft.nbt.Tag.TAG_LIST:
+                ListTag lt = (ListTag) tag;
+                List<D> list = new ArrayList<>();
+                for (net.minecraft.nbt.Tag e : lt) {
+                    list.add(encodeTag(ops, e));
+                }
+                return ops.createList(list);
+            case net.minecraft.nbt.Tag.TAG_STRING:
+                return ops.createString(tag.asString().orElse(""));
+            case net.minecraft.nbt.Tag.TAG_BYTE:
+                return ops.createBoolean(tag.asByte().orElse((byte) 0) != 0);
+            case net.minecraft.nbt.Tag.TAG_SHORT:
+                return ops.createInt(tag.asShort().orElse((short) 0));
+            case net.minecraft.nbt.Tag.TAG_INT:
+                return ops.createInt(tag.asInt().orElse(0));
+            case net.minecraft.nbt.Tag.TAG_LONG:
+                return ops.createLong(tag.asLong().orElse(0L));
+            case net.minecraft.nbt.Tag.TAG_FLOAT:
+                return ops.createFloat(tag.asFloat().orElse(0F));
+            case net.minecraft.nbt.Tag.TAG_DOUBLE:
+                return ops.createDouble(tag.asDouble().orElse(0D));
+            case net.minecraft.nbt.Tag.TAG_BYTE_ARRAY:
+                List<D> byteList = new ArrayList<>();
+                for (byte b : tag.asByteArray().orElse(new byte[0])) {
+                    byteList.add(ops.createInt(b));
+                }
+                return ops.createList(byteList);
+            case net.minecraft.nbt.Tag.TAG_INT_ARRAY:
+                List<D> intList = new ArrayList<>();
+                for (int i : tag.asIntArray().orElse(new int[0])) {
+                    intList.add(ops.createInt(i));
+                }
+                return ops.createList(intList);
+            case net.minecraft.nbt.Tag.TAG_LONG_ARRAY:
+                List<D> longList = new ArrayList<>();
+                for (long l : tag.asLongArray().orElse(new long[0])) {
+                    longList.add(ops.createLong(l));
+                }
+                return ops.createList(longList);
+            default:
+                return ops.empty();
+        }
+    }
 
     public static final Codec<SavedEntity> SAVED_ENTITY = new Codec<>() {
         @Override

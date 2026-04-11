@@ -26,6 +26,7 @@ public class Components {
     public static DataComponentType<?> CHARGED_PROJECTILES = register("charged_projectiles", ChargedProjectile.TYPE);
     public static DataComponentType<?> CONSUMABLE = register("consumable", Consume.TYPE);
     public static DataComponentType<?> CONTAINER_LOOT = register("container_loot", ContainerLoot.TYPE);
+    public static DataComponentType<?> CUSTOM_DATA = register("custom_data", CustomData.TYPE);
     public static DataComponentType<?> USE_COOLDOWN = register("use_cooldown", CooldownUse.TYPE);
     public static DataComponentType<?> CUSTOM_NAME = register("custom_name", CustomName.TYPE);
     public static DataComponentType<?> DEATH_PROTECTION = register("death_protection", DeathProtect.TYPE);

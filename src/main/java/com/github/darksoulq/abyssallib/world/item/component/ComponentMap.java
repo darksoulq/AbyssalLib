@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomData;
 import com.github.darksoulq.abyssallib.world.util.CTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -85,6 +86,8 @@ public class ComponentMap {
         if (item == null || item.getStack() == null) return;
 
         for (io.papermc.paper.datacomponent.DataComponentType type : item.getStack().getDataTypes()) {
+            if (type.key().asString().equals("minecraft:custom_data")) continue;
+
             DataComponentType<?> custom = Registries.DATA_COMPONENT_TYPES.get(type.key().toString());
             if (custom == null) continue;
 
@@ -101,6 +104,18 @@ public class ComponentMap {
                 if (component != null) {
                     components.put(custom, component);
                 }
+            }
+        }
+
+        net.minecraft.world.item.ItemStack nms = org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(item.getStack());
+        net.minecraft.world.item.component.CustomData dta = nms.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+
+        if (dta != null && !dta.isEmpty()) {
+            net.minecraft.nbt.CompoundTag tag = dta.copyTag();
+            tag.remove("CustomComponents");
+
+            if (!tag.isEmpty()) {
+                components.put(CustomData.TYPE, new CustomData(tag));
             }
         }
 
