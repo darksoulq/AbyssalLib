@@ -29,7 +29,6 @@ import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
-import com.github.darksoulq.abyssallib.world.multiblock.Multiblock;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessorType;
 import io.papermc.paper.potion.PotionMix;
@@ -51,7 +50,6 @@ public class Registries {
     public static final Registry<Item> ITEMS = new Registry<>();
     public static final Registry<ItemCategory> ITEM_CATEGORIES = new Registry<>();
     public static final Registry<CustomBlock> BLOCKS = new Registry<>();
-    public static final Registry<Multiblock> MULTIBLOCKS = new Registry<>();
     public static final Registry<CustomEntity<? extends LivingEntity>> ENTITIES = new Registry<>();
 
     public static final Registry<Structure> STRUCTURES = new Registry<>();

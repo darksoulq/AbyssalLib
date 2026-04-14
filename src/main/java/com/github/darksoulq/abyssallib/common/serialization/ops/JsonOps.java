@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization.ops;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.*;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 
@@ -15,6 +17,8 @@ public class JsonOps extends DynamicOps<JsonNode> {
 
     /** Singleton instance of JsonOps to avoid unnecessary allocations. */
     public static final JsonOps INSTANCE = new JsonOps();
+
+    public final ObjectMapper mapper = new JsonMapper();
 
     /** Private constructor for singleton pattern. */
     private JsonOps() {}

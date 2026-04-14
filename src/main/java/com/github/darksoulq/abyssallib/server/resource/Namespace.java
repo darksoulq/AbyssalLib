@@ -46,6 +46,24 @@ public class Namespace {
         this.pack = pack;
     }
 
+    public @NotNull Atlas atlas(@NotNull String id, boolean autoLoad) {
+        for (Asset a : assets) {
+            if (a instanceof Atlas atlas && atlas.getId().equals(id)) return atlas;
+        }
+        Atlas atlas = autoLoad ? new Atlas(plugin, namespace, id) : new Atlas(namespace, id);
+        assets.add(atlas);
+        return atlas;
+    }
+
+    public @NotNull Atlas atlas(@NotNull String id, byte[] data) {
+        for (Asset a : assets) {
+            if (a instanceof Atlas atlas && atlas.getId().equals(id)) return atlas;
+        }
+        Atlas atlas = new Atlas(namespace, id, data);
+        assets.add(atlas);
+        return atlas;
+    }
+
     /**
      * Registers a texture and attempts to load it from the plugin's JAR resources.
      *

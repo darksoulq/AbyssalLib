@@ -14,7 +14,6 @@ public final class EventRegistry {
         AbyssalLib.EVENT_BUS.register(new PlayerEvents());
         AbyssalLib.EVENT_BUS.register(new EntityEvents());
         AbyssalLib.EVENT_BUS.register(new BlockEvents());
-        AbyssalLib.EVENT_BUS.register(new MultiblockEvents());
         AbyssalLib.EVENT_BUS.register(new ItemEvents());
         AbyssalLib.EVENT_BUS.register(new ServerEvents());
         AbyssalLib.EVENT_BUS.register(new GuiEvents());

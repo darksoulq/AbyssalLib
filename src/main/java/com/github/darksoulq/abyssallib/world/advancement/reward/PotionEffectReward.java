@@ -1,14 +1,9 @@
 package com.github.darksoulq.abyssallib.world.advancement.reward;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-
-import java.util.Map;
 
 public class PotionEffectReward implements AdvancementReward {
 

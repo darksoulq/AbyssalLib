@@ -5,20 +5,12 @@ import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.permission.PermissionManager;
 import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebServer;
-import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
-import com.github.darksoulq.abyssallib.world.data.loot.LootEntry;
-import com.github.darksoulq.abyssallib.world.data.loot.LootPool;
-import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
-import com.github.darksoulq.abyssallib.world.data.loot.MergeStrategy;
 import dev.faststats.bukkit.BukkitMetrics;
 import dev.faststats.core.ErrorTracker;
 import dev.faststats.core.Metrics;
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 public final class AbyssalLib extends JavaPlugin {

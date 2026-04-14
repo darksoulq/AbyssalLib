@@ -3,13 +3,11 @@ package com.github.darksoulq.abyssallib.bootstrap;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
-import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 
 public final class PluginShutdown {
 
     public static void execute() {
         BlockManager.save();
-        MultiblockManager.save();
         EnergyNetwork.save();
 
         if (AbyssalLib.PACK_SERVER != null && AbyssalLib.PACK_SERVER.isEnabled()) {

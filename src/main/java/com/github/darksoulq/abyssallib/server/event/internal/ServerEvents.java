@@ -27,7 +27,6 @@ import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.entity.internal.NaturalSpawnRegistry;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenLoader;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenManager;
-import com.github.darksoulq.abyssallib.world.multiblock.internal.MultiblockManager;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import com.github.darksoulq.abyssallib.world.structure.StructureLoader;
 import net.minecraft.advancements.AdvancementHolder;
@@ -80,7 +79,6 @@ public class ServerEvents {
                     LootLoader.load();
                     CommandBus.register(AbyssalLib.PLUGIN_ID, new InternalCommand());
                     BlockManager.load();
-                    MultiblockManager.load();
                     EntityManager.load();
                     EntityManager.restoreEntities();
                     EnergyNetwork.load();
