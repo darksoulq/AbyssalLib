@@ -16,6 +16,7 @@ import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissi
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
+import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatisticMenu;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
@@ -23,7 +24,7 @@ import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.data.statistic.StatisticFormatter;
 import com.github.darksoulq.abyssallib.world.data.statistic.formatter.DefaultStatisticFormatter;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
-import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
+import com.github.darksoulq.abyssallib.world.gen.internal.StructureLocator;
 import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.gui.internal.PermissionMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
@@ -88,6 +89,17 @@ public class InternalCommand {
                         .suggests(InternalCommand::attributeTypeSuggests)
                         .executes(InternalCommand::attributeGetExecutor)
                     )
+                )
+            )
+        ).then(Commands.literal("locate")
+            .requires(DefaultConditions.hasPerm(PluginPermissions.LOCATE))
+            .then(Commands.literal("structure")
+                .then(Commands.argument("structure", ArgumentTypes.key())
+                    .suggests((ctx, builder) -> {
+                        Registries.STRUCTURES.getAll().keySet().forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(InternalCommand::locateExecutor)
                 )
             )
         ).then(Commands.literal("summon")
@@ -385,6 +397,29 @@ public class InternalCommand {
                 )
             )
         );
+    }
+
+    private static int locateExecutor(CommandContext<CommandSourceStack> ctx) {
+        Entity sender = isEntity(ctx.getSource());
+        if (sender == null) return 0;
+        Player player = sender instanceof Player p ? p : null;
+        if (player == null) return 0;
+
+        Key structureKey = ctx.getArgument("structure", Key.class);
+        String structureId = structureKey.asString();
+
+        reply(ctx, "<yellow>Locating " + structureId + "...</yellow>");
+
+        StructureLocator.locate(player.getWorld(), structureId, player.getLocation(), 100).thenAccept(loc -> {
+            if (loc != null) {
+                int distance = (int) player.getLocation().distance(loc);
+                reply(ctx, "<green>Found " + structureId + " at <aqua><click:suggest_command:'/tp " + loc.getBlockX() + " ~ " + loc.getBlockZ() + "'>" + loc.getBlockX() + " ~ " + loc.getBlockZ() + "</click></aqua> <gray>(" + distance + " blocks away)</gray></green>");
+            } else {
+                reply(ctx, "<red>Could not find " + structureId + " nearby.</red>");
+            }
+        });
+
+        return Command.SUCCESS;
     }
 
     public static void loadRPInfos(List<ResourcePackInfo> rps, boolean reload) {

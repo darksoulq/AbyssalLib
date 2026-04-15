@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.common.util;
 
+import com.github.darksoulq.abyssallib.server.translation.GlyphService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.kyori.adventure.text.Component;
@@ -35,7 +36,11 @@ public class TextUtil {
     /**
      * The shared {@link MiniMessage} instance used for parsing MiniMessage text.
      */
-    public static final MiniMessage MM = MiniMessage.miniMessage();
+    public static final MiniMessage MM = MiniMessage.builder()
+        .tags(TagResolver.builder()
+            .resolvers(TagResolver.standard(), GlyphService.resolve())
+            .build())
+        .build();
 
     /**
      * Builds the global {@link Gson} instance using all registered type adapters.

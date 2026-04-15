@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.translation;
 
 import com.github.darksoulq.abyssallib.common.color.MiniMessageBridge;
+import com.github.darksoulq.abyssallib.server.placeholder.CustomPlaceholderResolver;
 import com.github.darksoulq.abyssallib.server.translation.internal.CustomTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.LanguageLoader;
 import com.github.darksoulq.abyssallib.world.item.Item;
@@ -225,6 +226,7 @@ public final class ServerTranslator {
                 }
 
                 resolvers.add(GlyphService.resolve());
+                resolvers.add(CustomPlaceholderResolver.resolve(player));
 
                 resolvers.add(TagResolver.resolver(Set.of("tr", "translate"), (queue, ctx) -> {
                     if (!queue.hasNext()) return Tag.inserting(Component.empty());

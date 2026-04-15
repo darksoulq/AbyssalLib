@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.bootstrap;
 
 import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissions;
+import com.github.darksoulq.abyssallib.server.placeholder.ExpressionPlaceholders;
+import com.github.darksoulq.abyssallib.server.placeholder.Placeholders;
 import com.github.darksoulq.abyssallib.world.advancement.criterion.Criterions;
 import com.github.darksoulq.abyssallib.world.advancement.reward.Rewards;
 import com.github.darksoulq.abyssallib.world.block.BlockPredicateLoader;
@@ -56,6 +58,9 @@ public final class ContentRegistry {
 
         ItemCategories.ITEM_CATEGORIES.apply();
         PluginPermissions.NAMESPACE.apply();
+
+        Placeholders.PLACEHOLDERS.apply();
+        ExpressionPlaceholders.PLACEHOLDERS.apply();
 
         Criterions.CRITERION.apply();
         Rewards.REWARDS.apply();

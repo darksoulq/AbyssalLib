@@ -8,6 +8,7 @@ import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
 import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
+import com.github.darksoulq.abyssallib.world.gen.internal.StructureLocator;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
@@ -52,6 +53,16 @@ public class StructureFeature extends Feature<StructureFeature.Config> {
             config.mirror();
 
         structure.place(context.level(), context.origin(), finalRotation, finalMirror, 1.0f);
+
+        StructureLocator.record(
+            context.level().getWorld().getName(),
+            context.origin().getBlockX(),
+            context.origin().getBlockY(),
+            context.origin().getBlockZ(),
+            config.structureId(),
+            finalRotation,
+            finalMirror
+        );
         return true;
     }
 

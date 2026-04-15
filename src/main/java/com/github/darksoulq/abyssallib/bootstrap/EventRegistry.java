@@ -19,5 +19,6 @@ public final class EventRegistry {
         AbyssalLib.EVENT_BUS.register(new GuiEvents());
         AbyssalLib.EVENT_BUS.register(new AdvancementEvents());
         AbyssalLib.EVENT_BUS.register(new StatisticEvents());
+        AbyssalLib.EVENT_BUS.register(new ScoreboardEvent());
     }
 }

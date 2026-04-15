@@ -18,6 +18,7 @@ public class PluginPermissions {
         .defaultValue(PermissionDefault.OP)
         .description("Allows summoning entities"));
     public static final PermissionNode LOOT_SET = NAMESPACE.register("loot.set", n -> new PermissionNode(n).defaultValue(PermissionDefault.OP));
+    public static final PermissionNode LOCATE = NAMESPACE.register("locate", n -> new PermissionNode(n).defaultValue(PermissionDefault.OP));
 
     public static final PermissionNode STATISTICS_VIEW_SELF = NAMESPACE.register("statistics.view.self", n -> new PermissionNode(n)
         .defaultValue(PermissionDefault.TRUE)

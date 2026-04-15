@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.entity.data;
+package com.github.darksoulq.abyssallib.world.data.attribute;
 
 /**
  * Defines arithmetic operations that can be applied to numeric attributes via {@link AttributeModifier}.

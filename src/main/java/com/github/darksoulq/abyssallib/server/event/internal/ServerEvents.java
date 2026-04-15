@@ -9,12 +9,14 @@ import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketReceiveEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.PacketTranslator;
 import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
 import com.github.darksoulq.abyssallib.world.advancement.AdvancementLoader;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.internal.MapLoader;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootLoader;
@@ -22,7 +24,6 @@ import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.loot.MergeStrategy;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.tag.TagLoader;
-import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import com.github.darksoulq.abyssallib.world.entity.internal.NaturalSpawnRegistry;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenLoader;
@@ -91,6 +92,8 @@ public class ServerEvents {
                     WorldGenLoader.load();
                     AdvancementLoader.load();
                     AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
+
+                    Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), PlayerSidebarManager::updateAll, 2L, 2L);
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         } else {

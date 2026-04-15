@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.server.event.custom.entity;
 
-import com.github.darksoulq.abyssallib.world.entity.data.Attribute;
-import com.github.darksoulq.abyssallib.world.entity.data.AttributeModifier;
+import com.github.darksoulq.abyssallib.world.data.attribute.Attribute;
+import com.github.darksoulq.abyssallib.world.data.attribute.AttributeModifier;
 import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Cancellable;

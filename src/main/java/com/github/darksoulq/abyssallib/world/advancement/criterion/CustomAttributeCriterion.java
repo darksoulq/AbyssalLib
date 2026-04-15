@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes;
+import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import org.bukkit.entity.Player;
 
 import java.util.Map;

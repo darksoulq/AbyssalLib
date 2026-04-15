@@ -1,7 +1,7 @@
 package com.github.darksoulq.abyssallib.extension
 
-import com.github.darksoulq.abyssallib.world.entity.data.Attribute
-import com.github.darksoulq.abyssallib.world.entity.data.EntityAttributes
+import com.github.darksoulq.abyssallib.world.data.attribute.Attribute
+import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes
 import org.bukkit.entity.Entity
 
 fun <T : Number> Entity.getAttribute(attr: Attribute<T>) : Number {

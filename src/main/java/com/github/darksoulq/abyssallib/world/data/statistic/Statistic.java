@@ -32,8 +32,8 @@ public record Statistic(StatisticType type, Key target) {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Statistic(StatisticType type, Key target))) return false;
-        return Objects.equals(this.type, type) && Objects.equals(this.target, target);
+        if (!(o instanceof Statistic(StatisticType thatType, Key thatTarget))) return false;
+        return Objects.equals(this.type, thatType) && Objects.equals(this.target, thatTarget);
     }
 
 }

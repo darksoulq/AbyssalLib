@@ -31,6 +31,14 @@ public class WorldGenManager implements Listener {
     private static final Map<String, CustomBlockPopulator> POPULATORS = new HashMap<>();
 
     /**
+     * Returns the map storing worlds mapped to enum map of generation phases
+     * @return the feature map
+     */
+    public static Map<String, Map<GenerationPhase, List<PlacedFeature>>> getFeatures() {
+        return FEATURES;
+    }
+
+    /**
      * Initializes the world generation manager and registers events to inject populators.
      */
     public static void init() {
@@ -73,6 +81,8 @@ public class WorldGenManager implements Listener {
             public void generate(WorldGenAccess level, int chunkX, int chunkZ, Random random) {
                 Map<GenerationPhase, List<PlacedFeature>> phaseMap = FEATURES.get(world.getName());
                 if (phaseMap == null || phaseMap.isEmpty()) return;
+
+                StructureLocator.clearChunk(world.getName(), chunkX, chunkZ);
 
                 long seed = level.getWorld().getSeed();
                 long chunkSeed = (seed ^ (chunkX * 341873128712L)) + (chunkZ * 132897987541L);

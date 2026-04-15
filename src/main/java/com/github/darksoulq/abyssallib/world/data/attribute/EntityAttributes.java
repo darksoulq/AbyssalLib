@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.entity.data;
+package com.github.darksoulq.abyssallib.world.data.attribute;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;

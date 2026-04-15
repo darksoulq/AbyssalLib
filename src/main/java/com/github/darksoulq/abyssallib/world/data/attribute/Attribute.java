@@ -1,4 +1,4 @@
-package com.github.darksoulq.abyssallib.world.entity.data;
+package com.github.darksoulq.abyssallib.world.data.attribute;
 
 import net.kyori.adventure.key.Key;
 
