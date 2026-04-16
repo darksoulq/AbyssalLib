@@ -17,15 +17,17 @@ public class BBTexture {
     private final String frameOrderType;
     private final boolean visible;
     private final byte[] data;
-    
+
+    private final int width;
+    private final int height;
     private final int uvWidth;
     private final int uvHeight;
     private final int frameTime;
     private final boolean frameInterpolate;
     private final int[] frames;
 
-    public BBTexture(String uuid, String id, String name, String path, String folder, String namespace, String group, boolean particle, String renderMode, String renderSides, int fps, String frameOrderType, boolean visible, String source, 
-                     int uvWidth, int uvHeight, int frameTime, boolean frameInterpolate, int[] frames) {
+    public BBTexture(String uuid, String id, String name, String path, String folder, String namespace, String group, boolean particle, String renderMode, String renderSides, int fps, String frameOrderType, boolean visible, String source,
+                     int width, int height, int uvWidth, int uvHeight, int frameTime, boolean frameInterpolate, int[] frames) {
         this.uuid = uuid;
         this.id = id;
         this.name = name;
@@ -39,6 +41,8 @@ public class BBTexture {
         this.fps = fps;
         this.frameOrderType = frameOrderType;
         this.visible = visible;
+        this.width = width;
+        this.height = height;
         this.uvWidth = uvWidth;
         this.uvHeight = uvHeight;
         this.frameTime = frameTime;
@@ -66,6 +70,8 @@ public class BBTexture {
     public String getFrameOrderType() { return frameOrderType; }
     public boolean isVisible() { return visible; }
     public byte[] getData() { return data; }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
     public int getUvWidth() { return uvWidth; }
     public int getUvHeight() { return uvHeight; }
     public int getFrameTime() { return frameTime; }

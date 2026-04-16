@@ -53,16 +53,6 @@ public class BBElement {
     public Vector3f getRotation() { return rotation; }
     public Map<String, BBFace> getFaces() { return faces; }
 
-    public static class BBFace {
-        private final Vector4f uv;
-        private final String texture;
-
-        public BBFace(Vector4f uv, String texture) {
-            this.uv = uv;
-            this.texture = texture;
-        }
-
-        public Vector4f getUv() { return uv; }
-        public String getTexture() { return texture; }
+    public record BBFace(Vector4f uv, String texture) {
     }
 }

@@ -61,7 +61,7 @@ public final class BBModelLoader {
 
         if (root.has("resolution")) {
             JsonNode rNode = root.get("resolution");
-            model.setResolution(new BBResolution(optInt(rNode, "width", 64), optInt(rNode, "height", 64)));
+            model.setResolution(new BBResolution(optInt(rNode, "width", 16), optInt(rNode, "height", 16)));
         }
 
         List<String> texMap = new ArrayList<>();
@@ -79,6 +79,7 @@ public final class BBModelLoader {
                     optStr(tNode, "folder"), optStr(tNode, "namespace"), optStr(tNode, "group"), optBool(tNode, "particle", false),
                     optStr(tNode, "render_mode"), optStr(tNode, "render_sides"), optInt(tNode, "fps", 7),
                     optStr(tNode, "frame_order_type"), optBool(tNode, "visible", true), optStr(tNode, "source"),
+                    optInt(tNode, "width", 16), optInt(tNode, "height", 16),
                     optInt(tNode, "uv_width", 16), optInt(tNode, "uv_height", 16), optInt(tNode, "frame_time", 1),
                     optBool(tNode, "frame_interpolate", false), frames
                 );
@@ -143,7 +144,7 @@ public final class BBModelLoader {
                         if (anNode.has("keyframes")) {
                             for (JsonNode kfNode : anNode.get("keyframes")) {
                                 Vector3f dp = new Vector3f();
-                                if (kfNode.has("data_points") && kfNode.get("data_points").size() > 0) {
+                                if (kfNode.has("data_points") && !kfNode.get("data_points").isEmpty()) {
                                     JsonNode dpNode = kfNode.get("data_points").get(0);
                                     dp.set((float) optDouble(dpNode, "x", 0), (float) optDouble(dpNode, "y", 0), (float) optDouble(dpNode, "z", 0));
                                 }
@@ -163,6 +164,7 @@ public final class BBModelLoader {
     private static void buildOutlinerTree(JsonNode node, BBModel model, Map<String, BBGroup> parsedGroups, BBGroup parent) {
         if (node.isTextual()) {
             if (parent != null) parent.getChildElements().add(node.asText());
+            else model.getRootElements().add(node.asText());
             return;
         }
         if (node.isObject()) {

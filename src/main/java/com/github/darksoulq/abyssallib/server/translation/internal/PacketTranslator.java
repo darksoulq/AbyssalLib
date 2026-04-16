@@ -18,10 +18,35 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundShowDialogPacket;
-import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBossEventPacket;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ClientboundDisguisedChatPacket;
+import net.minecraft.network.protocol.game.ClientboundMerchantOffersPacket;
+import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
+import net.minecraft.network.protocol.game.ClientboundSetObjectivePacket;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
+import net.minecraft.network.protocol.game.ClientboundTabListPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.dialog.*;
+import net.minecraft.server.dialog.ActionButton;
+import net.minecraft.server.dialog.CommonButtonData;
+import net.minecraft.server.dialog.CommonDialogData;
+import net.minecraft.server.dialog.ConfirmationDialog;
+import net.minecraft.server.dialog.Dialog;
+import net.minecraft.server.dialog.DialogListDialog;
+import net.minecraft.server.dialog.MultiActionDialog;
+import net.minecraft.server.dialog.NoticeDialog;
+import net.minecraft.server.dialog.ServerLinksDialog;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -37,15 +62,25 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.ConcurrentModificationException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class PacketTranslator {
     private static final Map<UUID, Map<Integer, String>> TRANSLATION_STATES = new ConcurrentHashMap<>();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
     private static final Base64.Encoder B64_ENCODER = Base64.getEncoder();
     private static final Base64.Decoder B64_DECODER = Base64.getDecoder();
+    private static final Pattern LANG_PATTERN = Pattern.compile("<(?:lang|tr|translate):([^>]+)>");
+    private static final Pattern LANG_OR_PATTERN = Pattern.compile("<(?:lang_or|tr_or|translate_or):([^:]+):([^>]+)>");
 
     public static void startUpdater() {
         Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
@@ -154,7 +189,14 @@ public class PacketTranslator {
         List<Packet<? super ClientGamePacketListener>> subPackets = new ArrayList<>();
         boolean changed = false;
 
-        for (Packet<? super ClientGamePacketListener> sub : packet.subPackets()) {
+        List<Packet<? super ClientGamePacketListener>> safeIter = new ArrayList<>();
+        try {
+            packet.subPackets().forEach(safeIter::add);
+        } catch (ConcurrentModificationException e) {
+            return packet;
+        }
+
+        for (Packet<? super ClientGamePacketListener> sub : safeIter) {
             Packet<?> processed = processSend(sub, player);
             subPackets.add((Packet<? super ClientGamePacketListener>) processed);
             if (processed != sub) changed = true;
@@ -242,7 +284,7 @@ public class PacketTranslator {
 
     private static Packet<?> handleBossEvent(ClientboundBossEventPacket packet, Player player) {
         try {
-            for (java.lang.reflect.Field field : packet.getClass().getDeclaredFields()) {
+            for (Field field : packet.getClass().getDeclaredFields()) {
                 if (net.minecraft.network.chat.Component.class.isAssignableFrom(field.getType())) {
                     field.setAccessible(true);
                     net.minecraft.network.chat.Component comp = (net.minecraft.network.chat.Component) field.get(packet);
@@ -253,7 +295,7 @@ public class PacketTranslator {
                     field.setAccessible(true);
                     Object innerObj = field.get(packet);
                     if (innerObj != null) {
-                        for (java.lang.reflect.Field innerField : innerObj.getClass().getDeclaredFields()) {
+                        for (Field innerField : innerObj.getClass().getDeclaredFields()) {
                             if (net.minecraft.network.chat.Component.class.isAssignableFrom(innerField.getType())) {
                                 innerField.setAccessible(true);
                                 net.minecraft.network.chat.Component innerComp = (net.minecraft.network.chat.Component) innerField.get(innerObj);
@@ -514,9 +556,9 @@ public class PacketTranslator {
 
     private static Component preProcessTags(Component component) {
         return component
-            .replaceText(b -> b.match(java.util.regex.Pattern.compile("<(?:lang|tr|translate):([^>]+)>"))
+            .replaceText(b -> b.match(LANG_PATTERN)
                 .replacement((match, builder) -> Component.translatable(match.group(1))))
-            .replaceText(b -> b.match(java.util.regex.Pattern.compile("<(?:lang_or|tr_or|translate_or):([^:]+):([^>]+)>"))
+            .replaceText(b -> b.match(LANG_OR_PATTERN)
                 .replacement((match, builder) -> Component.translatable(match.group(1)).fallback(match.group(2))));
     }
 

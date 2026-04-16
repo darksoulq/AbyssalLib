@@ -5,11 +5,14 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
+import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -50,6 +53,7 @@ public class PlayerEvents {
         if (AbyssalLib.PERMISSION_MANAGER != null) {
             AbyssalLib.PERMISSION_MANAGER.handleQuit(event.getPlayer());
         }
+        PlayerSidebarManager.remove(event.getPlayer());
     }
 
     @SubscribeEvent(ignoreCancelled = false)

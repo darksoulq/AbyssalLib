@@ -20,6 +20,7 @@ public class BBModel {
     private Vector3f visibleBox;
     private BBResolution resolution;
 
+    private final List<String> rootElements = new ArrayList<>();
     private final List<BBGroup> rootGroups = new ArrayList<>();
     private final Map<String, BBGroup> groupCache = new HashMap<>();
     private final Map<String, BBElement> elements = new HashMap<>();
@@ -41,6 +42,7 @@ public class BBModel {
     public BBResolution getResolution() { return resolution; }
     public void setResolution(BBResolution resolution) { this.resolution = resolution; }
 
+    public List<String> getRootElements() { return rootElements; }
     public List<BBGroup> getRootGroups() { return rootGroups; }
     public Map<String, BBGroup> getGroupCache() { return groupCache; }
     public Map<String, BBElement> getElements() { return elements; }

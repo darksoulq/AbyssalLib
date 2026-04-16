@@ -23,7 +23,7 @@ public class BBAnimator {
     }
 
     public void addKeyframe(BBKeyframe keyframe) {
-        switch (keyframe.getChannel()) {
+        switch (keyframe.channel()) {
             case "position" -> position.add(keyframe);
             case "rotation" -> rotation.add(keyframe);
             case "scale" -> scale.add(keyframe);
@@ -31,9 +31,9 @@ public class BBAnimator {
     }
 
     public void sort() {
-        position.sort(Comparator.comparingDouble(BBKeyframe::getTime));
-        rotation.sort(Comparator.comparingDouble(BBKeyframe::getTime));
-        scale.sort(Comparator.comparingDouble(BBKeyframe::getTime));
+        position.sort(Comparator.comparingDouble(BBKeyframe::time));
+        rotation.sort(Comparator.comparingDouble(BBKeyframe::time));
+        scale.sort(Comparator.comparingDouble(BBKeyframe::time));
     }
 
     public String getName() { return name; }

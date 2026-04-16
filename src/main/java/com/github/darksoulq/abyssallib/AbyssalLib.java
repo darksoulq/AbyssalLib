@@ -9,6 +9,7 @@ import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import dev.faststats.bukkit.BukkitMetrics;
 import dev.faststats.core.ErrorTracker;
 import dev.faststats.core.Metrics;
+import net.kyori.adventure.text.Component;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Logger;

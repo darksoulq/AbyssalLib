@@ -7,22 +7,22 @@ public final class BBInterpolation {
     private BBInterpolation() {}
 
     public static void interpolate(BBKeyframe before, BBKeyframe a, BBKeyframe b, BBKeyframe after, float time, Vector3f dest) {
-        if (a.getInterpolation() == BBEasing.STEP || b == null) {
-            dest.set(a.getDataPoint());
+        if (a.interpolation() == BBEasing.STEP || b == null) {
+            dest.set(a.dataPoint());
             return;
         }
 
-        float t = (time - a.getTime()) / (b.getTime() - a.getTime());
+        float t = (time - a.time()) / (b.time() - a.time());
 
-        switch (a.getInterpolation()) {
-            case LINEAR -> dest.set(a.getDataPoint()).lerp(b.getDataPoint(), t);
+        switch (a.interpolation()) {
+            case LINEAR -> dest.set(a.dataPoint()).lerp(b.dataPoint(), t);
             case SMOOTH -> {
-                Vector3f p0 = before != null ? before.getDataPoint() : a.getDataPoint();
-                Vector3f p3 = after != null ? after.getDataPoint() : b.getDataPoint();
-                catmullRom(p0, a.getDataPoint(), b.getDataPoint(), p3, t, dest);
+                Vector3f p0 = before != null ? before.dataPoint() : a.dataPoint();
+                Vector3f p3 = after != null ? after.dataPoint() : b.dataPoint();
+                catmullRom(p0, a.dataPoint(), b.dataPoint(), p3, t, dest);
             }
             case BEZIER -> cubicBezier(a, b, t, dest);
-            default -> dest.set(a.getDataPoint());
+            default -> dest.set(a.dataPoint());
         }
     }
 
@@ -33,10 +33,10 @@ public final class BBInterpolation {
         float uuu = uu * u;
         float ttt = tt * t;
 
-        Vector3f p0 = a.getDataPoint();
-        Vector3f p1 = a.getBezierRightValue() != null && a.getBezierRightValue().lengthSquared() > 0 ? a.getBezierRightValue() : p0;
-        Vector3f p2 = b.getBezierLeftValue() != null && b.getBezierLeftValue().lengthSquared() > 0 ? b.getBezierLeftValue() : b.getDataPoint();
-        Vector3f p3 = b.getDataPoint();
+        Vector3f p0 = a.dataPoint();
+        Vector3f p1 = a.bezierRightValue() != null && a.bezierRightValue().lengthSquared() > 0 ? a.bezierRightValue() : p0;
+        Vector3f p2 = b.bezierLeftValue() != null && b.bezierLeftValue().lengthSquared() > 0 ? b.bezierLeftValue() : b.dataPoint();
+        Vector3f p3 = b.dataPoint();
 
         dest.x = uuu * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + ttt * p3.x;
         dest.y = uuu * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + ttt * p3.y;

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.bootstrap.PackSetup;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
@@ -16,6 +17,7 @@ import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissi
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
+import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatisticMenu;
@@ -29,6 +31,11 @@ import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.gui.internal.PermissionMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
+import com.github.darksoulq.abyssallib.world.particle.Particles;
+import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
+import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
+import com.github.darksoulq.abyssallib.world.particle.timeline.Animations;
+import com.github.darksoulq.abyssallib.world.particle.timeline.Billboarding;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -47,22 +54,27 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
+import org.bukkit.Color;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
+import java.awt.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -133,9 +145,16 @@ public class InternalCommand {
             .then(Commands.literal("get")
                 .requires(DefaultConditions.hasAnyPerm(PluginPermissions.STATISTICS_VIEW_SELF, PluginPermissions.STATISTICS_VIEW_ALL))
                 .executes(InternalCommand::getSelfStatistics)
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(InternalCommand::getSelfStatistics)
+                )
                 .then(Commands.argument("player", ArgumentTypes.player())
                     .requires(DefaultConditions.hasPerm(PluginPermissions.STATISTICS_VIEW_ALL))
-                    .executes(InternalCommand::getOtherStatistics))
+                    .executes(InternalCommand::getOtherStatistics)
+                    .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                        .executes(InternalCommand::getOtherStatistics)
+                    )
+                )
             )
             .then(Commands.literal("view")
                 .requires(DefaultConditions.hasAnyPerm(PluginPermissions.STATISTICS_MENU_SELF, PluginPermissions.STATISTICS_MENU_ALL))
@@ -396,7 +415,168 @@ public class InternalCommand {
                     )
                 )
             )
+        ).then(Commands.literal("particles")
+            .then(Commands.literal("showcase")
+                .then(Commands.literal("standard")
+                    .executes(InternalCommand::particleShowcaseStandard)
+                )
+                .then(Commands.literal("dust")
+                    .executes(InternalCommand::particleShowcaseDust)
+                )
+                .then(Commands.literal("item")
+                    .executes(InternalCommand::particleShowcaseItem)
+                )
+                .then(Commands.literal("text")
+                    .executes(InternalCommand::particleShowcaseText)
+                )
+            )
+            .then(Commands.literal("stress")
+                .then(Commands.literal("standard")
+                    .executes(InternalCommand::particleStressStandard)
+                )
+                .then(Commands.literal("dust")
+                    .executes(InternalCommand::particleStressDust)
+                )
+                .then(Commands.literal("item")
+                    .executes(InternalCommand::particleStressItem)
+                )
+            )
         );
+    }
+
+    private static int particleShowcaseStandard(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(player.getLocation().add(0, 1, 0))
+            .shape(Generators.helix(2.0, 5.0, 3, 200, 0.2))
+            .render(new Renderers.Standard(Particle.CHERRY_LEAVES, 1, 0.05, null))
+            .transform(Animations.spinY(360, 200, p -> p))
+            .duration(200)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<green>Started Standard Particle Showcase (10s)</green>");
+        return Command.SUCCESS;
+    }
+
+    private static int particleShowcaseDust(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(player.getLocation().add(0, 2, 0))
+            .shape(Generators.sphere(2.5, 800))
+            .render(new Renderers.DustRenderer(1.0f))
+            .color(Color.AQUA)
+            .transform(Animations.spinX(360, 200, p -> p))
+            .transform(Animations.spinY(720, 200, p -> p))
+            .transform(Animations.breathe(0.8, 1.2, 40))
+            .duration(200)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<green>Started Dust Particle Showcase (10s)</green>");
+        return Command.SUCCESS;
+    }
+
+    private static int particleShowcaseItem(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(player.getLocation().add(0, 2, 0))
+            .shape(Generators.cube(3.0, 4))
+            .render(new Renderers.ItemDisplayRenderer(new ItemStack(Material.DIAMOND_BLOCK), 0.4f, Display.Billboard.FIXED))
+            .transform(Animations.spinY(360, 200, p -> p))
+            .transform(Animations.spinX(180, 200, p -> p))
+            .duration(200)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<green>Started Item Display Showcase (10s)</green>");
+        return Command.SUCCESS;
+    }
+
+    private static int particleShowcaseText(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(() -> player.getLocation().add(0, 2.5, 0))
+            .shape(Generators.text("AbyssalLib", "Arial", Font.BOLD, 24, 4.0))
+            .render(new Renderers.DustRenderer(0.8f))
+            .color(Color.YELLOW)
+            .transform(Billboarding.faceDynamic(() -> player.getLocation().add(0, 2.5, 0), player::getLocation))
+            .duration(200)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<green>Started Text Particle Showcase (10s)</green>");
+        return Command.SUCCESS;
+    }
+
+    private static int particleStressStandard(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(player.getLocation().add(0, 5, 0))
+            .shape(Generators.sphere(10.0, 50000))
+            .render(new Renderers.Standard(Particle.FLAME, 1, 0, null))
+            .transform(Animations.spinY(1080, 400, p -> p))
+            .transform(Animations.spinZ(360, 400, p -> p))
+            .duration(400)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<red>Started Standard Particle Stress Test (50k points, 20s)</red>");
+        return Command.SUCCESS;
+    }
+
+    private static int particleStressDust(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(player.getLocation().add(0, 5, 0))
+            .shape(Generators.cube(15.0, 40))
+            .render(new Renderers.DustRenderer(0.5f))
+            .color(Color.PURPLE)
+            .transform(Animations.spinX(720, 400, p -> p))
+            .transform(Animations.spinY(720, 400, p -> p))
+            .duration(400)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<red>Started Dust Particle Stress Test (High Density Cube, 20s)</red>");
+        return Command.SUCCESS;
+    }
+
+    private static int particleStressItem(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Particles.builder()
+            .origin(player.getLocation().add(0, 5, 0))
+            .shape(Generators.sphere(8.0, 2500))
+            .render(new Renderers.ItemDisplayRenderer(new ItemStack(Material.EMERALD), 0.2f, Display.Billboard.CENTER))
+            .transform(Animations.spinY(720, 400, p -> p))
+            .transform(Animations.breathe(0.2, 1.5, 50))
+            .duration(400)
+            .viewers(List.of(player))
+            .build()
+            .start();
+
+        reply(ctx, "<red>Started Item Display Stress Test (2500 items, 20s)</red>");
+        return Command.SUCCESS;
     }
 
     private static int locateExecutor(CommandContext<CommandSourceStack> ctx) {
@@ -644,7 +824,7 @@ public class InternalCommand {
         try {
             page = ctx.getArgument("page", Integer.class);
         } catch (IllegalArgumentException ignored) {}
-        return player == null ? com.mojang.brigadier.Command.SINGLE_SUCCESS : sendStats(ctx, player, page);
+        return player == null ? 0 : sendStats(ctx, player, page);
     }
 
     public static int getOtherStatistics(CommandContext<CommandSourceStack> ctx) {
