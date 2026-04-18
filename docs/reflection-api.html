@@ -1,0 +1,129 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-04-18T18:20:06.7930295"><title>Reflection API | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"the-result-wrapper","level":0,"title":"The Result Wrapper","anchor":"#the-result-wrapper"},{"id":"accessing-classes","level":0,"title":"Accessing Classes","anchor":"#accessing-classes"},{"id":"fields","level":0,"title":"Fields","anchor":"#fields"},{"id":"methods","level":0,"title":"Methods","anchor":"#methods"},{"id":"constructors","level":0,"title":"Constructors","anchor":"#constructors"},{"id":"arrays-reflectarray","level":0,"title":"Arrays (ReflectArray)","anchor":"#arrays-reflectarray"},{"id":"generics-and-types-reflecttype","level":0,"title":"Generics and Types (ReflectType)","anchor":"#generics-and-types-reflecttype"},{"id":"annotations-reflectannotation","level":0,"title":"Annotations (ReflectAnnotation)","anchor":"#annotations-reflectannotation"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Reflection API | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/reflection-api.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Reflection API | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/reflection-api.html#webpage",
+    "url": "writerside-documentation/reflection-api.html",
+    "name": "Reflection API | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="reflection-api" data-main-title="Reflection API" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Other"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="reflection-api" id="reflection-api.md">Reflection API</h1><p id="-hw2ke1_4">The AbyssalLib Reflection API is a high-performance, cached wrapper around standard Java Reflection and <code class="code" id="-hw2ke1_13">MethodHandles</code>. It abstracts away accessibility checks (<code class="code" id="-hw2ke1_14">setAccessible(true)</code>) and uses a <code class="code" id="-hw2ke1_15">Result&lt;T&gt;</code> wrapper to eliminate standard checked exceptions.</p><section class="chapter"><h2 id="the-result-wrapper" data-toc="the-result-wrapper">The Result Wrapper</h2><p id="-hw2ke1_16">All operations that can fail (such as finding a method or getting a field value) return a <code class="code" id="-hw2ke1_19">Result&lt;T&gt;</code> instead of throwing checked exceptions.</p><div class="table-wrapper"><table class="wide" id="-hw2ke1_17"><thead><tr class="ijRowHead" id="-hw2ke1_20"><th id="-hw2ke1_27"><p>Method</p></th><th id="-hw2ke1_28"><p>Information</p></th></tr></thead><tbody><tr id="-hw2ke1_21"><td id="-hw2ke1_29"><p><code class="code" id="-hw2ke1_31">get()</code></p></td><td id="-hw2ke1_30"><p>Returns the value, or throws a <code class="code" id="-hw2ke1_32">RuntimeException</code> if the operation failed.</p></td></tr><tr id="-hw2ke1_22"><td id="-hw2ke1_33"><p><code class="code" id="-hw2ke1_35">getOrNull()</code></p></td><td id="-hw2ke1_34"><p>Returns the value, or <code class="code" id="-hw2ke1_36">null</code> if the operation failed.</p></td></tr><tr id="-hw2ke1_23"><td id="-hw2ke1_37"><p><code class="code" id="-hw2ke1_39">getOrElse(T fallback)</code></p></td><td id="-hw2ke1_38"><p>Returns the value, or the provided fallback if it failed.</p></td></tr><tr id="-hw2ke1_24"><td id="-hw2ke1_40"><p><code class="code" id="-hw2ke1_42">ifSuccess(Consumer&lt;T&gt;)</code></p></td><td id="-hw2ke1_41"><p>Executes the consumer block only if the operation was successful.</p></td></tr><tr id="-hw2ke1_25"><td id="-hw2ke1_43"><p><code class="code" id="-hw2ke1_45">ifFailure(Consumer&lt;Throwable&gt;)</code></p></td><td id="-hw2ke1_44"><p>Executes the consumer block only if the operation failed, passing the exception.</p></td></tr><tr id="-hw2ke1_26"><td id="-hw2ke1_46"><p><code class="code" id="-hw2ke1_48">map(Function)</code>/<code class="code" id="-hw2ke1_49">flatMap(Function)</code></p></td><td id="-hw2ke1_47"><p>Transforms the result functionally, chaining reflection calls together safely.</p></td></tr></tbody></table></div></section><section class="chapter"><h2 id="accessing-classes" data-toc="accessing-classes">Accessing Classes</h2><p id="-hw2ke1_50">The entry point for the API is the <code class="code" id="-hw2ke1_53">Reflect</code> class. Internal caching ensures that repeated lookups for the same class or member do not incur a performance penalty.</p><div class="tabs" id="-hw2ke1_51" data-anchors="[-hw2ke1_54,-hw2ke1_55]"><div class="tabs__content" data-gtm="tab" id="-hw2ke1_54" data-title="AbyssalLib"><div class="code-block" data-lang="java" data-title="Java">
+// From a known class (Never fails, returns directly)
+ReflectClass&lt;Player&gt; refPlayer = Reflect.of(Player.class);
+
+// From a string (Returns a Result)
+Result&lt;ReflectClass&lt;?&gt;&gt; refEntity = Reflect.of(&quot;net.minecraft.world.entity.Entity&quot;);
+</div></div><div class="tabs__content" data-gtm="tab" id="-hw2ke1_55" data-title="Vanilla"><div class="code-block" data-lang="java" data-title="Java">
+try {
+    Class&lt;?&gt; clazz = Class.forName(&quot;net.minecraft.world.entity.Entity&quot;);
+} catch (ClassNotFoundException e) {
+    e.printStackTrace();
+}
+</div></div></div></section><section class="chapter"><h2 id="fields" data-toc="fields">Fields</h2><p id="-hw2ke1_58">You can retrieve fields by their exact string name, or dynamically search the class hierarchy for the first field matching a specific <code class="code" id="-hw2ke1_61">Class</code> type using <code class="code" id="-hw2ke1_62">fieldByType</code>.</p><div class="tabs" id="-hw2ke1_59" data-anchors="[-hw2ke1_63,-hw2ke1_64]"><div class="tabs__content" data-gtm="tab" id="-hw2ke1_63" data-title="AbyssalLib"><div class="code-block" data-lang="java" data-title="Java">
+ReflectClass&lt;?&gt; clazz = Reflect.of(target.getClass());
+
+// Get
+String value = (String) clazz.field(&quot;privateString&quot;)
+    .flatMap(f -&gt; f.get(target))
+    .getOrNull();
+
+// Set
+clazz.field(&quot;privateString&quot;).ifSuccess(f -&gt; f.set(target, &quot;New Value&quot;));
+
+// Look up by Type instead of name
+clazz.fieldByType(String.class).ifSuccess(f -&gt; f.set(target, &quot;New Value&quot;));
+</div></div><div class="tabs__content" data-gtm="tab" id="-hw2ke1_64" data-title="Vanilla"><div class="code-block" data-lang="java" data-title="Java">
+try {
+    Field field = target.getClass().getDeclaredField(&quot;privateString&quot;);
+    field.setAccessible(true);
+    
+    // Get
+    String value = (String) field.get(target);
+    
+    // Set
+    field.set(target, &quot;New Value&quot;);
+} catch (NoSuchFieldException | IllegalAccessException e) {
+    e.printStackTrace();
+}
+</div></div></div></section><section class="chapter"><h2 id="methods" data-toc="methods">Methods</h2><p id="-hw2ke1_67">Methods are looked up using their name and their exact parameter types.</p><div class="tabs" id="-hw2ke1_68" data-anchors="[-hw2ke1_70,-hw2ke1_71]"><div class="tabs__content" data-gtm="tab" id="-hw2ke1_70" data-title="AbyssalLib"><div class="code-block" data-lang="java" data-title="Java">
+Reflect.of(target.getClass())
+    .method(&quot;doSomething&quot;, int.class, String.class)
+    .ifSuccess(m -&gt; {
+        boolean result = (boolean) m.invoke(target, 5, &quot;Hello&quot;).getOrElse(false);
+    });
+</div></div><div class="tabs__content" data-gtm="tab" id="-hw2ke1_71" data-title="Vanilla"><div class="code-block" data-lang="java" data-title="Java">
+try {
+    Method method = target.getClass().getDeclaredMethod(&quot;doSomething&quot;, int.class, String.class);
+    method.setAccessible(true);
+    
+    boolean result = (boolean) method.invoke(target, 5, &quot;Hello&quot;);
+} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+    e.printStackTrace();
+}
+</div></div></div></section><section class="chapter"><h2 id="constructors" data-toc="constructors">Constructors</h2><p id="-hw2ke1_74">Constructors are fetched using their exact parameter types and can be instantiated safely.</p><div class="tabs" id="-hw2ke1_75" data-anchors="[-hw2ke1_77,-hw2ke1_78]"><div class="tabs__content" data-gtm="tab" id="-hw2ke1_77" data-title="AbyssalLib"><div class="code-block" data-lang="java" data-title="Java">
+ItemStack stack = Reflect.of(ItemStack.class)
+    .constructor(Material.class, int.class)
+    .flatMap(c -&gt; c.newInstance(Material.DIAMOND, 64))
+    .getOrNull();
+</div></div><div class="tabs__content" data-gtm="tab" id="-hw2ke1_78" data-title="Vanilla"><div class="code-block" data-lang="java" data-title="Java">
+try {
+    Constructor&lt;ItemStack&gt; constructor = ItemStack.class.getDeclaredConstructor(Material.class, int.class);
+    constructor.setAccessible(true);
+    
+    ItemStack stack = constructor.newInstance(Material.DIAMOND, 64);
+} catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+    e.printStackTrace();
+}
+</div></div></div></section><section class="chapter"><h2 id="arrays-reflectarray" data-toc="arrays-reflectarray">Arrays (<code class="code" id="-hw2ke1_85">ReflectArray</code>)</h2><p id="-hw2ke1_82">Provides a safe wrapper over <code class="code" id="-hw2ke1_86">java.lang.reflect.Array</code> to instantiate, read, and write arrays dynamically without manual casting or try-catch blocks.</p><div class="tabs" id="-hw2ke1_83" data-anchors="[-hw2ke1_87,-hw2ke1_88]"><div class="tabs__content" data-gtm="tab" id="-hw2ke1_87" data-title="AbyssalLib"><div class="code-block" data-lang="java" data-title="Java">
+ReflectArray.newInstance(String.class, 10).ifSuccess(array -&gt; {
+    ReflectArray.set(array, 0, &quot;Hello&quot;);
+    String value = (String) ReflectArray.get(array, 0).getOrNull();
+    int length = ReflectArray.getLength(array).getOrElse(0);
+});
+</div></div><div class="tabs__content" data-gtm="tab" id="-hw2ke1_88" data-title="Vanilla"><div class="code-block" data-lang="java" data-title="Java">
+try {
+    Object array = Array.newInstance(String.class, 10);
+    Array.set(array, 0, &quot;Hello&quot;);
+    String value = (String) Array.get(array, 0);
+    int length = Array.getLength(array);
+} catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+    e.printStackTrace();
+}
+</div></div></div></section><section class="chapter"><h2 id="generics-and-types-reflecttype" data-toc="generics-and-types-reflecttype">Generics and Types (<code class="code" id="-hw2ke1_95">ReflectType</code>)</h2><p id="-hw2ke1_92"><code class="code" id="-hw2ke1_96">ReflectType</code> wraps standard Java <code class="code" id="-hw2ke1_97">Type</code> objects to easily resolve generic parameters, wildcards, and array components without manual <code class="code" id="-hw2ke1_98">instanceof</code> checks.</p><div class="code-block" data-lang="java">
+Reflect.of(MyClass.class).field(&quot;stringList&quot;).ifSuccess(field -&gt; {
+    // Fetches the 'String' class from inside a List&lt;String&gt; field
+    ReflectType genericType = field.getGenericType();
+    
+    if (genericType.isParameterized()) {
+        genericType.getTypeArguments().forEach(typeArg -&gt; {
+            Class&lt;?&gt; rawClass = typeArg.getRawType().getOrNull().getUnderlyingClass();
+        });
+    }
+});
+</div></section><section class="chapter"><h2 id="annotations-reflectannotation" data-toc="annotations-reflectannotation">Annotations (<code class="code" id="-hw2ke1_102">ReflectAnnotation</code>)</h2><p id="-hw2ke1_100">Allows safe reading of annotation attributes at runtime without directly invoking the annotation's underlying interface methods.</p><div class="tabs" id="-hw2ke1_101" data-anchors="[-hw2ke1_103,-hw2ke1_104]"><div class="tabs__content" data-gtm="tab" id="-hw2ke1_103" data-title="AbyssalLib"><div class="code-block" data-lang="java" data-title="Java">
+Reflect.of(targetClass)
+    .getReflectAnnotation(MyAnnotation.class)
+    .ifSuccess(ann -&gt; {
+        // Safe dynamic retrieval of the default &quot;value()&quot; attribute
+        String value = (String) ann.value().getOrNull();
+        
+        // Safe dynamic retrieval of a custom attribute
+        int priority = (int) ann.getValue(&quot;priority&quot;).getOrElse(0);
+    });
+</div></div><div class="tabs__content" data-gtm="tab" id="-hw2ke1_104" data-title="Vanilla"><div class="code-block" data-lang="java" data-title="Java">
+try {
+    MyAnnotation ann = targetClass.getAnnotation(MyAnnotation.class);
+    if (ann != null) {
+        Method valueMethod = ann.annotationType().getDeclaredMethod(&quot;value&quot;);
+        String value = (String) valueMethod.invoke(ann);
+    }
+} catch (Exception e) {
+    e.printStackTrace();
+}
+</div></div></div></section><div class="last-modified">18 April 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="events.html" class="navigation-links__prev">Events</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

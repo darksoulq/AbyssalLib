@@ -1,0 +1,65 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-04-18T18:20:06.9689864"><title>Custom Rewards | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-a-custom-reward","level":0,"title":"Creating a Custom Reward","anchor":"#creating-a-custom-reward"},{"id":"registering-the-reward","level":0,"title":"Registering the Reward","anchor":"#registering-the-reward"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Custom Rewards | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/custom-rewards.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Custom Rewards | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/custom-rewards.html#webpage",
+    "url": "writerside-documentation/custom-rewards.html",
+    "name": "Custom Rewards | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="custom-rewards" data-main-title="Custom Rewards" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Advancements"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="custom-rewards" id="custom-rewards.md">Custom Rewards</h1><p id="q6dcl3_4">If the built-in advancement rewards do not meet your requirements, you can create custom ones by implementing the <code class="code" id="q6dcl3_7">AdvancementReward</code> interface.</p><section class="chapter"><h2 id="creating-a-custom-reward" data-toc="creating-a-custom-reward">Creating a Custom Reward</h2><p id="q6dcl3_8">To create a custom reward, implement <code class="code" id="q6dcl3_11">AdvancementReward</code>. You must also define a <code class="code" id="q6dcl3_12">Codec</code> so the reward can be serialized and loaded from JSON files, and a <code class="code" id="q6dcl3_13">RewardType</code> to link the codec to your class.</p><p id="q6dcl3_9">For this example, we will create a <code class="code" id="q6dcl3_14">HealReward</code> that restores a specific amount of health to the player when the advancement is granted.</p><div class="code-block" data-lang="java">
+public class HealReward implements AdvancementReward {
+
+    // 1. Define the Codec for JSON serialization
+    public static final Codec&lt;HealReward&gt; CODEC = new Codec&lt;&gt;() {
+        @Override
+        public &lt;D&gt; HealReward decode(DynamicOps&lt;D&gt; ops, D input) throws CodecException {
+            Map&lt;D, D&gt; map = ops.getMap(input).orElseThrow();
+            double amount = Codecs.DOUBLE.decode(ops, map.get(ops.createString(&quot;amount&quot;)));
+            return new HealReward(amount);
+        }
+
+        @Override
+        public &lt;D&gt; D encode(DynamicOps&lt;D&gt; ops, HealReward value) throws CodecException {
+            return ops.createMap(Map.of(
+                ops.createString(&quot;amount&quot;), Codecs.DOUBLE.encode(ops, value.amount)
+            ));
+        }
+    };
+
+    // 2. Define the RewardType pointing to the Codec
+    public static final RewardType&lt;HealReward&gt; TYPE = () -&gt; CODEC;
+
+    private final double amount;
+
+    public HealReward(double amount) {
+        this.amount = amount;
+    }
+
+    @Override
+    public RewardType&lt;?&gt; getType() {
+        return TYPE;
+    }
+
+    // 3. Define the actual reward logic
+    @Override
+    public void grant(Player player) {
+        double newHealth = Math.min(player.getMaxHealth(), player.getHealth() + amount);
+        player.setHealth(newHealth);
+    }
+}
+</div></section><section class="chapter"><h2 id="registering-the-reward" data-toc="registering-the-reward">Registering the Reward</h2><p id="q6dcl3_15">Just like items, custom rewards must be registered using a <code class="code" id="q6dcl3_19">DeferredRegistry</code> targeting <code class="code" id="q6dcl3_20">Registries.REWARDS</code>.</p><div class="code-block" data-lang="java">
+public final class Rewards {
+    
+    public static final DeferredRegistry&lt;RewardType&lt;?&gt;&gt; REWARDS = DeferredRegistry.create(Registries.REWARDS, &quot;abyssallib_example&quot;);
+
+    // Register the reward using its TYPE
+    public static final RewardType&lt;?&gt; HEAL = REWARDS.register(&quot;heal&quot;, id -&gt; HealReward.TYPE);
+}
+</div><aside class="prompt" data-type="note" data-title="" id="q6dcl3_17"><p>Do not forget to call <code class="code" id="q6dcl3_21">Rewards.REWARDS.apply()</code> in your plugin's <code class="code" id="q6dcl3_22">onEnable()</code> method.</p></aside><p id="q6dcl3_18">Once registered, you can use <code class="code" id="q6dcl3_23">&quot;abyssallib_example:heal&quot;</code> as the type in your JSON advancements, passing the <code class="code" id="q6dcl3_24">&quot;amount&quot;</code> parameter as defined in your codec.</p></section><div class="last-modified">18 April 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="first-advancement.html" class="navigation-links__prev">Creating Your First Advancement</a><a href="custom-criterion.html" class="navigation-links__next">Custom Criteria</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

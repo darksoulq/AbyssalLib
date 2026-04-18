@@ -9,6 +9,9 @@
         <module name="abyssallib" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="21" />
+    <bytecodeTargetLevel target="21">
+      <module name="AbyssalLib.main" target="25" />
+      <module name="AbyssalLib.test" target="25" />
+    </bytecodeTargetLevel>
   </component>
 </project>

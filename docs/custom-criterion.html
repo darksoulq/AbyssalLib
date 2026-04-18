@@ -1,0 +1,64 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-04-18T18:20:06.9730066"><title>Custom Criteria | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-a-custom-criterion","level":0,"title":"Creating a Custom Criterion","anchor":"#creating-a-custom-criterion"},{"id":"registering-the-criterion","level":0,"title":"Registering the Criterion","anchor":"#registering-the-criterion"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Custom Criteria | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/custom-criterion.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Custom Criteria | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/custom-criterion.html#webpage",
+    "url": "writerside-documentation/custom-criterion.html",
+    "name": "Custom Criteria | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="custom-criterion" data-main-title="Custom Criteria" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Advancements"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="custom-criterion" id="custom-criterion.md">Custom Criteria</h1><p id="xux8t6_4">If you need an advancement to unlock based on logic not covered by the default criteria, you can create a custom criterion by implementing the <code class="code" id="xux8t6_7">AdvancementCriterion</code> interface.</p><section class="chapter"><h2 id="creating-a-custom-criterion" data-toc="creating-a-custom-criterion">Creating a Custom Criterion</h2><p id="xux8t6_8">To create a custom criterion, implement <code class="code" id="xux8t6_13">AdvancementCriterion</code>. Similar to rewards, you must provide a <code class="code" id="xux8t6_14">Codec</code> for JSON serialization and a <code class="code" id="xux8t6_15">CriterionType</code>.</p><p id="xux8t6_9">You must implement the <code class="code" id="xux8t6_16">isMet(Player)</code> method, which is evaluated to check if the player satisfies the condition.</p><p id="xux8t6_10">For this example, we will create a <code class="code" id="xux8t6_17">HasPermissionCriterion</code> that checks if the player holds a specific permission node.</p><div class="code-block" data-lang="java">
+public class HasPermissionCriterion implements AdvancementCriterion {
+
+    // 1. Define the Codec for JSON serialization
+    public static final Codec&lt;HasPermissionCriterion&gt; CODEC = new Codec&lt;&gt;() {
+        @Override
+        public &lt;D&gt; HasPermissionCriterion decode(DynamicOps&lt;D&gt; ops, D input) throws CodecException {
+            Map&lt;D, D&gt; map = ops.getMap(input).orElseThrow();
+            String node = Codecs.STRING.decode(ops, map.get(ops.createString(&quot;node&quot;)));
+            return new HasPermissionCriterion(node);
+        }
+
+        @Override
+        public &lt;D&gt; D encode(DynamicOps&lt;D&gt; ops, HasPermissionCriterion value) throws CodecException {
+            return ops.createMap(Map.of(
+                ops.createString(&quot;node&quot;), Codecs.STRING.encode(ops, value.node)
+            ));
+        }
+    };
+
+    // 2. Define the CriterionType pointing to the Codec
+    public static final CriterionType&lt;HasPermissionCriterion&gt; TYPE = () -&gt; CODEC;
+
+    private final String node;
+
+    public HasPermissionCriterion(String node) {
+        this.node = node;
+    }
+
+    @Override
+    public CriterionType&lt;?&gt; getType() {
+        return TYPE;
+    }
+
+    // 3. Define the logic that dictates if the criterion is met
+    @Override
+    public boolean isMet(Player player) {
+        return player.hasPermission(node);
+    }
+}
+</div><aside class="prompt" data-type="tip" data-title="" id="xux8t6_12"><p>The <code class="code" id="xux8t6_18">AdvancementCriterion</code> interface also provides a default <code class="code" id="xux8t6_19">isMet(Player player, Event event)</code> method. You can override this if your condition needs to inspect a specific Bukkit event payload rather than just the player's static state.</p></aside></section><section class="chapter"><h2 id="registering-the-criterion" data-toc="registering-the-criterion">Registering the Criterion</h2><p id="xux8t6_20">Custom criteria must be registered using a <code class="code" id="xux8t6_24">DeferredRegistry</code> targeting <code class="code" id="xux8t6_25">Registries.CRITERIA</code>.</p><div class="code-block" data-lang="java">
+public final class Criteria {
+    
+    public static final DeferredRegistry&lt;CriterionType&lt;?&gt;&gt; CRITERIA = DeferredRegistry.create(Registries.CRITERIA, &quot;abyssallib_example&quot;);
+
+    // Register the criterion using its TYPE
+    public static final CriterionType&lt;?&gt; HAS_PERMISSION = CRITERIA.register(&quot;has_permission&quot;, id -&gt; HasPermissionCriterion.TYPE);
+}
+</div><aside class="prompt" data-type="note" data-title="" id="xux8t6_22"><p>Do not forget to call <code class="code" id="xux8t6_26">Criteria.CRITERIA.apply()</code> in your plugin's <code class="code" id="xux8t6_27">onEnable()</code> method.</p></aside><p id="xux8t6_23">Once registered, you can use <code class="code" id="xux8t6_28">&quot;abyssallib_example:has_permission&quot;</code> as the criteria type in your JSON advancements, passing the <code class="code" id="xux8t6_29">&quot;node&quot;</code> parameter as defined in your codec.</p></section><div class="last-modified">18 April 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="custom-rewards.html" class="navigation-links__prev">Custom Rewards</a><a href="default-criterion.html" class="navigation-links__next">Default Criterion</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

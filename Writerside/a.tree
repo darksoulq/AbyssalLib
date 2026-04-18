@@ -24,6 +24,8 @@
     </toc-element>
     <toc-element toc-title="Advancements">
         <toc-element topic="first-advancement.md"/>
+        <toc-element topic="custom-rewards.md"/>
+        <toc-element topic="custom-criterion.md"/>
         <toc-element topic="default-criterion.md"/>
         <toc-element topic="default-rewards.md"/>
     </toc-element>
@@ -43,5 +45,6 @@
         <toc-element topic="structures.md"/>
         <toc-element topic="ssr.md"/>
         <toc-element topic="events.md"/>
+        <toc-element topic="reflection-api.md"/>
     </toc-element>
 </instance-profile>

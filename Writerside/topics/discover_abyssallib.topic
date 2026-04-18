@@ -23,12 +23,18 @@
             </card>
             <card href="first-gui.md" summary="Create your first GUI.">
             </card>
+            <card href="first-feature.md" summary="Create your own WorldGen Feature.">
+            </card>
+            <card href="first-advancement.md" summary="Add custom Advancements">
+            </card>
         </primary>
         <secondary>
             <title>Misc</title>
             <card href="ssr.md" summary="Dynamic Server-Side Translations.">
             </card>
             <card href="structures.md" summary="Create custom structures.">
+            </card>
+            <card href="reflection-api.md" summary="Simplify reflection.">
             </card>
         </secondary>
     </section-starting-page>
