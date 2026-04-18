@@ -1,6 +1,9 @@
 package com.github.darksoulq.abyssallib.server.resource.asset.definition;
 
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.time.ZoneId;
@@ -8,12 +11,46 @@ import java.util.*;
 
 public interface Selector {
     String id();
-
     Map<String, Object> toJson();
+
+    public interface Transformation {
+        Object toJson();
+
+        record Matrix(Matrix4f matrix) implements Transformation {
+            @Override
+            public Object toJson() {
+                float[] arr = new float[16];
+                matrix.get(arr);
+                List<Float> list = new ArrayList<>(16);
+                for (float f : arr) {
+                    list.add(f);
+                }
+                return list;
+            }
+        }
+
+        record Components(
+            @Nullable Vector3f translation,
+            @Nullable Vector3f scale,
+            @Nullable Quaternionf leftRotation,
+            @Nullable Quaternionf rightRotation
+        ) implements Transformation {
+            @Override
+            public Object toJson() {
+                Map<String, Object> map = new LinkedHashMap<>();
+                if (leftRotation != null) map.put("left_rotation", List.of(leftRotation.x(), leftRotation.y(), leftRotation.z(), leftRotation.w()));
+                if (rightRotation != null) map.put("right_rotation", List.of(rightRotation.x(), rightRotation.y(), rightRotation.z(), rightRotation.w()));
+                if (scale != null) map.put("scale", List.of(scale.x(), scale.y(), scale.z()));
+                if (translation != null) map.put("translation", List.of(translation.x(), translation.y(), translation.z()));
+                return map;
+            }
+        }
+    }
 
     class Model implements Selector {
         private final com.github.darksoulq.abyssallib.server.resource.asset.Model model;
         private final List<Tint> tints = new LinkedList<>();
+        private Transformation transformation = null;
 
         public Model(com.github.darksoulq.abyssallib.server.resource.asset.Model model, Tint... tints) {
             this.model = model;
@@ -26,6 +63,15 @@ public interface Selector {
 
         public List<Tint> getTints() {
             return Collections.unmodifiableList(tints);
+        }
+
+        public void setTransformation(@Nullable Transformation transformation) {
+            this.transformation = transformation;
+        }
+
+        @Nullable
+        public Transformation getTransformation() {
+            return transformation;
         }
 
         @Override
@@ -44,6 +90,9 @@ public interface Selector {
                 tintJsons.add(tint.toJson());
             }
             json.put("tints", tintJsons);
+
+            if (transformation != null) json.put("transformation", transformation.toJson());
+
             return json;
         }
     }
@@ -63,6 +112,7 @@ public interface Selector {
     class Select implements Selector {
         private final Property property;
         private Selector fallback = null;
+        private Transformation transformation = null;
 
         public Select(Property property) {
             this.property = property;
@@ -80,6 +130,15 @@ public interface Selector {
         @Nullable
         public Selector getFallback() {
             return fallback;
+        }
+
+        public void setTransformation(@Nullable Transformation transformation) {
+            this.transformation = transformation;
+        }
+
+        @Nullable
+        public Transformation getTransformation() {
+            return transformation;
         }
 
         @Override
@@ -120,6 +179,7 @@ public interface Selector {
                 }
             }
             if (fallback != null) json.put("fallback", fallback.toJson());
+            if (transformation != null) json.put("transformation", transformation.toJson());
 
             return json;
         }
@@ -652,36 +712,42 @@ public interface Selector {
         }
     }
 
-    record Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse) implements Selector {
+    record Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse, @Nullable Transformation transformation) implements Selector {
+        public Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse) {
+            this(property, onTrue, onFalse, null);
+        }
 
         @Override
-            public String id() {
-                return "minecraft:condition";
-            }
+        public String id() {
+            return "minecraft:condition";
+        }
 
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("property", property.id());
-                switch (property) {
-                    case CustomModelData customModelData -> json.put("index", customModelData.index);
-                    case Component component -> {
-                        json.put("predicate", component.component.id());
-                        json.put("value", component.component.toJson());
-                    }
-                    case KeybindDown keybindDown -> json.put("keybind", keybindDown.keybind.type);
-                    case HasComponent hasComponent -> {
-                        json.put("component", hasComponent.component.id());
-                        json.put("ignore_default", hasComponent.ignoreDefault);
-                    }
-                    default -> {
-                    }
+        @Override
+        public Map<String, Object> toJson() {
+            Map<String, Object> json = new LinkedHashMap<>();
+            json.put("type", id());
+            json.put("property", property.id());
+            switch (property) {
+                case CustomModelData customModelData -> json.put("index", customModelData.index);
+                case Component component -> {
+                    json.put("predicate", component.component.id());
+                    json.put("value", component.component.toJson());
                 }
-                json.put("on_true", onTrue.toJson());
-                json.put("on_false", onFalse.toJson());
-                return json;
+                case KeybindDown keybindDown -> json.put("keybind", keybindDown.keybind.type);
+                case HasComponent hasComponent -> {
+                    json.put("component", hasComponent.component.id());
+                    json.put("ignore_default", hasComponent.ignoreDefault);
+                }
+                default -> {
+                }
             }
+            json.put("on_true", onTrue.toJson());
+            json.put("on_false", onFalse.toJson());
+
+            if (transformation != null) json.put("transformation", transformation.toJson());
+
+            return json;
+        }
 
             public interface Property {
                 String id();
@@ -863,6 +929,7 @@ public interface Selector {
         private final List<Entry> entries = new LinkedList<>();
         private int scale = 0;
         private Selector fallback = null;
+        private Transformation transformation = null;
 
         public RangeDispatch(Property property) {
             this.property = property;
@@ -881,6 +948,15 @@ public interface Selector {
         public RangeDispatch fallback(Selector selector) {
             this.fallback = selector;
             return this;
+        }
+
+        public void setTransformation(@Nullable Transformation transformation) {
+            this.transformation = transformation;
+        }
+
+        @Nullable
+        public Transformation getTransformation() {
+            return transformation;
         }
 
         public Property getProperty() {
@@ -938,6 +1014,9 @@ public interface Selector {
             }
             json.put("entries", entryJsons);
             json.put("fallback", fallback.toJson());
+
+            if (transformation != null) json.put("transformation", transformation.toJson());
+
             return json;
         }
 
@@ -1052,28 +1131,40 @@ public interface Selector {
         }
     }
 
-    record Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base,
-                   Selector.Special.Type type) implements Selector {
+    record Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base, Selector.Special.Type type, @Nullable Transformation transformation) implements Selector {
+
+        public Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base, Selector.Special.Type type) {
+            this(base, type, null);
+        }
 
         @Override
         public String id() {
             return "minecraft:special";
         }
+
         @Override
         public Map<String, Object> toJson() {
             Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", id());
             json.put("model", type.toJson());
             json.put("base", base.file());
+
+            if (transformation != null) json.put("transformation", transformation.toJson());
+
             return json;
         }
 
         public interface Type {
             String id();
+
             Map<String, Object> toJson();
         }
 
-        public record Banner(NamedColor color) implements Type {
+        public record Banner(NamedColor color, @Nullable Attachment attachment) implements Type {
+            public Banner(NamedColor color) {
+                this(color, null);
+            }
+
             @Override
             public String id() {
                 return "minecraft:banner";
@@ -1084,11 +1175,16 @@ public interface Selector {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("color", color.name().toLowerCase());
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
                 return json;
+            }
+
+            public enum Attachment {
+                WALL, GROUND
             }
         }
 
-        public record Bed(Texture texture) implements Type {
+        public record Bed(Texture texture, Part part) implements Type {
             @Override
             public String id() {
                 return "minecraft:bed";
@@ -1099,6 +1195,40 @@ public interface Selector {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("texture", texture.file());
+                json.put("part", part.name().toLowerCase());
+                return json;
+            }
+
+            public enum Part {
+                HEAD, FOOT
+            }
+        }
+
+        public static class Bell implements Type {
+            @Override
+            public String id() {
+                return "minecraft:bell";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                return Map.of("type", id());
+            }
+        }
+
+        public record Book(float openAngle, float page1, float page2) implements Type {
+            @Override
+            public String id() {
+                return "minecraft:book";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("open_angle", openAngle);
+                json.put("page1", page1);
+                json.put("page2", page2);
                 return json;
             }
         }
@@ -1115,7 +1245,11 @@ public interface Selector {
             }
         }
 
-        public record Chest(Texture texture, int openness) implements Type {
+        public record Chest(Texture texture, int openness, @Nullable ChestType chestType) implements Type {
+            public Chest(Texture texture, int openness) {
+                this(texture, openness, null);
+            }
+
             @Override
             public String id() {
                 return "minecraft:chest";
@@ -1127,7 +1261,12 @@ public interface Selector {
                 json.put("type", id());
                 json.put("texture", texture.file());
                 json.put("openness", openness);
+                if (chestType != null) json.put("chest_type", chestType.name().toLowerCase());
                 return json;
+            }
+
+            public enum ChestType {
+                SINGLE, LEFT, RIGHT
             }
         }
 
@@ -1143,13 +1282,38 @@ public interface Selector {
             }
         }
 
+        public record EndCube(Effect effect) implements Type {
+            @Override
+            public String id() {
+                return "minecraft:end_cube";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("effect", effect.name().toLowerCase());
+                return json;
+            }
+
+            public enum Effect {
+                PORTAL, GATEWAY
+            }
+        }
+
         public static class HangingSign implements Type {
             private final WoodType type;
             private final Texture texture;
+            private final Attachment attachment;
 
             public HangingSign(WoodType type, Texture texture) {
+                this(type, texture, null);
+            }
+
+            public HangingSign(WoodType type, Texture texture, @Nullable Attachment attachment) {
                 this.type = type;
                 this.texture = texture;
+                this.attachment = attachment;
             }
 
             public WoodType getWoodType() {
@@ -1158,6 +1322,11 @@ public interface Selector {
 
             public Texture getTexture() {
                 return texture;
+            }
+
+            @Nullable
+            public Attachment getAttachment() {
+                return attachment;
             }
 
             @Override
@@ -1171,7 +1340,12 @@ public interface Selector {
                 json.put("type", id());
                 json.put("wood_type", type.name().toLowerCase());
                 json.put("texture", texture.file());
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
                 return json;
+            }
+
+            public enum Attachment {
+                WALL, CEILING, CEILING_MIDDLE
             }
         }
 
@@ -1182,7 +1356,6 @@ public interface Selector {
                 this.animationTime = animationTime;
             }
 
-            @Override
             @Nullable
             public Texture texture() {
                 return texture;
@@ -1223,12 +1396,10 @@ public interface Selector {
         public static class ShulkerBox implements Type {
             private final Texture texture;
             private final int openness;
-            private final Orientation orientaion;
 
-            public ShulkerBox(Texture texture, int openness, Orientation orientaion) {
+            public ShulkerBox(Texture texture, int openness) {
                 this.texture = texture;
                 this.openness = openness;
-                this.orientaion = orientaion;
             }
 
             public Texture getTexture() {
@@ -1237,10 +1408,6 @@ public interface Selector {
 
             public int getOpenness() {
                 return openness;
-            }
-
-            public Orientation getOrientation() {
-                return orientaion;
             }
 
             @Override
@@ -1254,7 +1421,6 @@ public interface Selector {
                 json.put("type", id());
                 json.put("texture", texture.file());
                 json.put("openness", openness);
-                json.put("orientation", orientaion.name().toLowerCase());
                 return json;
             }
         }
@@ -1262,10 +1428,16 @@ public interface Selector {
         public static class StandingSign implements Type {
             private final WoodType type;
             private final Texture texture;
+            private final Attachment attachment;
 
             public StandingSign(WoodType type, Texture texture) {
+                this(type, texture, null);
+            }
+
+            public StandingSign(WoodType type, Texture texture, @Nullable Attachment attachment) {
                 this.type = type;
                 this.texture = texture;
+                this.attachment = attachment;
             }
 
             public WoodType getWoodType() {
@@ -1274,6 +1446,11 @@ public interface Selector {
 
             public Texture getTexture() {
                 return texture;
+            }
+
+            @Nullable
+            public Attachment getAttachment() {
+                return attachment;
             }
 
             @Override
@@ -1287,7 +1464,12 @@ public interface Selector {
                 json.put("type", id());
                 json.put("wood_type", type.name().toLowerCase());
                 json.put("texture", texture.file());
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
                 return json;
+            }
+
+            public enum Attachment {
+                WALL, GROUND
             }
         }
 

@@ -32,6 +32,7 @@ public class Components {
     public static DataComponentType<?> DEATH_PROTECTION = register("death_protection", DeathProtect.TYPE);
     public static DataComponentType<?> TOOLTIP_DISPLAY = register("tooltip_display", DisplayTooltip.TYPE);
     public static DataComponentType<?> DAMAGE = register("damage", Durability.TYPE);
+    public static DataComponentType<?> DYE = register("dye", Dye.TYPE);
     public static DataComponentType<?> DYED_COLOR = register("dyed_color", DyedColor.TYPE);
     public static DataComponentType<?> ENCHANTABLE = register("enchantable", EnchantableComponent.TYPE);
     public static DataComponentType<?> ENCHANTMENT_GLINT_OVERRIDE = register("enchantment_glint_override", EnchantmentGlintOverride.TYPE);

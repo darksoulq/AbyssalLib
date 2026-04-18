@@ -12,6 +12,7 @@ import net.minecraft.advancements.*;
 import net.minecraft.advancements.criterion.ImpossibleTrigger;
 import net.minecraft.core.ClientAsset;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStackTemplate;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -255,7 +256,7 @@ public class Advancement {
                 : Optional.empty();
 
             DisplayInfo info = new DisplayInfo(
-                CraftItemStack.asNMSCopy(display.getIcon()),
+                ItemStackTemplate.fromNonEmptyStack(CraftItemStack.asNMSCopy(display.getIcon())),
                 PaperAdventure.asVanilla(display.getTitle()),
                 PaperAdventure.asVanilla(display.getDescription()),
                 background,

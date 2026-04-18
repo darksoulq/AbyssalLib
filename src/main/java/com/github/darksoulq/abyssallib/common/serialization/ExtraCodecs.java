@@ -25,6 +25,7 @@ import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.Identifier;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -191,7 +192,6 @@ public class ExtraCodecs {
                     .canAlwaysEat(canAlwaysEat).build()
     );
 
-    @SuppressWarnings("unchecked")
     public static final Codec<Equippable> EQUIPPABLE = RecordCodecBuilder.create(
             Codec.enumCodec(EquipmentSlot.class).fieldOf("slot", Equippable::slot),
             Codecs.KEY.fieldOf("equip_sound", Equippable::equipSound),
@@ -398,11 +398,7 @@ public class ExtraCodecs {
             Codecs.FLOAT.fieldOf("disable_cooldown_scale", BlocksAttacks::disableCooldownScale),
             DAMAGE_REDUCTION.list().fieldOf("damage_reductions", BlocksAttacks::damageReductions),
             ITEM_DAMAGE_FUNCTION.fieldOf("item_damage", BlocksAttacks::itemDamage),
-            DAMAGE_TYPE.nullable().fieldOf("bypassed_by", b -> {
-                TagKey<DamageType> bypassedBy = b.bypassedBy();
-                if (bypassedBy == null) return null;
-                else return RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(bypassedBy.key());
-            }),
+            DAMAGE_TYPE_KEYS.nullable().fieldOf("bypassed_by", BlocksAttacks::bypassedBy),
             Codecs.KEY.nullable().fieldOf("block_sound", BlocksAttacks::blockSound),
             Codecs.KEY.nullable().fieldOf("disable_sound", BlocksAttacks::disableSound),
             (blockDelaySeconds, disableCooldownScale, damageReductions, itemDamage, bypassedBy,
@@ -414,25 +410,25 @@ public class ExtraCodecs {
                         .itemDamage(itemDamage)
                         .blockSound(blockSound)
                         .disableSound(disableSound);
-                if (bypassedBy != null) builder.bypassedBy(TagKey.create(RegistryKey.DAMAGE_TYPE, bypassedBy.key()));
+                if (bypassedBy != null) builder.bypassedBy(bypassedBy);
                 return builder.build();
             }
     );
 
     public static Codec<EquipmentSlotGroup> EQUIPMENT_SLOT_GROUP = Codecs.STRING.xmap(
-            EquipmentSlotGroup::getByName,
-            EquipmentSlotGroup::toString
+        EquipmentSlotGroup::getByName,
+        equipmentSlotGroup -> equipmentSlotGroup != null ? equipmentSlotGroup.toString() : EquipmentSlotGroup.ANY.toString()
     );
     public static Codec<Attribute> ATTRIBUTE = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getOrThrow,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getKeyOrThrow
+        RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getOrThrow,
+        RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getKeyOrThrow
     );
     public static Codec<AttributeModifier> ATTRIBUTE_MODIFIER = RecordCodecBuilder.create(
-            Codecs.NAMESPACED_KEY.fieldOf("key", AttributeModifier::getKey),
-            Codecs.DOUBLE.fieldOf("amount", AttributeModifier::getAmount),
-            Codec.enumCodec(AttributeModifier.Operation.class).fieldOf("operation", AttributeModifier::getOperation),
-            EQUIPMENT_SLOT_GROUP.fieldOf("slot", AttributeModifier::getSlotGroup),
-            AttributeModifier::new
+        Codecs.NAMESPACED_KEY.fieldOf("key", AttributeModifier::getKey),
+        Codecs.DOUBLE.fieldOf("amount", AttributeModifier::getAmount),
+        Codec.enumCodec(AttributeModifier.Operation.class).fieldOf("operation", AttributeModifier::getOperation),
+        EQUIPMENT_SLOT_GROUP.fieldOf("slot", AttributeModifier::getSlotGroup),
+        AttributeModifier::new
     );
     public static final Codec<ItemAttributeModifiers> ITEM_ATTRIBUTE_MODIFIERS = Codec.map(ATTRIBUTE, Codec.map(ATTRIBUTE_MODIFIER, EQUIPMENT_SLOT_GROUP)).xmap(
             map -> {
@@ -532,7 +528,7 @@ public class ExtraCodecs {
     public static final Codec<CompoundTag> COMPOUND_TAG = new Codec<>() {
         @Override
         public <D> CompoundTag decode(DynamicOps<D> ops, D input) throws CodecException {
-            net.minecraft.nbt.Tag tag = decodeTag(ops, input);
+            Tag tag = decodeTag(ops, input);
             if (tag instanceof CompoundTag ct) {
                 return ct;
             }
@@ -545,7 +541,7 @@ public class ExtraCodecs {
         }
     };
 
-    private static <D> net.minecraft.nbt.Tag decodeTag(DynamicOps<D> ops, D input) {
+    private static <D> Tag decodeTag(DynamicOps<D> ops, D input) {
         if (ops.getMap(input).isPresent()) {
             CompoundTag tag = new CompoundTag();
             ops.getMap(input).get().forEach((k, v) ->
@@ -580,51 +576,51 @@ public class ExtraCodecs {
         return new CompoundTag();
     }
 
-    private static <D> D encodeTag(DynamicOps<D> ops, net.minecraft.nbt.Tag tag) {
+    private static <D> D encodeTag(DynamicOps<D> ops, Tag tag) {
         if (tag == null) return ops.empty();
 
         switch (tag.getId()) {
-            case net.minecraft.nbt.Tag.TAG_COMPOUND:
+            case Tag.TAG_COMPOUND:
                 CompoundTag ct = (CompoundTag) tag;
                 Map<D, D> map = new LinkedHashMap<>();
                 for (String key : ct.keySet()) {
                     map.put(ops.createString(key), encodeTag(ops, ct.get(key)));
                 }
                 return ops.createMap(map);
-            case net.minecraft.nbt.Tag.TAG_LIST:
+            case Tag.TAG_LIST:
                 ListTag lt = (ListTag) tag;
                 List<D> list = new ArrayList<>();
-                for (net.minecraft.nbt.Tag e : lt) {
+                for (Tag e : lt) {
                     list.add(encodeTag(ops, e));
                 }
                 return ops.createList(list);
-            case net.minecraft.nbt.Tag.TAG_STRING:
+            case Tag.TAG_STRING:
                 return ops.createString(tag.asString().orElse(""));
-            case net.minecraft.nbt.Tag.TAG_BYTE:
+            case Tag.TAG_BYTE:
                 return ops.createBoolean(tag.asByte().orElse((byte) 0) != 0);
-            case net.minecraft.nbt.Tag.TAG_SHORT:
+            case Tag.TAG_SHORT:
                 return ops.createInt(tag.asShort().orElse((short) 0));
-            case net.minecraft.nbt.Tag.TAG_INT:
+            case Tag.TAG_INT:
                 return ops.createInt(tag.asInt().orElse(0));
-            case net.minecraft.nbt.Tag.TAG_LONG:
+            case Tag.TAG_LONG:
                 return ops.createLong(tag.asLong().orElse(0L));
-            case net.minecraft.nbt.Tag.TAG_FLOAT:
+            case Tag.TAG_FLOAT:
                 return ops.createFloat(tag.asFloat().orElse(0F));
-            case net.minecraft.nbt.Tag.TAG_DOUBLE:
+            case Tag.TAG_DOUBLE:
                 return ops.createDouble(tag.asDouble().orElse(0D));
-            case net.minecraft.nbt.Tag.TAG_BYTE_ARRAY:
+            case Tag.TAG_BYTE_ARRAY:
                 List<D> byteList = new ArrayList<>();
                 for (byte b : tag.asByteArray().orElse(new byte[0])) {
                     byteList.add(ops.createInt(b));
                 }
                 return ops.createList(byteList);
-            case net.minecraft.nbt.Tag.TAG_INT_ARRAY:
+            case Tag.TAG_INT_ARRAY:
                 List<D> intList = new ArrayList<>();
                 for (int i : tag.asIntArray().orElse(new int[0])) {
                     intList.add(ops.createInt(i));
                 }
                 return ops.createList(intList);
-            case net.minecraft.nbt.Tag.TAG_LONG_ARRAY:
+            case Tag.TAG_LONG_ARRAY:
                 List<D> longList = new ArrayList<>();
                 for (long l : tag.asLongArray().orElse(new long[0])) {
                     longList.add(ops.createLong(l));

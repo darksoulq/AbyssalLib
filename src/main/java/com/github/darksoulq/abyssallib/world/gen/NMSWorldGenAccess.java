@@ -192,7 +192,7 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     @Override
     public @NotNull Material getType(int x, int y, int z) {
         pos.set(x, y, z);
-        return CraftBlockData.fromData(level.getBlockState(pos)).getMaterial();
+        return CraftBlockData.createData(level.getBlockState(pos)).getMaterial();
     }
 
     /**
@@ -206,7 +206,7 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     @Override
     public @NotNull BlockData getBlockData(int x, int y, int z) {
         pos.set(x, y, z);
-        return CraftBlockData.fromData(level.getBlockState(pos));
+        return CraftBlockData.createData(level.getBlockState(pos));
     }
 
     /**

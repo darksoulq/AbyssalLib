@@ -79,9 +79,13 @@ public class Renderers {
      * Supports both static points and velocity-based points via {@link MotionVector}.
      */
     public static class Standard implements ParticleRenderer {
+        /** The Bukkit particle type to spawn. */
         private final Particle particle;
+        /** The number of particles to spawn per point. */
         private final int count;
+        /** The speed/extra data for the particle. */
         private final double speed;
+        /** Optional extra data for specific particles (e.g., BlockData). */
         private final Object data;
 
         /**
@@ -108,36 +112,17 @@ public class Renderers {
          */
         @Override
         public void render(Location center, List<Vector> points, List<Player> viewers) {
-            if (viewers == null || viewers.isEmpty() || points.isEmpty() || center.getWorld() == null) return;
-
-            ParticleOptions options;
-            try {
-                options = CraftParticle.createParticleParam(particle, data);
-            } catch (Throwable t) {
-                return;
-            }
-
-            List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>(points.size());
-            float s = (float) speed;
-
+            World w = center.getWorld();
+            if (w == null) return;
             for (Vector v : points) {
-                double x = center.getX() + v.getX();
-                double y = center.getY() + v.getY();
-                double z = center.getZ() + v.getZ();
-
+                Location loc = center.clone().add(v);
                 if (v instanceof MotionVector mv) {
                     Vector vel = mv.getVelocity();
-                    packets.add(new ClientboundLevelParticlesPacket(
-                        options, true, false, x, y, z, (float) vel.getX(), (float) vel.getY(), (float) vel.getZ(), s == 0 ? 1f : s, 0
-                    ));
+                    w.spawnParticle(particle, viewers, null, loc.getX(), loc.getY(), loc.getZ(), 0, vel.getX(), vel.getY(), vel.getZ(), speed == 0 ? 1 : speed, data, true);
                 } else {
-                    packets.add(new ClientboundLevelParticlesPacket(
-                        options, true, false, x, y, z, 0f, 0f, 0f, s, count
-                    ));
+                    w.spawnParticle(particle, viewers, null, loc.getX(), loc.getY(), loc.getZ(), count, 0, 0, 0, speed, data, false);
                 }
             }
-
-            sendBundled(viewers, packets);
         }
     }
 
@@ -148,6 +133,7 @@ public class Renderers {
      * to create high-fidelity colored effects.
      */
     public static class DustRenderer implements ParticleRenderer {
+        /** The size scale of the dust particles. */
         private final float size;
 
         /**
@@ -168,29 +154,19 @@ public class Renderers {
          */
         @Override
         public void render(Location center, List<Vector> points, List<Player> viewers) {
-            if (viewers == null || viewers.isEmpty() || points.isEmpty() || center.getWorld() == null) return;
-
-            List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>(points.size());
+            World w = center.getWorld();
+            if (w == null || points.isEmpty()) return;
 
             for (Vector v : points) {
-                double x = center.getX() + v.getX();
-                double y = center.getY() + v.getY();
-                double z = center.getZ() + v.getZ();
+                Location loc = center.clone().add(v);
 
                 Color c = Color.WHITE;
                 if (v instanceof Pixel p) {
                     c = p.getColor();
                 }
 
-                int colorInt = (c.getRed() << 16) | (c.getGreen() << 8) | c.getBlue();
-                DustParticleOptions options = new DustParticleOptions(colorInt, size);
-
-                packets.add(new ClientboundLevelParticlesPacket(
-                    options, true, false, x, y, z, 0f, 0f, 0f, 0f, 1
-                ));
+                w.spawnParticle(Particle.DUST, viewers, null, loc.getX(), loc.getY(), loc.getZ(), 1, 0, 0, 0, 0, new Particle.DustOptions(c, size), true);
             }
-
-            sendBundled(viewers, packets);
         }
     }
 

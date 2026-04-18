@@ -497,10 +497,17 @@ public class BlockEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
         for (Location loc : BlockManager.ACTIVE_BLOCKS) {
-            CustomBlock block = CustomBlock.resolve(loc.getBlock());
+            CustomBlock block = CustomBlock.resolve(loc);
+
             if (block == null) {
-                return;
+                continue;
             }
+
+            if (loc.getBlock().getType() != block.getMaterial()) {
+                BlockManager.remove(loc);
+                continue;
+            }
+
             if (block.getEntity() != null) {
                 block.getEntity().serverTick();
                 if (ThreadLocalRandom.current().nextFloat() < 0.001f) {

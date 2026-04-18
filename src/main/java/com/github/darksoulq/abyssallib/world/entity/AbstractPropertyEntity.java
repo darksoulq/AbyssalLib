@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
+import com.github.darksoulq.abyssallib.common.reflection.Reflect;
+import com.github.darksoulq.abyssallib.common.reflection.ReflectClass;
+import com.github.darksoulq.abyssallib.common.reflection.ReflectField;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.block.property.Property;
 
@@ -75,20 +78,22 @@ public abstract class AbstractPropertyEntity<T> {
      */
     public <D> D serialize(DynamicOps<D> ops) throws Exception {
         Map<D, D> map = new LinkedHashMap<>();
-        Class<?> cls = getClass();
-        while (cls != AbstractPropertyEntity.class && cls != Object.class) {
-            for (Field field : cls.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())) continue;
+        ReflectClass<?> rc = Reflect.of(getClass());
 
-                field.setAccessible(true);
-                Object obj = field.get(this);
+        while (rc != null && rc.getUnderlyingClass() != AbstractPropertyEntity.class && rc.getUnderlyingClass() != Object.class) {
+            for (java.lang.reflect.Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
+                ReflectField<Object> field = rc.field(rawField.getName()).getOrNull();
+
+                if (field == null || field.isStatic()) continue;
+
+                Object obj = field.get(this).getOrNull();
 
                 if (obj instanceof Property<?> prop) {
                     D encoded = prop.encode(ops);
                     map.put(ops.createString(field.getName()), encoded);
                 }
             }
-            cls = cls.getSuperclass();
+            rc = rc.getSuperclass().getOrNull();
         }
         return ops.createMap(map);
     }
@@ -106,13 +111,15 @@ public abstract class AbstractPropertyEntity<T> {
      */
     public <D> void deserialize(DynamicOps<D> ops, D input) throws Exception {
         Map<D, D> map = ops.getMap(input).orElse(Map.of());
-        Class<?> cls = getClass();
-        while (cls != AbstractPropertyEntity.class && cls != Object.class) {
-            for (Field field : cls.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())) continue;
+        ReflectClass<?> rc = Reflect.of(getClass());
 
-                field.setAccessible(true);
-                Object obj = field.get(this);
+        while (rc != null && rc.getUnderlyingClass() != AbstractPropertyEntity.class && rc.getUnderlyingClass() != Object.class) {
+            for (java.lang.reflect.Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
+                ReflectField<Object> field = rc.field(rawField.getName()).getOrNull();
+
+                if (field == null || field.isStatic()) continue;
+
+                Object obj = field.get(this).getOrNull();
 
                 if (!(obj instanceof Property<?> prop)) continue;
 
@@ -121,7 +128,7 @@ public abstract class AbstractPropertyEntity<T> {
                     prop.decode(ops, encoded);
                 }
             }
-            cls = cls.getSuperclass();
+            rc = rc.getSuperclass().getOrNull();
         }
     }
 }
