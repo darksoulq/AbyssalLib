@@ -3,7 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '2.3.20'
     id 'io.papermc.paperweight.userdev' version '2.0.0-beta.21'
     id 'xyz.jpenilla.run-paper' version '3.0.2'
-    id 'com.gradleup.shadow' version '9.3.0'
 }
 
 group = 'com.github.darksoulq'
@@ -58,11 +57,8 @@ dependencies {
 
     compileOnly('org.xerial:sqlite-jdbc:3.44.1.0')
     compileOnly('org.apache.pdfbox:fontbox:3.0.5')
-
-    implementation('com.fasterxml.jackson.core:jackson-databind:2.17.0')
-    implementation('com.fasterxml.jackson.core:jackson-core:2.17.0')
-    implementation('com.fasterxml.jackson.core:jackson-annotations:2.17.0')
-
+    compileOnly('com.fasterxml.jackson.core:jackson-databind:2.17.0')
+    compileOnly('com.fasterxml.jackson.core:jackson-core:2.17.0')
     compileOnly 'org.mongodb:mongodb-driver-sync:5.0.0'
     compileOnly 'redis.clients:jedis:5.1.2'
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
@@ -71,18 +67,6 @@ dependencies {
 
     compileOnly('com.magmaguy:ResourcePackManager:1.7.1')
     compileOnly 'me.clip:placeholderapi:2.11.7'
-}
-
-shadowJar {
-    relocate 'com.fasterxml.jackson', 'com.github.darksoulq.libs.jackson'
-
-    dependencies {
-        include(dependency('com.fasterxml.jackson.core:.*'))
-    }
-}
-
-tasks.assemble {
-    dependsOn tasks.shadowJar
 }
 
 tasks.withType(JavaCompile).configureEach {
