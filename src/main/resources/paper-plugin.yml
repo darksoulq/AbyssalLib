@@ -1,5 +1,5 @@
 name: AbyssalLib
-version: '2.0.2-mc.26.1.2'
+version: '2.0.3-mc.26.1.2'
 main: com.github.darksoulq.abyssallib.AbyssalLib
 api-version: '1.21'
 authors: [ DarkSoul ]

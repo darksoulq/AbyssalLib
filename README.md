@@ -1,33 +1,57 @@
-**THIS IS A PAPER ONLY LIBRARY!**
+<div align="center" style="line-height:0;">
+  <img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/banner.png" />
+  <br/>
+  <a href="https://discord.gg/e35gP423vN"><img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/general_parts/discord_dark.png"/></a><a href="https://jitpack.io/#darksoulq/AbyssalLib"><img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage@main/plugin_icons/v1/general_parts/builds_dark.png"/></a><a href="https://darksoulq.github.io/AbyssalLib/"><img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/general_parts/docs_dark.png"/></a>
+</div>
 
-[![Static Badge](https://img.shields.io/badge/%20-javadoc-%20?style=flat-square&logo=readthedocs&color=0f0f0f&link=https%3A%2F%2Fjitpack.io%2Fcom%2Fgithub%2Fdarksoulq%2FAbyssalLib%2Flatest%2Fjavadoc%2F)](https://jitpack.io/com/github/darksoulq/AbyssalLib/latest/javadoc/)
-[![](https://jitpack.io/v/darksoulq/AbyssalLib.svg)](https://jitpack.io/#darksoulq/AbyssalLib)[![Static Badge](https://img.shields.io/badge/%20-wiki-%20?style=flat-square&logo=readthedocs&color=0f0f0f&link=https%3A%2F%2Fdarksoulq.github.io%2FAbyssalLib)](https://darksoulq.github.io/AbyssalLib/)
+---
 
-![Desc](https://cdn.modrinth.com/data/cached_images/a568f61483725852d4a57ba4bea9342949a703ea.png)
+## Features
 
-<details>
-<summary>Text Description</summary>
+A general-purpose library providing tools and APIs to simplify plugin development, including:
 
-AbyssalLib allows easy creations of items, blocks, Guis and more for plugin devs, in a way that allows for plugin integrations easily.
+- ResourcePack API for easier pack handling and distribution
+- Serverside translations with dynamic updates for items (along with glyphs, placeholders support)
+- Items, blocks, GUIs, and entity API
+- Advancements, toasts, and permissions API
+- Energy system and flexible economy API (multi-currency)
+- Scoreboard and placeholder API with extended functionality
 
-If you wish to use the library in your own plugin check out the docs.
+And much more.
 
-Features:
-- GUI API
-- Item API
-- Block API- Beta
-- Glyph (chat image/gui textures/etc) API- Beta
-- Config API
-- Tags API
-- Particle API
-- Events API (easier to use layer for bukkit events)
-- Command API (easier to use layer over brigadier registration on paper)
-- Automatic pack generation and sending
+---
 
-Additional Features (Quality of Life):
-- Chat Input handler so you dont have to write your own (get input from chat)
-</details>
+<div align="center">
 
-- FaQ:
-- Where are configs located?
-  - Configs are all located in <serverfolder>/config/
+<table>
+<tr>
+<td align="center" width="50%">
+  <a href="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/advancement.png">
+    <img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/advancement.png" width="100%" />
+  </a><br/>
+  <sub><b>Advancements</b></sub>
+</td>
+<td align="center" width="50%">
+  <a href="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/permission.png">
+    <img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/permission.png" width="100%" />
+  </a><br/>
+  <sub><b>Permissions</b></sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+  <a href="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/recipe.png">
+    <img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/recipe.png" width="100%" />
+  </a><br/>
+  <sub><b>Recipe</b></sub>
+</td>
+<td align="center" width="50%">
+  <a href="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/item_ssr.png">
+    <img src="https://cdn.jsdelivr.net/gh/darksoulq/ImageStorage/plugin_icons/v1/abyssallib/item_ssr.png" width="100%" />
+  </a><br/>
+  <sub><b>Item and ServerSide Translation</b></sub>
+</td>
+</tr>
+</table>
+
+</div>

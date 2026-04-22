@@ -57,16 +57,15 @@ public class PermissionMenu {
 
     static void setupBackup(GuiView view) {
         Player player = (Player) view.getInventoryView().getPlayer();
-        INVENTORY_BACKUPS.put(player.getUniqueId(), player.getInventory().getContents());
+        if (!INVENTORY_BACKUPS.containsKey(player.getUniqueId())) {
+            INVENTORY_BACKUPS.put(player.getUniqueId(), player.getInventory().getContents());
+        }
         ItemStack[] bottomContents = view.getBottom().getContents();
         Arrays.fill(bottomContents, ItemStack.empty());
         view.getBottom().setContents(bottomContents);
     }
 
     static void loadBackup(GuiView view) {
-        view.getTop().setItem(0, ItemStack.of(Material.AIR));
-        view.getTop().setItem(1, ItemStack.of(Material.AIR));
-        view.getTop().setItem(2, ItemStack.of(Material.AIR));
         ItemStack[] bottomContents = view.getBottom().getContents();
         Arrays.fill(bottomContents, ItemStack.empty());
         view.getBottom().setContents(bottomContents);
@@ -694,6 +693,13 @@ public class PermissionMenu {
             gui.set(SlotPosition.top(49), GuiButton.of(Items.BACK.getStack(), ctx -> onBack.accept(player)));
         }
         gui.set(SlotPosition.top(53), GuiButton.of(Items.FORWARD.getStack(), ctx -> layer.next(ctx.view())));
+
+        gui.onOpen(PermissionMenu::setupBackup);
+        gui.onClose(view -> {
+            if (!GuiManager.OPEN_VIEWS.containsKey(view.getInventoryView())) {
+                loadBackup(view);
+            }
+        });
 
         GuiManager.open(player, gui.build());
         return layer;
