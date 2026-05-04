@@ -193,8 +193,8 @@ public class Config {
             newLines.add(line);
         }
 
-        while (!newLines.isEmpty() && newLines.get(newLines.size() - 1).trim().isEmpty()) {
-            newLines.remove(newLines.size() - 1);
+        while (!newLines.isEmpty() && newLines.getLast().trim().isEmpty()) {
+            newLines.removeLast();
         }
 
         Files.write(file.toPath(), newLines);
@@ -246,10 +246,15 @@ public class Config {
          * @return The stored value, or the default if not present.
          * @throws RuntimeException If a {@link Codec.CodecException} occurs during decoding.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked"})
         public T get() {
             try {
-                return (T) readRaw(yaml.get(path, defaultValue));
+                Object raw = yaml.get(path, defaultValue);
+                Object normalized = normalize(raw);
+                if (codec != null) {
+                    return (T) codec.decode(YamlOps.INSTANCE, normalized);
+                }
+                return (T) normalized;
             } catch (Codec.CodecException e) {
                 throw new RuntimeException(e);
             }
@@ -291,27 +296,22 @@ public class Config {
          *
          * @param obj The raw object from the YAML configuration.
          * @return The processed object (Map, List, or decoded object).
-         * @throws Codec.CodecException If decoding fails.
          */
-        private Object readRaw(Object obj) throws Codec.CodecException {
+        private Object normalize(Object obj) {
             if (obj instanceof ConfigurationSection section) {
                 Map<String, Object> map = new LinkedHashMap<>();
                 for (String key : section.getKeys(false)) {
-                    map.put(key, readRaw(section.get(key)));
+                    map.put(key, normalize(section.get(key)));
                 }
                 return map;
             } else if (obj instanceof List<?> list) {
                 List<Object> newList = new ArrayList<>();
                 for (Object item : list) {
-                    newList.add(readRaw(item));
+                    newList.add(normalize(item));
                 }
                 return newList;
-            } else {
-                if (codec != null) {
-                    return codec.decode(YamlOps.INSTANCE, obj);
-                }
-                return obj;
             }
+            return obj;
         }
     }
 }
