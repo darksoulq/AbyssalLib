@@ -1,0 +1,78 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-04T16:17:04.1319722"><title>Expressionable Placeholders | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"available-operations","level":0,"title":"Available Operations","anchor":"#available-operations"},{"id":"implementing-a-custom-expressionable","level":0,"title":"Implementing a Custom Expressionable","anchor":"#implementing-a-custom-expressionable"},{"id":"using-expressions-in-text","level":0,"title":"Using Expressions in Text","anchor":"#using-expressions-in-text"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Expressionable Placeholders | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/expressionable-placeholders.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Expressionable Placeholders | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/expressionable-placeholders.html#webpage",
+    "url": "writerside-documentation/expressionable-placeholders.html",
+    "name": "Expressionable Placeholders | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="expressionable-placeholders" data-main-title="Expressionable Placeholders" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Placeholders"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="expressionable-placeholders" id="expressionable-placeholders.md">Expressionable Placeholders</h1><p id="mbq6hu_4">The <code class="code" id="mbq6hu_8">Expressionable&lt;T&gt;</code> interface allows placeholders to be dynamically evaluated using mathematical and logical operators directly from text tags. This eliminates the need to create dozens of specific placeholders for simple comparisons or arithmetic.</p><section class="chapter"><h2 id="available-operations" data-toc="available-operations">Available Operations</h2><p id="mbq6hu_9">When a placeholder implements <code class="code" id="mbq6hu_12">Expressionable</code>, it can be targeted by the global <code class="code" id="mbq6hu_13">abyssallib</code> operator placeholders.</p><p id="mbq6hu_10">The standard syntax for an operation is: <code class="code" id="mbq6hu_14">&lt;placeholder:abyssallib:&lt;operator&gt;:&lt;target_placeholder&gt;:[argument]&gt;</code></p><div class="table-wrapper"><table class="wide" id="mbq6hu_11"><thead><tr class="ijRowHead" id="mbq6hu_15"><th id="mbq6hu_23"><p>Operator</p></th><th id="mbq6hu_24"><p>Category</p></th><th id="mbq6hu_25"><p>Description</p></th></tr></thead><tbody><tr id="mbq6hu_16"><td id="mbq6hu_26"><p><code class="code" id="mbq6hu_29">add</code>, <code class="code" id="mbq6hu_30">sub</code>, <code class="code" id="mbq6hu_31">mul</code>, <code class="code" id="mbq6hu_32">div</code>, <code class="code" id="mbq6hu_33">mod</code>, <code class="code" id="mbq6hu_34">pow</code></p></td><td id="mbq6hu_27"><p>Mathematics</p></td><td id="mbq6hu_28"><p>Standard arithmetic operations. Requires an argument.</p></td></tr><tr id="mbq6hu_17"><td id="mbq6hu_35"><p><code class="code" id="mbq6hu_38">min</code>, <code class="code" id="mbq6hu_39">max</code></p></td><td id="mbq6hu_36"><p>Mathematics</p></td><td id="mbq6hu_37"><p>Returns the minimum or maximum between the target and the argument.</p></td></tr><tr id="mbq6hu_18"><td id="mbq6hu_40"><p><code class="code" id="mbq6hu_43">round</code>, <code class="code" id="mbq6hu_44">floor</code>, <code class="code" id="mbq6hu_45">ceil</code>, <code class="code" id="mbq6hu_46">abs</code></p></td><td id="mbq6hu_41"><p>Math (Unary)</p></td><td id="mbq6hu_42"><p>Standard rounding and absolute value operations. Does not take an argument.</p></td></tr><tr id="mbq6hu_19"><td id="mbq6hu_47"><p><code class="code" id="mbq6hu_50">sin</code>, <code class="code" id="mbq6hu_51">cos</code>, <code class="code" id="mbq6hu_52">tan</code>, <code class="code" id="mbq6hu_53">asin</code>, <code class="code" id="mbq6hu_54">acos</code>, <code class="code" id="mbq6hu_55">atan</code></p></td><td id="mbq6hu_48"><p>Trigonometry</p></td><td id="mbq6hu_49"><p>Standard trigonometric functions. Does not take an argument.</p></td></tr><tr id="mbq6hu_20"><td id="mbq6hu_56"><p><code class="code" id="mbq6hu_59">eq</code>, <code class="code" id="mbq6hu_60">neq</code>, <code class="code" id="mbq6hu_61">gt</code>, <code class="code" id="mbq6hu_62">lt</code>, <code class="code" id="mbq6hu_63">gte</code>, <code class="code" id="mbq6hu_64">lte</code></p></td><td id="mbq6hu_57"><p>Relational Logic</p></td><td id="mbq6hu_58"><p>Equality and greater/less-than comparisons. Returns a boolean. Requires an argument.</p></td></tr><tr id="mbq6hu_21"><td id="mbq6hu_65"><p><code class="code" id="mbq6hu_68">and</code>, <code class="code" id="mbq6hu_69">or</code>, <code class="code" id="mbq6hu_70">xor</code></p></td><td id="mbq6hu_66"><p>Boolean Logic</p></td><td id="mbq6hu_67"><p>Standard logical operators. Returns a boolean. Requires an argument.</p></td></tr><tr id="mbq6hu_22"><td id="mbq6hu_71"><p><code class="code" id="mbq6hu_74">not</code></p></td><td id="mbq6hu_72"><p>Boolean (Unary)</p></td><td id="mbq6hu_73"><p>Inverts the boolean state of the target. Does not take an argument.</p></td></tr></tbody></table></div></section><section class="chapter"><h2 id="implementing-a-custom-expressionable" data-toc="implementing-a-custom-expressionable">Implementing a Custom Expressionable</h2><p id="mbq6hu_75">While AbyssalLib provides abstract classes for basic types (<code class="code" id="mbq6hu_78">AbstractDoublePlaceholder</code>, <code class="code" id="mbq6hu_79">AbstractStringPlaceholder</code>, <code class="code" id="mbq6hu_80">AbstractBooleanPlaceholder</code>), you can implement <code class="code" id="mbq6hu_81">Expressionable&lt;T&gt;</code> on any custom placeholder.</p><p id="mbq6hu_76">For this example, we will create a <code class="code" id="mbq6hu_82">PlayerVelocityPlaceholder</code> that returns a Bukkit <code class="code" id="mbq6hu_83">Vector</code>. We will implement <code class="code" id="mbq6hu_84">add</code> to combine velocities, and <code class="code" id="mbq6hu_85">gt</code> (greater than) to compare the magnitude of the velocity against a threshold.</p><div class="code-block" data-lang="java">
+import com.github.darksoulq.abyssallib.server.placeholder.Placeholder;
+import com.github.darksoulq.abyssallib.server.placeholder.PlaceholderArgument;
+import com.github.darksoulq.abyssallib.server.placeholder.PlaceholderContext;
+import com.github.darksoulq.abyssallib.server.placeholder.PlaceholderResult;
+import com.github.darksoulq.abyssallib.server.placeholder.expression.Expressionable;
+import net.kyori.adventure.key.Key;
+import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
+
+public class PlayerVelocityPlaceholder extends Placeholder&lt;Vector&gt; implements Expressionable&lt;Vector&gt; {
+
+    public PlayerVelocityPlaceholder(Key id) {
+        super(id, Vector.class);
+    }
+
+    @Override
+    public PlaceholderResult&lt;Vector&gt; resolve(PlaceholderContext context) {
+        Player player = context.getPlayer();
+        if (player == null) return PlaceholderResult.empty();
+        
+        return PlaceholderResult.success(player.getVelocity());
+    }
+
+    @Override
+    public PlaceholderResult&lt;Vector&gt; add(PlaceholderContext ctx, PlaceholderArgument other) {
+        PlaceholderResult&lt;Vector&gt; res = resolve(ctx);
+        if (res.isEmpty() || res.isError()) return res;
+
+        // Attempt to parse the argument as a single scalar double to add to all axes
+        Double scalar = other.asDouble().getOrNull();
+        if (scalar != null) {
+            Vector current = res.getValue().clone();
+            return PlaceholderResult.success(current.add(new Vector(scalar, scalar, scalar)));
+        }
+        
+        return PlaceholderResult.error(&quot;Invalid vector addition argument&quot;);
+    }
+
+    @Override
+    public PlaceholderResult&lt;Boolean&gt; gt(PlaceholderContext ctx, PlaceholderArgument other) {
+        PlaceholderResult&lt;Vector&gt; res = resolve(ctx);
+        if (res.isEmpty() || res.isError()) return PlaceholderResult.empty();
+
+        // Compare the vector's length (speed) against a provided double
+        Double threshold = other.asDouble().getOrNull();
+        if (threshold != null) {
+            return PlaceholderResult.success(res.getValue().length() &gt; threshold);
+        }
+
+        return PlaceholderResult.empty();
+    }
+
+    // ... (Other Expressionable methods must be implemented, returning PlaceholderResult.empty() if unsupported) ...
+
+    @Override
+    public PlaceholderResult&lt;Vector&gt; sub(PlaceholderContext ctx, PlaceholderArgument other) { return PlaceholderResult.empty(); }
+    @Override public PlaceholderResult&lt;Vector&gt; mul(PlaceholderContext ctx, PlaceholderArgument other) { return PlaceholderResult.empty(); }
+    @Override public PlaceholderResult&lt;Vector&gt; div(PlaceholderContext ctx, PlaceholderArgument other) { return PlaceholderResult.empty(); }
+    
+    // ... remaining methods omitted for brevity
+}
+</div></section><section class="chapter"><h2 id="using-expressions-in-text" data-toc="using-expressions-in-text">Using Expressions in Text</h2><p id="mbq6hu_86">Once your expressionable placeholder is registered, you can target it using the global <code class="code" id="mbq6hu_89">abyssallib</code> operator placeholders.</p><p id="mbq6hu_87">Assuming the <code class="code" id="mbq6hu_90">PlayerVelocityPlaceholder</code> is registered as <code class="code" id="mbq6hu_91">abyssallib_example:velocity</code>, here is how it is used in text:</p><ul class="list _bullet" id="mbq6hu_88"><li class="list__item" id="mbq6hu_92"><p id="mbq6hu_95"><span class="control" id="mbq6hu_96">Basic Resolution:</span> Displays the vector directly (falling back to its <code class="code" id="mbq6hu_97">toString()</code> or your custom <code class="code" id="mbq6hu_98">format()</code> method). <code class="code" id="mbq6hu_99">&lt;placeholder:abyssallib_example:velocity&gt;</code></p></li><li class="list__item" id="mbq6hu_93"><p id="mbq6hu_100"><span class="control" id="mbq6hu_101">Math Expression:</span> Adds <code class="code" id="mbq6hu_102">0.5</code> to all axes of the player's current velocity. <code class="code" id="mbq6hu_103">&lt;placeholder:abyssallib:add:abyssallib_example:velocity:0.5&gt;</code></p></li><li class="list__item" id="mbq6hu_94"><p id="mbq6hu_104"><span class="control" id="mbq6hu_105">Logic Expression:</span> Evaluates to <code class="code" id="mbq6hu_106">true</code> if the player's total velocity magnitude is greater than <code class="code" id="mbq6hu_107">2.0</code>. <code class="code" id="mbq6hu_108">&lt;placeholder:abyssallib:gt:abyssallib_example:velocity:2.0&gt;</code></p></li></ul></section><div class="last-modified">04 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="first-placeholder.html" class="navigation-links__prev">Creating Your First Placeholder</a><a href="default-placeholders.html" class="navigation-links__next">Default Placeholders</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

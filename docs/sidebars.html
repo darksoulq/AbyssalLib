@@ -1,0 +1,50 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-04T16:17:04.8385412"><title>Sidebars | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-a-sidebar","level":0,"title":"Creating a Sidebar","anchor":"#creating-a-sidebar"},{"id":"setting-content","level":0,"title":"Setting Content","anchor":"#setting-content"},{"id":"hiding-the-score-numbers","level":0,"title":"Hiding the Score Numbers","anchor":"#hiding-the-score-numbers"},{"id":"managing-viewers-and-priority","level":0,"title":"Managing Viewers and Priority","anchor":"#managing-viewers-and-priority"},{"id":"cleanup","level":0,"title":"Cleanup","anchor":"#cleanup"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Sidebars | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/sidebars.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Sidebars | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/sidebars.html#webpage",
+    "url": "writerside-documentation/sidebars.html",
+    "name": "Sidebars | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="sidebars" data-main-title="Sidebars" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Other"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="sidebars" id="sidebars.md">Sidebars</h1><p id="-b9qgp6_4">The Sidebar API provides a robust, packet-based, and entirely flicker-free way to manage sideboards (scoreboards) for players. It supports dynamic per-player content, a priority-based overlapping system, and native support for hiding the red side numbers.</p><section class="chapter"><h2 id="creating-a-sidebar" data-toc="creating-a-sidebar">Creating a Sidebar</h2><p id="-b9qgp6_10">To create a sidebar, instantiate the <code class="code" id="-b9qgp6_13">Sidebar</code> class with a unique <code class="code" id="-b9qgp6_14">Key</code> and a priority level.</p><p id="-b9qgp6_11">The priority level determines which sidebar a player sees if they are added to multiple sidebars simultaneously. The sidebar with the highest priority integer will be displayed.</p><div class="code-block" data-lang="java">
+// Creates a sidebar with a priority of 10
+Sidebar globalSidebar = new Sidebar(Key.key(&quot;abyssallib_example&quot;, &quot;global_board&quot;), 10);
+</div></section><section class="chapter"><h2 id="setting-content" data-toc="setting-content">Setting Content</h2><p id="-b9qgp6_15">You can assign both static <code class="code" id="-b9qgp6_19">Component</code>s and dynamic <code class="code" id="-b9qgp6_20">Function&lt;Player, Component&gt;</code>s to the title and lines of the sidebar.</p><p id="-b9qgp6_16">Using a <code class="code" id="-b9qgp6_21">Function</code> allows you to use a single <code class="code" id="-b9qgp6_22">Sidebar</code> instance globally, while still displaying player-specific data (like their individual ping, name, or stats). Sidebars support up to 15 lines (indexes <code class="code" id="-b9qgp6_23">0</code> to <code class="code" id="-b9qgp6_24">14</code>).</p><div class="code-block" data-lang="java">
+// Setting a static title
+globalSidebar.setTitle(TextUtil.parse(&quot;&lt;gold&gt;&lt;b&gt;My Server&lt;/b&gt;&lt;/gold&gt;&quot;));
+
+// Setting a static line at index 0 (top line)
+globalSidebar.setLine(0, TextUtil.parse(&quot;&lt;gray&gt;Welcome to the server!&lt;/gray&gt;&quot;));
+
+// Setting a dynamic line at index 1 that calculates per-player
+globalSidebar.setLine(1, player -&gt; 
+    TextUtil.parse(&quot;&lt;white&gt;Your Ping: &lt;green&gt;&quot; + player.getPing() + &quot;ms&lt;/green&gt;&lt;/white&gt;&quot;)
+);
+
+// Setting a dynamic line at index 2
+globalSidebar.setLine(2, player -&gt; 
+    TextUtil.parse(&quot;&lt;white&gt;Your Location: &lt;aqua&gt;&quot; + player.getLocation().getBlockX() + &quot;, &quot; + player.getLocation().getBlockZ() + &quot;&lt;/aqua&gt;&lt;/white&gt;&quot;)
+);
+</div><aside class="prompt" data-type="tip" data-title="" id="-b9qgp6_18"><p>The lines are rendered from top to bottom based on their index. Index <code class="code" id="-b9qgp6_25">0</code> is the top-most line below the title, and index <code class="code" id="-b9qgp6_26">14</code> is the bottom-most line.</p></aside></section><section class="chapter"><h2 id="hiding-the-score-numbers" data-toc="hiding-the-score-numbers">Hiding the Score Numbers</h2><p id="-b9qgp6_27">In modern Minecraft versions, you can hide the red numbers that normally appear on the right side of the scoreboard. By default, AbyssalLib sidebars have these numbers hidden. You can toggle this behavior using <code class="code" id="-b9qgp6_29">setShowNumbers()</code>.</p><div class="code-block" data-lang="java">
+// This will force the standard 1-15 red numbers to appear on the right side
+globalSidebar.setShowNumbers(true);
+</div></section><section class="chapter"><h2 id="managing-viewers-and-priority" data-toc="managing-viewers-and-priority">Managing Viewers and Priority</h2><p id="-b9qgp6_30">To show the sidebar to a player, simply add them as a viewer.</p><p id="-b9qgp6_31">Because of the priority system, you can layer sidebars. For example, if a player is viewing a <code class="code" id="-b9qgp6_33">GlobalBoard</code> (Priority 10) and you add them to a <code class="code" id="-b9qgp6_34">CombatBoard</code> (Priority 50), the API will automatically transition their screen to the <code class="code" id="-b9qgp6_35">CombatBoard</code>. When you remove them from the <code class="code" id="-b9qgp6_36">CombatBoard</code>, it will seamlessly fall back to the <code class="code" id="-b9qgp6_37">GlobalBoard</code>.</p><div class="code-block" data-lang="java">
+// Show the sidebar to the player
+globalSidebar.addViewer(player);
+
+// Remove the sidebar from the player
+globalSidebar.removeViewer(player);
+</div></section><section class="chapter"><h2 id="cleanup" data-toc="cleanup">Cleanup</h2><p id="-b9qgp6_38">If you are completely removing a sidebar feature from your plugin (e.g., during a minigame reset or plugin reload), you must destroy the sidebar to clear it from the internal memory and remove it from all players currently viewing it.</p><div class="code-block" data-lang="java">
+// Removes the sidebar globally from all viewers and memory
+globalSidebar.destroy();
+
+// Alternatively, you can close ALL sidebars across the entire server:
+PlayerSidebarManager.closeAll();
+</div></section><div class="last-modified">04 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="structures.html" class="navigation-links__prev">Structures</a><a href="toasts.html" class="navigation-links__next">Toasts</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

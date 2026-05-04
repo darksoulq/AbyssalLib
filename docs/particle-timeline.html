@@ -1,0 +1,69 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-04T16:17:04.3073589"><title>The Timeline API | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"building-a-timeline","level":0,"title":"Building a Timeline","anchor":"#building-a-timeline"},{"id":"timeline-builder-methods","level":0,"title":"Timeline Builder Methods","anchor":"#timeline-builder-methods"},{"id":"billboarding","level":0,"title":"Billboarding","anchor":"#billboarding"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="The Timeline API | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/particle-timeline.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="The Timeline API | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/particle-timeline.html#webpage",
+    "url": "writerside-documentation/particle-timeline.html",
+    "name": "The Timeline API | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="particle-timeline" data-main-title="The Timeline API" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Particles"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="particle-timeline" id="particle-timeline.md">The Timeline API</h1><p id="x7m2gl_4">While standalone <code class="code" id="x7m2gl_9">Transformer</code>s apply their logic continuously, the <span class="control" id="x7m2gl_10">Timeline API</span> allows you to sequence multiple animations into specific &quot;keyframes&quot; or time windows. This is essential for creating complex, multi-stage visual effects, such as a shape that grows, pauses, and then spins.</p><p id="x7m2gl_5">Because <code class="code" id="x7m2gl_11">Timeline</code> itself implements the <code class="code" id="x7m2gl_12">Transformer</code> interface, you can pass it directly into your <code class="code" id="x7m2gl_13">Particles</code> builder just like any other animation.</p><section class="chapter"><h2 id="building-a-timeline" data-toc="building-a-timeline">Building a Timeline</h2><p id="x7m2gl_14">To create a timeline, use <code class="code" id="x7m2gl_18">Timeline.builder()</code>. You can define a total duration, whether the sequence should loop, and add your specific keyframes.</p><p id="x7m2gl_15">A keyframe requires a <code class="code" id="x7m2gl_19">start</code> tick, a <code class="code" id="x7m2gl_20">duration</code> in ticks, and the <code class="code" id="x7m2gl_21">Transformer</code> to execute during that window.</p><div class="code-block" data-lang="java">
+public final class ParticleTest {
+
+    public static void spawnSequence(Player player) {
+        // 1. Build the Timeline
+        Timeline sequence = Timeline.builder()
+            .duration(100) // The timeline lasts exactly 100 ticks (5 seconds)
+            .loop(true)    // When it reaches 100 ticks, it restarts at 0
+            
+            // From tick 0 to 50: Grow the shape from 0x to 2x size
+            .add(0, 50, Animations.scale(0.0, 2.0, 50, Easing.EASE_OUT_QUAD))
+            
+            // From tick 50 to 100: Spin the shape 360 degrees around the Y axis
+            .add(50, 50, Animations.spinY(360, 50, Easing.EASE_IN_OUT_CUBIC))
+            
+            .build();
+
+        // 2. Apply it to the Particles effect
+        Particles effect = Particles.builder()
+            .origin(player.getLocation())
+            .shape(Generators.cube(1.0, 5))
+            .render(new Renderers.Standard(Particle.FLAME, 1, 0, null))
+            .transform(sequence) // Pass the timeline here!
+            .interval(1)
+            .build();
+
+        effect.start();
+    }
+}
+</div><aside class="prompt" data-type="tip" data-title="" id="x7m2gl_17"><p>If you add a keyframe that exceeds your configured <code class="code" id="x7m2gl_22">duration()</code>, the builder will automatically extend the total timeline duration to fit it.</p></aside></section><section class="chapter"><h2 id="timeline-builder-methods" data-toc="timeline-builder-methods">Timeline Builder Methods</h2><div class="table-wrapper"><table class="wide" id="x7m2gl_23"><thead><tr class="ijRowHead" id="x7m2gl_25"><th id="x7m2gl_29"><p>Method</p></th><th id="x7m2gl_30"><p>Information</p></th></tr></thead><tbody><tr id="x7m2gl_26"><td id="x7m2gl_31"><p><code class="code" id="x7m2gl_33">duration(long ticks)</code></p></td><td id="x7m2gl_32"><p>Sets the total lifespan of the timeline loop in server ticks.</p></td></tr><tr id="x7m2gl_27"><td id="x7m2gl_34"><p><code class="code" id="x7m2gl_36">loop(boolean loop)</code></p></td><td id="x7m2gl_35"><p>Sets whether the timeline should restart from tick 0 once it completes. Defaults to <code class="code" id="x7m2gl_37">true</code>.</p></td></tr><tr id="x7m2gl_28"><td id="x7m2gl_38"><p><code class="code" id="x7m2gl_40">add(long start, long duration, Transformer transformer)</code></p></td><td id="x7m2gl_39"><p>Adds a keyframe to the timeline. The transformer will only apply between <code class="code" id="x7m2gl_41">start</code> and <code class="code" id="x7m2gl_42">start + duration</code>.</p></td></tr></tbody></table></div></section><section class="chapter"><h2 id="billboarding" data-toc="billboarding">Billboarding</h2><p id="x7m2gl_43">A common requirement in 3D particle systems is &quot;billboarding&quot;&mdash;forcing a flat 2D shape (like a circle or text) to constantly face a specific target, usually the player's camera.</p><p id="x7m2gl_44">AbyssalLib provides a <code class="code" id="x7m2gl_47">Billboarding</code> utility class to handle this complex vector math for you.</p><section class="chapter"><h3 id="static-billboarding" data-toc="static-billboarding">Static Billboarding</h3><p id="x7m2gl_48">If your origin and target do not move, use <code class="code" id="x7m2gl_50">Billboarding.face()</code>. The rotation is calculated exactly once when the effect is created, making it highly performant.</p><div class="code-block" data-lang="java">
+Location origin = new Location(world, 0, 100, 0);
+Location target = new Location(world, 10, 100, 10);
+
+Particles.builder()
+    .origin(origin)
+    .shape(Generators.text(&quot;Hello&quot;, &quot;Arial&quot;, Font.BOLD, 12, 2.0))
+    // Calculate rotation once, orienting the text towards the target
+    .transform(Billboarding.face(origin, target))
+    .render(new Renderers.Standard(Particle.END_ROD, 1, 0, null))
+    .build()
+    .start();
+</div></section><section class="chapter"><h3 id="dynamic-billboarding" data-toc="dynamic-billboarding">Dynamic Billboarding</h3><p id="x7m2gl_51">If your target (or origin) is constantly moving, use <code class="code" id="x7m2gl_55">Billboarding.faceDynamic()</code>. This accepts <code class="code" id="x7m2gl_56">Supplier&lt;Location&gt;</code> parameters and recalculates the rotation vector every single tick.</p><p id="x7m2gl_52">This is perfect for effects that must always face a moving player.</p><div class="code-block" data-lang="java">
+Particles.builder()
+    .origin(() -&gt; blockLocation)
+    .shape(Generators.text(&quot;Look at me!&quot;, &quot;Arial&quot;, Font.BOLD, 12, 2.0))
+    // Recalculates rotation every tick to face the player's eye location
+    .transform(Billboarding.faceDynamic(
+        () -&gt; blockLocation, 
+        () -&gt; player.getEyeLocation()
+    ))
+    .render(new Renderers.Standard(Particle.END_ROD, 1, 0, null))
+    .build()
+    .start();
+</div><aside class="prompt" data-type="note" data-title="" id="x7m2gl_54"><p>When applying multiple transformers, <b id="x7m2gl_57">order matters</b>. You should generally apply scaling and internal animations (like spinning) <em id="x7m2gl_58">before</em> applying a Billboarding or Translation transformer.</p></aside></section></section><div class="last-modified">04 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="first-particle-effect.html" class="navigation-links__prev">Creating Your First Particle Effect</a><a href="particle-components.html" class="navigation-links__next">Custom Particle Components</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

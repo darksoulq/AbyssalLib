@@ -1,0 +1,98 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-04T16:17:04.0803278"><title>Creating Your First Placeholder | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-a-custom-placeholder","level":0,"title":"Creating a custom placeholder","anchor":"#creating-a-custom-placeholder"},{"id":"using-placeholder-arguments","level":0,"title":"Using Placeholder Arguments","anchor":"#using-placeholder-arguments"},{"id":"registering-the-placeholder","level":0,"title":"Registering the Placeholder","anchor":"#registering-the-placeholder"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating Your First Placeholder | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/first-placeholder.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating Your First Placeholder | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/first-placeholder.html#webpage",
+    "url": "writerside-documentation/first-placeholder.html",
+    "name": "Creating Your First Placeholder | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="first-placeholder" data-main-title="Creating Your First Placeholder" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Placeholders"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="first-placeholder" id="first-placeholder.md">Creating Your First Placeholder</h1><p id="lpuivb_4">Unlike standard string-based placeholder APIs, AbyssalLib placeholders are strongly typed (<code class="code" id="lpuivb_8">Placeholder&lt;T&gt;</code>). This allows you to resolve complex objects and use the <code class="code" id="lpuivb_9">format(T value)</code> method to dictate exactly how they are styled into text.</p><section class="chapter"><h2 id="creating-a-custom-placeholder" data-toc="creating-a-custom-placeholder">Creating a custom placeholder</h2><p id="lpuivb_10">To create a placeholder, extend the <code class="code" id="lpuivb_15">Placeholder&lt;T&gt;</code> class, where <code class="code" id="lpuivb_16">T</code> is the specific object type you want to return.</p><p id="lpuivb_11">By default, the API will convert unknown objects to strings. However, by overriding <code class="code" id="lpuivb_17">format(T value)</code>, you can return a rich MiniMessage <code class="code" id="lpuivb_18">Component</code>.</p><p id="lpuivb_12">For this example, we will create a placeholder that finds the <code class="code" id="lpuivb_19">EquipmentSlot</code> of the player's most damaged armor piece and formats it nicely.</p><div class="code-block" data-lang="java">
+public class DamagedSlotPlaceholder extends Placeholder&lt;EquipmentSlot&gt; {
+
+    public DamagedSlotPlaceholder(Key id) {
+        // Define the ID and the specific class type this placeholder returns
+        super(id, EquipmentSlot.class);
+    }
+
+    @Override
+    public PlaceholderResult&lt;EquipmentSlot&gt; resolve(PlaceholderContext context) {
+        Player player = context.getPlayer();
+        if (player == null) return PlaceholderResult.empty();
+
+        EquipmentSlot mostDamaged = null;
+        double maxDamagePercent = -1;
+
+        // Iterate through the player's armor to find the most damaged piece
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (!slot.isArmor()) continue;
+
+            ItemStack item = player.getInventory().getItem(slot);
+            if (item == null || !item.hasItemMeta() || !(item.getItemMeta() instanceof Damageable meta)) continue;
+
+            double damagePercent = (double) meta.getDamage() / item.getType().getMaxDurability();
+            if (damagePercent &gt; maxDamagePercent) {
+                maxDamagePercent = damagePercent;
+                mostDamaged = slot;
+            }
+        }
+
+        // Return empty if no damaged armor is found, otherwise return the slot
+        if (mostDamaged == null) return PlaceholderResult.empty();
+        return PlaceholderResult.success(mostDamaged);
+    }
+
+    // Override the format method to define the visual text output
+    @Override
+    public Component format(EquipmentSlot value) {
+        // Convert &quot;CHEST&quot; to &quot;Chest&quot; and apply a red color
+        String niceName = value.name().substring(0, 1).toUpperCase() + value.name().substring(1).toLowerCase();
+        return TextUtil.parse(&quot;&lt;red&gt;&quot; + niceName + &quot;&lt;/red&gt;&quot;);
+    }
+}
+</div><aside class="prompt" data-type="note" data-title="" id="lpuivb_14"><p>Overriding <code class="code" id="lpuivb_20">format()</code> is highly recommended when returning enums or custom data objects, as it gives you full control over capitalization, colors, and translatable components without cluttering your <code class="code" id="lpuivb_21">resolve()</code> logic.</p></aside></section><section class="chapter"><h2 id="using-placeholder-arguments" data-toc="using-placeholder-arguments">Using Placeholder Arguments</h2><p id="lpuivb_22">Placeholders can accept dynamic arguments defined inside the MiniMessage placeholder tag (e.g., <code class="code" id="lpuivb_24">&lt;placeholder:abyssallib_example:slot_by_name:head&gt;</code>). You can access these arguments through the <code class="code" id="lpuivb_25">PlaceholderContext</code>.</p><div class="code-block" data-lang="java">
+public class SlotByNamePlaceholder extends Placeholder&lt;EquipmentSlot&gt; {
+
+    public SlotByNamePlaceholder(Key id) {
+        super(id, EquipmentSlot.class);
+    }
+
+    @Override
+    public PlaceholderResult&lt;EquipmentSlot&gt; resolve(PlaceholderContext context) {
+        // Check if an argument was provided
+        if (!context.hasArgs()) return PlaceholderResult.error(&quot;Missing slot argument&quot;);
+
+        // Fetch the first argument as a String
+        String slotName = context.getRaw(0, &quot;&quot;).toUpperCase(Locale.ROOT);
+
+        try {
+            EquipmentSlot slot = EquipmentSlot.valueOf(slotName);
+            return PlaceholderResult.success(slot);
+        } catch (IllegalArgumentException e) {
+            return PlaceholderResult.error(&quot;Invalid slot name: &quot; + slotName);
+        }
+    }
+
+    @Override
+    public Component format(EquipmentSlot value) {
+        return TextUtil.parse(&quot;&lt;yellow&gt;&quot; + value.name() + &quot;&lt;/yellow&gt;&quot;);
+    }
+}
+</div></section><section class="chapter"><h2 id="registering-the-placeholder" data-toc="registering-the-placeholder">Registering the Placeholder</h2><p id="lpuivb_26">Placeholders must be registered using a <code class="code" id="lpuivb_29">DeferredRegistry</code> targeting <code class="code" id="lpuivb_30">Registries.PLACEHOLDERS</code>. The namespace and ID you provide here will dictate the base tag used in-game.</p><div class="code-block" data-lang="java">
+public final class CustomPlaceholders {
+
+    public static final DeferredRegistry&lt;Placeholder&lt;?&gt;&gt; PLACEHOLDERS = DeferredRegistry.create(Registries.PLACEHOLDERS, AbyssalLibExample.PLUGIN_ID);
+
+    // This will be accessible in-game as &lt;placeholder:abyssallib_example:damaged_slot&gt;
+    public static final Placeholder&lt;?&gt; DAMAGED_SLOT = PLACEHOLDERS.register(&quot;damaged_slot&quot;, id -&gt; new DamagedSlotPlaceholder(id));
+
+    // This will be accessible in-game as &lt;placeholder:abyssallib_example:slot_by_name:&lt;argument&gt;&gt;
+    public static final Placeholder&lt;?&gt; SLOT_BY_NAME = PLACEHOLDERS.register(&quot;slot_by_name&quot;, id -&gt; new SlotByNamePlaceholder(id));
+}
+</div><aside class="prompt" data-type="note" data-title="" id="lpuivb_28"><p>Do not forget to call <code class="code" id="lpuivb_31">CustomPlaceholders.PLACEHOLDERS.apply()</code> in your plugin's <code class="code" id="lpuivb_32">onEnable()</code> method.</p></aside></section><div class="last-modified">04 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="creating-custom-codecs.html" class="navigation-links__prev">Creating Custom Codecs</a><a href="expressionable-placeholders.html" class="navigation-links__next">Expressionable Placeholders</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

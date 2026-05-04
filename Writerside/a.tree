@@ -41,10 +41,31 @@
             <toc-element topic="default-decorators.md"/>
         </toc-element>
     </toc-element>
+    <toc-element toc-title="Particles">
+        <toc-element topic="first-particle-effect.md"/>
+        <toc-element topic="particle-timeline.md"/>
+        <toc-element topic="particle-components.md"/>
+        <toc-element topic="particle-renderers.md"/>
+        <toc-element topic="particle-generators.md"/>
+        <toc-element topic="particle-transformers.md"/>
+    </toc-element>
+    <toc-element toc-title="Codecs">
+        <toc-element topic="understanding-codecs.md" accepts-web-file-names-ref="50df5160"/>
+        <toc-element topic="creating-custom-codecs.md"/>
+    </toc-element>
+    <toc-element toc-title="Placeholders">
+        <toc-element topic="first-placeholder.md"/>
+        <toc-element topic="expressionable-placeholders.md"/>
+        <toc-element topic="default-placeholders.md"/>
+    </toc-element>
     <toc-element toc-title="Other">
         <toc-element topic="structures.md"/>
+        <toc-element topic="sidebars.md"/>
+        <toc-element topic="toasts.md"/>
         <toc-element topic="ssr.md"/>
         <toc-element topic="events.md"/>
+        <toc-element topic="config-api.md"/>
+        <toc-element topic="chat-input.md"/>
         <toc-element topic="reflection-api.md"/>
     </toc-element>
 </instance-profile>

@@ -1,0 +1,100 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-04T16:17:04.3649024"><title>Custom Particle Components | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"custom-generator","level":0,"title":"Custom Generator","anchor":"#custom-generator"},{"id":"custom-transformer","level":0,"title":"Custom Transformer","anchor":"#custom-transformer"},{"id":"custom-renderer","level":0,"title":"Custom Renderer","anchor":"#custom-renderer"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Custom Particle Components | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/particle-components.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Custom Particle Components | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/particle-components.html#webpage",
+    "url": "writerside-documentation/particle-components.html",
+    "name": "Custom Particle Components | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="particle-components" data-main-title="Custom Particle Components" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Particles"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="particle-components" id="particle-components.md">Custom Particle Components</h1><p id="akh9ds_4">If the default particle components do not meet your exact needs, the Particles API is designed to be easily extensible. You can create custom shapes, animations, and visualization methods by implementing the respective interfaces.</p><section class="chapter"><h2 id="custom-generator" data-toc="custom-generator">Custom Generator</h2><p id="akh9ds_8">The <code class="code" id="akh9ds_14">Generator</code> is a functional interface responsible for providing a list of relative coordinates (vectors) for a specific animation tick.</p><p id="akh9ds_9">Because it is a functional interface, you can pass lambdas directly into the builder, or create a dedicated class for complex mathematical shapes.</p><div class="table-wrapper"><table class="wide" id="akh9ds_10"><thead><tr class="ijRowHead" id="akh9ds_15"><th id="akh9ds_17"><p>Method</p></th><th id="akh9ds_18"><p>Information</p></th></tr></thead><tbody><tr id="akh9ds_16"><td id="akh9ds_19"><p><code class="code" id="akh9ds_21">generate(long tick)</code></p></td><td id="akh9ds_20"><p>Returns a <code class="code" id="akh9ds_22">List&lt;Vector&gt;</code> representing the local coordinates of the shape for the given tick.</p></td></tr></tbody></table></div><p id="akh9ds_11"><span class="control" id="akh9ds_23">Example: A Random Scatter Generator</span> This generator produces a specified number of completely random points within a bounded box every tick.</p><div class="code-block" data-lang="java">
+public class ScatterGenerator implements Generator {
+    
+    private final int count;
+    private final double spread;
+
+    public ScatterGenerator(int count, double spread) {
+        this.count = count;
+        this.spread = spread;
+    }
+
+    @Override
+    public List&lt;Vector&gt; generate(long tick) {
+        List&lt;Vector&gt; points = new ArrayList&lt;&gt;(count);
+        for (int i = 0; i &lt; count; i++) {
+            double x = (Math.random() - 0.5) * spread;
+            double y = (Math.random() - 0.5) * spread;
+            double z = (Math.random() - 0.5) * spread;
+            
+            // You can optionally return Pixel objects if you want to assign colors!
+            points.add(new Vector(x, y, z));
+        }
+        return points;
+    }
+}
+</div></section><section class="chapter"><h2 id="custom-transformer" data-toc="custom-transformer">Custom Transformer</h2><p id="akh9ds_24">The <code class="code" id="akh9ds_30">Transformer</code> is a functional interface that intercepts the vectors produced by the <code class="code" id="akh9ds_31">Generator</code> and modifies them before they reach the renderer. This is typically used for spatial manipulation (rotation, scale, offsets).</p><div class="table-wrapper"><table class="wide" id="akh9ds_25"><thead><tr class="ijRowHead" id="akh9ds_32"><th id="akh9ds_34"><p>Method</p></th><th id="akh9ds_35"><p>Information</p></th></tr></thead><tbody><tr id="akh9ds_33"><td id="akh9ds_36"><p><code class="code" id="akh9ds_38">transform(Vector input, long tick)</code></p></td><td id="akh9ds_37"><p>Takes an input vector and the current tick, and returns the modified vector.</p></td></tr></tbody></table></div><p id="akh9ds_26"><span class="control" id="akh9ds_39">Example: A Jitter/Noise Transformer</span> This transformer applies a slight, randomized offset to every point, simulating a chaotic &quot;shaking&quot; or noise effect.</p><div class="code-block" data-lang="java">
+public class JitterTransformer implements Transformer {
+    
+    private final double intensity;
+
+    public JitterTransformer(double intensity) {
+        this.intensity = intensity;
+    }
+
+    @Override
+    public Vector transform(Vector input, long tick) {
+        double offsetX = (Math.random() - 0.5) * intensity;
+        double offsetY = (Math.random() - 0.5) * intensity;
+        double offsetZ = (Math.random() - 0.5) * intensity;
+        
+        // Always modify and return the vector
+        return input.add(new Vector(offsetX, offsetY, offsetZ));
+    }
+}
+</div><aside class="prompt" data-type="tip" data-title="" id="akh9ds_28"><p>Because <code class="code" id="akh9ds_40">Transformer</code> is a functional interface, you can apply simple logic directly in the builder: <code class="code" id="akh9ds_41">.transform((v, tick) -&gt; v.add(new Vector(0, Math.sin(tick / 10.0), 0)))</code></p></aside></section><section class="chapter"><h2 id="custom-renderer" data-toc="custom-renderer">Custom Renderer</h2><p id="akh9ds_42">The <code class="code" id="akh9ds_47">ParticleRenderer</code> interface is responsible for taking the final, mathematically processed coordinates and displaying them in the Minecraft world.</p><div class="table-wrapper"><table class="wide" id="akh9ds_43"><thead><tr class="ijRowHead" id="akh9ds_48"><th id="akh9ds_52"><p>Method</p></th><th id="akh9ds_53"><p>Information</p></th></tr></thead><tbody><tr id="akh9ds_49"><td id="akh9ds_54"><p><code class="code" id="akh9ds_56">start(Location origin)</code></p></td><td id="akh9ds_55"><p><em id="akh9ds_57">(Optional)</em> Fires when the effect begins. Useful for spawning persistent entities or playing a startup sound.</p></td></tr><tr id="akh9ds_50"><td id="akh9ds_58"><p><code class="code" id="akh9ds_60">render(Location center, List&lt;Vector&gt; points, List&lt;Player&gt; viewers)</code></p></td><td id="akh9ds_59"><p>Fires every tick. Responsible for iterating through the points and executing the visual display logic.</p></td></tr><tr id="akh9ds_51"><td id="akh9ds_61"><p><code class="code" id="akh9ds_63">stop()</code></p></td><td id="akh9ds_62"><p><em id="akh9ds_64">(Optional)</em> Fires when the effect is terminated. Must be used to clean up any persistent entities or memory leaks.</p></td></tr></tbody></table></div><p id="akh9ds_44"><span class="control" id="akh9ds_65">Example: A Sound Renderer</span> Renderers do not strictly have to spawn particles. This custom renderer plays a subtle note block sound at the location of every generated point, creating spatial audio effects.</p><div class="code-block" data-lang="java">
+import com.github.darksoulq.abyssallib.world.particle.ParticleRenderer;
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
+
+import java.util.List;
+
+public class SoundRenderer implements ParticleRenderer {
+
+    private final Sound sound;
+    private final float volume;
+    private final float pitch;
+
+    public SoundRenderer(Sound sound, float volume, float pitch) {
+        this.sound = sound;
+        this.volume = volume;
+        this.pitch = pitch;
+    }
+
+    @Override
+    public void render(Location center, List&lt;Vector&gt; points, List&lt;Player&gt; viewers) {
+        if (center.getWorld() == null || points.isEmpty()) return;
+
+        for (Vector v : points) {
+            // Calculate the absolute world location of the point
+            Location loc = center.clone().add(v);
+            
+            // Play the sound
+            if (viewers == null || viewers.isEmpty()) {
+                loc.getWorld().playSound(loc, sound, volume, pitch);
+            } else {
+                for (Player p : viewers) {
+                    p.playSound(loc, sound, volume, pitch);
+                }
+            }
+        }
+    }
+}
+</div><aside class="prompt" data-type="note" data-title="" id="akh9ds_46"><p>If your renderer spawns entities (like Armor Stands or Block Displays), you <b id="akh9ds_66">must</b> store references to their Entity IDs/UUIDs and override the <code class="code" id="akh9ds_67">stop()</code> method to <code class="code" id="akh9ds_68">remove()</code> them when the effect ends, otherwise you will cause severe entity leaking.</p></aside></section><div class="last-modified">04 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="particle-timeline.html" class="navigation-links__prev">The Timeline API</a><a href="particle-renderers.html" class="navigation-links__next">Default Renderers</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>
