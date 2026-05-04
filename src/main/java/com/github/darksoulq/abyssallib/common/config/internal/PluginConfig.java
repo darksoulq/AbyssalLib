@@ -45,7 +45,7 @@ public class PluginConfig {
         public Config.Value<List<String>> externalPacks;
 
         public ResourcePack(Config cfg) {
-            enabled = cfg.value("resource-pack.enabled", false)
+            enabled = cfg.value("resource-pack.enabled", true)
                 .withComment("Whether autohosting is enabled; in case set to false and ResourcePackManager is installed, RSPM will be used.");
             sendPhase = cfg.value("resource-pack.send_at", SendPhase.JOIN, Codec.enumCodec(SendPhase.class))
                 .withComment("When to send the resource-pack (either CONFIGURATION or JOIN)");
