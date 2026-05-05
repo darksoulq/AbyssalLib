@@ -1,183 +1,56 @@
 package com.github.darksoulq.abyssallib.world.data.attribute;
 
-import java.math.BigDecimal;
+import net.kyori.adventure.key.Key;
+import org.bukkit.attribute.AttributeModifier.Operation;
 
 /**
  * Represents a modifier applied to an attribute's base value.
- * This class supports arithmetic operations including addition, subtraction,
- * multiplication, and division for a wide variety of numeric types.
- *
- * @param <T>
- * The numeric type of the attribute being modified, extending {@link Number}.
  */
-public class AttributeModifier<T extends Number> {
+public class AttributeModifier {
+    /** The unique identifier for this specific modifier. */
+    private final Key key;
+    /** The numeric value to apply as a modifier. */
+    private final double amount;
+    /** The arithmetic operation logic to apply to the base value. */
+    private final Operation operation;
 
     /**
-     * The modifier value to apply during calculations.
-     */
-    private final T value;
-
-    /**
-     * The arithmetic operation logic to apply to the base value.
-     */
-    private final AttributeOperation operation;
-
-    /**
-     * Constructs a new attribute modifier with a specific value and operation type.
+     * Constructs a new attribute modifier.
      *
-     * @param value
-     * The numeric value to apply as a modifier.
-     * @param operation
-     * The {@link AttributeOperation} defining how the value interacts with the base.
+     * @param key       The unique key identifying this modifier.
+     * @param amount    The numeric value to apply.
+     * @param operation The {@link Operation} defining how the value interacts with the base.
      */
-    public AttributeModifier(T value, AttributeOperation operation) {
-        this.value = value;
+    public AttributeModifier(Key key, double amount, Operation operation) {
+        this.key = key;
+        this.amount = amount;
         this.operation = operation;
+    }
+
+    /**
+     * Retrieves the unique identifier of this modifier.
+     *
+     * @return The modifier key.
+     */
+    public Key getKey() {
+        return key;
     }
 
     /**
      * Retrieves the raw numeric value associated with this modifier.
      *
-     * @return
-     * The modifier value of type {@code T}.
+     * @return The modifier amount.
      */
-    public T getValue() {
-        return value;
+    public double getAmount() {
+        return amount;
     }
 
     /**
      * Retrieves the specific arithmetic operation performed by this modifier.
      *
-     * @return
-     * The {@link AttributeOperation} constant representing the operation.
+     * @return The {@link Operation} representing the calculation type.
      */
-    public AttributeOperation getOperation() {
+    public Operation getOperation() {
         return operation;
-    }
-
-    /**
-     * Applies this modifier to an integer base value.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified integer value.
-     */
-    public int applyToInt(int base) {
-        int mod = value.intValue();
-        return switch (operation) {
-            case ADD -> base + mod;
-            case SUBTRACT -> base - mod;
-            case MULTIPLY -> base * mod;
-            case DIVIDE -> mod == 0 ? base : base / mod;
-        };
-    }
-
-    /**
-     * Applies this modifier to a floating-point base value.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified float value.
-     */
-    public float applyToFloat(float base) {
-        float mod = value.floatValue();
-        return switch (operation) {
-            case ADD -> base + mod;
-            case SUBTRACT -> base - mod;
-            case MULTIPLY -> base * mod;
-            case DIVIDE -> mod == 0.0f ? base : base / mod;
-        };
-    }
-
-    /**
-     * Applies this modifier to a double-precision base value.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified double value.
-     */
-    public double applyToDouble(double base) {
-        double mod = value.doubleValue();
-        return switch (operation) {
-            case ADD -> base + mod;
-            case SUBTRACT -> base - mod;
-            case MULTIPLY -> base * mod;
-            case DIVIDE -> mod == 0.0 ? base : base / mod;
-        };
-    }
-
-    /**
-     * Applies this modifier to a long integer base value.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified long value.
-     */
-    public long applyToLong(long base) {
-        long mod = value.longValue();
-        return switch (operation) {
-            case ADD -> base + mod;
-            case SUBTRACT -> base - mod;
-            case MULTIPLY -> base * mod;
-            case DIVIDE -> mod == 0L ? base : base / mod;
-        };
-    }
-
-    /**
-     * Applies this modifier to a short integer base value.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified short value.
-     */
-    public short applyToShort(short base) {
-        short mod = value.shortValue();
-        return (short) switch (operation) {
-            case ADD -> base + mod;
-            case SUBTRACT -> base - mod;
-            case MULTIPLY -> base * mod;
-            case DIVIDE -> mod == 0 ? base : base / mod;
-        };
-    }
-
-    /**
-     * Applies this modifier to a byte base value.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified byte value.
-     */
-    public byte applyToByte(byte base) {
-        byte mod = value.byteValue();
-        return (byte) switch (operation) {
-            case ADD -> base + mod;
-            case SUBTRACT -> base - mod;
-            case MULTIPLY -> base * mod;
-            case DIVIDE -> mod == 0 ? base : base / mod;
-        };
-    }
-
-    /**
-     * Applies this modifier to a {@link BigDecimal} base value for high-precision arithmetic.
-     *
-     * @param base
-     * The original base value to be modified.
-     * @return
-     * The resulting modified BigDecimal value.
-     */
-    public BigDecimal applyToBigDecimal(BigDecimal base) {
-        BigDecimal mod = (value instanceof BigDecimal b) ? b : new BigDecimal(value.toString());
-        return switch (operation) {
-            case ADD -> base.add(mod);
-            case SUBTRACT -> base.subtract(mod);
-            case MULTIPLY -> base.multiply(mod);
-            case DIVIDE -> mod.compareTo(BigDecimal.ZERO) == 0 ? base : base.divide(mod, BigDecimal.ROUND_HALF_UP);
-        };
     }
 }

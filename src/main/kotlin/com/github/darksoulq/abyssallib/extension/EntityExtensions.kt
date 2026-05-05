@@ -4,15 +4,18 @@ import com.github.darksoulq.abyssallib.world.data.attribute.Attribute
 import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes
 import org.bukkit.entity.Entity
 
-fun <T : Number> Entity.getAttribute(attr: Attribute<T>) : Number {
-    return EntityAttributes.of(this).get<T>(attr)
+fun Entity.getAttribute(attr: Attribute): Double {
+    return EntityAttributes.of(this).getValue(attr)
 }
-fun <T : Number> Entity.getAttributeBase(attr: Attribute<T>) : Number {
-    return EntityAttributes.of(this).getBaseValue<T>(attr)
+
+fun Entity.getAttributeBase(attr: Attribute): Double {
+    return EntityAttributes.of(this).getBaseValue(attr)
 }
-fun <T : Number> Entity.setAttribute(attr: Attribute<T>, value: T) {
-    EntityAttributes.of(this).set<T>(attr, value)
+
+fun Entity.setAttributeBase(attr: Attribute, value: Double) {
+    EntityAttributes.of(this).setBaseValue(attr, value)
 }
-fun Entity.getAttributes() : EntityAttributes {
+
+fun Entity.getAttributes(): EntityAttributes {
     return EntityAttributes.of(this)
 }

@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.server.event.custom.entity;
 
 import com.github.darksoulq.abyssallib.world.data.attribute.Attribute;
 import com.github.darksoulq.abyssallib.world.data.attribute.AttributeModifier;
-import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -13,11 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * An event called when a new modifier is added to an entity's attribute.
  * This event is {@link Cancellable}, allowing listeners to prevent the modifier
  * from being applied or to swap the modifier for a different one.
- *
- * @param <T>
- * The numeric type of the attribute and modifier.
  */
-public class EntityAttributeModifierAddEvent<T extends Number> extends Event implements Cancellable {
+public class EntityAttributeModifierAddEvent extends Event implements Cancellable {
 
     /**
      * The handler list for this event. Required by Bukkit's event system.
@@ -32,17 +28,12 @@ public class EntityAttributeModifierAddEvent<T extends Number> extends Event imp
     /**
      * The attribute to which the modifier is being added.
      */
-    private final Attribute<T> attribute;
-
-    /**
-     * The unique identifier Key for the modifier.
-     */
-    private final Key modifierId;
+    private final Attribute attribute;
 
     /**
      * The modifier object containing the value and operation type.
      */
-    private AttributeModifier<T> modifier;
+    private AttributeModifier modifier;
 
     /**
      * The current cancellation state of this event.
@@ -56,15 +47,12 @@ public class EntityAttributeModifierAddEvent<T extends Number> extends Event imp
      * The {@link Entity} receiving the modifier.
      * @param attribute
      * The {@link Attribute} instance being modified.
-     * @param modifierId
-     * The unique {@link Key} identifying this specific modifier.
      * @param modifier
      * The {@link AttributeModifier} object to be added.
      */
-    public EntityAttributeModifierAddEvent(@NotNull Entity entity, @NotNull Attribute<T> attribute, @NotNull Key modifierId, @NotNull AttributeModifier<T> modifier) {
+    public EntityAttributeModifierAddEvent(@NotNull Entity entity, @NotNull Attribute attribute, @NotNull AttributeModifier modifier) {
         this.entity = entity;
         this.attribute = attribute;
-        this.modifierId = modifierId;
         this.modifier = modifier;
     }
 
@@ -84,18 +72,8 @@ public class EntityAttributeModifierAddEvent<T extends Number> extends Event imp
      * @return
      * The {@link Attribute} definition.
      */
-    public @NotNull Attribute<T> getAttribute() {
+    public @NotNull Attribute getAttribute() {
         return attribute;
-    }
-
-    /**
-     * Retrieves the unique identifier Key for the incoming modifier.
-     *
-     * @return
-     * The modifier's {@link Key}.
-     */
-    public @NotNull Key getModifierId() {
-        return modifierId;
     }
 
     /**
@@ -104,7 +82,7 @@ public class EntityAttributeModifierAddEvent<T extends Number> extends Event imp
      * @return
      * The {@link AttributeModifier} instance.
      */
-    public @NotNull AttributeModifier<T> getModifier() {
+    public @NotNull AttributeModifier getModifier() {
         return modifier;
     }
 
@@ -114,7 +92,7 @@ public class EntityAttributeModifierAddEvent<T extends Number> extends Event imp
      * @param modifier
      * The replacement {@link AttributeModifier} instance.
      */
-    public void setModifier(@NotNull AttributeModifier<T> modifier) {
+    public void setModifier(@NotNull AttributeModifier modifier) {
         this.modifier = modifier;
     }
 

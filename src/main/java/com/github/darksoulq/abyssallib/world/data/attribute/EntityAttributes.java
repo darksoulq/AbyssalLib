@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityAttributeChangeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityAttributeModifierAddEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.EntityAttributeModifierRemoveEvent;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -17,21 +18,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages custom attributes and modifiers for entities with persistent storage support.
- * This class provides a bridge between raw database values and functional {@link Attribute}
- * objects, allowing for complex arithmetic modifications and event-driven updates.
+ * This class acts as a bridge between the SQLite database and dynamic {@link AttributeInstance}s.
+ * Only supports attributes explicitly registered in {@link Registries#ATTRIBUTES}.
  */
 public class EntityAttributes {
-
     /** Cache of loaded attribute containers indexed by entity UUID. */
     private static final Map<UUID, EntityAttributes> CACHE = new ConcurrentHashMap<>();
-
     /** The unique identifier of the entity being managed. */
     private final UUID uuid;
+    /** Cache of active attribute instances for this entity. */
+    private final Map<Key, AttributeInstance> instances = new ConcurrentHashMap<>();
+    /** Map of raw base values loaded from the database. */
+    private final Map<String, Double> rawBaseValues = new ConcurrentHashMap<>();
 
-    /** Map of raw attribute keys to their string-serialized values. */
-    private final Map<String, String> rawValues = new ConcurrentHashMap<>();
-
-    /** The database instance used for persistent storage of entity attributes. */
     private static final Database DATABASE = new Database(
         new File(AbyssalLib.getInstance().getDataFolder(), "entity_data.db")
     );
@@ -39,8 +38,7 @@ public class EntityAttributes {
     /**
      * Initializes the global attribute database and ensures the table structure exists.
      *
-     * @throws RuntimeException
-     * If the database connection or table initialization fails.
+     * @throws RuntimeException If the database connection or table initialization fails.
      */
     public static void init() {
         try {
@@ -54,8 +52,7 @@ public class EntityAttributes {
     /**
      * Private constructor for initializing an entity's attribute container.
      *
-     * @param uuid
-     * The {@link UUID} of the target entity.
+     * @param uuid The {@link UUID} of the target entity.
      */
     private EntityAttributes(UUID uuid) {
         this.uuid = uuid;
@@ -65,10 +62,8 @@ public class EntityAttributes {
     /**
      * Retrieves the attribute container for a specific entity.
      *
-     * @param entity
-     * The {@link Entity} instance.
-     * @return
-     * The associated {@link EntityAttributes} manager.
+     * @param entity The {@link Entity} instance.
+     * @return The associated {@link EntityAttributes} manager.
      */
     public static EntityAttributes of(Entity entity) {
         return of(entity.getUniqueId());
@@ -77,199 +72,179 @@ public class EntityAttributes {
     /**
      * Retrieves the attribute container for a specific UUID.
      *
-     * @param uuid
-     * The {@link UUID} of the target entity.
-     * @return
-     * The associated {@link EntityAttributes} manager.
+     * @param uuid The {@link UUID} of the target entity.
+     * @return The associated {@link EntityAttributes} manager.
      */
     public static EntityAttributes of(UUID uuid) {
         return CACHE.computeIfAbsent(uuid, EntityAttributes::new);
     }
 
+    private void validate(Attribute attr) {
+        if (Registries.ATTRIBUTES.get(attr.key().asString()) == null) {
+            throw new IllegalArgumentException("Cannot interact with unregistered attribute: " + attr.key().asString());
+        }
+    }
+
+    /**
+     * Retrieves or creates the active instance for a given registered attribute.
+     *
+     * @param attr The {@link Attribute} definition.
+     * @return The {@link AttributeInstance}.
+     * @throws IllegalArgumentException If the attribute is not registered.
+     */
+    public AttributeInstance getInstance(Attribute attr) {
+        validate(attr);
+        return instances.computeIfAbsent(attr.key(), k -> {
+            double base = rawBaseValues.getOrDefault(attr.key().asString(), attr.defaultValue());
+            return new AttributeInstance(attr, base);
+        });
+    }
+
     /**
      * Sets the base value of an attribute, triggering a change event and updating the database.
      *
-     * @param <T>
-     * The numeric type of the attribute.
-     * @param attr
-     * The {@link Attribute} definition to update.
-     * @param value
-     * The new base value to assign.
+     * @param attr  The {@link Attribute} definition to update.
+     * @param value The new base value to assign.
+     * @throws IllegalArgumentException If the attribute is not registered.
      */
-    public <T extends Number> void set(Attribute<T> attr, T value) {
+    public void setBaseValue(Attribute attr, double value) {
+        validate(attr);
         Entity entity = Bukkit.getEntity(uuid);
         if (entity != null) {
-            T oldBase = getBaseValue(attr);
-            EntityAttributeChangeEvent<T> event = EventBus.post(new EntityAttributeChangeEvent<>(entity, attr, oldBase, value));
+            double oldBase = getBaseValue(attr);
+            EntityAttributeChangeEvent event = EventBus.post(new EntityAttributeChangeEvent(entity, attr, oldBase, value));
             if (event.isCancelled()) {
                 return;
             }
             value = event.getNewValue();
         }
 
-        rawValues.put(attr.key(), value.toString());
-        save(attr.key(), value.toString());
+        getInstance(attr).setBaseValue(value);
+        rawBaseValues.put(attr.key().asString(), value);
+        save(attr.key().asString(), String.valueOf(value));
     }
 
     /**
      * Adds a modifier to an attribute, allowing for event-driven logic to override the application.
      *
-     * @param <T>
-     * The numeric type of the attribute and modifier.
-     * @param attr
-     * The {@link Attribute} instance to modify.
-     * @param id
-     * The unique {@link Key} identifying this specific modifier.
-     * @param modifier
-     * The value of the modifier.
-     * @param operation
-     * The {@link AttributeOperation} determining how the modifier is applied.
+     * @param attr     The {@link Attribute} instance to modify.
+     * @param modifier The {@link AttributeModifier} determining how the value interacts with the base.
+     * @throws IllegalArgumentException If the attribute is not registered.
      */
-    public <T extends Number> void addModifier(Attribute<T> attr, Key id, T modifier, AttributeOperation operation) {
+    public void addModifier(Attribute attr, AttributeModifier modifier) {
+        validate(attr);
         Entity entity = Bukkit.getEntity(uuid);
-        AttributeModifier<T> modObj = new AttributeModifier<>(modifier, operation);
+        AttributeModifier modObj = modifier;
+
         if (entity != null) {
-            EntityAttributeModifierAddEvent<T> event = EventBus.post(new EntityAttributeModifierAddEvent<>(entity, attr, id, modObj));
+            EntityAttributeModifierAddEvent event = EventBus.post(new EntityAttributeModifierAddEvent(entity, attr, modObj));
             if (event.isCancelled()) {
                 return;
             }
             modObj = event.getModifier();
         }
-        attr.addModifier(id, modObj.getValue(), modObj.getOperation());
+
+        getInstance(attr).addModifier(modObj);
     }
 
     /**
      * Removes a specific modifier from an attribute based on its unique Key.
      *
-     * @param <T>
-     * The numeric type of the attribute.
-     * @param attr
-     * The {@link Attribute} instance to update.
-     * @param id
-     * The unique {@link Key} of the modifier to remove.
+     * @param attr The {@link Attribute} instance to update.
+     * @param id   The unique {@link Key} of the modifier to remove.
+     * @throws IllegalArgumentException If the attribute is not registered.
      */
-    public <T extends Number> void removeModifier(Attribute<T> attr, Key id) {
-        Entity entity = Bukkit.getEntity(uuid);
-        AttributeModifier<T> existing = attr.getModifiers().get(id);
+    public void removeModifier(Attribute attr, Key id) {
+        validate(attr);
+        AttributeInstance instance = getInstance(attr);
+        AttributeModifier existing = instance.getModifier(id);
+
         if (existing == null) {
             return;
         }
 
+        Entity entity = Bukkit.getEntity(uuid);
         if (entity != null) {
-            EntityAttributeModifierRemoveEvent<T> event = EventBus.post(new EntityAttributeModifierRemoveEvent<>(entity, attr, id, existing));
+            EntityAttributeModifierRemoveEvent event = EventBus.post(new EntityAttributeModifierRemoveEvent(entity, attr, existing));
             if (event.isCancelled()) {
                 return;
             }
         }
-        attr.removeModifier(id);
+
+        instance.removeModifier(id);
     }
 
     /**
      * Checks if a specific attribute has been defined or loaded for this entity.
      *
-     * @param attr
-     * The {@link Attribute} to check for.
-     * @return
-     * True if the attribute key exists in the local data map.
+     * @param attr The {@link Attribute} to check for.
+     * @return True if the attribute exists in the local data map or has an active instance.
+     * @throws IllegalArgumentException If the attribute is not registered.
      */
-    public boolean has(Attribute<?> attr) {
-        return rawValues.containsKey(attr.key());
+    public boolean has(Attribute attr) {
+        validate(attr);
+        return rawBaseValues.containsKey(attr.key().asString()) || instances.containsKey(attr.key());
     }
 
     /**
      * Retrieves the raw base value of an attribute without applying any modifiers.
      *
-     * @param <T>
-     * The numeric type of the attribute.
-     * @param attr
-     * The {@link Attribute} to retrieve.
-     * @return
-     * The deserialized base value, or null if not found.
+     * @param attr The {@link Attribute} to retrieve.
+     * @return The deserialized base value.
+     * @throws IllegalArgumentException If the attribute is not registered.
      */
-    public <T extends Number> T getBaseValue(Attribute<T> attr) {
-        String raw = rawValues.get(attr.key());
-        if (raw == null) {
-            return null;
-        }
-        return deserialize(raw, attr.type());
+    public double getBaseValue(Attribute attr) {
+        return getInstance(attr).getBaseValue();
     }
 
     /**
      * Retrieves the final calculated value of an attribute after applying all modifiers.
      *
-     * @param <T>
-     * The numeric type of the attribute.
-     * @param attr
-     * The {@link Attribute} to retrieve.
-     * @return
-     * The final calculated value, or null if the base value is missing.
+     * @param attr The {@link Attribute} to retrieve.
+     * @return The final calculated value.
+     * @throws IllegalArgumentException If the attribute is not registered.
      */
-    public <T extends Number> T get(Attribute<T> attr) {
-        String raw = rawValues.get(attr.key());
-        if (raw == null) {
-            return null;
-        }
-        T base = deserialize(raw, attr.type());
-        return attr.applyModifiers(base);
+    public double getValue(Attribute attr) {
+        return getInstance(attr).getValue();
     }
 
     /**
      * Retrieves a map containing all raw attribute keys and values for this entity.
      *
-     * @return
-     * A {@link Map} of string-serialized attribute data.
+     * @return A {@link Map} of string-serialized attribute data.
      */
     public Map<String, String> getAllAttributes() {
-        return rawValues;
-    }
-
-    /**
-     * Internal logic for deserializing raw database strings into numeric types.
-     *
-     * @param <T>
-     * The target type.
-     * @param value
-     * The raw string value.
-     * @param type
-     * The target class type.
-     * @return
-     * The deserialized object, or null if parsing fails.
-     */
-    @SuppressWarnings("unchecked")
-    private <T> T deserialize(String value, Class<T> type) {
-        try {
-            if (type == Integer.class) {
-                return (T) Integer.valueOf(value);
-            }
-            if (type == Double.class) {
-                return (T) Double.valueOf(value);
-            }
-            if (type == Float.class) {
-                return (T) Float.valueOf(value);
-            }
-            if (type == Long.class) {
-                return (T) Long.valueOf(value);
-            }
-        } catch (Exception e) {
-            return null;
-        }
-        return null;
+        Map<String, String> result = new ConcurrentHashMap<>();
+        rawBaseValues.forEach((k, v) -> result.put(k, String.valueOf(v)));
+        return result;
     }
 
     /**
      * Asynchronously loads all attribute data for this entity from the database.
+     * Only loads data for attributes currently present in the registry.
      */
     public void load() {
         DATABASE.executor().table("entity_data")
             .where("uuid = ?", uuid.toString())
             .selectAsync(rs -> Map.entry(rs.getString("key"), rs.getString("value")))
             .thenAccept(rows -> {
-                Map<String, String> temp = new ConcurrentHashMap<>();
+                Map<String, Double> temp = new ConcurrentHashMap<>();
                 for (var entry : rows) {
-                    temp.put(entry.getKey(), entry.getValue());
+                    if (Registries.ATTRIBUTES.get(entry.getKey()) != null) {
+                        try {
+                            temp.put(entry.getKey(), Double.parseDouble(entry.getValue()));
+                        } catch (NumberFormatException ignored) {}
+                    }
                 }
-                rawValues.clear();
-                rawValues.putAll(temp);
+                rawBaseValues.clear();
+                rawBaseValues.putAll(temp);
+
+                for (Map.Entry<Key, AttributeInstance> entry : instances.entrySet()) {
+                    Double dbBase = rawBaseValues.get(entry.getKey().asString());
+                    if (dbBase != null) {
+                        entry.getValue().setBaseValue(dbBase);
+                    }
+                }
             })
             .exceptionally(ex -> {
                 AbyssalLib.getInstance().getLogger().severe("Failed to load attributes for " + uuid + ": " + ex.getMessage());
@@ -277,14 +252,6 @@ public class EntityAttributes {
             });
     }
 
-    /**
-     * Asynchronously saves an attribute's raw value to the database.
-     *
-     * @param key
-     * The attribute key string.
-     * @param value
-     * The string-serialized value.
-     */
     private void save(String key, String value) {
         DATABASE.executor().table("entity_data").replace()
             .value("uuid", uuid.toString())

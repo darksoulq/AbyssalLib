@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.server.event.custom.entity;
 
 import com.github.darksoulq.abyssallib.world.data.attribute.Attribute;
 import com.github.darksoulq.abyssallib.world.data.attribute.AttributeModifier;
-import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -13,11 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * An event called when an existing modifier is being removed from an entity's attribute.
  * This event is {@link Cancellable}, allowing listeners to prevent the removal of
  * the modifier.
- *
- * @param <T>
- * The numeric type of the attribute and the modifier being removed.
  */
-public class EntityAttributeModifierRemoveEvent<T extends Number> extends Event implements Cancellable {
+public class EntityAttributeModifierRemoveEvent extends Event implements Cancellable {
 
     /**
      * The handler list for this event. Required by Bukkit's event system.
@@ -32,17 +28,12 @@ public class EntityAttributeModifierRemoveEvent<T extends Number> extends Event 
     /**
      * The attribute that the modifier is currently attached to.
      */
-    private final Attribute<T> attribute;
-
-    /**
-     * The unique identifier Key for the modifier being removed.
-     */
-    private final Key modifierId;
+    private final Attribute attribute;
 
     /**
      * The specific modifier object that is slated for removal.
      */
-    private final AttributeModifier<T> modifier;
+    private final AttributeModifier modifier;
 
     /**
      * The current cancellation state of this event.
@@ -56,15 +47,12 @@ public class EntityAttributeModifierRemoveEvent<T extends Number> extends Event 
      * The {@link Entity} losing the modifier.
      * @param attribute
      * The {@link Attribute} instance being updated.
-     * @param modifierId
-     * The unique {@link Key} identifying the modifier to remove.
      * @param modifier
      * The {@link AttributeModifier} instance that was found and is being removed.
      */
-    public EntityAttributeModifierRemoveEvent(@NotNull Entity entity, @NotNull Attribute<T> attribute, @NotNull Key modifierId, @NotNull AttributeModifier<T> modifier) {
+    public EntityAttributeModifierRemoveEvent(@NotNull Entity entity, @NotNull Attribute attribute, @NotNull AttributeModifier modifier) {
         this.entity = entity;
         this.attribute = attribute;
-        this.modifierId = modifierId;
         this.modifier = modifier;
     }
 
@@ -84,18 +72,8 @@ public class EntityAttributeModifierRemoveEvent<T extends Number> extends Event 
      * @return
      * The {@link Attribute} definition.
      */
-    public @NotNull Attribute<T> getAttribute() {
+    public @NotNull Attribute getAttribute() {
         return attribute;
-    }
-
-    /**
-     * Retrieves the unique identifier Key for the modifier being removed.
-     *
-     * @return
-     * The modifier's unique {@link Key}.
-     */
-    public @NotNull Key getModifierId() {
-        return modifierId;
     }
 
     /**
@@ -104,7 +82,7 @@ public class EntityAttributeModifierRemoveEvent<T extends Number> extends Event 
      * @return
      * The {@link AttributeModifier} instance.
      */
-    public @NotNull AttributeModifier<T> getModifier() {
+    public @NotNull AttributeModifier getModifier() {
         return modifier;
     }
 

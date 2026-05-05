@@ -11,11 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * An event called when an entity's base attribute value is changed.
  * This event is {@link Cancellable}, allowing listeners to prevent the change
  * or modify the new value before it is persisted to the database.
- *
- * @param <T>
- * The numeric type of the attribute being modified.
  */
-public class EntityAttributeChangeEvent<T extends Number> extends Event implements Cancellable {
+public class EntityAttributeChangeEvent extends Event implements Cancellable {
 
     /**
      * The handler list for this event. Required by Bukkit's event system.
@@ -30,17 +27,17 @@ public class EntityAttributeChangeEvent<T extends Number> extends Event implemen
     /**
      * The attribute definition involved in this change.
      */
-    private final Attribute<T> attribute;
+    private final Attribute attribute;
 
     /**
      * The original base value before the change.
      */
-    private final T oldValue;
+    private final double oldValue;
 
     /**
      * The new base value to be applied.
      */
-    private T newValue;
+    private double newValue;
 
     /**
      * The current cancellation state of this event.
@@ -59,7 +56,7 @@ public class EntityAttributeChangeEvent<T extends Number> extends Event implemen
      * @param newValue
      * The proposed new base value.
      */
-    public EntityAttributeChangeEvent(@NotNull Entity entity, @NotNull Attribute<T> attribute, T oldValue, T newValue) {
+    public EntityAttributeChangeEvent(@NotNull Entity entity, @NotNull Attribute attribute, double oldValue, double newValue) {
         this.entity = entity;
         this.attribute = attribute;
         this.oldValue = oldValue;
@@ -82,7 +79,7 @@ public class EntityAttributeChangeEvent<T extends Number> extends Event implemen
      * @return
      * The {@link Attribute} definition.
      */
-    public @NotNull Attribute<T> getAttribute() {
+    public @NotNull Attribute getAttribute() {
         return attribute;
     }
 
@@ -90,9 +87,9 @@ public class EntityAttributeChangeEvent<T extends Number> extends Event implemen
      * Retrieves the value of the attribute prior to this change event.
      *
      * @return
-     * The old base value of type {@code T}.
+     * The old base value.
      */
-    public T getOldValue() {
+    public double getOldValue() {
         return oldValue;
     }
 
@@ -100,9 +97,9 @@ public class EntityAttributeChangeEvent<T extends Number> extends Event implemen
      * Retrieves the proposed new value for the attribute.
      *
      * @return
-     * The proposed new base value of type {@code T}.
+     * The proposed new base value.
      */
-    public T getNewValue() {
+    public double getNewValue() {
         return newValue;
     }
 
@@ -112,7 +109,7 @@ public class EntityAttributeChangeEvent<T extends Number> extends Event implemen
      * @param newValue
      * The new base value to apply to the entity.
      */
-    public void setNewValue(T newValue) {
+    public void setNewValue(double newValue) {
         this.newValue = newValue;
     }
 

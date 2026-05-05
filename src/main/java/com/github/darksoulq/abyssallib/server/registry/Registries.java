@@ -11,6 +11,7 @@ import com.github.darksoulq.abyssallib.world.advancement.criterion.CriterionType
 import com.github.darksoulq.abyssallib.world.advancement.reward.RewardType;
 import com.github.darksoulq.abyssallib.world.block.BlockPredicate;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.data.attribute.Attribute;
 import com.github.darksoulq.abyssallib.world.data.loot.LootConditionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
@@ -42,6 +43,7 @@ public class Registries {
     public static final Registry<EnergyNodeType<?>> ENERGY_NODE_TYPES = new Registry<>();
 
     public static final Registry<DataComponentType<?>> DATA_COMPONENT_TYPES = new Registry<>();
+    public static final Registry<Attribute> ATTRIBUTES = new Registry<>();
     public static final Registry<StatisticType> STATISTIC_TYPES = new Registry<>();
     public static final Registry<StatisticFormatter> STATISTIC_FORMATTERS = new Registry<>();
 

@@ -253,31 +253,28 @@ public class Placeholders {
 
             String attrId = context.getRaw(0, "");
             String type = context.getRaw(1, "value").toLowerCase(Locale.ROOT);
-            EntityAttributes attributes = EntityAttributes.of(player);
 
-            com.github.darksoulq.abyssallib.world.data.attribute.Attribute<Double> dummy =
-                new com.github.darksoulq.abyssallib.world.data.attribute.Attribute<>(attrId, Double.class, 0.0);
-            
-            if (!attributes.has(dummy)) return PlaceholderResult.empty();
+            com.github.darksoulq.abyssallib.world.data.attribute.Attribute attribute =
+                com.github.darksoulq.abyssallib.server.registry.Registries.ATTRIBUTES.get(attrId);
+
+            if (attribute == null) return PlaceholderResult.empty();
+
+            EntityAttributes attributes = EntityAttributes.of(player);
+            if (!attributes.has(attribute)) return PlaceholderResult.empty();
 
             return switch (type) {
-                case "base" -> {
-                    Double base = attributes.getBaseValue(dummy);
-                    yield base != null ? PlaceholderResult.success(base) : PlaceholderResult.empty();
-                }
+                case "base" -> PlaceholderResult.success(attributes.getBaseValue(attribute));
                 case "modifier" -> {
                     String modKeyStr = context.getRaw(2, "");
                     if (modKeyStr.isEmpty()) yield PlaceholderResult.empty();
+
                     Key modKey = Key.key(modKeyStr);
-                    
-                    Map<Key, AttributeModifier<Double>> modifiers = dummy.getModifiers();
-                    AttributeModifier<Double> mod = modifiers.get(modKey);
-                    yield mod != null ? PlaceholderResult.success(mod.getValue()) : PlaceholderResult.empty();
+                    com.github.darksoulq.abyssallib.world.data.attribute.AttributeInstance instance = attributes.getInstance(attribute);
+                    com.github.darksoulq.abyssallib.world.data.attribute.AttributeModifier mod = instance.getModifier(modKey);
+
+                    yield mod != null ? PlaceholderResult.success(mod.getAmount()) : PlaceholderResult.empty();
                 }
-                default -> {
-                    Double val = attributes.get(dummy);
-                    yield val != null ? PlaceholderResult.success(val) : PlaceholderResult.empty();
-                }
+                default -> PlaceholderResult.success(attributes.getValue(attribute));
             };
         }
     });

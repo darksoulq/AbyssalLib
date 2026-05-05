@@ -321,13 +321,25 @@ public class Advancement {
 
         /** @param id The advancement unique key. */
         public Builder(Key id) { this.id = id; }
-        /** @param parent The parent key. @return builder. */
+        /**
+         * @param parent The parent key.
+         * @return builder.
+         **/
         public Builder parent(Key parent) { this.parent = parent; return this; }
-        /** @param display Visual info. @return builder. */
+        /**
+         * @param display Visual info.
+         * @return builder.
+         **/
         public Builder display(AdvancementDisplay display) { this.display = display; return this; }
-        /** @param name Criterion name. @param criterion Logic. @return builder. */
+        /**
+         * @param name Criterion name. @param criterion Logic.
+         * @return builder.
+         **/
         public Builder criterion(String name, AdvancementCriterion criterion) { this.criteria.put(name, criterion); return this; }
-        /** @param reward Award to grant. @return builder. */
+        /**
+         * @param reward Award to grant.
+         * @return builder.
+         **/
         public Builder reward(AdvancementReward reward) { this.rewards.add(reward); return this; }
         /** @return New Advancement. */
         public Advancement build() { return new Advancement(id, parent, display, criteria, rewards); }

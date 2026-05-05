@@ -38,7 +38,7 @@ public class AdvancementEvents {
     }
 
     @SubscribeEvent
-    public void onEntityAttributeChange(EntityAttributeChangeEvent<?> event) {
+    public void onEntityAttributeChange(EntityAttributeChangeEvent event) {
         if (event.getEntity() instanceof Player player) {
             checkAdvancements(player, event);
         }
