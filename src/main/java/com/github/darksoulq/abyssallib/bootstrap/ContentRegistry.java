@@ -29,7 +29,6 @@ import com.github.darksoulq.abyssallib.world.structure.processor.StructureProces
 public final class ContentRegistry {
 
     public static void init() {
-        ComponentMap.initializeVanillaMap();
         Components.DATA_COMPONENTS_VANILLA.apply();
         Components.DATA_COMPONENTS.apply();
         ItemPredicateLoader.loadPredicates();

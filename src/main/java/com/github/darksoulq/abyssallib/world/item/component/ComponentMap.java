@@ -75,74 +75,6 @@ public class ComponentMap {
         load();
     }
 
-    public static void initializeVanillaMap() {
-        if (!VANILLA_MAP.isEmpty()) return;
-
-        VANILLA_MAP.put(DataComponentTypes.ATTRIBUTE_MODIFIERS, Components.ATTRIBUTE_MODIFIERS);
-        VANILLA_MAP.put(DataComponentTypes.BANNER_PATTERNS, Components.BANNER_PATTERNS);
-        VANILLA_MAP.put(DataComponentTypes.BASE_COLOR, Components.BASE_COLOR);
-        VANILLA_MAP.put(DataComponentTypes.BLOCKS_ATTACKS, Components.BLOCKS_ATTACKS);
-        VANILLA_MAP.put(DataComponentTypes.BLOCK_DATA, Components.BLOCK_DATA);
-        VANILLA_MAP.put(DataComponentTypes.BREAK_SOUND, Components.BREAK_SOUND);
-        VANILLA_MAP.put(DataComponentTypes.BUNDLE_CONTENTS, Components.BUNDLE_CONTENTS);
-        VANILLA_MAP.put(DataComponentTypes.CAN_BREAK, Components.CAN_BREAK);
-        VANILLA_MAP.put(DataComponentTypes.CAN_PLACE_ON, Components.CAN_PLACE_ON);
-        VANILLA_MAP.put(DataComponentTypes.CHARGED_PROJECTILES, Components.CHARGED_PROJECTILES);
-        VANILLA_MAP.put(DataComponentTypes.CONSUMABLE, Components.CONSUMABLE);
-        VANILLA_MAP.put(DataComponentTypes.CONTAINER_LOOT, Components.CONTAINER_LOOT);
-        VANILLA_MAP.put(DataComponentTypes.USE_COOLDOWN, Components.USE_COOLDOWN);
-        VANILLA_MAP.put(DataComponentTypes.CUSTOM_NAME, Components.CUSTOM_NAME);
-        VANILLA_MAP.put(DataComponentTypes.DEATH_PROTECTION, Components.DEATH_PROTECTION);
-        VANILLA_MAP.put(DataComponentTypes.TOOLTIP_DISPLAY, Components.TOOLTIP_DISPLAY);
-        VANILLA_MAP.put(DataComponentTypes.DAMAGE, Components.DAMAGE);
-        VANILLA_MAP.put(DataComponentTypes.DYED_COLOR, Components.DYED_COLOR);
-        VANILLA_MAP.put(DataComponentTypes.ENCHANTABLE, Components.ENCHANTABLE);
-        VANILLA_MAP.put(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, Components.ENCHANTMENT_GLINT_OVERRIDE);
-        VANILLA_MAP.put(DataComponentTypes.ENCHANTMENTS, Components.ENCHANTMENTS);
-        VANILLA_MAP.put(DataComponentTypes.EQUIPPABLE, Components.EQUIPPABLE);
-        VANILLA_MAP.put(DataComponentTypes.FIREWORKS, Components.FIREWORKS);
-        VANILLA_MAP.put(DataComponentTypes.FIREWORK_EXPLOSION, Components.FIREWORK_EXPLOSION);
-        VANILLA_MAP.put(DataComponentTypes.FOOD, Components.FOOD);
-        VANILLA_MAP.put(DataComponentTypes.GLIDER, Components.GLIDER);
-        VANILLA_MAP.put(DataComponentTypes.INSTRUMENT, Components.INSTRUMENT);
-        VANILLA_MAP.put(DataComponentTypes.INTANGIBLE_PROJECTILE, Components.INTANGIBLE_PROJECTILE);
-        VANILLA_MAP.put(DataComponentTypes.ITEM_MODEL, Components.ITEM_MODEL);
-        VANILLA_MAP.put(DataComponentTypes.ITEM_NAME, Components.ITEM_NAME);
-        VANILLA_MAP.put(DataComponentTypes.LORE, Components.LORE);
-        VANILLA_MAP.put(DataComponentTypes.MAP_COLOR, Components.MAP_COLOR);
-        VANILLA_MAP.put(DataComponentTypes.MAP_DECORATIONS, Components.MAP_DECORATIONS);
-        VANILLA_MAP.put(DataComponentTypes.MAP_ID, Components.MAP_ID);
-        VANILLA_MAP.put(DataComponentTypes.MAP_POST_PROCESSING, Components.MAP_POST_PROCESSING);
-        VANILLA_MAP.put(DataComponentTypes.MAX_DAMAGE, Components.MAX_DAMAGE);
-        VANILLA_MAP.put(DataComponentTypes.MAX_STACK_SIZE, Components.MAX_STACK_SIZE);
-        VANILLA_MAP.put(DataComponentTypes.CUSTOM_MODEL_DATA, Components.CUSTOM_MODEL_DATA);
-        VANILLA_MAP.put(DataComponentTypes.NOTE_BLOCK_SOUND, Components.NOTE_BLOCK_SOUND);
-        VANILLA_MAP.put(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER, Components.OMINOUS_BOTTLE_AMPLIFIER);
-        VANILLA_MAP.put(DataComponentTypes.JUKEBOX_PLAYABLE, Components.JUKEBOX_PLAYABLE);
-        VANILLA_MAP.put(DataComponentTypes.POT_DECORATIONS, Components.POT_DECORATIONS);
-        VANILLA_MAP.put(DataComponentTypes.POTION_CONTENTS, Components.POTION_CONTENTS);
-        VANILLA_MAP.put(DataComponentTypes.POTION_DURATION_SCALE, Components.POTION_DURATION_SCALE);
-        VANILLA_MAP.put(DataComponentTypes.PROFILE, Components.PROFILE);
-        VANILLA_MAP.put(DataComponentTypes.RECIPES, Components.RECIPES);
-        VANILLA_MAP.put(DataComponentTypes.USE_REMAINDER, Components.USE_REMAINDER);
-        VANILLA_MAP.put(DataComponentTypes.REPAIRABLE, Components.REPAIRABLE);
-        VANILLA_MAP.put(DataComponentTypes.REPAIR_COST, Components.REPAIR_COST);
-        VANILLA_MAP.put(DataComponentTypes.DAMAGE_RESISTANT, Components.DAMAGE_RESISTAMT);
-        VANILLA_MAP.put(DataComponentTypes.STORED_ENCHANTMENTS, Components.STORED_ENCHANTMENTS);
-        VANILLA_MAP.put(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS, Components.SUSPICIOUS_STEW_EFFECTS);
-        VANILLA_MAP.put(DataComponentTypes.TOOL, Components.TOOL);
-        VANILLA_MAP.put(DataComponentTypes.TOOLTIP_STYLE, Components.TOOLTIP_STYLE);
-        VANILLA_MAP.put(DataComponentTypes.LODESTONE_TRACKER, Components.LODESTONE_TRACKER);
-        VANILLA_MAP.put(DataComponentTypes.TRIM, Components.TRIM);
-        VANILLA_MAP.put(DataComponentTypes.UNBREAKABLE, Components.UNBREAKABLE);
-        VANILLA_MAP.put(DataComponentTypes.WEAPON, Components.WEAPON);
-        VANILLA_MAP.put(DataComponentTypes.WRITABLE_BOOK_CONTENT, Components.WRITABLE_BOOK_CONTENT);
-        VANILLA_MAP.put(DataComponentTypes.WRITTEN_BOOK_CONTENT, Components.WRITTEN_BOOK_CONTENT);
-    }
-
-    /**
-     * Triggers the component discovery process for the associated item or entity.
-     */
     public void load() {
         if (this.item != null) loadItem();
         if (this.entity != null) loadEntity();
@@ -163,15 +95,10 @@ public class ComponentMap {
             if (type.key().asString().equals("minecraft:custom_data")) continue;
             if (!item.getStack().hasData(type)) continue;
 
-            DataComponentType<?> custom = VANILLA_MAP.get(type);
-
+            DataComponentType<?> custom = Registries.DATA_COMPONENT_TYPES.get(type.key().asString());
             if (custom == null) {
-                custom = Registries.DATA_COMPONENT_TYPES.get(type.key().asString());
-                if (custom == null) {
-                    custom = Registries.DATA_COMPONENT_TYPES.get(type.key().value());
-                }
+                custom = Registries.DATA_COMPONENT_TYPES.get(type.key().value());
             }
-
             if (custom == null) continue;
 
             if (type instanceof io.papermc.paper.datacomponent.DataComponentType.Valued<?> vl) {
