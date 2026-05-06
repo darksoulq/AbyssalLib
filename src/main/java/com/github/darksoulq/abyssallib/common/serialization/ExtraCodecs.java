@@ -272,14 +272,6 @@ public class ExtraCodecs {
             }
     );
 
-    public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codecs.FLOAT.xmap(
-            ConsumeEffect::teleportRandomlyEffect,
-            ConsumeEffect.TeleportRandomly::diameter
-    );
-    public static Codec<ConsumeEffect.PlaySound> CONSUME_PLAY_SOUND = Codecs.KEY.xmap(
-            ConsumeEffect::playSoundConsumeEffect,
-            ConsumeEffect.PlaySound::sound
-    );
     public static Codec<PotionEffectType> POTION_EFFECT_TYPE = Codecs.KEY.xmap(
             RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)::getOrThrow,
             RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)::getKeyOrThrow
@@ -288,10 +280,7 @@ public class ExtraCodecs {
             k -> RegistrySet.keySetFromValues(RegistryKey.MOB_EFFECT, k),
             s -> s.resolve(Registry.POTION_EFFECT_TYPE).stream().toList()
     );
-    public static Codec<ConsumeEffect.RemoveStatusEffects> CONSUME_REMOVE_STATUS_EFFECTS = POTION_EFFECT_TYPES.xmap(
-            ConsumeEffect::removeEffects,
-            ConsumeEffect.RemoveStatusEffects::removeEffects
-    );
+
     public static Codec<PotionEffect> POTION_EFFECT = RecordCodecBuilder.create(
             Codecs.INT.fieldOf("amplifier", PotionEffect::getAmplifier),
             Codecs.INT.fieldOf("duration", PotionEffect::getDuration),
@@ -302,17 +291,86 @@ public class ExtraCodecs {
             (amplifier, duration, type, ambient, particles, icon) ->
                     new PotionEffect(type, duration, amplifier, ambient, particles, icon)
     );
-    public static Codec<ConsumeEffect.ApplyStatusEffects> CONSUME_APPLY_STATUS_EFFECTS = RecordCodecBuilder.create(
-            POTION_EFFECT.list().fieldOf("effects", ConsumeEffect.ApplyStatusEffects::effects),
-            Codecs.FLOAT.fieldOf("probability", ConsumeEffect.ApplyStatusEffects::probability),
-            ConsumeEffect::applyStatusEffects
+    public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codecs.DOUBLE.xmap(
+        d -> ConsumeEffect.teleportRandomlyEffect(d.floatValue()),
+        e -> (double) e.diameter()
     );
-    public static Codec<ConsumeEffect.ClearAllStatusEffects> CONSUME_CLEAR_ALL_EFFECTS = Codec.of(o -> ConsumeEffect.clearAllStatusEffects(), null);
-    public static Codec<ConsumeEffect> CONSUME_EFFECT = Codec.fallback(
-            CONSUME_APPLY_STATUS_EFFECTS,
-            Codec.fallback(CONSUME_PLAY_SOUND, Codec.fallback(CONSUME_TELEPORT_RANDOMLY,
-                    Codec.fallback(CONSUME_REMOVE_STATUS_EFFECTS, CONSUME_CLEAR_ALL_EFFECTS)))
+
+    public static final Codec<ConsumeEffect.PlaySound> CONSUME_PLAY_SOUND = Codecs.KEY.xmap(
+        ConsumeEffect::playSoundConsumeEffect,
+        ConsumeEffect.PlaySound::sound
     );
+
+    public static final Codec<ConsumeEffect.RemoveStatusEffects> CONSUME_REMOVE_STATUS_EFFECTS = POTION_EFFECT_TYPES.xmap(
+        ConsumeEffect::removeEffects,
+        ConsumeEffect.RemoveStatusEffects::removeEffects
+    );
+
+    public static final Codec<ConsumeEffect.ApplyStatusEffects> CONSUME_APPLY_STATUS_EFFECTS = RecordCodecBuilder.create(
+        POTION_EFFECT.list().fieldOf("effects", ConsumeEffect.ApplyStatusEffects::effects),
+        Codecs.DOUBLE.xmap(Double::floatValue, Float::doubleValue).fieldOf("probability", ConsumeEffect.ApplyStatusEffects::probability),
+        ConsumeEffect::applyStatusEffects
+    );
+
+    public static final Codec<ConsumeEffect> CONSUME_EFFECT = new Codec<>() {
+        @Override
+        public <D> ConsumeEffect decode(DynamicOps<D> ops, D input) throws CodecException {
+            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for ConsumeEffect"));
+            D typeNode = map.get(ops.createString("type"));
+            if (typeNode == null) throw new CodecException("Missing type for ConsumeEffect");
+            String type = Codecs.STRING.decode(ops, typeNode).replace("minecraft:", "");
+
+            return switch (type) {
+                case "apply_effects" -> CONSUME_APPLY_STATUS_EFFECTS.decode(ops, input);
+                case "remove_effects" -> {
+                    D node = map.get(ops.createString("effects"));
+                    if (node == null) throw new CodecException("Missing 'effects'");
+                    yield CONSUME_REMOVE_STATUS_EFFECTS.decode(ops, node);
+                }
+                case "clear_all_effects" -> ConsumeEffect.clearAllStatusEffects();
+                case "teleport_randomly" -> {
+                    D node = map.get(ops.createString("diameter"));
+                    if (node == null) throw new CodecException("Missing 'diameter'");
+                    yield CONSUME_TELEPORT_RANDOMLY.decode(ops, node);
+                }
+                case "play_sound" -> {
+                    D node = map.get(ops.createString("sound"));
+                    if (node == null) throw new CodecException("Missing 'sound'");
+                    yield CONSUME_PLAY_SOUND.decode(ops, node);
+                }
+                default -> throw new CodecException("Unknown consume effect type: " + type);
+            };
+        }
+
+        @Override
+        public <D> D encode(DynamicOps<D> ops, ConsumeEffect value) throws CodecException {
+            Map<D, D> map = new HashMap<>();
+
+            switch (value) {
+                case ConsumeEffect.ApplyStatusEffects ase -> {
+                    ops.getMap(CONSUME_APPLY_STATUS_EFFECTS.encode(ops, ase)).ifPresent(map::putAll);
+                    map.put(ops.createString("type"), ops.createString("minecraft:apply_effects"));
+                }
+                case ConsumeEffect.RemoveStatusEffects rse -> {
+                    map.put(ops.createString("effects"), CONSUME_REMOVE_STATUS_EFFECTS.encode(ops, rse));
+                    map.put(ops.createString("type"), ops.createString("minecraft:remove_effects"));
+                }
+                case ConsumeEffect.ClearAllStatusEffects clearAllStatusEffects ->
+                    map.put(ops.createString("type"), ops.createString("minecraft:clear_all_effects"));
+                case ConsumeEffect.TeleportRandomly tr -> {
+                    map.put(ops.createString("diameter"), CONSUME_TELEPORT_RANDOMLY.encode(ops, tr));
+                    map.put(ops.createString("type"), ops.createString("minecraft:teleport_randomly"));
+                }
+                case ConsumeEffect.PlaySound ps -> {
+                    map.put(ops.createString("sound"), CONSUME_PLAY_SOUND.encode(ops, ps));
+                    map.put(ops.createString("type"), ops.createString("minecraft:play_sound"));
+                }
+                default -> throw new CodecException("Unknown consume effect type: " + value.getClass().getName());
+            }
+
+            return ops.createMap(map);
+        }
+    };
 
     public static Codec<SuspiciousEffectEntry> SUSPICIOUS_EFFECT_ENTRY = RecordCodecBuilder.create(
             POTION_EFFECT_TYPE.fieldOf("effect_type", SuspiciousEffectEntry::effect),
