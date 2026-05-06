@@ -23,7 +23,7 @@ public class CustomData extends DataComponent<CompoundTag> implements Vanilla {
         @Override
         public <D> D encode(DynamicOps<D> ops, CustomData component) throws CodecException {
             CompoundTag tag = component.getValue().copy();
-            tag.remove("CustomComponents");
+            tag.remove("CustomData");
             return ExtraCodecs.COMPOUND_TAG.encode(ops, tag);
         }
     };
@@ -45,13 +45,13 @@ public class CustomData extends DataComponent<CompoundTag> implements Vanilla {
         net.minecraft.world.item.component.CustomData existingData = nms.get(DataComponents.CUSTOM_DATA);
 
         CompoundTag newTag = value.copy();
-        newTag.remove("CustomComponents");
+        newTag.remove("CustomData");
 
         if (existingData != null) {
             CompoundTag existingTag = existingData.copyTag();
-            Tag customComponents = existingTag.get("CustomComponents");
+            Tag customComponents = existingTag.get("CustomData");
             if (customComponents != null) {
-                newTag.put("CustomComponents", customComponents);
+                newTag.put("CustomData", customComponents);
             }
         }
 
@@ -71,11 +71,11 @@ public class CustomData extends DataComponent<CompoundTag> implements Vanilla {
 
         if (existingData != null) {
             CompoundTag existingTag = existingData.copyTag();
-            Tag customComponents = existingTag.get("CustomComponents");
+            Tag customComponents = existingTag.get("CustomData");
 
             if (customComponents != null) {
                 CompoundTag keptTag = new CompoundTag();
-                keptTag.put("CustomComponents", customComponents);
+                keptTag.put("CustomData", customComponents);
                 nms.set(DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(keptTag));
             } else {
                 nms.remove(DataComponents.CUSTOM_DATA);

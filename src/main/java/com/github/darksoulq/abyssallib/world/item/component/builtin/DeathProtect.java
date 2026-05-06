@@ -14,10 +14,27 @@ import java.util.List;
 
 public class DeathProtect extends DataComponent<List<ConsumeEffect>> implements Vanilla {
     public static final Codec<DeathProtect> CODEC = ExtraCodecs.CONSUME_EFFECT.list().xmap(
-            DeathProtect::new,
-            DeathProtect::getValue
+        DeathProtect::new,
+        DeathProtect::getValue
     );
-    public static final DataComponentType<DeathProtect> TYPE = DataComponentType.valued(CODEC, DeathProtect::new);
+    public static final DataComponentType<DeathProtect> TYPE = new DataComponentType<DeathProtect>() {
+        @Override
+        public Codec<DeathProtect> codec() {
+            return CODEC;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public DeathProtect createFromValue(Object value) {
+            if (value instanceof DeathProtection dp) {
+                return new DeathProtect(dp.deathEffects());
+            }
+            if (value instanceof List<?> list) {
+                return new DeathProtect((List<ConsumeEffect>) list);
+            }
+            return null;
+        }
+    };
 
     public DeathProtect(List<ConsumeEffect> effects) {
         super(effects);

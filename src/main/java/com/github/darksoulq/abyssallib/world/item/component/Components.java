@@ -85,21 +85,4 @@ public class Components {
     private static DataComponentType<?> register(String name, DataComponentType<?> type) {
         return DATA_COMPONENTS_VANILLA.register(name, (id) -> type);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomData;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.potion.PotionMix;
 import io.papermc.paper.registry.RegistryAccess;
@@ -13,6 +14,7 @@ import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.minecraft.nbt.CompoundTag;
 import org.bukkit.*;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
@@ -190,10 +192,9 @@ public class Codecs {
     public static final Codec<ItemDisplay.ItemDisplayTransform> ITEM_DISPLAY_TRANSFORM = Codec.enumCodec(ItemDisplay.ItemDisplayTransform.class);
     public static final Codec<TextDisplay.TextAlignment> TEXT_ALIGNMENT = Codec.enumCodec(TextDisplay.TextAlignment.class);
 
-    // Extra
-    public static final Codec<Vector> VECTOR_I = new Codec<Vector>() {
+    public static final Codec<Vector> VECTOR_I = new Codec<>() {
         @Override
-        public <D> org.bukkit.util.Vector decode(DynamicOps<D> ops, D input) throws CodecException {
+        public <D> Vector decode(DynamicOps<D> ops, D input) throws CodecException {
             List<D> vector = ops.getList(input).orElseThrow();
             if (vector.size() != 3) throw new CodecException("Vector list size should be 3");
             int x = ops.getIntValue(vector.getFirst()).orElseThrow();
@@ -211,9 +212,9 @@ public class Codecs {
             return ops.createList(vector);
         }
     };
-    public static final Codec<Vector> VECTOR_F = new Codec<Vector>() {
+    public static final Codec<Vector> VECTOR_F = new Codec<>() {
         @Override
-        public <D> org.bukkit.util.Vector decode(DynamicOps<D> ops, D input) throws CodecException {
+        public <D> Vector decode(DynamicOps<D> ops, D input) throws CodecException {
             List<D> vector = ops.getList(input).orElseThrow();
             if (vector.size() != 3) throw new CodecException("Vector list size should be 3");
             double x = ops.getDoubleValue(vector.getFirst()).orElseThrow();
@@ -232,32 +233,32 @@ public class Codecs {
         }
     };
     public static final Codec<UUID> UUID = Codecs.STRING.xmap(
-            java.util.UUID::fromString,
-            java.util.UUID::toString
+        java.util.UUID::fromString,
+        java.util.UUID::toString
     );
     public static final Codec<Component> TEXT_COMPONENT = Codecs.STRING.xmap(
-            MiniMessage.miniMessage()::deserialize,
-            MiniMessage.miniMessage()::serialize
+        MiniMessage.miniMessage()::deserialize,
+        MiniMessage.miniMessage()::serialize
     );
     public static final Codec<Key> KEY = STRING.xmap(Key::key, Key::asString);
     public static final Codec<NamespacedKey> NAMESPACED_KEY = STRING.xmap(NamespacedKey::fromString, NamespacedKey::toString);
     public static final Codec<World> WORLD = KEY.xmap(Bukkit::getWorld, World::getKey);
     public static final Codec<Location> LOCATION = RecordCodecBuilder.create(
-            WORLD.fieldOf("world", Location::getWorld),
-            DOUBLE.fieldOf("x", Location::getX),
-            DOUBLE.fieldOf("y", Location::getY),
-            DOUBLE.fieldOf("z", Location::getZ),
-            FLOAT.fieldOf("yaw", Location::getYaw),
-            FLOAT.fieldOf("pitch", Location::getPitch),
-            Location::new
+        WORLD.fieldOf("world", Location::getWorld),
+        DOUBLE.fieldOf("x", Location::getX),
+        DOUBLE.fieldOf("y", Location::getY),
+        DOUBLE.fieldOf("z", Location::getZ),
+        FLOAT.fieldOf("yaw", Location::getYaw),
+        FLOAT.fieldOf("pitch", Location::getPitch),
+        Location::new
     );
     public static final Codec<DataComponentType> DATA_COMPONENT_TYPE = KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getOrThrow,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE)::getKeyOrThrow
+        key -> RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE).getOrThrow(key),
+        type -> RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE).getKeyOrThrow(type)
     );
     public static final Codec<List<DataComponent<?>>> DATA_COMPONENT_MAP = new Codec<>() {
         @Override
-        public <D> List<DataComponent<?>> decode(DynamicOps<D> ops, D input) {
+        public <D> List<DataComponent<?>> decode(DynamicOps<D> ops, D input) throws CodecException {
             if (input == null) throw new CodecException("Expected Map");
             Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map"));
             List<DataComponent<?>> components = new ArrayList<>();
@@ -265,7 +266,7 @@ public class Codecs {
                 String componentID = STRING.decode(ops, entry.getKey());
                 com.github.darksoulq.abyssallib.world.item.component.DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(componentID);
                 if (type == null) {
-                    AbyssalLib.LOGGER.warning("Failed to load component with ID: " + componentID + ", The component does not exist");
+                    AbyssalLib.getInstance().getLogger().warning("Failed to load component with ID: " + componentID + ", The component does not exist");
                     continue;
                 }
                 DataComponent<?> component = type.codec().decode(ops, entry.getValue());
@@ -275,21 +276,27 @@ public class Codecs {
         }
 
         @Override
-        public <D> D encode(DynamicOps<D> ops, List<DataComponent<?>> value) {
+        public <D> D encode(DynamicOps<D> ops, List<DataComponent<?>> value) throws CodecException {
             if (value == null) throw new CodecException("Expected Map");
             Map<D, D> map = new HashMap<>();
             for (DataComponent<?> component : value) {
                 String id = Registries.DATA_COMPONENT_TYPES.getId(component.getType());
                 if (id == null) {
-                    AbyssalLib.LOGGER.warning("Failed to serialize DataComponent as its ID is null");
+                    AbyssalLib.getInstance().getLogger().warning("Failed to serialize DataComponent as its ID is null");
                     continue;
                 }
+
+                if (component instanceof CustomData customData) {
+                    CompoundTag tag = customData.getValue().copy();
+                    tag.remove("CustomData");
+                    if (tag.isEmpty()) continue;
+                }
+
                 map.put(STRING.encode(ops, id), ComponentMap.encodeComponent(component, ops));
             }
             return ops.createMap(map);
         }
     };
-
     public static final Codec<ItemStack> ITEM_STACK = Codec.fallback(
         new Codec<>() {
             @Override
@@ -317,14 +324,26 @@ public class Codecs {
             @Override
             public <D> D encode(DynamicOps<D> ops, ItemStack value) throws CodecException {
                 Map<D, D> map = new HashMap<>();
-                Item item = Item.resolve(value);
-                if (item == null) item = new Item(value);
+                Item item = new Item(value);
                 int amount = value.getAmount();
                 List<DataComponent<?>> components = item.getComponentMap().getAllComponents();
                 map.put(ops.createString("id"), KEY.encode(ops, item.getId()));
                 if (amount > 1) map.put(ops.createString("amount"), ops.createInt(amount));
-                if (components != null && !components.isEmpty())
-                    map.put(ops.createString("data"), DATA_COMPONENT_MAP.encode(ops, components));
+                if (components != null && !components.isEmpty()) {
+                    boolean hasValidComponents = false;
+                    for (DataComponent<?> c : components) {
+                        if (c instanceof CustomData cd) {
+                            CompoundTag tag = cd.getValue().copy();
+                            tag.remove("CustomData");
+                            if (!tag.isEmpty()) hasValidComponents = true;
+                        } else {
+                            hasValidComponents = true;
+                        }
+                    }
+                    if (hasValidComponents) {
+                        map.put(ops.createString("data"), DATA_COMPONENT_MAP.encode(ops, components));
+                    }
+                }
                 return ops.createMap(map);
             }
         },
@@ -334,158 +353,157 @@ public class Codecs {
                 else return new ItemStack(Material.valueOf(key.value().toUpperCase()));
             },
             stack -> {
-                Item item = Item.resolve(stack);
-                if (item == null) item = new Item(stack);
+                Item item = new Item(stack);
                 return item.getId();
             }
         )
     );
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list()
-            .xmap(RecipeChoice.ExactChoice::new, RecipeChoice.ExactChoice::getChoices);
+        .xmap(RecipeChoice.ExactChoice::new, RecipeChoice.ExactChoice::getChoices);
     public static final Codec<RecipeChoice.MaterialChoice> MATERIAL_CHOICE = ITEM_STACK.list().xmap(
-                        (list) -> new RecipeChoice.MaterialChoice(list.stream().map(ItemStack::getType).toList()),
-                        (mats) -> mats.getChoices().stream().map(ItemStack::of).toList());
+        (list) -> new RecipeChoice.MaterialChoice(list.stream().map(ItemStack::getType).toList()),
+        (mats) -> mats.getChoices().stream().map(ItemStack::of).toList());
     public static final Codec<RecipeChoice> RECIPE_CHOICE = Codec.fallback(EXACT_CHOICE, MATERIAL_CHOICE);
 
     public static final Codec<ShapedRecipe> SHAPED_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", ShapedRecipe::getKey),
-            STRING.list().fieldOf("shape", o -> TextUtil.convertToList(o.getShape())),
-            Codec.map(CHARACTER, RECIPE_CHOICE).fieldOf("ingredients", ShapedRecipe::getChoiceMap),
-            ITEM_STACK.fieldOf("result", ShapedRecipe::getResult),
-            STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
-            Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
-                    Optional.of(s.getCategory())),
-            (id, shape, ing, result,
-             group, category) -> {
-                ShapedRecipe recipe = new ShapedRecipe(id, result);
-                recipe.shape(TextUtil.convertToArray(shape));
-                ing.forEach(recipe::setIngredient);
-                group.ifPresent(recipe::setGroup);
-                category.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", ShapedRecipe::getKey),
+        STRING.list().fieldOf("shape", o -> TextUtil.convertToList(o.getShape())),
+        Codec.map(CHARACTER, RECIPE_CHOICE).fieldOf("ingredients", ShapedRecipe::getChoiceMap),
+        ITEM_STACK.fieldOf("result", ShapedRecipe::getResult),
+        STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
+        Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
+            Optional.of(s.getCategory())),
+        (id, shape, ing, result,
+         group, category) -> {
+            ShapedRecipe recipe = new ShapedRecipe(id, result);
+            recipe.shape(TextUtil.convertToArray(shape));
+            ing.forEach(recipe::setIngredient);
+            group.ifPresent(recipe::setGroup);
+            category.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<ShapelessRecipe> SHAPELESS_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", ShapelessRecipe::getKey),
-            RECIPE_CHOICE.list().fieldOf("ingredients", ShapelessRecipe::getChoiceList),
-            ITEM_STACK.fieldOf("result", ShapelessRecipe::getResult),
-            STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
-            Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
-                    Optional.of(s.getCategory())),
-            (id, choices, result, group, cat) -> {
-                ShapelessRecipe recipe = new ShapelessRecipe(id, result);
-                choices.forEach(recipe::addIngredient);
-                group.ifPresent(recipe::setGroup);
-                cat.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", ShapelessRecipe::getKey),
+        RECIPE_CHOICE.list().fieldOf("ingredients", ShapelessRecipe::getChoiceList),
+        ITEM_STACK.fieldOf("result", ShapelessRecipe::getResult),
+        STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
+        Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
+            Optional.of(s.getCategory())),
+        (id, choices, result, group, cat) -> {
+            ShapelessRecipe recipe = new ShapelessRecipe(id, result);
+            choices.forEach(recipe::addIngredient);
+            group.ifPresent(recipe::setGroup);
+            cat.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<TransmuteRecipe> TRANSMUTE_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", TransmuteRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("input", TransmuteRecipe::getInput),
-            RECIPE_CHOICE.fieldOf("material", TransmuteRecipe::getMaterial),
-            ITEM_STACK.fieldOf("result", TransmuteRecipe::getResult),
-            STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
-            Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
-                    Optional.of(s.getCategory())),
-            (id, input, material, result, group, cat) -> {
-                TransmuteRecipe recipe = new TransmuteRecipe(id, result.getType(), input, material);
-                group.ifPresent(recipe::setGroup);
-                cat.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", TransmuteRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("input", TransmuteRecipe::getInput),
+        RECIPE_CHOICE.fieldOf("material", TransmuteRecipe::getMaterial),
+        ITEM_STACK.fieldOf("result", TransmuteRecipe::getResult),
+        STRING.optional().fieldOf("group", (s) -> Optional.of(s.getGroup())),
+        Codec.enumCodec(CraftingBookCategory.class).optional().fieldOf("category", (s) ->
+            Optional.of(s.getCategory())),
+        (id, input, material, result, group, cat) -> {
+            TransmuteRecipe recipe = new TransmuteRecipe(id, result.getType(), input, material);
+            group.ifPresent(recipe::setGroup);
+            cat.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<FurnaceRecipe> FURNACE_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", FurnaceRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("input", FurnaceRecipe::getInputChoice),
-            ITEM_STACK.fieldOf("result", FurnaceRecipe::getResult),
-            INT.fieldOf("cooking_time", FurnaceRecipe::getCookingTime),
-            FLOAT.fieldOf("exp", FurnaceRecipe::getExperience),
-            STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
-            Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
-                    Optional.of(f.getCategory())),
-            (id, input, result, time, exp,
-             group, cat) -> {
-                FurnaceRecipe recipe = new FurnaceRecipe(id, result, input, exp, time);
-                cat.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", FurnaceRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("input", FurnaceRecipe::getInputChoice),
+        ITEM_STACK.fieldOf("result", FurnaceRecipe::getResult),
+        INT.fieldOf("cooking_time", FurnaceRecipe::getCookingTime),
+        FLOAT.fieldOf("exp", FurnaceRecipe::getExperience),
+        STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
+        Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
+            Optional.of(f.getCategory())),
+        (id, input, result, time, exp,
+         group, cat) -> {
+            FurnaceRecipe recipe = new FurnaceRecipe(id, result, input, exp, time);
+            cat.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<SmokingRecipe> SMOKING_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", SmokingRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("input", SmokingRecipe::getInputChoice),
-            ITEM_STACK.fieldOf("result", SmokingRecipe::getResult),
-            INT.fieldOf("cooking_time", SmokingRecipe::getCookingTime),
-            FLOAT.fieldOf("exp", SmokingRecipe::getExperience),
-            STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
-            Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
-                    Optional.of(f.getCategory())),
-            (id, input, result, time, exp,
-             group, cat) -> {
-                SmokingRecipe recipe = new SmokingRecipe(id, result, input, exp, time);
-                cat.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", SmokingRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("input", SmokingRecipe::getInputChoice),
+        ITEM_STACK.fieldOf("result", SmokingRecipe::getResult),
+        INT.fieldOf("cooking_time", SmokingRecipe::getCookingTime),
+        FLOAT.fieldOf("exp", SmokingRecipe::getExperience),
+        STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
+        Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
+            Optional.of(f.getCategory())),
+        (id, input, result, time, exp,
+         group, cat) -> {
+            SmokingRecipe recipe = new SmokingRecipe(id, result, input, exp, time);
+            cat.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<BlastingRecipe> BLASTING_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", BlastingRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("input", BlastingRecipe::getInputChoice),
-            ITEM_STACK.fieldOf("result", BlastingRecipe::getResult),
-            INT.fieldOf("cooking_time", BlastingRecipe::getCookingTime),
-            FLOAT.fieldOf("exp", BlastingRecipe::getExperience),
-            STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
-            Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
-                    Optional.of(f.getCategory())),
-            (id, input, result, time, exp,
-             group, cat) -> {
-                BlastingRecipe recipe = new BlastingRecipe(id, result, input, exp, time);
-                cat.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", BlastingRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("input", BlastingRecipe::getInputChoice),
+        ITEM_STACK.fieldOf("result", BlastingRecipe::getResult),
+        INT.fieldOf("cooking_time", BlastingRecipe::getCookingTime),
+        FLOAT.fieldOf("exp", BlastingRecipe::getExperience),
+        STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
+        Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
+            Optional.of(f.getCategory())),
+        (id, input, result, time, exp,
+         group, cat) -> {
+            BlastingRecipe recipe = new BlastingRecipe(id, result, input, exp, time);
+            cat.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<CampfireRecipe> CAMPFIRE_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", CampfireRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("input", CampfireRecipe::getInputChoice),
-            ITEM_STACK.fieldOf("result", CampfireRecipe::getResult),
-            INT.fieldOf("cooking_time", CampfireRecipe::getCookingTime),
-            FLOAT.fieldOf("exp", CampfireRecipe::getExperience),
-            STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
-            Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
-                    Optional.of(f.getCategory())),
-            (id, input, result, time, exp,
-             group, cat) -> {
-                CampfireRecipe recipe = new CampfireRecipe(id, result, input, exp, time);
-                cat.ifPresent(recipe::setCategory);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", CampfireRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("input", CampfireRecipe::getInputChoice),
+        ITEM_STACK.fieldOf("result", CampfireRecipe::getResult),
+        INT.fieldOf("cooking_time", CampfireRecipe::getCookingTime),
+        FLOAT.fieldOf("exp", CampfireRecipe::getExperience),
+        STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
+        Codec.enumCodec(CookingBookCategory.class).optional().fieldOf("category", (f) ->
+            Optional.of(f.getCategory())),
+        (id, input, result, time, exp,
+         group, cat) -> {
+            CampfireRecipe recipe = new CampfireRecipe(id, result, input, exp, time);
+            cat.ifPresent(recipe::setCategory);
+            return recipe;
+        }
     );
     public static final Codec<StonecuttingRecipe> STONECUTTING_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", StonecuttingRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("input", StonecuttingRecipe::getInputChoice),
-            ITEM_STACK.fieldOf("result", StonecuttingRecipe::getResult),
-            STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
-            (id, input, result, group) -> {
-                StonecuttingRecipe recipe = new StonecuttingRecipe(id, result, input);
-                group.ifPresent(recipe::setGroup);
-                return recipe;
-            }
+        NAMESPACED_KEY.fieldOf("id", StonecuttingRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("input", StonecuttingRecipe::getInputChoice),
+        ITEM_STACK.fieldOf("result", StonecuttingRecipe::getResult),
+        STRING.optional().fieldOf("group", (f) -> Optional.of(f.getGroup())),
+        (id, input, result, group) -> {
+            StonecuttingRecipe recipe = new StonecuttingRecipe(id, result, input);
+            group.ifPresent(recipe::setGroup);
+            return recipe;
+        }
     );
     public static final Codec<SmithingTransformRecipe> SMITHING_TRANSFORM_RECIPE = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", SmithingTransformRecipe::getKey),
-            RECIPE_CHOICE.fieldOf("base", SmithingTransformRecipe::getBase),
-            RECIPE_CHOICE.fieldOf("template", SmithingTransformRecipe::getTemplate),
-            RECIPE_CHOICE.fieldOf("addition", SmithingTransformRecipe::getAddition),
-            ITEM_STACK.fieldOf("result", SmithingTransformRecipe::getResult),
-            BOOLEAN.optional().fieldOf("copy_components", r -> Optional.of(r.willCopyDataComponents())),
-            (id, base, template, addition,
-             result, copy) -> copy.map(aBoolean ->
-                    new SmithingTransformRecipe(id, result, template, base, addition, aBoolean)).orElseGet(() -> new SmithingTransformRecipe(id, result, template, base, addition))
+        NAMESPACED_KEY.fieldOf("id", SmithingTransformRecipe::getKey),
+        RECIPE_CHOICE.fieldOf("base", SmithingTransformRecipe::getBase),
+        RECIPE_CHOICE.fieldOf("template", SmithingTransformRecipe::getTemplate),
+        RECIPE_CHOICE.fieldOf("addition", SmithingTransformRecipe::getAddition),
+        ITEM_STACK.fieldOf("result", SmithingTransformRecipe::getResult),
+        BOOLEAN.optional().fieldOf("copy_components", r -> Optional.of(r.willCopyDataComponents())),
+        (id, base, template, addition,
+         result, copy) -> copy.map(aBoolean ->
+            new SmithingTransformRecipe(id, result, template, base, addition, aBoolean)).orElseGet(() -> new SmithingTransformRecipe(id, result, template, base, addition))
     );
     public static final Codec<PotionMix> POTION_MIX = RecordCodecBuilder.create(
-            NAMESPACED_KEY.fieldOf("id", PotionMix::getKey),
-            RECIPE_CHOICE.fieldOf("input", PotionMix::getInput),
-            RECIPE_CHOICE.fieldOf("ingredient", PotionMix::getIngredient),
-            ITEM_STACK.fieldOf("result", PotionMix::getResult),
-            (id, input, ingredient, result) -> new PotionMix(id, result, input, ingredient)
+        NAMESPACED_KEY.fieldOf("id", PotionMix::getKey),
+        RECIPE_CHOICE.fieldOf("input", PotionMix::getInput),
+        RECIPE_CHOICE.fieldOf("ingredient", PotionMix::getIngredient),
+        ITEM_STACK.fieldOf("result", PotionMix::getResult),
+        (id, input, ingredient, result) -> new PotionMix(id, result, input, ingredient)
     );
 }

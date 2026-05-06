@@ -21,6 +21,7 @@ import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifiers;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviders;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicateLoader;
 import com.github.darksoulq.abyssallib.world.item.Items;
+import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemCategories;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessors;
@@ -28,6 +29,7 @@ import com.github.darksoulq.abyssallib.world.structure.processor.StructureProces
 public final class ContentRegistry {
 
     public static void init() {
+        ComponentMap.initializeVanillaMap();
         Components.DATA_COMPONENTS_VANILLA.apply();
         Components.DATA_COMPONENTS.apply();
         ItemPredicateLoader.loadPredicates();

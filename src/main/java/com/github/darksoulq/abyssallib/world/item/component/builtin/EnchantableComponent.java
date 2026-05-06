@@ -12,10 +12,26 @@ import org.bukkit.inventory.ItemStack;
 @SuppressWarnings("UnstableApiUsage")
 public class EnchantableComponent extends DataComponent<Integer> implements Vanilla {
     public static final Codec<EnchantableComponent> CODEC = Codecs.INT.xmap(
-            EnchantableComponent::new,
-            EnchantableComponent::getValue
+        EnchantableComponent::new,
+        EnchantableComponent::getValue
     );
-    public static final DataComponentType<EnchantableComponent> TYPE = DataComponentType.valued(CODEC, EnchantableComponent::new);
+    public static final DataComponentType<EnchantableComponent> TYPE = new DataComponentType<>() {
+        @Override
+        public Codec<EnchantableComponent> codec() {
+            return CODEC;
+        }
+
+        @Override
+        public EnchantableComponent createFromValue(Object value) {
+            if (value instanceof Enchantable e) {
+                return new EnchantableComponent(e.value());
+            }
+            if (value instanceof Integer i) {
+                return new EnchantableComponent(i);
+            }
+            return null;
+        }
+    };
 
     public EnchantableComponent(int level) {
         super(level);
