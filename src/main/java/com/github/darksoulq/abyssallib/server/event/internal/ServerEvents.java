@@ -11,7 +11,7 @@ import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEven
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
-import com.github.darksoulq.abyssallib.server.translation.internal.PacketTranslator;
+import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
 import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
 import com.github.darksoulq.abyssallib.world.advancement.AdvancementLoader;
@@ -106,7 +106,7 @@ public class ServerEvents {
     public void onPacketSend(PacketSendEvent event) {
         if (event.getPlayer() == null) return;
         Packet<?> original = event.getPacket();
-        Packet<?> translated = PacketTranslator.processSend(original, event.getPlayer());
+        Packet<?> translated = ItemPacketModifier.processSend(original, event.getPlayer());
 
         if (original != translated) {
             event.setPacket(translated);
@@ -117,7 +117,7 @@ public class ServerEvents {
     public void onPacketReceive(PacketReceiveEvent event) {
         if (event.getPlayer() == null) return;
         Packet<?> original = event.getPacket();
-        Packet<?> unTranslated = PacketTranslator.processReceive(original, event.getPlayer());
+        Packet<?> unTranslated = ItemPacketModifier.processReceive(original, event.getPlayer());
 
         if (original != unTranslated) {
             event.setPacket(unTranslated);

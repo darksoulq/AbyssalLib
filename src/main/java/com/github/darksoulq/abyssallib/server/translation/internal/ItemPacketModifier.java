@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.translation.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.translation.ClientItemModifier;
 import com.github.darksoulq.abyssallib.server.translation.ItemTranslationContext;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.mojang.datafixers.util.Pair;
@@ -12,30 +13,10 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundShowDialogPacket;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBossEventPacket;
-import net.minecraft.network.protocol.game.ClientboundBundlePacket;
-import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
-import net.minecraft.network.protocol.game.ClientboundDisguisedChatPacket;
-import net.minecraft.network.protocol.game.ClientboundMerchantOffersPacket;
-import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
-import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
-import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
-import net.minecraft.network.protocol.game.ClientboundSetObjectivePacket;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
-import net.minecraft.network.protocol.game.ClientboundTabListPacket;
-import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.dialog.ActionButton;
@@ -63,9 +44,7 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
@@ -74,13 +53,16 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-public class PacketTranslator {
+public class ItemPacketModifier {
     private static final Map<UUID, Map<Integer, String>> TRANSLATION_STATES = new ConcurrentHashMap<>();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
-    private static final Base64.Encoder B64_ENCODER = Base64.getEncoder();
-    private static final Base64.Decoder B64_DECODER = Base64.getDecoder();
     private static final Pattern LANG_PATTERN = Pattern.compile("<(?:lang|tr|translate):([^>]+)>");
     private static final Pattern LANG_OR_PATTERN = Pattern.compile("<(?:lang_or|tr_or|translate_or):([^:]+):([^>]+)>");
+    private static final List<ClientItemModifier> MODIFIERS = new ArrayList<>();
+
+    public static void registerModifier(ClientItemModifier modifier) {
+        MODIFIERS.add(modifier);
+    }
 
     public static void startUpdater() {
         Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
@@ -101,15 +83,14 @@ public class PacketTranslator {
 
                     if (slot.hasItem()) {
                         ItemStack original = slot.getItem();
-                        ItemStack translated = original.copy();
-                        translateItem(translated, player);
+                        ItemStack processed = processItemSend(original, player);
 
-                        String currentState = getTranslationState(translated);
+                        String currentState = getTranslationState(processed);
                         String lastState = states.get(i);
 
                         if (!currentState.equals(lastState)) {
                             states.put(i, currentState);
-                            sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.getStateId(), i, translated));
+                            sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.getStateId(), i, processed));
                         }
                     } else {
                         states.remove(i);
@@ -118,15 +99,14 @@ public class PacketTranslator {
 
                 ItemStack carried = menu.getCarried();
                 if (!carried.isEmpty()) {
-                    ItemStack translatedCarried = carried.copy();
-                    translateItem(translatedCarried, player);
+                    ItemStack processedCarried = processItemSend(carried, player);
 
-                    String currentState = getTranslationState(translatedCarried);
+                    String currentState = getTranslationState(processedCarried);
                     String lastState = states.get(-1);
 
                     if (!currentState.equals(lastState)) {
                         states.put(-1, currentState);
-                        sp.connection.send(new ClientboundContainerSetSlotPacket(-1, menu.getStateId(), -1, translatedCarried));
+                        sp.connection.send(new ClientboundSetCursorItemPacket(processedCarried));
                     }
                 } else {
                     states.remove(-1);
@@ -159,6 +139,7 @@ public class PacketTranslator {
             case ClientboundBundlePacket p -> handleBundle(p, player);
             case ClientboundContainerSetSlotPacket p -> handleSlot(p, player);
             case ClientboundContainerSetContentPacket p -> handleContent(p, player);
+            case ClientboundSetCursorItemPacket p -> handleCursorItem(p, player);
             case ClientboundSetEntityDataPacket p -> handleEntityData(p, player);
             case ClientboundSetEquipmentPacket p -> handleEquipment(p, player);
             case ClientboundMerchantOffersPacket p -> handleMerchantOffers(p, player);
@@ -179,7 +160,15 @@ public class PacketTranslator {
 
     public static Packet<?> processReceive(Packet<?> packet, Player player) {
         if (packet instanceof ServerboundSetCreativeModeSlotPacket p) {
-            return handleCreativeSlot(p);
+            return handleCreativeSlot(p, player);
+        }
+        return packet;
+    }
+
+    private static Packet<?> handleCursorItem(ClientboundSetCursorItemPacket packet, Player player) {
+        ItemStack processed = processItemSend(packet.contents(), player);
+        if (processed != packet.contents()) {
+            return new ClientboundSetCursorItemPacket(processed);
         }
         return packet;
     }
@@ -362,13 +351,11 @@ public class PacketTranslator {
     }
 
     private static Packet<?> handleSlot(ClientboundContainerSetSlotPacket packet, Player player) {
-        ItemStack original = packet.getItem();
-        if (original.isEmpty()) return packet;
-
-        ItemStack copy = original.copy();
-        translateItem(copy, player);
-
-        return new ClientboundContainerSetSlotPacket(packet.getContainerId(), packet.getStateId(), packet.getSlot(), copy);
+        ItemStack processed = processItemSend(packet.getItem(), player);
+        if (processed != packet.getItem()) {
+            return new ClientboundContainerSetSlotPacket(packet.getContainerId(), packet.getStateId(), packet.getSlot(), processed);
+        }
+        return packet;
     }
 
     private static Packet<?> handleContent(ClientboundContainerSetContentPacket packet, Player player) {
@@ -378,26 +365,17 @@ public class PacketTranslator {
 
         for (int i = 0; i < originalItems.size(); i++) {
             ItemStack stack = originalItems.get(i);
-            if (stack.isEmpty()) {
-                translatedItems.set(i, stack);
-                continue;
-            }
-            ItemStack copy = stack.copy();
-            translateItem(copy, player);
-            translatedItems.set(i, copy);
-            changed = true;
+            ItemStack processed = processItemSend(stack, player);
+            if (processed != stack) changed = true;
+            translatedItems.set(i, processed);
         }
 
         ItemStack carried = packet.carriedItem();
-        ItemStack translatedCarried = carried;
-        if (!carried.isEmpty()) {
-            translatedCarried = carried.copy();
-            translateItem(translatedCarried, player);
-            changed = true;
-        }
+        ItemStack processedCarried = processItemSend(carried, player);
+        if (processedCarried != carried) changed = true;
 
         if (!changed) return packet;
-        return new ClientboundContainerSetContentPacket(packet.containerId(), packet.stateId(), translatedItems, translatedCarried);
+        return new ClientboundContainerSetContentPacket(packet.containerId(), packet.stateId(), translatedItems, processedCarried);
     }
 
     @SuppressWarnings("unchecked")
@@ -422,11 +400,10 @@ public class PacketTranslator {
                     modified = true;
                 }
                 case ItemStack stack -> {
-                    if (!stack.isEmpty()) {
-                        ItemStack copy = stack.copy();
-                        translateItem(copy, player);
+                    ItemStack processed = processItemSend(stack, player);
+                    if (processed != stack) {
                         EntityDataSerializer<ItemStack> serializer = (EntityDataSerializer<ItemStack>) entry.serializer();
-                        newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, copy));
+                        newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, processed));
                         modified = true;
                     } else {
                         newValues.add(entry);
@@ -446,15 +423,9 @@ public class PacketTranslator {
         boolean changed = false;
 
         for (var pair : slots) {
-            ItemStack original = pair.getSecond();
-            if (original.isEmpty()) {
-                newSlots.add(pair);
-                continue;
-            }
-            ItemStack copy = original.copy();
-            translateItem(copy, player);
-            newSlots.add(Pair.of(pair.getFirst(), copy));
-            changed = true;
+            ItemStack processed = processItemSend(pair.getSecond(), player);
+            if (processed != pair.getSecond()) changed = true;
+            newSlots.add(Pair.of(pair.getFirst(), processed));
         }
 
         if (!changed) return packet;
@@ -467,21 +438,10 @@ public class PacketTranslator {
         boolean changed = false;
 
         for (MerchantOffer offer : original) {
-            ItemStack result = offer.getResult().copy();
-            ItemStack costA = offer.getCostA().copy();
-            ItemStack costB = offer.getCostB().copy();
-            if (!result.isEmpty()) {
-                translateItem(result, player);
-                changed = true;
-            }
-            if (!costA.isEmpty()) {
-                translateItem(costA, player);
-                changed = true;
-            }
-            if (!costB.isEmpty()) {
-                translateItem(costB, player);
-                changed = true;
-            }
+            ItemStack result = processItemSend(offer.getResult(), player);
+
+            if (result != offer.getResult()) changed = true;
+
             MerchantOffer newOffer = new MerchantOffer(
                 offer.getItemCostA(), offer.getItemCostB(), result,
                 offer.getUses(), offer.getMaxUses(), offer.getXp(),
@@ -496,62 +456,91 @@ public class PacketTranslator {
         return new ClientboundMerchantOffersPacket(packet.getContainerId(), copy, packet.getVillagerLevel(), packet.getVillagerXp(), packet.showProgress(), packet.canRestock());
     }
 
-    private static Packet<?> handleCreativeSlot(ServerboundSetCreativeModeSlotPacket packet) {
+    private static Packet<?> handleCreativeSlot(ServerboundSetCreativeModeSlotPacket packet, Player player) {
         ItemStack item = packet.itemStack();
-        if (!item.isEmpty()) {
-            untranslateItem(item);
+        ItemStack untranslated = untranslateItem(item, player);
+        if (untranslated != item) {
+            return new ServerboundSetCreativeModeSlotPacket(packet.slotNum(), untranslated);
         }
         return packet;
     }
 
-    private static void translateItem(ItemStack stack, Player player) {
-        untranslateItem(stack);
+    private static ItemStack processItemSend(ItemStack stack, Player player) {
+        if (stack == null || stack.isEmpty()) return stack;
 
-        CustomData existing = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        CompoundTag rootTag = existing.copyTag();
+        ItemStack untranslated = untranslateItem(stack, player);
+        boolean wasUntranslated = (untranslated != stack);
 
-        Optional<CompoundTag> customDataOpt = rootTag.getCompound("CustomData");
+        ItemStack workingCopy = untranslated.copy();
+        org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(workingCopy);
 
-        CompoundTag translationCache = new CompoundTag();
-        boolean hasOg = false;
-
-        net.minecraft.network.chat.Component customName = stack.get(DataComponents.CUSTOM_NAME);
-        if (customName != null) {
-            String json = GSON.serialize(PaperAdventure.asAdventure(customName));
-            translationCache.putString("cn", B64_ENCODER.encodeToString(json.getBytes(StandardCharsets.UTF_8)));
-            stack.set(DataComponents.CUSTOM_NAME, translateItemNMS(customName, player, stack, ItemTranslationContext.CUSTOM_NAME));
-            hasOg = true;
-        }
-
-        net.minecraft.network.chat.Component itemName = stack.get(DataComponents.ITEM_NAME);
-        if (itemName != null) {
-            String json = GSON.serialize(PaperAdventure.asAdventure(itemName));
-            translationCache.putString("in", B64_ENCODER.encodeToString(json.getBytes(StandardCharsets.UTF_8)));
-            stack.set(DataComponents.ITEM_NAME, translateItemNMS(itemName, player, stack, ItemTranslationContext.NAME));
-            hasOg = true;
-        }
-
-        ItemLore lore = stack.get(DataComponents.LORE);
-        if (lore != null) {
-            ListTag loreOg = new ListTag();
-            List<net.minecraft.network.chat.Component> translatedLines = new ArrayList<>();
-
-            for (net.minecraft.network.chat.Component line : lore.lines()) {
-                String json = GSON.serialize(PaperAdventure.asAdventure(line));
-                loreOg.add(StringTag.valueOf(B64_ENCODER.encodeToString(json.getBytes(StandardCharsets.UTF_8))));
-                translatedLines.add(translateItemNMS(line, player, stack, ItemTranslationContext.LORE));
+        boolean modified = false;
+        for (ClientItemModifier modifier : MODIFIERS) {
+            if (modifier.modify(bukkitStack, player)) {
+                modified = true;
             }
-            translationCache.put("lr", loreOg);
-            stack.set(DataComponents.LORE, new ItemLore(translatedLines));
-            hasOg = true;
         }
 
-        if (hasOg) {
-            CompoundTag customDataKeyTag = customDataOpt.orElseGet(CompoundTag::new);
-            customDataKeyTag.put("TranslationCache", translationCache);
-            rootTag.put("CustomData", customDataKeyTag);
-            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(rootTag));
+        boolean needsTranslation = false;
+        net.minecraft.network.chat.Component customName = workingCopy.get(DataComponents.CUSTOM_NAME);
+        if (customName != null) {
+            workingCopy.set(DataComponents.CUSTOM_NAME, translateItemNMS(customName, player, workingCopy, ItemTranslationContext.CUSTOM_NAME));
+            needsTranslation = true;
         }
+
+        net.minecraft.network.chat.Component itemName = workingCopy.get(DataComponents.ITEM_NAME);
+        if (itemName != null) {
+            workingCopy.set(DataComponents.ITEM_NAME, translateItemNMS(itemName, player, workingCopy, ItemTranslationContext.NAME));
+            needsTranslation = true;
+        }
+
+        ItemLore lore = workingCopy.get(DataComponents.LORE);
+        if (lore != null) {
+            List<net.minecraft.network.chat.Component> translatedLines = new ArrayList<>();
+            for (net.minecraft.network.chat.Component line : lore.lines()) {
+                translatedLines.add(translateItemNMS(line, player, workingCopy, ItemTranslationContext.LORE));
+            }
+            workingCopy.set(DataComponents.LORE, new ItemLore(translatedLines));
+            needsTranslation = true;
+        }
+
+        if (modified || needsTranslation) {
+            CustomData existing = workingCopy.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+            CompoundTag rootTag = existing.copyTag();
+
+            byte[] serialized = CraftItemStack.asCraftMirror(untranslated).serializeAsBytes();
+            rootTag.putByteArray("OriginalItem", serialized);
+
+            workingCopy.set(DataComponents.CUSTOM_DATA, CustomData.of(rootTag));
+            return workingCopy;
+        }
+
+        if (wasUntranslated) {
+            return untranslated;
+        }
+
+        return stack;
+    }
+
+    private static ItemStack untranslateItem(ItemStack stack, Player player) {
+        if (stack == null || stack.isEmpty()) return stack;
+
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        if (customData == null) return stack;
+
+        CompoundTag rootTag = customData.copyTag();
+
+        if (rootTag.contains("OriginalItem")) {
+            Optional<byte[]> optBytes = rootTag.getByteArray("OriginalItem");
+            if (optBytes.isPresent() && optBytes.get().length > 0) {
+                try {
+                    org.bukkit.inventory.ItemStack restoredBukkit = org.bukkit.inventory.ItemStack.deserializeBytes(optBytes.get());
+                    return CraftItemStack.asNMSCopy(restoredBukkit);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        return stack;
     }
 
     private static Component preProcessTags(Component component) {
@@ -567,71 +556,6 @@ public class PacketTranslator {
         org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
         Component translated = ServerTranslator.translateItemComponent(adventure, player, bukkitStack, context);
         return PaperAdventure.asVanilla(translated);
-    }
-
-    private static boolean untranslateItem(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) return false;
-
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        if (customData == null) return false;
-
-        CompoundTag rootTag = customData.copyTag();
-        Optional<CompoundTag> customDataOpt = rootTag.getCompound("CustomData");
-        if (customDataOpt.isEmpty()) return false;
-
-        CompoundTag customDataKeyTag = customDataOpt.get();
-        Optional<CompoundTag> cacheOpt = customDataKeyTag.getCompound("TranslationCache");
-        if (cacheOpt.isEmpty()) return false;
-
-        CompoundTag translationCache = cacheOpt.get();
-
-        try {
-            translationCache.getString("cn").ifPresent(b64 -> {
-                try {
-                    String cleanB64 = b64.replaceAll("^\"|\"$", "");
-                    String json = new String(B64_DECODER.decode(cleanB64), StandardCharsets.UTF_8);
-                    stack.set(DataComponents.CUSTOM_NAME, PaperAdventure.asVanilla(GSON.deserialize(json)));
-                } catch (Exception ignored) {}
-            });
-
-            translationCache.getString("in").ifPresent(b64 -> {
-                try {
-                    String cleanB64 = b64.replaceAll("^\"|\"$", "");
-                    String json = new String(B64_DECODER.decode(cleanB64), StandardCharsets.UTF_8);
-                    stack.set(DataComponents.ITEM_NAME, PaperAdventure.asVanilla(GSON.deserialize(json)));
-                } catch (Exception ignored) {}
-            });
-
-            translationCache.getList("lr").ifPresent(loreOg -> {
-                try {
-                    List<net.minecraft.network.chat.Component> restoredLines = new ArrayList<>();
-                    for (Tag tag : loreOg) {
-                        tag.asString().ifPresent(b64 -> {
-                            try {
-                                String cleanB64 = b64.replaceAll("^\"|\"$", "");
-                                String json = new String(B64_DECODER.decode(cleanB64), StandardCharsets.UTF_8);
-                                restoredLines.add(PaperAdventure.asVanilla(GSON.deserialize(json)));
-                            } catch (Exception ignored) {}
-                        });
-                    }
-                    stack.set(DataComponents.LORE, new ItemLore(restoredLines));
-                } catch (Exception ignored) {}
-            });
-        } finally {
-            customDataKeyTag.remove("TranslationCache");
-            if (customDataKeyTag.isEmpty()) {
-                rootTag.remove("CustomData");
-            } else {
-                rootTag.put("CustomData", customDataKeyTag);
-            }
-
-            if (rootTag.isEmpty()) {
-                stack.remove(DataComponents.CUSTOM_DATA);
-            } else {
-                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(rootTag));
-            }
-        }
-        return true;
     }
 
     private static net.minecraft.network.chat.Component translateNMS(net.minecraft.network.chat.Component vanilla, Player player) {

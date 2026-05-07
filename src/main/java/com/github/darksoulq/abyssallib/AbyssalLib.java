@@ -6,10 +6,15 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.permission.PermissionManager;
 import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebServer;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
+import com.github.darksoulq.abyssallib.server.translation.ClientItemModifier;
+import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
 import dev.faststats.bukkit.BukkitMetrics;
 import dev.faststats.core.ErrorTracker;
 import dev.faststats.core.Metrics;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Logger;
