@@ -92,18 +92,11 @@ public class InternalCommand {
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
             .requires(DefaultConditions.hasPerm(PluginPermissions.ITEMS_GIVE))
-            .then(Commands.argument("item", RegistryEntryArgument.registryEntry(Registries.ITEMS))
-                .requires(DefaultConditions.playerOnly())
-                .executes(ctx -> giveMultiExecutor(ctx, 1, null))
-                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                    .executes(ctx -> giveMultiExecutor(ctx, ctx.getArgument("amount", Integer.class), null))
-                )
-            )
             .then(Commands.argument("targets", ArgumentTypes.players())
                 .then(Commands.argument("item", RegistryEntryArgument.registryEntry(Registries.ITEMS))
-                    .executes(ctx -> giveMultiExecutor(ctx, 1, ctx.getArgument("targets", PlayerSelectorArgumentResolver.class)))
+                    .executes(ctx -> giveMultiExecutor(ctx, 1))
                     .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                        .executes(ctx -> giveMultiExecutor(ctx, ctx.getArgument("amount", Integer.class), ctx.getArgument("targets", PlayerSelectorArgumentResolver.class)))
+                        .executes(ctx -> giveMultiExecutor(ctx, ctx.getArgument("amount", Integer.class)))
                     )
                 )
             )
@@ -121,7 +114,7 @@ public class InternalCommand {
             .requires(DefaultConditions.hasPerm(PluginPermissions.LOCATE))
             .then(Commands.literal("structure")
                 .then(Commands.argument("structure", ArgumentTypes.key())
-                    .suggests((_, builder) -> {
+                    .suggests((ctx, builder) -> {
                         Registries.STRUCTURES.getAll().keySet().forEach(builder::suggest);
                         return builder.buildFuture();
                     })
@@ -189,15 +182,9 @@ public class InternalCommand {
             )
         ).then(Commands.literal("serialize")
             .then(Commands.literal("item")
-                .requires(DefaultConditions.hasPerm(PluginPermissions.SERIALIZE_ITEM))
+                .requires(DefaultConditions.playerOnly().and(DefaultConditions.hasPerm(PluginPermissions.SERIALIZE_ITEM)))
                 .then(Commands.argument("format", EnumArgument.enumArg(ExportFormat.class))
-                    .requires(DefaultConditions.playerOnly())
-                    .executes(ctx -> serializeItemExecutor(ctx, null))
-                )
-                .then(Commands.argument("targets", ArgumentTypes.players())
-                    .then(Commands.argument("format", EnumArgument.enumArg(ExportFormat.class))
-                        .executes(ctx -> serializeItemExecutor(ctx, ctx.getArgument("targets", PlayerSelectorArgumentResolver.class)))
-                    )
+                    .executes(InternalCommand::serializeItemExecutor)
                 )
             )
             .then(Commands.literal("block")
@@ -239,7 +226,7 @@ public class InternalCommand {
             .then(Commands.literal("commands")
                 .executes(ctx -> {
                     CommandBus.reloadAll();
-                    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+                    return Command.SUCCESS;
                 })
             )
             .then(Commands.literal("pack")
@@ -254,22 +241,23 @@ public class InternalCommand {
                         );
                     }
                     ctx.getSource().getSender().sendRichMessage("<red>Reload complete</red>");
-                    return 0;
+                    return Command.SUCCESS;
                 })
             )
             .then(Commands.literal("translations")
                 .executes(ctx -> {
                     ServerTranslator.reload();
                     reply(ctx, "<green>Translations reloaded</green>");
-                    return 0;
+                    return Command.SUCCESS;
                 })
             )
         ).then(Commands.literal("content")
+            .requires(DefaultConditions.hasPerm(PluginPermissions.CONTENT_ITEMS_VIEW))
             .then(Commands.literal("items")
-                .requires(DefaultConditions.playerOnly().and(DefaultConditions.hasPerm(PluginPermissions.CONTENT_ITEMS_VIEW)))
                 .executes(ctx -> {
                     Player player = getPlayer(ctx);
-                    if (player != null) ItemMenu.open(player);
+                    if (player == null) return Command.FAILURE;
+                    ItemMenu.open(player);
                     return Command.SUCCESS;
                 })
                 .then(Commands.argument("plugin", StringArgumentType.string())
@@ -283,10 +271,9 @@ public class InternalCommand {
                     })
                     .executes(ctx -> {
                         Player player = getPlayer(ctx);
-                        if (player != null) {
-                            String ns = ctx.getArgument("plugin", String.class);
-                            ItemMenu.openPlugin(player, ns);
-                        }
+                        if (player == null) return Command.FAILURE;
+                        String ns = ctx.getArgument("plugin", String.class);
+                        ItemMenu.openPlugin(player, ns);
                         return Command.SUCCESS;
                     })
                     .then(Commands.argument("category", StringArgumentType.string())
@@ -299,25 +286,23 @@ public class InternalCommand {
                                     hasCustom = true;
                                 }
                             }
-                            if (!hasCustom) {
-                                builder.suggest("all");
-                            }
+                            if (!hasCustom) builder.suggest("all");
                             return builder.buildFuture();
                         })
                         .executes(ctx -> {
                             Player player = getPlayer(ctx);
-                            if (player != null) {
-                                String ns = ctx.getArgument("plugin", String.class);
-                                String catPath = ctx.getArgument("category", String.class);
+                            if (player == null) return Command.FAILURE;
+                            String ns = ctx.getArgument("plugin", String.class);
+                            String catPath = ctx.getArgument("category", String.class);
 
-                                ItemCategory cat = Registries.ITEM_CATEGORIES.get(ns + ":" + catPath);
-                                if (cat != null) {
-                                    ItemMenu.openCategory(player, cat);
-                                } else if (catPath.equals("all")) {
-                                    ItemMenu.openPlugin(player, ns);
-                                } else {
-                                    reply(ctx, "<red>Category not found.</red>");
-                                }
+                            ItemCategory cat = Registries.ITEM_CATEGORIES.get(ns + ":" + catPath);
+                            if (cat != null) {
+                                ItemMenu.openCategory(player, cat);
+                            } else if (catPath.equals("all")) {
+                                ItemMenu.openPlugin(player, ns);
+                            } else {
+                                reply(ctx, "<red>Category not found.</red>");
+                                return Command.FAILURE;
                             }
                             return Command.SUCCESS;
                         })
@@ -327,24 +312,32 @@ public class InternalCommand {
         ).then(Commands.literal("permissions")
             .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_EDIT).or(DefaultConditions.consoleOnly()))
             .then(Commands.literal("gui")
-                .requires(DefaultConditions.playerOnly())
                 .executes(ctx -> {
                     Player p = getPlayer(ctx);
-                    if (p != null) PermissionMenu.openMainMenu(p);
+                    if (p == null) return Command.FAILURE;
+                    PermissionMenu.openMainMenu(p);
                     return Command.SUCCESS;
                 })
+                .then(Commands.argument("targets", ArgumentTypes.players())
+                    .executes(ctx -> {
+                        for (Player target : ctx.getArgument("targets", PlayerSelectorArgumentResolver.class).resolve(ctx.getSource())) {
+                            PermissionMenu.openMainMenu(target);
+                        }
+                        return Command.SUCCESS;
+                    })
+                )
             )
             .then(Commands.literal("web")
                 .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_WEB).or(DefaultConditions.consoleOnly()))
                 .executes(ctx -> {
                     if (AbyssalLib.PERMISSION_WEB_SERVER == null || !AbyssalLib.PERMISSION_WEB_SERVER.isEnabled()) {
                         reply(ctx, "<red>Web server is not enabled in config.</red>");
-                        return 0;
+                        return Command.FAILURE;
                     }
                     String token = AbyssalLib.PERMISSION_WEB_SERVER.createSession();
                     String url = AbyssalLib.CONFIG.permissions.webProtocol.get() + "://" + AbyssalLib.CONFIG.permissions.webIp.get() + ":" + AbyssalLib.CONFIG.permissions.webPort.get() + "/?token=" + token;
                     reply(ctx, "<green>Web Editor URL: <click:open_url:'" + url + "'><aqua><u>Click Here</u></aqua></click></green>\n<gray>This link expires in 15 minutes.</gray>");
-                    return 1;
+                    return Command.SUCCESS;
                 })
             )
             .then(Commands.literal("user")
@@ -355,12 +348,12 @@ public class InternalCommand {
                                 .then(Commands.argument("value", BoolArgumentType.bool())
                                     .executes(ctx -> {
                                         UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
-                                        if (target == null) return 0;
+                                        if (target == null) return Command.FAILURE;
                                         PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
                                         user.setPermission(new Node(ctx.getArgument("node", String.class), ctx.getArgument("value", Boolean.class)));
                                         user.save();
                                         reply(ctx, "<green>Permission set for user.</green>");
-                                        return 1;
+                                        return Command.SUCCESS;
                                     })
                                 )
                             )
@@ -369,12 +362,12 @@ public class InternalCommand {
                             .then(Commands.argument("node", StringArgumentType.string())
                                 .executes(ctx -> {
                                     UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
-                                    if (target == null) return 0;
+                                    if (target == null) return Command.FAILURE;
                                     PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
                                     user.unsetPermission(ctx.getArgument("node", String.class));
                                     user.save();
                                     reply(ctx, "<green>Permission unset for user.</green>");
-                                    return 1;
+                                    return Command.SUCCESS;
                                 })
                             )
                         )
@@ -384,12 +377,12 @@ public class InternalCommand {
                             .then(Commands.argument("group", StringArgumentType.word())
                                 .executes(ctx -> {
                                     UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
-                                    if (target == null) return 0;
+                                    if (target == null) return Command.FAILURE;
                                     PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
                                     user.addParent(new Node(ctx.getArgument("group", String.class)));
                                     user.save();
                                     reply(ctx, "<green>Group added to user.</green>");
-                                    return 1;
+                                    return Command.SUCCESS;
                                 })
                             )
                         )
@@ -397,12 +390,12 @@ public class InternalCommand {
                             .then(Commands.argument("group", StringArgumentType.word())
                                 .executes(ctx -> {
                                     UUID target = AbyssalLib.PERMISSION_MANAGER.getUuidFromName(ctx.getArgument("target", String.class));
-                                    if (target == null) return 0;
+                                    if (target == null) return Command.FAILURE;
                                     PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getUser(target);
                                     user.removeParent(ctx.getArgument("group", String.class));
                                     user.save();
                                     reply(ctx, "<green>Group removed from user.</green>");
-                                    return 1;
+                                    return Command.SUCCESS;
                                 })
                             )
                         )
@@ -416,13 +409,13 @@ public class InternalCommand {
                             String id = ctx.getArgument("id", String.class);
                             if (Registries.PERMISSION_GROUPS.contains(id)) {
                                 reply(ctx, "<red>Group already exists.</red>");
-                                return 0;
+                                return Command.FAILURE;
                             }
                             PermissionGroup group = new PermissionGroup(id);
                             Registries.PERMISSION_GROUPS.register(id, group);
                             group.save();
                             reply(ctx, "<green>Group created.</green>");
-                            return 1;
+                            return Command.SUCCESS;
                         })
                     )
                     .then(Commands.literal("delete")
@@ -430,11 +423,11 @@ public class InternalCommand {
                             String id = ctx.getArgument("id", String.class);
                             if (!Registries.PERMISSION_GROUPS.contains(id)) {
                                 reply(ctx, "<red>Group does not exist.</red>");
-                                return 0;
+                                return Command.FAILURE;
                             }
                             AbyssalLib.PERMISSION_MANAGER.deleteGroup(id);
                             reply(ctx, "<green>Group deleted.</green>");
-                            return 1;
+                            return Command.SUCCESS;
                         })
                     )
                     .then(Commands.literal("setweight")
@@ -442,11 +435,11 @@ public class InternalCommand {
                             .executes(ctx -> {
                                 String id = ctx.getArgument("id", String.class);
                                 PermissionGroup group = Registries.PERMISSION_GROUPS.get(id);
-                                if (group == null) return 0;
+                                if (group == null) return Command.FAILURE;
                                 group.setWeight(ctx.getArgument("weight", Integer.class));
                                 group.save();
                                 reply(ctx, "<green>Weight set.</green>");
-                                return 1;
+                                return Command.SUCCESS;
                             })
                         )
                     )
@@ -457,11 +450,11 @@ public class InternalCommand {
                                     .executes(ctx -> {
                                         String id = ctx.getArgument("id", String.class);
                                         PermissionGroup group = Registries.PERMISSION_GROUPS.get(id);
-                                        if (group == null) return 0;
+                                        if (group == null) return Command.FAILURE;
                                         group.setPermission(new Node(ctx.getArgument("node", String.class), ctx.getArgument("value", Boolean.class)));
                                         group.save();
                                         reply(ctx, "<green>Permission set for group.</green>");
-                                        return 1;
+                                        return Command.SUCCESS;
                                     })
                                 )
                             )
@@ -471,11 +464,11 @@ public class InternalCommand {
                                 .executes(ctx -> {
                                     String id = ctx.getArgument("id", String.class);
                                     PermissionGroup group = Registries.PERMISSION_GROUPS.get(id);
-                                    if (group == null) return 0;
+                                    if (group == null) return Command.FAILURE;
                                     group.unsetPermission(ctx.getArgument("node", String.class));
                                     group.save();
                                     reply(ctx, "<green>Permission unset for group.</green>");
-                                    return 1;
+                                    return Command.SUCCESS;
                                 })
                             )
                         )
@@ -485,23 +478,14 @@ public class InternalCommand {
         );
     }
 
-    private static int serializeItemExecutor(CommandContext<CommandSourceStack> ctx, PlayerSelectorArgumentResolver targetResolver) throws CommandSyntaxException {
-        List<Player> targets = new ArrayList<>();
-        if (targetResolver != null) {
-            targets.addAll(targetResolver.resolve(ctx.getSource()));
-        } else {
-            Player player = getPlayer(ctx);
-            if (player == null) return 0;
-            targets.add(player);
-        }
+    private static int serializeItemExecutor(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return Command.FAILURE;
 
-        if (targets.isEmpty()) return 0;
-        Player target = targets.getFirst();
-
-        ItemStack held = target.getInventory().getItemInMainHand();
+        ItemStack held = player.getInventory().getItemInMainHand();
         if (held.isEmpty()) {
-            reply(ctx, "<red>Target must be holding an item to serialize.</red>");
-            return 0;
+            reply(ctx, "<red>You must be holding an item to serialize.</red>");
+            return Command.FAILURE;
         }
 
         ExportFormat format = ctx.getArgument("format", ExportFormat.class);
@@ -510,12 +494,12 @@ public class InternalCommand {
 
     private static int serializeBlockExecutor(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
-        if (player == null) return 0;
+        if (player == null) return Command.FAILURE;
 
         Block block = player.getTargetBlockExact(10);
         if (block == null) {
             reply(ctx, "<red>You must be looking at a block to serialize.</red>");
-            return 0;
+            return Command.FAILURE;
         }
 
         BlockInfo info = BlockInfo.resolve(block);
@@ -525,12 +509,12 @@ public class InternalCommand {
 
     private static int serializeEntityExecutor(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
-        if (player == null) return 0;
+        if (player == null) return Command.FAILURE;
 
         Entity target = player.getTargetEntity(10);
         if (target == null) {
             reply(ctx, "<red>You must be looking at an entity to serialize.</red>");
-            return 0;
+            return Command.FAILURE;
         }
 
         ExportFormat format = ctx.getArgument("format", ExportFormat.class);
@@ -551,13 +535,13 @@ public class InternalCommand {
                     result = YamlOps.dump(ExtraCodecs.SAVED_ENTITY.encode(YamlOps.INSTANCE, saved));
                 }
                 default -> {
-                    return 0;
+                    return Command.FAILURE;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
             reply(ctx, "<red>Failed to serialize entity.</red>");
-            return 0;
+            return Command.FAILURE;
         }
 
         reply(ctx, "<green>Entity successfully serialized! <click:copy_to_clipboard:'" + result.replace("'", "\\'") + "'><aqua><u>Click here to copy</u></aqua></click></green>");
@@ -572,13 +556,13 @@ public class InternalCommand {
                 case JSON -> result = JsonOps.INSTANCE.mapper.writeValueAsString(codec.encode(JsonOps.INSTANCE, value));
                 case YAML -> result = YamlOps.dump(codec.encode(YamlOps.INSTANCE, value));
                 default -> {
-                    return 0;
+                    return Command.FAILURE;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
             reply(ctx, "<red>Failed to serialize object.</red>");
-            return 0;
+            return Command.FAILURE;
         }
 
         reply(ctx, "<green>Successfully serialized! <click:copy_to_clipboard:'" + result.replace("'", "\\'") + "'><aqua><u>Click here to copy</u></aqua></click></green>");
@@ -586,13 +570,12 @@ public class InternalCommand {
     }
 
     private static int sendToastExecutor(CommandContext<CommandSourceStack> ctx, boolean held, boolean hasSubtitle) throws CommandSyntaxException {
-        PlayerSelectorArgumentResolver resolver = ctx.getArgument("targets", PlayerSelectorArgumentResolver.class);
-        List<Player> targets = resolver.resolve(ctx.getSource());
+        List<Player> targets = ctx.getArgument("targets", PlayerSelectorArgumentResolver.class).resolve(ctx.getSource());
         ItemStack iconItem;
 
         if (held) {
             Player player = getPlayer(ctx);
-            if (player == null) return 0;
+            if (player == null) return Command.FAILURE;
             iconItem = player.getInventory().getItemInMainHand();
         } else {
             CompoundTag nbt = ctx.getArgument("nbt", CompoundTag.class);
@@ -600,7 +583,7 @@ public class InternalCommand {
                 iconItem = Codecs.ITEM_STACK.decode(NbtOps.INSTANCE, nbt);
             } catch (Exception e) {
                 reply(ctx, "<red>Failed to parse custom NBT item.</red>");
-                return 0;
+                return Command.FAILURE;
             }
         }
 
@@ -636,7 +619,7 @@ public class InternalCommand {
             sourceLoc = ctx.getSource().getLocation();
         }
 
-        if (sourceLoc.getWorld() == null) return 0;
+        if (sourceLoc.getWorld() == null) return Command.FAILURE;
 
         Key structureKey = ctx.getArgument("structure", Key.class);
         String structureId = structureKey.asString();
@@ -690,23 +673,15 @@ public class InternalCommand {
         }
     }
 
-    private static int giveMultiExecutor(CommandContext<CommandSourceStack> ctx, int amount, PlayerSelectorArgumentResolver targetResolver) throws CommandSyntaxException {
-        List<Player> targets;
-        if (targetResolver != null) {
-            targets = targetResolver.resolve(ctx.getSource());
-        } else {
-            Player player = getPlayer(ctx);
-            if (player == null) return 0;
-            targets = List.of(player);
-        }
-
+    private static int giveMultiExecutor(CommandContext<CommandSourceStack> ctx, int amount) throws CommandSyntaxException {
+        List<Player> targets = ctx.getArgument("targets", PlayerSelectorArgumentResolver.class).resolve(ctx.getSource());
         Item item = ctx.getArgument("item", Item.class);
 
         for (Player player : targets) {
             player.getInventory().addItem(item.getStack().asQuantity(amount));
         }
 
-        return targets.size();
+        return Command.SUCCESS;
     }
 
     public static int attributeGetExecutor(CommandContext<CommandSourceStack> ctx) {
@@ -748,7 +723,7 @@ public class InternalCommand {
     public static int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
         FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
         Location sourceLoc = ctx.getSource().getLocation();
-        if (sourceLoc.getWorld() == null) return 0;
+        if (sourceLoc.getWorld() == null) return Command.FAILURE;
         Location loc = position.resolve(ctx.getSource()).toLocation(sourceLoc.getWorld());
 
         CustomEntity<? extends LivingEntity> entity = ctx.getArgument("entity", CustomEntity.class);
@@ -758,7 +733,7 @@ public class InternalCommand {
     }
 
     private static int setLootTableLookingExecutor(CommandContext<CommandSourceStack> ctx) {
-        if (!(ctx.getSource().getExecutor() instanceof Player player)) return 0;
+        if (!(ctx.getSource().getExecutor() instanceof Player player)) return Command.FAILURE;
 
         LootTable table = ctx.getArgument("table", LootTable.class);
         String tableId = Registries.LOOT_TABLES.getId(table);
@@ -781,13 +756,13 @@ public class InternalCommand {
             return Command.SUCCESS;
         }
 
-        return 0;
+        return Command.FAILURE;
     }
 
     private static int setLootTableExecutor(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
         Location sourceLoc = ctx.getSource().getLocation();
-        if (sourceLoc.getWorld() == null) return 0;
+        if (sourceLoc.getWorld() == null) return Command.FAILURE;
 
         Location loc = position.resolve(ctx.getSource()).toLocation(sourceLoc.getWorld());
         LootTable table = ctx.getArgument("table", LootTable.class);
@@ -812,12 +787,16 @@ public class InternalCommand {
             return Command.SUCCESS;
         }
 
-        return 0;
+        reply(ctx, "<red>Target block is not a valid container, and no entity was found.</red>");
+        return Command.FAILURE;
     }
 
     private static int sendStats(CommandContext<CommandSourceStack> ctx, Player target, int page) {
         Map<Statistic, Integer> statsMap = PlayerStatistics.of(target).getAll();
-        if (statsMap.isEmpty()) return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+        if (statsMap.isEmpty()) {
+            reply(ctx, "<red>✖</red> <gray>No statistics found for <white>" + target.getName() + "</white>.</gray>");
+            return Command.SUCCESS;
+        }
 
         List<Map.Entry<Statistic, Integer>> entries = new ArrayList<>(statsMap.entrySet());
         entries.sort(Comparator.comparing((Map.Entry<Statistic, Integer> e) -> e.getKey().type().id().asString())
@@ -860,7 +839,7 @@ public class InternalCommand {
         message = message.append(TextUtil.parse(footer + "\n"));
 
         ctx.getSource().getSender().sendMessage(message);
-        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+        return Command.SUCCESS;
     }
 
     public static int getSelfStatistics(CommandContext<CommandSourceStack> ctx) {
@@ -869,7 +848,7 @@ public class InternalCommand {
         try {
             page = ctx.getArgument("page", Integer.class);
         } catch (IllegalArgumentException ignored) {}
-        return player == null ? 0 : sendStats(ctx, player, page);
+        return player == null ? Command.FAILURE : sendStats(ctx, player, page);
     }
 
     public static int getOtherStatistics(CommandContext<CommandSourceStack> ctx) {
@@ -878,20 +857,20 @@ public class InternalCommand {
         try {
             page = ctx.getArgument("page", Integer.class);
         } catch (IllegalArgumentException ignored) {}
-        return target == null ? com.mojang.brigadier.Command.SINGLE_SUCCESS : sendStats(ctx, target, page);
+        return target == null ? Command.FAILURE : sendStats(ctx, target, page);
     }
 
     public static int getSelfStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
         if (player != null) PlayerStatisticMenu.open(player, player);
-        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+        return Command.SUCCESS;
     }
 
     public static int getOtherStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player target = resolvePlayer(ctx);
         Player viewer = getPlayer(ctx);
         if (target != null && viewer != null) PlayerStatisticMenu.open(viewer, target);
-        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+        return Command.SUCCESS;
     }
 
     private static void reply(CommandContext<CommandSourceStack> ctx, String message) {
