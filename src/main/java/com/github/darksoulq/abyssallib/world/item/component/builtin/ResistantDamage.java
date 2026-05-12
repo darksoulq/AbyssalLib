@@ -12,11 +12,9 @@ import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.TypedKey;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
-import io.papermc.paper.registry.tag.TagKey;
 import net.kyori.adventure.key.Key;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
-import org.bukkit.block.banner.PatternType;
 import org.bukkit.damage.DamageType;
 import org.bukkit.inventory.ItemStack;
 

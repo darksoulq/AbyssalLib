@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.resource.asset;
 
 import org.bukkit.plugin.Plugin;
+
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

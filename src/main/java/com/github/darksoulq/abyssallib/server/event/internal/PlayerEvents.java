@@ -7,17 +7,15 @@ import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractio
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
 import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
-import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 
 import java.util.HashMap;
 
@@ -40,7 +38,6 @@ public class PlayerEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onJoin(PlayerJoinEvent event) {
         PacketInterceptor.inject(event.getPlayer());
-        EntityAttributes.of(event.getPlayer());
         PlayerStatistics.of(event.getPlayer());
         if (AbyssalLib.PERMISSION_MANAGER != null) {
             AbyssalLib.PERMISSION_MANAGER.handleJoin(event.getPlayer());

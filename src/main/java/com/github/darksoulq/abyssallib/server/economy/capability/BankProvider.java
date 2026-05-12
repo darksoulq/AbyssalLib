@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.economy.capability;
 
 import com.github.darksoulq.abyssallib.server.economy.Account;
 import net.kyori.adventure.key.Key;
+
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;

@@ -5,9 +5,14 @@ import com.github.darksoulq.abyssallib.server.translation.ClientItemModifier;
 import com.github.darksoulq.abyssallib.server.translation.ItemTranslationContext;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.mojang.datafixers.util.Pair;
+import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
@@ -19,15 +24,7 @@ import net.minecraft.network.protocol.common.ClientboundShowDialogPacket;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.dialog.ActionButton;
-import net.minecraft.server.dialog.CommonButtonData;
-import net.minecraft.server.dialog.CommonDialogData;
-import net.minecraft.server.dialog.ConfirmationDialog;
-import net.minecraft.server.dialog.Dialog;
-import net.minecraft.server.dialog.DialogListDialog;
-import net.minecraft.server.dialog.MultiActionDialog;
-import net.minecraft.server.dialog.NoticeDialog;
-import net.minecraft.server.dialog.ServerLinksDialog;
+import net.minecraft.server.dialog.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -44,12 +41,7 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -546,19 +538,19 @@ public class ItemPacketModifier {
     private static Component preProcessTags(Component component) {
         return component
             .replaceText(b -> b.match(LANG_PATTERN)
-                .replacement((match, builder) -> Component.translatable(match.group(1))))
+                .replacement((match, _) -> Component.translatable(match.group(1))))
             .replaceText(b -> b.match(LANG_OR_PATTERN)
-                .replacement((match, builder) -> Component.translatable(match.group(1)).fallback(match.group(2))));
+                .replacement((match, _) -> Component.translatable(match.group(1)).fallback(match.group(2))));
     }
 
-    private static net.minecraft.network.chat.Component translateItemNMS(net.minecraft.network.chat.Component vanilla, Player player, ItemStack stack, ItemTranslationContext context) {
+    public static net.minecraft.network.chat.Component translateItemNMS(net.minecraft.network.chat.Component vanilla, Player player, ItemStack stack, ItemTranslationContext context) {
         Component adventure = preProcessTags(PaperAdventure.asAdventure(vanilla));
         org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
         Component translated = ServerTranslator.translateItemComponent(adventure, player, bukkitStack, context);
         return PaperAdventure.asVanilla(translated);
     }
 
-    private static net.minecraft.network.chat.Component translateNMS(net.minecraft.network.chat.Component vanilla, Player player) {
+    public static net.minecraft.network.chat.Component translateNMS(net.minecraft.network.chat.Component vanilla, Player player) {
         Component adventure = preProcessTags(PaperAdventure.asAdventure(vanilla));
         Component translated = ServerTranslator.translate(adventure, player);
         return PaperAdventure.asVanilla(translated);

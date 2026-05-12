@@ -10,6 +10,7 @@ import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntityLo
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.internal.EntityManager;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.event.entity.EntityDeathEvent;
 
 public class EntityEvents {
 
@@ -26,7 +27,7 @@ public class EntityEvents {
     }
 
     @SubscribeEvent(ignoreCancelled = false)
-    public void onEntityDeath(org.bukkit.event.entity.EntityDeathEvent event) {
+    public void onEntityDeath(EntityDeathEvent event) {
         CustomEntity<? extends LivingEntity> entity = CustomEntity.resolve(event.getEntity());
         if (entity == null) return;
 

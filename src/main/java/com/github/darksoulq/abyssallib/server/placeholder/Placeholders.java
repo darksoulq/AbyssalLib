@@ -6,7 +6,6 @@ import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractDou
 import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractStringPlaceholder;
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.data.attribute.AttributeModifier;
 import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
@@ -18,7 +17,6 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 
 import java.util.Locale;
-import java.util.Map;
 
 public class Placeholders {
 

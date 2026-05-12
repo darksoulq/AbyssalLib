@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.resource;
 
-import com.github.darksoulq.abyssallib.common.model.blockbench.BBModel;
 import com.github.darksoulq.abyssallib.server.resource.asset.*;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
 import org.bukkit.plugin.Plugin;
@@ -81,6 +80,24 @@ public class Namespace {
         CoreShader c = new CoreShader(namespace, name, vsh, fsh, json);
         assets.add(c);
         return c;
+    }
+
+    public IncludeShader includeShader(String name) {
+        IncludeShader i = new IncludeShader(plugin, namespace, name);
+        assets.add(i);
+        return i;
+    }
+
+    public IncludeShader includeShader(String name, byte[] glsl) {
+        IncludeShader i = new IncludeShader(namespace, name, glsl);
+        assets.add(i);
+        return i;
+    }
+
+    public IncludeShader includeShader(String name, String glsl) {
+        IncludeShader i = new IncludeShader(namespace, name, glsl);
+        assets.add(i);
+        return i;
     }
 
     /**

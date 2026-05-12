@@ -17,8 +17,12 @@ public class PluginPermissions {
     public static final PermissionNode ENTITY_SUMMON = NAMESPACE.register("entity.summon", n -> new PermissionNode(n)
         .defaultValue(PermissionDefault.OP)
         .description("Allows summoning entities"));
-    public static final PermissionNode LOOT_SET = NAMESPACE.register("loot.set", n -> new PermissionNode(n).defaultValue(PermissionDefault.OP));
-    public static final PermissionNode LOCATE = NAMESPACE.register("locate", n -> new PermissionNode(n).defaultValue(PermissionDefault.OP));
+    public static final PermissionNode LOOT_SET = NAMESPACE.register("loot.set", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows setting custom loot tables"));
+    public static final PermissionNode LOCATE = NAMESPACE.register("locate", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows locating custom structures"));
 
     public static final PermissionNode STATISTICS_VIEW_SELF = NAMESPACE.register("statistics.view.self", n -> new PermissionNode(n)
         .defaultValue(PermissionDefault.TRUE)
@@ -38,8 +42,26 @@ public class PluginPermissions {
         .description("Allows reloading commands, lang files, resource packs."));
     public static final PermissionNode CONTENT_ITEMS_VIEW = NAMESPACE.register("content.items.view", n -> new PermissionNode(n)
         .defaultValue(PermissionDefault.OP)
-        .description(" Allows opening the content items menu"));
+        .description("Allows opening the content items menu"));
 
-    public static final PermissionNode PERMISSIONS_EDIT = NAMESPACE.register("permissions.edit", n -> new PermissionNode(n).defaultValue(PermissionDefault.OP));
-    public static final PermissionNode PERMISSIONS_WEB = NAMESPACE.register("permissions.web", n -> new PermissionNode(n).defaultValue(PermissionDefault.OP));
+    public static final PermissionNode PERMISSIONS_EDIT = NAMESPACE.register("permissions.edit", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows editing permissions via gui or commands"));
+    public static final PermissionNode PERMISSIONS_WEB = NAMESPACE.register("permissions.web", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows generating web editor links for permissions"));
+
+    public static final PermissionNode TOAST_SEND = NAMESPACE.register("toast.send", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows sending toasts to players"));
+
+    public static final PermissionNode SERIALIZE_ITEM = NAMESPACE.register("serialize.item", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows serializing held items"));
+    public static final PermissionNode SERIALIZE_BLOCK = NAMESPACE.register("serialize.block", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows serializing the target block"));
+    public static final PermissionNode SERIALIZE_ENTITY = NAMESPACE.register("serialize.entity", n -> new PermissionNode(n)
+        .defaultValue(PermissionDefault.OP)
+        .description("Allows serializing the target entity"));
 }

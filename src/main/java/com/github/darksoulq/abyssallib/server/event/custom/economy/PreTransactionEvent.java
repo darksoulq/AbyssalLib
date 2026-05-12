@@ -7,6 +7,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+
 import java.math.BigDecimal;
 
 public class PreTransactionEvent extends Event implements Cancellable {

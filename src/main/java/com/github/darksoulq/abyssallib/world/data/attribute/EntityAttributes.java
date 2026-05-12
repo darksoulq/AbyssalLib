@@ -252,6 +252,30 @@ public class EntityAttributes {
             });
     }
 
+    public void delete() {
+        CACHE.remove(uuid);
+        instances.clear();
+        rawBaseValues.clear();
+        DATABASE.executor().table("entity_data")
+            .where("uuid = ?", uuid.toString())
+            .delete()
+            .executeAsync();
+    }
+
+    public void unload() {
+        CACHE.remove(uuid);
+        instances.clear();
+        rawBaseValues.clear();
+    }
+
+    public static void unloadIfCached(UUID uuid) {
+        EntityAttributes attrs = CACHE.remove(uuid);
+        if (attrs != null) {
+            attrs.instances.clear();
+            attrs.rawBaseValues.clear();
+        }
+    }
+
     private void save(String key, String value) {
         DATABASE.executor().table("entity_data").replace()
             .value("uuid", uuid.toString())

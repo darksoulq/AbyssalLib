@@ -6,8 +6,6 @@ import com.github.darksoulq.abyssallib.common.reflection.ReflectField;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.block.property.Property;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

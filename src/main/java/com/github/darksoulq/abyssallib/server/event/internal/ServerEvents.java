@@ -97,7 +97,7 @@ public class ServerEvents {
                 }
             }.runTaskLater(AbyssalLib.getInstance(), 10);
         } else {
-            TaskUtil.delayedTask(AbyssalLib.getInstance(), 1, RecipeLoader::reload);
+            RecipeLoader.reload();
             reloadAdvancements();
         }
     }

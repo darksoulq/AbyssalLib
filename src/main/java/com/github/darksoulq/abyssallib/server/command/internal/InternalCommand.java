@@ -1,13 +1,22 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.bootstrap.PackSetup;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
+import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
+import com.github.darksoulq.abyssallib.common.serialization.ops.NbtOps;
+import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.command.Command;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
 import com.github.darksoulq.abyssallib.server.command.DefaultConditions;
+import com.github.darksoulq.abyssallib.server.command.argument.EnumArgument;
+import com.github.darksoulq.abyssallib.server.command.argument.NbtCompoundArgument;
 import com.github.darksoulq.abyssallib.server.command.argument.RegistryEntryArgument;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.permission.Node;
@@ -17,7 +26,8 @@ import com.github.darksoulq.abyssallib.server.permission.internal.PluginPermissi
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.ResourcePack;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
+import com.github.darksoulq.abyssallib.world.advancement.AdvancementFrame;
+import com.github.darksoulq.abyssallib.world.advancement.Toast;
 import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatisticMenu;
@@ -31,11 +41,6 @@ import com.github.darksoulq.abyssallib.world.gui.internal.ItemMenu;
 import com.github.darksoulq.abyssallib.world.gui.internal.PermissionMenu;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
-import com.github.darksoulq.abyssallib.world.particle.Particles;
-import com.github.darksoulq.abyssallib.world.particle.impl.Generators;
-import com.github.darksoulq.abyssallib.world.particle.impl.Renderers;
-import com.github.darksoulq.abyssallib.world.particle.timeline.Animations;
-import com.github.darksoulq.abyssallib.world.particle.timeline.Billboarding;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -54,27 +59,23 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import net.kyori.adventure.text.Component;
-import org.bukkit.*;
-import org.bukkit.Color;
+import net.minecraft.nbt.CompoundTag;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
-import java.awt.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -83,14 +84,27 @@ import static com.github.darksoulq.abyssallib.server.resource.ResourcePack.UUID_
 
 public class InternalCommand {
 
+    public enum ExportFormat {
+        NBT, JSON, YAML
+    }
+
     @Command(name = "abyssallib")
     public void register(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("give")
             .requires(DefaultConditions.hasPerm(PluginPermissions.ITEMS_GIVE))
             .then(Commands.argument("item", RegistryEntryArgument.registryEntry(Registries.ITEMS))
-                .executes(InternalCommand::giveOneExecutor)
+                .requires(DefaultConditions.playerOnly())
+                .executes(ctx -> giveMultiExecutor(ctx, 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                    .executes(InternalCommand::giveMultiExecutor)
+                    .executes(ctx -> giveMultiExecutor(ctx, ctx.getArgument("amount", Integer.class), null))
+                )
+            )
+            .then(Commands.argument("targets", ArgumentTypes.players())
+                .then(Commands.argument("item", RegistryEntryArgument.registryEntry(Registries.ITEMS))
+                    .executes(ctx -> giveMultiExecutor(ctx, 1, ctx.getArgument("targets", PlayerSelectorArgumentResolver.class)))
+                    .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                        .executes(ctx -> giveMultiExecutor(ctx, ctx.getArgument("amount", Integer.class), ctx.getArgument("targets", PlayerSelectorArgumentResolver.class)))
+                    )
                 )
             )
         ).then(Commands.literal("attribute")
@@ -107,11 +121,14 @@ public class InternalCommand {
             .requires(DefaultConditions.hasPerm(PluginPermissions.LOCATE))
             .then(Commands.literal("structure")
                 .then(Commands.argument("structure", ArgumentTypes.key())
-                    .suggests((ctx, builder) -> {
+                    .suggests((_, builder) -> {
                         Registries.STRUCTURES.getAll().keySet().forEach(builder::suggest);
                         return builder.buildFuture();
                     })
-                    .executes(InternalCommand::locateExecutor)
+                    .executes(ctx -> locateExecutor(ctx, null))
+                    .then(Commands.argument("location", ArgumentTypes.finePosition(false))
+                        .executes(ctx -> locateExecutor(ctx, ctx.getArgument("location", FinePositionResolver.class)))
+                    )
                 )
             )
         ).then(Commands.literal("summon")
@@ -121,7 +138,7 @@ public class InternalCommand {
                     .executes(ctx -> {
                         try {
                             return summonExecutor(ctx);
-                        } catch (CloneNotSupportedException e) {
+                        } catch (CloneNotSupportedException | CommandSyntaxException e) {
                             throw new RuntimeException(e);
                         }
                     })
@@ -139,6 +156,60 @@ public class InternalCommand {
                     .then(Commands.argument("table", RegistryEntryArgument.registryEntry(Registries.LOOT_TABLES))
                         .executes(InternalCommand::setLootTableExecutor)
                     )
+                )
+            )
+        ).then(Commands.literal("toast")
+            .requires(DefaultConditions.hasPerm(PluginPermissions.TOAST_SEND))
+            .then(Commands.argument("targets", ArgumentTypes.players())
+                .then(Commands.literal("held")
+                    .requires(DefaultConditions.playerOnly())
+                    .then(Commands.argument("frame", EnumArgument.enumArg(AdvancementFrame.class))
+                        .then(Commands.argument("title", StringArgumentType.string())
+                            .executes(ctx -> sendToastExecutor(ctx, true, false))
+                            .then(Commands.argument("subtitle", StringArgumentType.string())
+                                .executes(ctx -> sendToastExecutor(ctx, true, true))
+                            )
+                        )
+                    )
+                )
+                .then(Commands.literal("custom")
+                    .then(Commands.argument("frame", EnumArgument.enumArg(AdvancementFrame.class))
+                        .then(Commands.argument("title", StringArgumentType.string())
+                            .then(Commands.argument("nbt", NbtCompoundArgument.nbt())
+                                .executes(ctx -> sendToastExecutor(ctx, false, false))
+                            )
+                            .then(Commands.argument("subtitle", StringArgumentType.string())
+                                .then(Commands.argument("nbt", NbtCompoundArgument.nbt())
+                                    .executes(ctx -> sendToastExecutor(ctx, false, true))
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        ).then(Commands.literal("serialize")
+            .then(Commands.literal("item")
+                .requires(DefaultConditions.hasPerm(PluginPermissions.SERIALIZE_ITEM))
+                .then(Commands.argument("format", EnumArgument.enumArg(ExportFormat.class))
+                    .requires(DefaultConditions.playerOnly())
+                    .executes(ctx -> serializeItemExecutor(ctx, null))
+                )
+                .then(Commands.argument("targets", ArgumentTypes.players())
+                    .then(Commands.argument("format", EnumArgument.enumArg(ExportFormat.class))
+                        .executes(ctx -> serializeItemExecutor(ctx, ctx.getArgument("targets", PlayerSelectorArgumentResolver.class)))
+                    )
+                )
+            )
+            .then(Commands.literal("block")
+                .requires(DefaultConditions.playerOnly().and(DefaultConditions.hasPerm(PluginPermissions.SERIALIZE_BLOCK)))
+                .then(Commands.argument("format", EnumArgument.enumArg(ExportFormat.class))
+                    .executes(InternalCommand::serializeBlockExecutor)
+                )
+            )
+            .then(Commands.literal("entity")
+                .requires(DefaultConditions.playerOnly().and(DefaultConditions.hasPerm(PluginPermissions.SERIALIZE_ENTITY)))
+                .then(Commands.argument("format", EnumArgument.enumArg(ExportFormat.class))
+                    .executes(InternalCommand::serializeEntityExecutor)
                 )
             )
         ).then(Commands.literal("statistics")
@@ -195,13 +266,10 @@ public class InternalCommand {
             )
         ).then(Commands.literal("content")
             .then(Commands.literal("items")
-                .requires(DefaultConditions.hasPerm(PluginPermissions.CONTENT_ITEMS_VIEW))
+                .requires(DefaultConditions.playerOnly().and(DefaultConditions.hasPerm(PluginPermissions.CONTENT_ITEMS_VIEW)))
                 .executes(ctx -> {
-                    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-                        reply(ctx, "<red>Only players can run this command</red>");
-                        return 0;
-                    }
-                    ItemMenu.open(player);
+                    Player player = getPlayer(ctx);
+                    if (player != null) ItemMenu.open(player);
                     return Command.SUCCESS;
                 })
                 .then(Commands.argument("plugin", StringArgumentType.string())
@@ -214,12 +282,11 @@ public class InternalCommand {
                         return builder.buildFuture();
                     })
                     .executes(ctx -> {
-                        if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-                            reply(ctx, "<red>Only players can run this command</red>");
-                            return 0;
+                        Player player = getPlayer(ctx);
+                        if (player != null) {
+                            String ns = ctx.getArgument("plugin", String.class);
+                            ItemMenu.openPlugin(player, ns);
                         }
-                        String ns = ctx.getArgument("plugin", String.class);
-                        ItemMenu.openPlugin(player, ns);
                         return Command.SUCCESS;
                     })
                     .then(Commands.argument("category", StringArgumentType.string())
@@ -238,20 +305,19 @@ public class InternalCommand {
                             return builder.buildFuture();
                         })
                         .executes(ctx -> {
-                            if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-                                reply(ctx, "<red>Only players can run this command</red>");
-                                return 0;
-                            }
-                            String ns = ctx.getArgument("plugin", String.class);
-                            String catPath = ctx.getArgument("category", String.class);
+                            Player player = getPlayer(ctx);
+                            if (player != null) {
+                                String ns = ctx.getArgument("plugin", String.class);
+                                String catPath = ctx.getArgument("category", String.class);
 
-                            ItemCategory cat = Registries.ITEM_CATEGORIES.get(ns + ":" + catPath);
-                            if (cat != null) {
-                                ItemMenu.openCategory(player, cat);
-                            } else if (catPath.equals("all")) {
-                                ItemMenu.openPlugin(player, ns);
-                            } else {
-                                reply(ctx, "<red>Category not found.</red>");
+                                ItemCategory cat = Registries.ITEM_CATEGORIES.get(ns + ":" + catPath);
+                                if (cat != null) {
+                                    ItemMenu.openCategory(player, cat);
+                                } else if (catPath.equals("all")) {
+                                    ItemMenu.openPlugin(player, ns);
+                                } else {
+                                    reply(ctx, "<red>Category not found.</red>");
+                                }
                             }
                             return Command.SUCCESS;
                         })
@@ -261,9 +327,10 @@ public class InternalCommand {
         ).then(Commands.literal("permissions")
             .requires(DefaultConditions.hasPerm(PluginPermissions.PERMISSIONS_EDIT).or(DefaultConditions.consoleOnly()))
             .then(Commands.literal("gui")
+                .requires(DefaultConditions.playerOnly())
                 .executes(ctx -> {
-                    if (!(ctx.getSource().getExecutor() instanceof Player p)) return 0;
-                    PermissionMenu.openMainMenu(p);
+                    Player p = getPlayer(ctx);
+                    if (p != null) PermissionMenu.openMainMenu(p);
                     return Command.SUCCESS;
                 })
             )
@@ -418,20 +485,167 @@ public class InternalCommand {
         );
     }
 
-    private static int locateExecutor(CommandContext<CommandSourceStack> ctx) {
-        Entity sender = isEntity(ctx.getSource());
-        if (sender == null) return 0;
-        Player player = sender instanceof Player p ? p : null;
+    private static int serializeItemExecutor(CommandContext<CommandSourceStack> ctx, PlayerSelectorArgumentResolver targetResolver) throws CommandSyntaxException {
+        List<Player> targets = new ArrayList<>();
+        if (targetResolver != null) {
+            targets.addAll(targetResolver.resolve(ctx.getSource()));
+        } else {
+            Player player = getPlayer(ctx);
+            if (player == null) return 0;
+            targets.add(player);
+        }
+
+        if (targets.isEmpty()) return 0;
+        Player target = targets.getFirst();
+
+        ItemStack held = target.getInventory().getItemInMainHand();
+        if (held.isEmpty()) {
+            reply(ctx, "<red>Target must be holding an item to serialize.</red>");
+            return 0;
+        }
+
+        ExportFormat format = ctx.getArgument("format", ExportFormat.class);
+        return serializeAndSend(ctx, format, Codecs.ITEM_STACK, held);
+    }
+
+    private static int serializeBlockExecutor(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
         if (player == null) return 0;
+
+        Block block = player.getTargetBlockExact(10);
+        if (block == null) {
+            reply(ctx, "<red>You must be looking at a block to serialize.</red>");
+            return 0;
+        }
+
+        BlockInfo info = BlockInfo.resolve(block);
+        ExportFormat format = ctx.getArgument("format", ExportFormat.class);
+        return serializeAndSend(ctx, format, ExtraCodecs.BLOCK_INFO, info);
+    }
+
+    private static int serializeEntityExecutor(CommandContext<CommandSourceStack> ctx) {
+        Player player = getPlayer(ctx);
+        if (player == null) return 0;
+
+        Entity target = player.getTargetEntity(10);
+        if (target == null) {
+            reply(ctx, "<red>You must be looking at an entity to serialize.</red>");
+            return 0;
+        }
+
+        ExportFormat format = ctx.getArgument("format", ExportFormat.class);
+        String result;
+
+        try {
+            switch (format) {
+                case NBT -> {
+                    SavedEntity saved = SavedEntity.create(target, NbtOps.INSTANCE);
+                    result = ExtraCodecs.SAVED_ENTITY.encode(NbtOps.INSTANCE, saved).toString();
+                }
+                case JSON -> {
+                    SavedEntity saved = SavedEntity.create(target, JsonOps.INSTANCE);
+                    result = JsonOps.INSTANCE.mapper.writeValueAsString(ExtraCodecs.SAVED_ENTITY.encode(JsonOps.INSTANCE, saved));
+                }
+                case YAML -> {
+                    SavedEntity saved = SavedEntity.create(target, YamlOps.INSTANCE);
+                    result = YamlOps.dump(ExtraCodecs.SAVED_ENTITY.encode(YamlOps.INSTANCE, saved));
+                }
+                default -> {
+                    return 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            reply(ctx, "<red>Failed to serialize entity.</red>");
+            return 0;
+        }
+
+        reply(ctx, "<green>Entity successfully serialized! <click:copy_to_clipboard:'" + result.replace("'", "\\'") + "'><aqua><u>Click here to copy</u></aqua></click></green>");
+        return Command.SUCCESS;
+    }
+
+    private static <T> int serializeAndSend(CommandContext<CommandSourceStack> ctx, ExportFormat format, Codec<T> codec, T value) {
+        String result;
+        try {
+            switch (format) {
+                case NBT -> result = codec.encode(NbtOps.INSTANCE, value).toString();
+                case JSON -> result = JsonOps.INSTANCE.mapper.writeValueAsString(codec.encode(JsonOps.INSTANCE, value));
+                case YAML -> result = YamlOps.dump(codec.encode(YamlOps.INSTANCE, value));
+                default -> {
+                    return 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            reply(ctx, "<red>Failed to serialize object.</red>");
+            return 0;
+        }
+
+        reply(ctx, "<green>Successfully serialized! <click:copy_to_clipboard:'" + result.replace("'", "\\'") + "'><aqua><u>Click here to copy</u></aqua></click></green>");
+        return Command.SUCCESS;
+    }
+
+    private static int sendToastExecutor(CommandContext<CommandSourceStack> ctx, boolean held, boolean hasSubtitle) throws CommandSyntaxException {
+        PlayerSelectorArgumentResolver resolver = ctx.getArgument("targets", PlayerSelectorArgumentResolver.class);
+        List<Player> targets = resolver.resolve(ctx.getSource());
+        ItemStack iconItem;
+
+        if (held) {
+            Player player = getPlayer(ctx);
+            if (player == null) return 0;
+            iconItem = player.getInventory().getItemInMainHand();
+        } else {
+            CompoundTag nbt = ctx.getArgument("nbt", CompoundTag.class);
+            try {
+                iconItem = Codecs.ITEM_STACK.decode(NbtOps.INSTANCE, nbt);
+            } catch (Exception e) {
+                reply(ctx, "<red>Failed to parse custom NBT item.</red>");
+                return 0;
+            }
+        }
+
+        AdvancementFrame advFrame = ctx.getArgument("frame", AdvancementFrame.class);
+        String titleStr = ctx.getArgument("title", String.class);
+        String subtitleStr = hasSubtitle ? ctx.getArgument("subtitle", String.class) : null;
+
+        for (Player p : targets) {
+            Component title = ServerTranslator.parseText(titleStr, p);
+            Toast.Builder builder = Toast.builder()
+                .titlle(title)
+                .icon(iconItem)
+                .frame(advFrame);
+
+            if (hasSubtitle) {
+                Component subtitle = ServerTranslator.parseText(subtitleStr, p);
+                builder.subtitle(subtitle);
+            }
+
+            Toast toast = builder.build();
+            toast.send(p);
+        }
+
+        reply(ctx, "<green>Toast sent to " + targets.size() + " players.</green>");
+        return Command.SUCCESS;
+    }
+
+    private static int locateExecutor(CommandContext<CommandSourceStack> ctx, FinePositionResolver posResolver) throws CommandSyntaxException {
+        Location sourceLoc;
+        if (posResolver != null) {
+            sourceLoc = posResolver.resolve(ctx.getSource()).toLocation(ctx.getSource().getLocation().getWorld());
+        } else {
+            sourceLoc = ctx.getSource().getLocation();
+        }
+
+        if (sourceLoc.getWorld() == null) return 0;
 
         Key structureKey = ctx.getArgument("structure", Key.class);
         String structureId = structureKey.asString();
 
         reply(ctx, "<yellow>Locating " + structureId + "...</yellow>");
 
-        StructureLocator.locate(player.getWorld(), structureId, player.getLocation(), 100).thenAccept(loc -> {
+        StructureLocator.locate(sourceLoc.getWorld(), structureId, sourceLoc, 100).thenAccept(loc -> {
             if (loc != null) {
-                int distance = (int) player.getLocation().distance(loc);
+                int distance = (int) sourceLoc.distance(loc);
                 reply(ctx, "<green>Found " + structureId + " at <aqua><click:suggest_command:'/tp " + loc.getBlockX() + " ~ " + loc.getBlockZ() + "'>" + loc.getBlockX() + " ~ " + loc.getBlockZ() + "</click></aqua> <gray>(" + distance + " blocks away)</gray></green>");
             } else {
                 reply(ctx, "<red>Could not find " + structureId + " nearby.</red>");
@@ -476,21 +690,23 @@ public class InternalCommand {
         }
     }
 
-    private static int giveItem(CommandContext<CommandSourceStack> ctx, int amount) {
-        Player player = getPlayer(ctx);
-        if (player == null) return Command.SUCCESS;
+    private static int giveMultiExecutor(CommandContext<CommandSourceStack> ctx, int amount, PlayerSelectorArgumentResolver targetResolver) throws CommandSyntaxException {
+        List<Player> targets;
+        if (targetResolver != null) {
+            targets = targetResolver.resolve(ctx.getSource());
+        } else {
+            Player player = getPlayer(ctx);
+            if (player == null) return 0;
+            targets = List.of(player);
+        }
 
         Item item = ctx.getArgument("item", Item.class);
-        player.getInventory().addItem(item.getStack().asQuantity(amount));
-        return Command.SUCCESS;
-    }
 
-    private static int giveOneExecutor(CommandContext<CommandSourceStack> ctx) {
-        return giveItem(ctx, 1);
-    }
+        for (Player player : targets) {
+            player.getInventory().addItem(item.getStack().asQuantity(amount));
+        }
 
-    private static int giveMultiExecutor(CommandContext<CommandSourceStack> ctx) {
-        return giveItem(ctx, ctx.getArgument("amount", int.class));
+        return targets.size();
     }
 
     public static int attributeGetExecutor(CommandContext<CommandSourceStack> ctx) {
@@ -504,7 +720,7 @@ public class InternalCommand {
                     data.load();
                     Map<String, String> attribMap = data.getAllAttributes();
                     if (attribMap.containsKey(key.toString())) {
-                        ctx.getSource().getSender().sendMessage(key + ": " + attribMap.get(key.toString()));
+                        ctx.getSource().getSender().sendMessage(Component.text(key + ": " + attribMap.get(key.toString())));
                     }
                 }
             })
@@ -529,11 +745,11 @@ public class InternalCommand {
     }
 
     @SuppressWarnings("unchecked")
-    public int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
+    public static int summonExecutor(CommandContext<CommandSourceStack> ctx) throws CloneNotSupportedException, CommandSyntaxException {
         FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
-        Entity sender = isEntity(ctx.getSource());
-        if (sender == null) return Command.SUCCESS;
-        Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
+        Location sourceLoc = ctx.getSource().getLocation();
+        if (sourceLoc.getWorld() == null) return 0;
+        Location loc = position.resolve(ctx.getSource()).toLocation(sourceLoc.getWorld());
 
         CustomEntity<? extends LivingEntity> entity = ctx.getArgument("entity", CustomEntity.class);
         entity.clone().spawn(loc, CustomEntitySpawnEvent.SpawnReason.PLUGIN);
@@ -542,10 +758,7 @@ public class InternalCommand {
     }
 
     private static int setLootTableLookingExecutor(CommandContext<CommandSourceStack> ctx) {
-        if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-            reply(ctx, "<red>Only players can use this command without specifying a location.</red>");
-            return 0;
-        }
+        if (!(ctx.getSource().getExecutor() instanceof Player player)) return 0;
 
         LootTable table = ctx.getArgument("table", LootTable.class);
         String tableId = Registries.LOOT_TABLES.getId(table);
@@ -568,16 +781,15 @@ public class InternalCommand {
             return Command.SUCCESS;
         }
 
-        reply(ctx, "<red>You are not looking at a valid container or entity.</red>");
         return 0;
     }
 
     private static int setLootTableExecutor(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         FinePositionResolver position = ctx.getArgument("location", FinePositionResolver.class);
-        Entity sender = isEntity(ctx.getSource());
-        if (sender == null) return 0;
+        Location sourceLoc = ctx.getSource().getLocation();
+        if (sourceLoc.getWorld() == null) return 0;
 
-        Location loc = position.resolve(ctx.getSource()).toLocation(sender.getWorld());
+        Location loc = position.resolve(ctx.getSource()).toLocation(sourceLoc.getWorld());
         LootTable table = ctx.getArgument("table", LootTable.class);
         String tableId = Registries.LOOT_TABLES.getId(table);
 
@@ -600,16 +812,12 @@ public class InternalCommand {
             return Command.SUCCESS;
         }
 
-        reply(ctx, "<red>Target block is not a valid container, and no entity was found.</red>");
         return 0;
     }
 
     private static int sendStats(CommandContext<CommandSourceStack> ctx, Player target, int page) {
         Map<Statistic, Integer> statsMap = PlayerStatistics.of(target).getAll();
-        if (statsMap.isEmpty()) {
-            reply(ctx, "<red>✖</red> <gray>No statistics found for <white>" + target.getName() + "</white>.</gray>");
-            return com.mojang.brigadier.Command.SINGLE_SUCCESS;
-        }
+        if (statsMap.isEmpty()) return com.mojang.brigadier.Command.SINGLE_SUCCESS;
 
         List<Map.Entry<Statistic, Integer>> entries = new ArrayList<>(statsMap.entrySet());
         entries.sort(Comparator.comparing((Map.Entry<Statistic, Integer> e) -> e.getKey().type().id().asString())
@@ -629,9 +837,7 @@ public class InternalCommand {
             Statistic stat = entry.getKey();
 
             StatisticFormatter formatter = Registries.STATISTIC_FORMATTERS.get(stat.type().id().asString());
-            if (formatter == null) {
-                formatter = new DefaultStatisticFormatter();
-            }
+            if (formatter == null) formatter = new DefaultStatisticFormatter();
 
             message = message.append(formatter.formatChat(stat, entry.getValue())).append(Component.newline());
         }
@@ -677,25 +883,15 @@ public class InternalCommand {
 
     public static int getSelfStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
-        if (player != null) {
-            PlayerStatisticMenu.open(player, player);
-        }
+        if (player != null) PlayerStatisticMenu.open(player, player);
         return com.mojang.brigadier.Command.SINGLE_SUCCESS;
     }
 
     public static int getOtherStatisticsMenu(CommandContext<CommandSourceStack> ctx) {
         Player target = resolvePlayer(ctx);
         Player viewer = getPlayer(ctx);
-        if (target != null && viewer != null) {
-            PlayerStatisticMenu.open(viewer, target);
-        }
+        if (target != null && viewer != null) PlayerStatisticMenu.open(viewer, target);
         return com.mojang.brigadier.Command.SINGLE_SUCCESS;
-    }
-
-    private static Entity isEntity(CommandSourceStack ctx) {
-        CommandSender sender = ctx.getExecutor() == null ? ctx.getSender() : ctx.getExecutor();
-        if (!(sender instanceof Entity entity)) return null;
-        return entity;
     }
 
     private static void reply(CommandContext<CommandSourceStack> ctx, String message) {
@@ -708,7 +904,6 @@ public class InternalCommand {
 
     private static Player resolvePlayer(CommandContext<CommandSourceStack> ctx) {
         PlayerSelectorArgumentResolver resolver = ctx.getArgument("player", PlayerSelectorArgumentResolver.class);
-        return Try.of(() -> resolver.resolve(ctx.getSource()).getFirst())
-            .orElse(null);
+        return Try.of(() -> resolver.resolve(ctx.getSource()).getFirst()).orElse(null);
     }
 }

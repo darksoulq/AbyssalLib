@@ -95,6 +95,35 @@ public final class ServerTranslator {
         GLOBAL_PROVIDERS.add(provider);
     }
 
+    public static Component parseText(@NotNull String text, @Nullable Player player, @NotNull TagResolver... extraResolvers) {
+        Locale locale = player != null ? player.locale() : Locale.US;
+        List<TagResolver> resolvers = new ArrayList<>(GLOBAL_RESOLVERS);
+        resolvers.addAll(Arrays.asList(extraResolvers));
+
+        if (player != null) {
+            resolvers.add(PlaceholderService.resolve(player));
+        }
+
+        resolvers.add(GlyphService.resolve());
+        resolvers.add(CustomPlaceholderResolver.resolve(player));
+
+        resolvers.add(TagResolver.resolver(Set.of("tr", "translate", "lang"), (queue, ctx) -> {
+            if (!queue.hasNext()) return Tag.inserting(Component.empty());
+            String nestedKey = queue.pop().value();
+            return Tag.inserting(resolveComponent(Component.translatable(nestedKey), player, locale, null, null));
+        }));
+
+        resolvers.add(TagResolver.resolver(Set.of("tr_or", "translate_or", "lang_or"), (queue, ctx) -> {
+            if (!queue.hasNext()) return Tag.inserting(Component.empty());
+            String nestedKey = queue.pop().value();
+            if (!queue.hasNext()) return Tag.inserting(resolveComponent(Component.translatable(nestedKey), player, locale, null, null));
+            String fallback = queue.pop().value();
+            return Tag.inserting(resolveComponent(Component.translatable(nestedKey).fallback(fallback), player, locale, null, null));
+        }));
+
+        return MiniMessageBridge.parse(text, resolvers.toArray(new TagResolver[0]));
+    }
+
     /**
      * Registers a global TagResolver that will be applied to all translated components.
      *

@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.economy.capability;
 import com.github.darksoulq.abyssallib.server.economy.Account;
 import com.github.darksoulq.abyssallib.server.economy.Currency;
 import com.github.darksoulq.abyssallib.server.economy.EconomyContext;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;

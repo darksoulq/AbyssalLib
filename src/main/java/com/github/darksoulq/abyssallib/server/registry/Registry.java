@@ -92,4 +92,9 @@ public final class Registry<T> {
     public T remove(String id) {
         return entries.remove(id);
     }
+
+    @ApiStatus.Internal
+    public void clear() {
+        entries.clear();
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.advancement;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.advancements.AdvancementHolder;
@@ -25,10 +26,10 @@ import java.util.UUID;
 public class Toast {
 
     /** The first line of text displayed in the toast. */
-    private final Component line1;
+    private final Component title;
 
     /** The second line of text displayed in the toast (nullable). */
-    private final Component line2;
+    private final Component subtitle;
 
     /** The item stack used as the visual icon for the notification. */
     private final ItemStack icon;
@@ -39,18 +40,18 @@ public class Toast {
     /**
      * Constructs a new Toast notification.
      *
-     * @param line1
+     * @param title
      * The primary header text.
-     * @param line2
+     * @param subtitle
      * The sub-header text.
      * @param icon
      * The icon to display.
      * @param frame
      * The visual {@link AdvancementFrame}.
      */
-    public Toast(Component line1, Component line2, ItemStack icon, AdvancementFrame frame) {
-        this.line1 = line1;
-        this.line2 = line2;
+    public Toast(Component title, Component subtitle, ItemStack icon, AdvancementFrame frame) {
+        this.title = title;
+        this.subtitle = subtitle;
         this.icon = icon;
         this.frame = frame;
     }
@@ -66,9 +67,9 @@ public class Toast {
     public void send(Player player) {
         Key toastKey = Key.key(AbyssalLib.PLUGIN_ID, "toast_" + UUID.randomUUID().toString().replace("-", ""));
 
-        Component title = line1;
-        if (line2 != null) {
-            title = title.append(Component.newline()).append(line2);
+        Component title = this.title;
+        if (subtitle != null) {
+            title = title.append(Component.newline()).append(subtitle);
         }
 
         Advancement fakeAdv = Advancement.builder(toastKey)
@@ -141,8 +142,8 @@ public class Toast {
      * A fluent builder for creating {@link Toast} notifications.
      */
     public static class Builder {
-        private Component line1;
-        private Component line2;
+        private Component title;
+        private Component subtitle;
         private ItemStack icon;
         private AdvancementFrame frame = AdvancementFrame.TASK;
 
@@ -152,7 +153,7 @@ public class Toast {
          * @param line1 Primary header.
          * @return This builder.
          */
-        public Builder line1(Component line1) { this.line1 = line1; return this; }
+        public Builder titlle(Component line1) { this.title = line1; return this; }
 
         /**
          * Sets the second line of text.
@@ -160,7 +161,7 @@ public class Toast {
          * @param line2 Sub-header.
          * @return This builder.
          */
-        public Builder line2(Component line2) { this.line2 = line2; return this; }
+        public Builder subtitle(Component line2) { this.subtitle = line2; return this; }
 
         /**
          * Sets the icon for the toast.
@@ -184,6 +185,6 @@ public class Toast {
          * @return
          * A new {@link Toast} instance.
          */
-        public Toast build() { return new Toast(line1, line2, icon, frame); }
+        public Toast build() { return new Toast(title, subtitle, icon, frame); }
     }
 }

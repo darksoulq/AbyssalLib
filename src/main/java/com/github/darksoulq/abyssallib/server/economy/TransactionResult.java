@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.economy;
 
 import net.kyori.adventure.text.Component;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

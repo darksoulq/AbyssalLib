@@ -1,21 +1,20 @@
 package com.github.darksoulq.abyssallib.world.gen.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.feature.impl.StructureFeature;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacedFeature;
-import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 
 import java.io.*;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 public class StructureLocator {
     public record StructureLocation(int x, int y, int z, String id, StructureRotation rotation, Mirror mirror) {}

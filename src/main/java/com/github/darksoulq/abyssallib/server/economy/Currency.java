@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.economy;
 
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;

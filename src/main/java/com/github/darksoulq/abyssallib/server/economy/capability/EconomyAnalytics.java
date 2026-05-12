@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.economy.capability;
 
 import com.github.darksoulq.abyssallib.server.economy.Currency;
 import com.github.darksoulq.abyssallib.server.economy.EconomyContext;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
