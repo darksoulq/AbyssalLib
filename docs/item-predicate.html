@@ -1,0 +1,71 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-14T00:37:55.5193958"><title>Item Predicates | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"creating-a-predicate","level":0,"title":"Creating a Predicate","anchor":"#creating-a-predicate"},{"id":"creating-a-predicate_1","level":0,"title":"Creating a Predicate","anchor":"#creating-a-predicate_1"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Item Predicates | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/item-predicate.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Item Predicates | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/item-predicate.html#webpage",
+    "url": "writerside-documentation/item-predicate.html",
+    "name": "Item Predicates | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="item-predicate" data-main-title="Item Predicates" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Items///Predicates" data-section-switcher="[Code;YAML]" data-sections-label="In"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="item-predicate" id="item-predicate.md">Item Predicates</h1><p id="z4bejt6_4">An <code class="code" id="z4bejt6_8">ItemPredicate</code> is a filter used to evaluate <code class="code" id="z4bejt6_9">ItemStack</code> instances. Instead of manually checking item types and component data, Item Predicates allow you to construct rules that check an item's identity, the presence or absence of data components, exact component values, and nested sub-predicates.</p><p id="z4bejt6_5">Because Item Predicates support the <code class="code" id="z4bejt6_10">Condition</code> logical tree, you can natively implement <code class="code" id="z4bejt6_11">AND</code> (<code class="code" id="z4bejt6_12">all_of</code>) and <code class="code" id="z4bejt6_13">OR</code> (<code class="code" id="z4bejt6_14">any_of</code>) gates into your checks.</p><section class="chapter" data-section="Code"><h2 id="creating-a-predicate" data-toc="creating-a-predicate">Creating a Predicate</h2><p id="z4bejt6_15">To construct an Item Predicate in Java, use <code class="code" id="z4bejt6_19">ItemPredicate.builder()</code>.</p><p id="z4bejt6_16">The builder provides a fluent API to define your requirements. You can evaluate the predicate at any time by passing an <code class="code" id="z4bejt6_20">ItemStack</code> into its <code class="code" id="z4bejt6_21">test()</code> method.</p><div class="code-block" data-lang="java">
+public final class PredicateExample {
+
+    public static final ItemPredicate PRISTINE_SWORD = ItemPredicate.builder()
+        // 1. Must be a Diamond Sword
+        .material(Material.DIAMOND_SWORD)
+        
+        // 2. Must have Custom Model Data applied
+        .with(Key.key(&quot;minecraft:custom_model_data&quot;))
+        
+        // 3. Must NOT have the Unbreakable component
+        .without(Key.key(&quot;minecraft:unbreakable&quot;))
+        
+        // 4. Must have EXACTLY 0 damage
+        .value(new Durability(0))
+        
+        // 5. Logical OR: Must have either enchantments or stored enchantments
+        .withAny(Key.key(&quot;minecraft:enchantments&quot;), Key.key(&quot;minecraft:stored_enchantments&quot;))
+        
+        .build();
+
+    public static void checkItem(Player player, ItemStack item) {
+        if (PRISTINE_SWORD.test(item)) {
+            player.sendMessage(&quot;Item matches the predicate.&quot;);
+        }
+    }
+}
+</div><section class="chapter"><h3 id="builder-methods" data-toc="builder-methods">Builder Methods</h3><div class="table-wrapper"><table class="wide" id="z4bejt6_22"><thead><tr class="ijRowHead" id="z4bejt6_24"><th id="z4bejt6_31"><p>Method</p></th><th id="z4bejt6_32"><p>Description</p></th></tr></thead><tbody><tr id="z4bejt6_25"><td id="z4bejt6_33"><p><code class="code" id="z4bejt6_35">id(Key)</code>/<code class="code" id="z4bejt6_36">material(Material)</code></p></td><td id="z4bejt6_34"><p>Mandates that the item matches a specific base Key or vanilla Material.</p></td></tr><tr id="z4bejt6_26"><td id="z4bejt6_37"><p><code class="code" id="z4bejt6_39">with(Key)</code></p></td><td id="z4bejt6_38"><p>Requires the presence of a specific component Key on the item.</p></td></tr><tr id="z4bejt6_27"><td id="z4bejt6_40"><p><code class="code" id="z4bejt6_42">without(Key)</code></p></td><td id="z4bejt6_41"><p>Requires the absence of a specific component Key on the item.</p></td></tr><tr id="z4bejt6_28"><td id="z4bejt6_43"><p><code class="code" id="z4bejt6_45">value(DataComponent&lt;?&gt;)</code></p></td><td id="z4bejt6_44"><p>Requires an exact value match against the provided data component.</p></td></tr><tr id="z4bejt6_29"><td id="z4bejt6_46"><p><code class="code" id="z4bejt6_48">check(ItemPredicate)</code></p></td><td id="z4bejt6_47"><p>Evaluates an entire nested sub-predicate against the item.</p></td></tr><tr id="z4bejt6_30"><td id="z4bejt6_49"><p><code class="code" id="z4bejt6_51">withAny(...)</code>/<code class="code" id="z4bejt6_52">valueAny(...)</code></p></td><td id="z4bejt6_50"><p>Logical <code class="code" id="z4bejt6_53">OR</code>. Requires the item to satisfy at least one of the provided rules.</p></td></tr></tbody></table></div></section></section><section class="chapter" data-section="YAML"><h2 id="creating-a-predicate_1" data-toc="creating-a-predicate_1">Creating a Predicate</h2><p id="z4bejt6_54">Predicates are inherently data-driven and can be loaded directly from configuration files.</p><p id="z4bejt6_55">To create a predicate using YAML, create a file at <span class="filepath" id="z4bejt6_58">plugins/AbyssalLib/predicates/item/&lt;namespace&gt;/&lt;id&gt;.yml</span>. For this example, we will recreate the &quot;Pristine Sword&quot; predicate at <span class="filepath" id="z4bejt6_59">abyssallib_example/pristine_sword.yml</span>.</p><div class="code-block" data-lang="yaml">
+# 1. Must be a Diamond Sword
+id: &quot;minecraft:diamond_sword&quot;
+
+# 2. Must have Custom Model Data applied, AND
+# 5. Logical OR: Must have either enchantments or stored enchantments
+with:
+  - &quot;minecraft:custom_model_data&quot;
+  - any_of:
+      - &quot;minecraft:enchantments&quot;
+      - &quot;minecraft:stored_enchantments&quot;
+
+# 3. Must NOT have the Unbreakable component
+without:
+  - &quot;minecraft:unbreakable&quot;
+
+# 4. Must have EXACTLY 0 damage
+components:
+  - &quot;minecraft:damage&quot;: 0
+</div><section class="chapter"><h3 id="utilizing-loaded-predicates" data-toc="utilizing-loaded-predicates">Utilizing Loaded Predicates</h3><p id="z4bejt6_60">During server startup, AbyssalLib automatically parses YAML definitions in the predicates folder and registers them under the <code class="code" id="z4bejt6_64">Registries.ITEM_PREDICATES</code> registry.</p><p id="z4bejt6_61">You can retrieve and use the predicate in your code using its namespaced key:</p><div class="code-block" data-lang="java">
+public void checkLoadedItem(ItemStack item) {
+    // Fetch the predicate using the namespace (folder name) and filename
+    ItemPredicate predicate = Registries.ITEM_PREDICATES.get(&quot;abyssallib_example:pristine_sword&quot;);
+    
+    if (predicate != null &amp;&amp; predicate.test(item)) {
+        // The item matches the YAML definition.
+    }
+}
+</div><aside class="prompt" data-type="tip" data-title="" id="z4bejt6_63"><p>Because Item Predicates are registered, you can reference an existing predicate directly inside <em id="z4bejt6_65">another</em> predicate simply by providing its string ID instead of rewriting the full object definition.</p></aside></section></section><div class="last-modified">13 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="configuration.html" class="navigation-links__prev">Configuration</a><a href="default-component-format.html" class="navigation-links__next">Default Component Formats</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

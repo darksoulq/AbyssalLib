@@ -8,6 +8,10 @@
     <toc-element topic="installation.md"/>
     <toc-element topic="configuration.md"/>
     <toc-element toc-title="Items">
+        <toc-element toc-title="Predicates">
+            <toc-element topic="item-predicate.md"/>
+            <toc-element topic="default-component-format.md"/>
+        </toc-element>
         <toc-element topic="first-item.md">
             <toc-element topic="food-item.md"/>
         </toc-element>
