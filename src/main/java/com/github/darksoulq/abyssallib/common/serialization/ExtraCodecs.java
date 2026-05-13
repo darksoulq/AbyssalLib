@@ -488,24 +488,24 @@ public class ExtraCodecs {
         EQUIPMENT_SLOT_GROUP.fieldOf("slot", AttributeModifier::getSlotGroup),
         AttributeModifier::new
     );
-    public static final Codec<ItemAttributeModifiers> ITEM_ATTRIBUTE_MODIFIERS = Codec.map(ATTRIBUTE, Codec.map(ATTRIBUTE_MODIFIER, EQUIPMENT_SLOT_GROUP)).xmap(
-            map -> {
-                ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.itemAttributes();
-                map.forEach((attribute, inner) ->
-                        inner.forEach((modifier, group) ->
-                                builder.addModifier(attribute, modifier, group)
-                        )
-                );
-                return builder.build();
-            },
-            modifiers -> {
-                Map<Attribute, Map<AttributeModifier, EquipmentSlotGroup>> map = new LinkedHashMap<>();
-                for (ItemAttributeModifiers.Entry e : modifiers.modifiers()) {
-                    map.computeIfAbsent(e.attribute(), k -> new LinkedHashMap<>())
-                            .put(e.modifier(), e.getGroup());
-                }
-                return map;
+    public static final Codec<ItemAttributeModifiers> ITEM_ATTRIBUTE_MODIFIERS = Codec.map(ATTRIBUTE, Codec.map(EQUIPMENT_SLOT_GROUP, ATTRIBUTE_MODIFIER)).xmap(
+        map -> {
+            ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.itemAttributes();
+            map.forEach((attribute, inner) ->
+                inner.forEach((group, modifier) ->
+                    builder.addModifier(attribute, modifier, group)
+                )
+            );
+            return builder.build();
+        },
+        modifiers -> {
+            Map<Attribute, Map<EquipmentSlotGroup, AttributeModifier>> map = new LinkedHashMap<>();
+            for (ItemAttributeModifiers.Entry e : modifiers.modifiers()) {
+                map.computeIfAbsent(e.attribute(), k -> new LinkedHashMap<>())
+                    .put(e.getGroup(), e.modifier());
             }
+            return map;
+        }
     );
 
     public static final Codec<BlockInfo> BLOCK_INFO = new Codec<>() {
