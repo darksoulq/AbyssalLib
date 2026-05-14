@@ -9,6 +9,9 @@ import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import net.kyori.adventure.key.Key;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -314,6 +317,11 @@ public class ItemPredicate implements Predicate<ItemStack> {
                     return false;
                 }
                 DataComponent<?> other = finalItem.getData(type);
+
+                if (comp.getValue() instanceof Tag reqTag && other.getValue() instanceof Tag actTag) {
+                    return matchTags(reqTag, actTag);
+                }
+
                 return Objects.equals(comp.getValue(), other.getValue());
             })) {
                 return false;
@@ -327,6 +335,48 @@ public class ItemPredicate implements Predicate<ItemStack> {
         }
 
         return true;
+    }
+
+    /**
+     * Evaluates a partial match between two NBT tags.
+     * <p>
+     * For CompoundTags, the actual tag must contain all keys present in the required tag,
+     * and their respective values must match.
+     * For ListTags, the actual tag must contain matching elements for each required element.
+     * Primitive tags require an exact equality match.
+     *
+     * @param required The baseline tag containing required data.
+     * @param actual   The actual tag present on the item being evaluated.
+     * @return True if the actual tag satisfies the structural requirements of the required tag.
+     */
+    private static boolean matchTags(Tag required, Tag actual) {
+        if (required == actual) return true;
+        if (required == null) return true;
+        if (actual == null) return false;
+        if (required.getId() != actual.getId()) return false;
+
+        if (required instanceof CompoundTag reqComp && actual instanceof CompoundTag actComp) {
+            for (String key : reqComp.keySet()) {
+                if (!matchTags(reqComp.get(key), actComp.get(key))) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (required instanceof ListTag reqList && actual instanceof ListTag actList) {
+            if (reqList.isEmpty()) return actList.isEmpty();
+            for (Tag reqElement : reqList) {
+                boolean found = false;
+                for (Tag actElement : actList) {
+                    if (matchTags(reqElement, actElement)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) return false;
+            }
+            return true;
+        }
+        return Objects.equals(required, actual);
     }
 
     /**

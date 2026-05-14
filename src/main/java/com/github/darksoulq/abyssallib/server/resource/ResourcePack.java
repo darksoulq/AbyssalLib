@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.resource;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
+import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackCompileEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
@@ -142,6 +143,7 @@ public class ResourcePack {
      */
     public void compile(boolean override) {
         if (!override && outputFile.toFile().exists()) {
+            EventBus.post(new ResourcePackCompileEvent(pluginId, this));
             HASH_MAP.put(pluginId, FileUtils.sha1(outputFile));
             for (Namespace ns : namespaces.values()) {
                 Item icon = new Item(Key.key(ns.getNamespace(), "plugin_icon"), Material.GRASS_BLOCK);
