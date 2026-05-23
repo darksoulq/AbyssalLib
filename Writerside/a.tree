@@ -45,6 +45,11 @@
             <toc-element topic="default-decorators.md"/>
         </toc-element>
     </toc-element>
+    <toc-element toc-title="Scheduler">
+        <toc-element topic="task-scheduling.md"/>
+        <toc-element topic="execution-context.md"/>
+        <toc-element topic="task-sequences.md"/>
+    </toc-element>
     <toc-element toc-title="Particles">
         <toc-element topic="first-particle-effect.md"/>
         <toc-element topic="particle-timeline.md"/>
@@ -63,6 +68,7 @@
         <toc-element topic="default-placeholders.md"/>
     </toc-element>
     <toc-element toc-title="Other">
+        <toc-element topic="command-api.md"/>
         <toc-element topic="structures.md"/>
         <toc-element topic="sidebars.md"/>
         <toc-element topic="toasts.md"/>
