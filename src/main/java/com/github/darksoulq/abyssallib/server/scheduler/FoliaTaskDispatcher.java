@@ -12,33 +12,25 @@ import java.util.concurrent.TimeUnit;
 
 public class FoliaTaskDispatcher {
     public static ScheduledTask schedule(Plugin plugin, Runnable action, boolean async, Entity entity, Location location, long delayTicks, long periodTicks, long delayMillis, long periodMillis, AbstractScheduledTask abstractTask) {
-        Runnable wrapped = abstractTask.getWrappedRunnable(action, delayMillis, periodMillis);
+        Runnable wrapped = abstractTask.getWrappedRunnable(action, periodMillis);
         io.papermc.paper.threadedregions.scheduler.ScheduledTask foliaTask;
 
         if (async) {
-            if (periodMillis > 0) {
-                foliaTask = Bukkit.getAsyncScheduler().runAtFixedRate(plugin, t -> wrapped.run(), delayMillis, periodMillis, TimeUnit.MILLISECONDS);
-            } else {
-                foliaTask = Bukkit.getAsyncScheduler().runDelayed(plugin, t -> wrapped.run(), delayMillis, TimeUnit.MILLISECONDS);
-            }
+            foliaTask = periodMillis > 0
+                ? Bukkit.getAsyncScheduler().runAtFixedRate(plugin, t -> wrapped.run(), delayMillis, periodMillis, TimeUnit.MILLISECONDS)
+                : Bukkit.getAsyncScheduler().runDelayed(plugin, t -> wrapped.run(), delayMillis, TimeUnit.MILLISECONDS);
         } else if (entity != null) {
-            if (periodTicks > 0) {
-                foliaTask = entity.getScheduler().runAtFixedRate(plugin, t -> wrapped.run(), null, Math.max(1, delayTicks), periodTicks);
-            } else {
-                foliaTask = entity.getScheduler().runDelayed(plugin, t -> wrapped.run(), null, Math.max(1, delayTicks));
-            }
+            foliaTask = periodTicks > 0
+                ? entity.getScheduler().runAtFixedRate(plugin, t -> wrapped.run(), null, Math.max(1, delayTicks), periodTicks)
+                : entity.getScheduler().runDelayed(plugin, t -> wrapped.run(), null, Math.max(1, delayTicks));
         } else if (location != null) {
-            if (periodTicks > 0) {
-                foliaTask = Bukkit.getRegionScheduler().runAtFixedRate(plugin, location, t -> wrapped.run(), Math.max(1, delayTicks), periodTicks);
-            } else {
-                foliaTask = Bukkit.getRegionScheduler().runDelayed(plugin, location, t -> wrapped.run(), Math.max(1, delayTicks));
-            }
+            foliaTask = periodTicks > 0
+                ? Bukkit.getRegionScheduler().runAtFixedRate(plugin, location, t -> wrapped.run(), Math.max(1, delayTicks), periodTicks)
+                : Bukkit.getRegionScheduler().runDelayed(plugin, location, t -> wrapped.run(), Math.max(1, delayTicks));
         } else {
-            if (periodTicks > 0) {
-                foliaTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, t -> wrapped.run(), Math.max(1, delayTicks), periodTicks);
-            } else {
-                foliaTask = Bukkit.getGlobalRegionScheduler().runDelayed(plugin, t -> wrapped.run(), Math.max(1, delayTicks));
-            }
+            foliaTask = periodTicks > 0
+                ? Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, t -> wrapped.run(), Math.max(1, delayTicks), periodTicks)
+                : Bukkit.getGlobalRegionScheduler().runDelayed(plugin, t -> wrapped.run(), Math.max(1, delayTicks));
         }
 
         return new ScheduledTask() {

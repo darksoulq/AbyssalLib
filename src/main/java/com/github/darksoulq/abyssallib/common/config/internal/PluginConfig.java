@@ -10,12 +10,14 @@ public class PluginConfig {
     public Config.Value<Boolean> metrics;
     public ResourcePack rp;
     public SpawnLimits spawnLimits;
+    public Features features;
     public Permissions permissions;
 
     public PluginConfig() {
         metrics = cfg.value("metrics", true);
         rp = new ResourcePack(cfg);
         spawnLimits = new SpawnLimits(cfg);
+        features = new Features(cfg);
         permissions = new Permissions(cfg);
     }
 
@@ -103,6 +105,15 @@ public class PluginConfig {
                 .withComment("The IP address to bind the web editor to.");
             webPort = cfg.value("permissions.web.port", 8081)
                 .withComment("The port to bind the web editor to.");
+        }
+    }
+
+    public static class Features {
+        public Config.Value<Integer> structureBlocksPlacedPerTick;
+
+        public Features(Config cfg) {
+            structureBlocksPlacedPerTick = cfg.value("features.structure_blocks_per_tick", 200)
+                .withComment("How many blocks should be placed per tick when using structure block");
         }
     }
 

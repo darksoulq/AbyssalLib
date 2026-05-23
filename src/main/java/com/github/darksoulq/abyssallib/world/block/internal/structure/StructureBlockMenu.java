@@ -63,6 +63,7 @@ public class StructureBlockMenu {
                 tile.mode.set(modes[nextIndex]);
                 tile.updateParticles();
                 refresh(gui, player);
+                ctx.view().getTop().clear();
                 ctx.view().render();
             },
             Component.text("Click to cycle mode", NamedTextColor.GRAY)
@@ -172,7 +173,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("LOAD", NamedTextColor.GREEN, TextDecoration.BOLD),
-            ctx -> {
+            _ -> {
                 if (tile.load()) player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure load failed. Check name.", NamedTextColor.RED));
             },

@@ -2,13 +2,13 @@ package com.github.darksoulq.abyssallib.world.particle;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.color.ColorProvider;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
+import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
 import com.github.darksoulq.abyssallib.world.particle.style.MotionVector;
 import com.github.darksoulq.abyssallib.world.particle.style.Pixel;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class Particles {
     private final BooleanSupplier cancelIf;
 
     /** The active Bukkit task handling the asynchronous tick loop. */
-    private BukkitTask task;
+    private ScheduledTask task;
     /** Thread-safe flag indicating if the effect is currently active. */
     private final AtomicBoolean running = new AtomicBoolean(false);
     /** Thread-safe flag to prevent overlapping asynchronous processing cycles. */
@@ -89,7 +89,7 @@ public class Particles {
         currentTick.set(0);
         processing.set(false);
         renderer.start(origin.get());
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), this::tick, 0L, interval);
+        task = AbyssalLib.SCHEDULER.schedule(this::tick).async().region(origin.get()).repeatEvery(interval, Clock.TICKS);
     }
 
     /**
@@ -122,12 +122,12 @@ public class Particles {
             List<Vector> points = calculateVectors(tick);
             List<Player> playerList = viewers != null ? viewers.get() : null;
 
-            Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> {
+            AbyssalLib.SCHEDULER.schedule(() -> {
                 if (running.get()) {
                     renderer.render(center, points, playerList);
                 }
                 processing.set(false);
-            });
+            }).once();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -190,7 +190,7 @@ public class Particles {
             task.cancel();
             task = null;
         }
-        Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), renderer::stop);
+        AbyssalLib.SCHEDULER.schedule(renderer::stop).once();
     }
 
     /**

@@ -9,10 +9,10 @@ import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketReceiveEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
 import com.github.darksoulq.abyssallib.world.advancement.AdvancementLoader;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
@@ -61,7 +61,6 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -72,30 +71,27 @@ public class ServerEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerLoad(ServerLoadEvent e) {
         if (e.getType() == ServerLoadEvent.LoadType.STARTUP) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    MapLoader.load();
-                    ServerTranslator.init();
-                    LootLoader.load();
-                    CommandBus.register(AbyssalLib.PLUGIN_ID, new InternalCommand());
-                    BlockManager.load();
-                    EntityManager.load();
-                    EntityManager.restoreEntities();
-                    EnergyNetwork.load();
-                    EntityAttributes.init();
-                    Try.run(PlayerStatistics::init);
-                    RecipeLoader.reload();
-                    TagLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "tags"));
-                    NaturalSpawnRegistry.load();
-                    StructureLoader.load();
-                    WorldGenLoader.load();
-                    AdvancementLoader.load();
-                    AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
+            AbyssalLib.SCHEDULER.schedule(() -> {
+                MapLoader.load();
+                ServerTranslator.init();
+                LootLoader.load();
+                CommandBus.register(AbyssalLib.PLUGIN_ID, new InternalCommand());
+                BlockManager.load();
+                EntityManager.load();
+                EntityManager.restoreEntities();
+                EnergyNetwork.load();
+                EntityAttributes.init();
+                Try.run(PlayerStatistics::init);
+                RecipeLoader.reload();
+                TagLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "tags"));
+                NaturalSpawnRegistry.load();
+                StructureLoader.load();
+                WorldGenLoader.load();
+                AdvancementLoader.load();
+                AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
 
-                    Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), PlayerSidebarManager::updateAll, 2L, 2L);
-                }
-            }.runTaskLater(AbyssalLib.getInstance(), 10);
+                AbyssalLib.SCHEDULER.schedule(PlayerSidebarManager::updateAll).after(2L, Clock.TICKS).repeatEvery(2L, Clock.TICKS);
+            }).after(10L, Clock.TICKS).once();
         } else {
             RecipeLoader.reload();
             reloadAdvancements();

@@ -49,7 +49,7 @@ public class ItemMenu {
 
             if (categoryCount == 0) {
                 itemCount = Registries.ITEMS.getAll().keySet().stream()
-                    .filter(key -> key.startsWith(plugin + ":") && !key.endsWith(":plugin_icon"))
+                    .filter(key -> key.startsWith(plugin + ":") && !key.endsWith(":plugin_icon") || !Registries.ITEMS.get(key).isHidden())
                     .count();
                 if (itemCount == 0) continue;
             } else {

@@ -10,9 +10,9 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNetworkTransferEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNodeAddEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNodeRemoveEvent;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.*;
@@ -67,15 +67,8 @@ public final class EnergyNetwork {
      * Initializes the network scheduler and database.
      */
     public static void init() {
-        new BukkitRunnable() {
-            @Override
-            public void run() { distribute(); }
-        }.runTaskTimer(AbyssalLib.getInstance(), 0L, 1L);
-
-        new BukkitRunnable() {
-            @Override
-            public void run() { save(); }
-        }.runTaskTimer(AbyssalLib.getInstance(), 2400L, 6000L);
+        AbyssalLib.SCHEDULER.schedule(EnergyNetwork::distribute).global().repeatEvery(1L, Clock.TICKS);
+        AbyssalLib.SCHEDULER.schedule(EnergyNetwork::save).global().async().after(2400L, Clock.TICKS).repeatEvery(6000L, Clock.TICKS);
 
         try {
             DATABASE.connect();

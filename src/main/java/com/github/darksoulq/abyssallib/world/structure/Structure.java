@@ -10,6 +10,9 @@ import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
+import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
+import com.github.darksoulq.abyssallib.server.util.regional.RegionalProcessor;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.NMSWorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
@@ -17,14 +20,12 @@ import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Leaves;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +91,7 @@ public class Structure {
 
     /**
      * Captures blocks and optionally entities within the defined physical region.
+     * Regional processor dynamically executes chunk-safe block mapping on Folia or Bukkit.
      *
      * @param corner1
      * The first corner {@link Location} bounding the region.
@@ -120,54 +122,57 @@ public class Structure {
 
         Map<PaletteEntry, Integer> paletteLookup = new HashMap<>();
 
-        for (int y = minY; y <= maxY; y++) {
-            for (int x = minX; x <= maxX; x++) {
-                for (int z = minZ; z <= maxZ; z++) {
+        RegionalProcessor.processVolume(AbyssalLib.getInstance(), corner1, corner2, block -> {
+            if (block.getType() == Material.STRUCTURE_VOID) {
+                return;
+            }
 
-                    Block block = corner1.getWorld().getBlockAt(x, y, z);
+            BlockInfo info = BlockInfo.resolve(block);
+            PaletteEntry entry = new PaletteEntry(info.getAsString(), info.states());
 
-                    if (block.getType() == Material.STRUCTURE_VOID) {
-                        continue;
+            int paletteIndex;
+            synchronized (paletteLookup) {
+                paletteIndex = paletteLookup.computeIfAbsent(entry, k -> {
+                    palette.add(k);
+                    return palette.size() - 1;
+                });
+            }
+
+            synchronized (blocks) {
+                blocks.add(new StructureBlock(
+                    block.getX() - originX,
+                    block.getY() - originY,
+                    block.getZ() - originZ,
+                    paletteIndex,
+                    info.properties(),
+                    info.nbt()
+                ));
+            }
+
+        }, () -> {
+            if (includeEntities) {
+                AbyssalLib.SCHEDULER.schedule(() -> {
+                    BoundingBox box = BoundingBox.of(corner1, corner2);
+                    for (org.bukkit.entity.Entity entity : corner1.getWorld().getNearbyEntities(box)) {
+                        if (entity instanceof Player) {
+                            continue;
+                        }
+                        Vector relativePos = entity.getLocation().toVector().subtract(origin.toVector());
+                        SavedEntity savedEntity = SavedEntity.create(entity, JsonOps.INSTANCE);
+                        synchronized (entities) {
+                            this.entities.add(new StructureEntity(relativePos, savedEntity));
+                        }
                     }
-
-                    BlockInfo info = BlockInfo.resolve(block);
-                    PaletteEntry entry = new PaletteEntry(info.getAsString(), info.states());
-
-                    int paletteIndex = paletteLookup.computeIfAbsent(entry, k -> {
-                        palette.add(k);
-                        return palette.size() - 1;
-                    });
-
-                    blocks.add(new StructureBlock(
-                        x - originX,
-                        y - originY,
-                        z - originZ,
-                        paletteIndex,
-                        info.properties(),
-                        info.nbt()
-                    ));
-                }
+                }).region(origin).once();
             }
-        }
-
-        if (includeEntities) {
-            BoundingBox box = BoundingBox.of(corner1, corner2);
-            for (org.bukkit.entity.Entity entity : corner1.getWorld().getNearbyEntities(box)) {
-                if (entity instanceof Player) {
-                    continue;
-                }
-                Vector relativePos = entity.getLocation().toVector().subtract(origin.toVector());
-                SavedEntity savedEntity = SavedEntity.create(entity, JsonOps.INSTANCE);
-                this.entities.add(new StructureEntity(relativePos, savedEntity));
-            }
-        }
+        });
     }
 
     /**
-     * Places this structure asynchronously using a scheduled repeating task to prevent server lag.
+     * Places this structure asynchronously using a scheduled repeating task securely evaluating regional boundaries.
      *
      * @param plugin
-     * The {@link Plugin} utilized for scheduling the Bukkit task.
+     * The {@link Plugin} utilized for scheduling the task.
      * @param origin
      * The target placement origin {@link Location}.
      * @param rotation
@@ -177,18 +182,18 @@ public class Structure {
      * @param integrity
      * The survival chance [0.0 - 1.0] for each individual block.
      * @param blocksPerTick
-     * The maximum number of blocks to process per server tick.
+     * The maximum number of blocks to process per execution slice.
      * @return
      * A {@link CompletableFuture} that resolves when the entire placement operation completes.
      */
     public CompletableFuture<Void> placeAsync(@NotNull Plugin plugin, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity, int blocksPerTick) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).runTaskTimer(plugin, 0L, 1L);
+        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).start(plugin);
         return future;
     }
 
     /**
-     * Places this structure synchronously in a live Bukkit world.
+     * Places this structure synchronously targeting regional thread execution requirements seamlessly.
      *
      * @param origin
      * The target placement origin {@link Location}.
@@ -200,23 +205,25 @@ public class Structure {
      * The survival chance [0.0 - 1.0] for each individual block.
      */
     public void place(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
-        Random random = new Random();
-        BlockData[] bakedData = new BlockData[palette.size()];
-        CustomBlock[] bakedCustom = new CustomBlock[palette.size()];
-        bakePalette(bakedData, bakedCustom, rotation, mirror);
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            Random random = new Random();
+            BlockData[] bakedData = new BlockData[palette.size()];
+            CustomBlock[] bakedCustom = new CustomBlock[palette.size()];
+            bakePalette(bakedData, bakedCustom, rotation, mirror);
 
-        for (StructureBlock sb : blocks) {
-            if (integrity < 1.0f && random.nextFloat() > integrity) {
-                continue;
+            for (StructureBlock sb : blocks) {
+                if (integrity < 1.0f && random.nextFloat() > integrity) {
+                    continue;
+                }
+                processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
             }
-            processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
-        }
-        placeEntities(null, origin, rotation, mirror, entities, null);
+            placeEntities(null, origin, rotation, mirror, entities, null);
+        }).region(origin).once();
     }
 
     /**
      * Places this structure inside an asynchronous or virtual {@link WorldGenAccess} context.
-     * Handles deferring out-of-bounds placements back to the main thread if strictly required.
+     * Handles deferring out-of-bounds placements back to regional scheduled executions explicitly ensuring safe completion.
      *
      * @param level
      * The {@link WorldGenAccess} bridging chunk generation.
@@ -248,15 +255,12 @@ public class Structure {
         placeEntities(level, origin, rotation, mirror, entities, deferredEntities);
 
         if (!deferredBlocks.isEmpty() || !deferredEntities.isEmpty()) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    for (StructureBlock sb : deferredBlocks) {
-                        processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
-                    }
-                    placeEntities(null, origin, rotation, mirror, deferredEntities, null);
+            AbyssalLib.SCHEDULER.schedule(() -> {
+                for (StructureBlock sb : deferredBlocks) {
+                    processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
                 }
-            }.runTask(AbyssalLib.getInstance());
+                placeEntities(null, origin, rotation, mirror, deferredEntities, null);
+            }).region(origin).once();
         }
     }
 
@@ -391,16 +395,14 @@ public class Structure {
 
             if (level instanceof NMSWorldGenAccess nmsLevel && !nmsLevel.isInRegion(finalTarget.getBlockX(), finalTarget.getBlockY(), finalTarget.getBlockZ())) {
                 final BlockInfo finalCurrent = current;
-                new BukkitRunnable() {
-                    public void run() {
-                        if (!finalTarget.isChunkLoaded()) {
-                            finalTarget.getChunk().load(true);
-                        }
-                        BlockData newBd = WorldGenUtils.bakeData(finalCurrent, rotation, mirror);
-                        CustomBlock newCb = finalCurrent.block() instanceof CustomBlock c ? c.clone() : null;
-                        WorldGenUtils.placeBlock(null, finalTarget, finalCurrent, newBd, newCb);
+                AbyssalLib.SCHEDULER.schedule(() -> {
+                    if (!finalTarget.isChunkLoaded()) {
+                        finalTarget.getChunk().load(true);
                     }
-                }.runTask(AbyssalLib.getInstance());
+                    BlockData newBd = WorldGenUtils.bakeData(finalCurrent, rotation, mirror);
+                    CustomBlock newCb = finalCurrent.block() instanceof CustomBlock c ? c.clone() : null;
+                    WorldGenUtils.placeBlock(null, finalTarget, finalCurrent, newBd, newCb);
+                }).region(finalTarget).once();
                 return;
             }
 
@@ -448,10 +450,12 @@ public class Structure {
             if (level != null) {
                 se.entity().spawn(level, target);
             } else {
-                if (!target.isChunkLoaded()) {
-                    target.getChunk().load(true);
-                }
-                se.entity().spawn(target);
+                AbyssalLib.SCHEDULER.schedule(() -> {
+                    if (!target.isChunkLoaded()) {
+                        target.getChunk().load(true);
+                    }
+                    se.entity().spawn(target);
+                }).region(target).once();
             }
         }
     }
@@ -648,57 +652,22 @@ public class Structure {
     }
 
     /**
-     * Internal Runnable class responsible for throttling asynchronous structure placement
-     * to avoid stressing the server thread during massive procedural generations.
+     * Internal class responsible for throttling asynchronous structure placement safely across threads.
      */
-    private class Paster extends BukkitRunnable {
+    private class Paster {
 
-        /** The base reference location for placement offsets. */
         private final Location origin;
-
-        /** The spatial rotation requested. */
         private final StructureRotation rotation;
-
-        /** The spatial mirroring requested. */
         private final Mirror mirror;
-
-        /** The probability threshold for placing each block. */
         private final float integrity;
-
-        /** The maximum number of blocks the task is allowed to place per tick. */
         private final int limit;
-
-        /** The future to complete once all blocks and entities are successfully placed. */
         private final CompletableFuture<Void> future;
-
-        /** The internal cursor state used across repeating task executions. */
         private final Iterator<StructureBlock> iterator;
-
-        /** Generates pseudo-random numbers to evaluate block integrity loss. */
         private final Random random = new Random();
-
-        /** Internally cached baked vanilla block data to speed up placement logic. */
         private final BlockData[] bakedData;
-
-        /** Internally cached baked custom block states to speed up placement logic. */
         private final CustomBlock[] bakedCustom;
+        private ScheduledTask activeTask;
 
-        /**
-         * Constructs a new chunk-safe, asynchronous structure paster task.
-         *
-         * @param origin
-         * The base placement {@link Location}.
-         * @param rotation
-         * The active {@link StructureRotation}.
-         * @param mirror
-         * The active {@link Mirror} transformation.
-         * @param integrity
-         * The placement consistency threshold [0-1].
-         * @param limit
-         * The upper bound on blocks placed per execution slice.
-         * @param future
-         * The {@link CompletableFuture} to signal termination.
-         */
         public Paster(Location origin, StructureRotation rotation, Mirror mirror, float integrity, int limit, CompletableFuture<Void> future) {
             this.origin = origin;
             this.rotation = rotation;
@@ -712,11 +681,11 @@ public class Structure {
             bakePalette(bakedData, bakedCustom, rotation, mirror);
         }
 
-        /**
-         * Executes a single time-slice of the placement algorithm.
-         */
-        @Override
-        public void run() {
+        public void start(Plugin plugin) {
+            activeTask = AbyssalLib.SCHEDULER.schedule(this::tick).region(origin).repeatEvery(1L, Clock.TICKS);
+        }
+
+        private void tick() {
             int count = 0;
 
             while (iterator.hasNext() && count < limit) {
@@ -724,7 +693,6 @@ public class Structure {
                 if (integrity < 1.0f && random.nextFloat() > integrity) {
                     continue;
                 }
-
                 processStructureBlock(null, origin, sb, rotation, mirror, bakedData, bakedCustom, null);
                 count++;
             }
@@ -732,7 +700,9 @@ public class Structure {
             if (!iterator.hasNext()) {
                 placeEntities(null, origin, rotation, mirror, entities, null);
                 future.complete(null);
-                cancel();
+                if (activeTask != null) {
+                    activeTask.cancel();
+                }
             }
         }
     }

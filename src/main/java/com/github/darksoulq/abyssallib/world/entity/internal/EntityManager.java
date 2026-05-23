@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.SpawnCategory;
 import io.papermc.paper.registry.RegistryAccess;
@@ -15,18 +16,18 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EntityManager {
     public static final Random RAND = new Random();
 
-    private static final Map<UUID, CustomEntity<? extends LivingEntity>> ENTITIES = new HashMap<>();
-    private static final Map<World, EnumMap<SpawnCategory, Integer>> CATEGORY_COUNTS = new HashMap<>();
-    private static final Map<World, Map<Long, Integer>> REGION_DENSITY = new HashMap<>();
-    private static final Map<World, List<Chunk>> CHUNK_CACHE = new HashMap<>();
+    private static final Map<UUID, CustomEntity<? extends LivingEntity>> ENTITIES = new ConcurrentHashMap<>();
+    private static final Map<World, Map<SpawnCategory, Integer>> CATEGORY_COUNTS = new ConcurrentHashMap<>();
+    private static final Map<World, Map<Long, Integer>> REGION_DENSITY = new ConcurrentHashMap<>();
+    private static final Map<World, List<Long>> CHUNK_CACHE = new ConcurrentHashMap<>();
     private static final int MAX_REGION_DENSITY = 6;
 
     private static final Database DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "entities.db"));
@@ -60,9 +61,9 @@ public class EntityManager {
                 ENTITIES.put(e.uuid, e);
             });
 
-            new NaturalSpawnTask().runTaskTimer(AbyssalLib.getInstance(), 200L, 20L);
-            new DespawnTask().runTaskTimer(AbyssalLib.getInstance(), 200L, 200L);
-            new ChunkCacheTask().runTaskTimer(AbyssalLib.getInstance(), 0L, 40L);
+            AbyssalLib.SCHEDULER.schedule(EntityManager::naturalSpawnTick).global().after(200L, Clock.TICKS).repeatEvery(20L, Clock.TICKS);
+            AbyssalLib.SCHEDULER.schedule(EntityManager::despawnTick).global().after(200L, Clock.TICKS).repeatEvery(200L, Clock.TICKS);
+            AbyssalLib.SCHEDULER.schedule(EntityManager::chunkCacheTick).global().repeatEvery(40L, Clock.TICKS);
 
         } catch (Exception e) {
             AbyssalLib.LOGGER.severe("Failed to load entity system");
@@ -80,13 +81,16 @@ public class EntityManager {
 
             long region = regionKey(ent.getLocation());
             REGION_DENSITY
-                .computeIfAbsent(w, x -> new HashMap<>())
+                .computeIfAbsent(w, x -> new ConcurrentHashMap<>())
                 .merge(region, 1, Integer::sum);
         });
-        DATABASE.executor().table("entities").replace()
-            .value("entity_uuid", entity.uuid.toString())
-            .value("entity_id", entity.getId().toString())
-            .executeAsync();
+
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            DATABASE.executor().table("entities").replace()
+                .value("entity_uuid", entity.uuid.toString())
+                .value("entity_id", entity.getId().toString())
+                .execute();
+        }).async().once();
     }
 
     public static CustomEntity<? extends LivingEntity> get(UUID uuid) {
@@ -108,9 +112,11 @@ public class EntityManager {
                     .merge(region, -1, (a, b) -> Math.max(0, a + b));
             });
         }
-        DATABASE.executor().table("entities").delete()
-            .where("entity_uuid = ?", uuid.toString())
-            .executeAsync();
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            DATABASE.executor().table("entities").delete()
+                .where("entity_uuid = ?", uuid.toString())
+                .execute();
+        }).async().once();
     }
 
     public static void restoreEntities() {
@@ -138,8 +144,10 @@ public class EntityManager {
         World world = entity.getWorld();
 
         double nearest = Double.MAX_VALUE;
-        for (Player p : world.getPlayers()) {
-            nearest = Math.min(nearest, p.getLocation().distanceSquared(loc));
+        for (org.bukkit.entity.Entity e : world.getNearbyEntities(loc, 128, 128, 128)) {
+            if (e instanceof Player p) {
+                nearest = Math.min(nearest, p.getLocation().distanceSquared(loc));
+            }
         }
 
         if (nearest > 128 * 128) return true;
@@ -148,88 +156,99 @@ public class EntityManager {
         return false;
     }
 
-    private static class DespawnTask extends BukkitRunnable {
-        @Override
-        public void run() {
-            for (CustomEntity<? extends LivingEntity> e : new ArrayList<>(ENTITIES.values())) {
-                e.getBaseEntity().ifPresent(ent -> {
+    private static void despawnTick() {
+        for (CustomEntity<? extends LivingEntity> e : new ArrayList<>(ENTITIES.values())) {
+            e.getBaseEntity().ifPresent(ent -> {
+                AbyssalLib.SCHEDULER.schedule(() -> {
+                    if (!ent.isValid()) return;
                     if (!shouldDespawn(ent)) return;
                     e.onUnload();
                     ent.remove();
                     remove(ent.getUniqueId());
-                });
+                }).entity(ent).once();
+            });
+        }
+    }
+
+    private static void naturalSpawnTick() {
+        for (World world : Bukkit.getWorlds()) {
+            List<Long> chunks = CHUNK_CACHE.get(world);
+            if (chunks == null || chunks.isEmpty()) continue;
+
+            for (SpawnCategory category : SpawnCategory.values()) {
+                int cap = getLimits(category, chunks.size());
+                int current = count(world, category);
+                if (current >= cap) continue;
+
+                List<Long> shuffledChunks = new ArrayList<>(chunks);
+                Collections.shuffle(shuffledChunks);
+
+                int needed = cap - current;
+                for (int i = 0; i < Math.min(shuffledChunks.size(), needed); i++) {
+                    long chunkKey = shuffledChunks.get(i);
+                    int cx = (int) chunkKey;
+                    int cz = (int) (chunkKey >> 32);
+
+                    Location regionLoc = new Location(world, (cx << 4) + 8, 64, (cz << 4) + 8);
+
+                    AbyssalLib.SCHEDULER.schedule(() -> {
+                        attemptSpawnInChunk(world, cx, cz, category);
+                    }).region(regionLoc).once();
+                }
             }
         }
     }
 
-    private static class NaturalSpawnTask extends BukkitRunnable {
-        @Override
-        public void run() {
-            for (World world : Bukkit.getWorlds()) {
-                if (world.getPlayers().isEmpty()) continue;
+    private static void attemptSpawnInChunk(World world, int cx, int cz, SpawnCategory category) {
+        Location center = new Location(world, (cx << 4) + 8, 64, (cz << 4) + 8);
+        if (!center.isChunkLoaded()) return;
 
-                List<Chunk> chunks = CHUNK_CACHE.get(world);
-                if (chunks == null || chunks.isEmpty()) continue;
-
-                List<Location> players = getPlayerLocations(world);
-
-                for (SpawnCategory category : SpawnCategory.values()) {
-                    tickCategory(world, category, chunks, players);
-                }
-            }
+        List<Player> nearbyPlayers = new ArrayList<>();
+        for (org.bukkit.entity.Entity e : world.getNearbyEntities(center, 128, 128, 128)) {
+            if (e instanceof Player p) nearbyPlayers.add(p);
         }
 
-        private static void tickCategory(World world, SpawnCategory category, List<Chunk> chunks, List<Location> players) {
-            int cap = getLimits(category, chunks.size());
-            int current = count(world, category);
-            if (current >= cap) return;
+        if (nearbyPlayers.isEmpty()) return;
 
-            Collections.shuffle(chunks);
+        List<CustomEntity<? extends LivingEntity>> pool = NaturalSpawnRegistry.get(category);
+        if (pool.isEmpty()) return;
 
-            for (Chunk chunk : chunks) {
-                if (current >= cap) break;
+        CustomEntity<? extends LivingEntity> proto = weightedRandom(pool);
+        if (proto == null) return;
 
-                List<CustomEntity<? extends LivingEntity>> pool = NaturalSpawnRegistry.get(category);
-                if (pool.isEmpty()) continue;
+        CustomEntity.SpawnSettings s = proto.getSpawnSettings();
+        if (s == null) return;
 
-                CustomEntity<? extends LivingEntity> proto = weightedRandom(pool);
-                if (proto == null) continue;
+        Location base = randomLocation(world, cx, cz, s, nearbyPlayers);
+        if (base == null) return;
 
-                CustomEntity.SpawnSettings s = proto.getSpawnSettings();
-                if (s == null) continue;
+        NamespacedKey biome = getBiomeKey(base);
+        if (!s.biomes.isEmpty() && !s.biomes.contains(biome)) return;
 
-                Location base = randomLocation(chunk, s, players);
-                if (base == null) continue;
+        long region = regionKey(base);
+        int density = REGION_DENSITY.getOrDefault(world, Map.of()).getOrDefault(region, 0);
+        if (density >= MAX_REGION_DENSITY) return;
 
-                NamespacedKey biome = getBiomeKey(base);
-                if (!s.biomes.isEmpty() && !s.biomes.contains(biome)) continue;
+        if (!isValidSpawn(s, world, base, nearbyPlayers)) return;
 
-                long region = regionKey(base);
-                int density = REGION_DENSITY.getOrDefault(world, Map.of()).getOrDefault(region, 0);
-                if (density >= MAX_REGION_DENSITY) continue;
+        int pack = rand(s.minPack, s.maxPack);
+        for (int i = 0; i < pack; i++) {
+            Location off = base.clone().add(
+                rand(-8, 8),
+                0,
+                rand(-8, 8)
+            );
 
-                if (!isValidSpawn(s, world, base, players)) continue;
-
-                int pack = rand(s.minPack, s.maxPack);
-                for (int i = 0; i < pack; i++) {
-                    Location off = base.clone().add(
-                        rand(-8, 8),
-                        0,
-                        rand(-8, 8)
-                    );
-
-                    Location onGround = randomLocation(chunk, s, players);
-                    if (s.placement == CustomEntity.SpawnPlacement.ON_GROUND && onGround != null) {
-                        off.setY(onGround.getY());
-                    }
-
-                    if (!isValidSpawn(s, world, off, players)) continue;
-                    proto.clone().spawn(off, CustomEntitySpawnEvent.SpawnReason.NATURAL);
-                    REGION_DENSITY.computeIfAbsent(world, x -> new HashMap<>())
-                        .merge(region, 1, Integer::sum);
-                    current++;
-                }
+            Location onGround = randomLocation(world, off.getBlockX() >> 4, off.getBlockZ() >> 4, s, nearbyPlayers);
+            if (s.placement == CustomEntity.SpawnPlacement.ON_GROUND && onGround != null) {
+                off.setY(onGround.getY());
             }
+
+            if (!isValidSpawn(s, world, off, nearbyPlayers)) continue;
+
+            proto.clone().spawn(off, CustomEntitySpawnEvent.SpawnReason.NATURAL);
+            REGION_DENSITY.computeIfAbsent(world, x -> new ConcurrentHashMap<>())
+                .merge(region, 1, Integer::sum);
         }
     }
 
@@ -245,11 +264,10 @@ public class EntityManager {
         return Math.max(1, base * chunks / 289);
     }
 
-    private static Location randomLocation(Chunk chunk, CustomEntity.SpawnSettings s, List<Location> players) {
-        World world = chunk.getWorld();
+    private static Location randomLocation(World world, int cx, int cz, CustomEntity.SpawnSettings s, List<Player> players) {
         for (int attempt = 0; attempt < 10; attempt++) {
-            int x = (chunk.getX() << 4) + RAND.nextInt(16);
-            int z = (chunk.getZ() << 4) + RAND.nextInt(16);
+            int x = (cx << 4) + RAND.nextInt(16);
+            int z = (cz << 4) + RAND.nextInt(16);
             int y = switch (s.heightMap) {
                 case MOTION_BLOCKING -> world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING);
                 case MOTION_BLOCKING_NO_LEAVES -> world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
@@ -271,7 +289,7 @@ public class EntityManager {
         return null;
     }
 
-    private static boolean isValidSpawn(CustomEntity.SpawnSettings s, World world, Location loc, List<Location> players) {
+    private static boolean isValidSpawn(CustomEntity.SpawnSettings s, World world, Location loc, List<Player> players) {
         Block block = loc.getBlock();
         Block below = block.getRelative(0, -1, 0);
         int light = block.getLightLevel();
@@ -297,7 +315,7 @@ public class EntityManager {
                 if (!block.getRelative(0, 1, 0).isPassable()) valid = false;
             }
         }
-        for (Location p : players) if (p.distanceSquared(loc) < 48 * 48) valid = false;
+        for (Player p : players) if (p.getLocation().distanceSquared(loc) < 48 * 48) valid = false;
         return valid && (s.canSpawn == null || s.canSpawn.test(world, loc));
     }
 
@@ -306,12 +324,6 @@ public class EntityManager {
         return RegistryAccess.registryAccess()
             .getRegistry(RegistryKey.BIOME)
             .getKey(biome);
-    }
-
-    private static List<Location> getPlayerLocations(World world) {
-        List<Location> list = new ArrayList<>();
-        for (Player p : world.getPlayers()) list.add(p.getLocation());
-        return list;
     }
 
     private static long regionKey(Location loc) {
@@ -339,31 +351,35 @@ public class EntityManager {
         }
         return list.getFirst();
     }
-    private static class ChunkCacheTask extends BukkitRunnable {
-        @Override
-        public void run() {
-            for (World world : Bukkit.getWorlds()) {
-                if (world.getPlayers().isEmpty()) {
-                    CHUNK_CACHE.remove(world);
-                    continue;
-                }
 
-                Set<Chunk> set = new HashSet<>();
-                for (Player p : world.getPlayers()) {
-                    int cx = p.getLocation().getBlockX() >> 4;
-                    int cz = p.getLocation().getBlockZ() >> 4;
+    private static void chunkCacheTick() {
+        Map<World, Set<Long>> newCache = new HashMap<>();
+        for (World w : Bukkit.getWorlds()) newCache.put(w, ConcurrentHashMap.newKeySet());
 
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            AbyssalLib.SCHEDULER.schedule(() -> {
+                Location loc = p.getLocation();
+                int cx = loc.getBlockX() >> 4;
+                int cz = loc.getBlockZ() >> 4;
+                World w = loc.getWorld();
+                Set<Long> set = newCache.get(w);
+                if (set != null) {
                     for (int dx = -8; dx <= 8; dx++) {
                         for (int dz = -8; dz <= 8; dz++) {
                             if (dx * dx + dz * dz > 64) continue;
-                            if (world.isChunkLoaded(cx + dx, cz + dz)) {
-                                set.add(world.getChunkAt(cx + dx, cz + dz));
+                            if (w.isChunkLoaded(cx + dx, cz + dz)) {
+                                set.add(((long) (cx + dx) & 0xFFFFFFFFL) | (((long) (cz + dz) & 0xFFFFFFFFL) << 32));
                             }
                         }
                     }
                 }
-                CHUNK_CACHE.put(world, new ArrayList<>(set));
-            }
+            }).entity(p).once();
         }
+
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            for (Map.Entry<World, Set<Long>> entry : newCache.entrySet()) {
+                CHUNK_CACHE.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+        }).global().after(10L, Clock.TICKS).once();
     }
 }

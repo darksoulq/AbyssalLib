@@ -20,7 +20,8 @@ import java.util.Map;
  */
 public abstract class AbstractPropertyEntity<T> {
 
-    /** The type or owner associated with this entity.
+    /**
+     * The type or owner associated with this entity.
      */
     private final T type;
 
@@ -41,16 +42,6 @@ public abstract class AbstractPropertyEntity<T> {
     public T getType() {
         return type;
     }
-
-    /**
-     * Called every server tick. Override to provide active logic.
-     */
-    public void serverTick() {}
-
-    /**
-     * Called during a random world tick.
-     */
-    public void randomTick() {}
 
     /**
      * Called when the entity is loaded into the world.

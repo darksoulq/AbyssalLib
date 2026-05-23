@@ -1,18 +1,14 @@
 package com.github.darksoulq.abyssallib.server.translation.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.translation.ClientItemModifier;
 import com.github.darksoulq.abyssallib.server.translation.ItemTranslationContext;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.mojang.datafixers.util.Pair;
-import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
@@ -57,7 +53,7 @@ public class ItemPacketModifier {
     }
 
     public static void startUpdater() {
-        Bukkit.getScheduler().runTaskTimer(AbyssalLib.getInstance(), () -> {
+        AbyssalLib.SCHEDULER.schedule(() -> {
             TRANSLATION_STATES.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
 
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -104,7 +100,7 @@ public class ItemPacketModifier {
                     states.remove(-1);
                 }
             }
-        }, 5L, 5L);
+        }).after(5L, Clock.TICKS).repeatEvery(5L, Clock.TICKS);
     }
 
     private static String getTranslationState(ItemStack stack) {

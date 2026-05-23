@@ -9,7 +9,7 @@ import com.github.darksoulq.abyssallib.server.permission.internal.*;
 
 import java.util.Locale;
 
-public final class PermissionSetup {
+public final class Permissions {
 
     public static void init(AbyssalLib plugin) {
         Try.run(() -> {

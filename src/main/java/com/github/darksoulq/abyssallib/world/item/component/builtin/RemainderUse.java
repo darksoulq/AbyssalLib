@@ -14,7 +14,11 @@ public class RemainderUse extends DataComponent<UseRemainder> implements Vanilla
             RemainderUse::new,
             r -> r.value.transformInto()
     );
-    public static final DataComponentType<RemainderUse> TYPE = DataComponentType.valued(CODEC, RemainderUse::new);
+    public static final DataComponentType<RemainderUse> TYPE = DataComponentType.valued(CODEC, remainder -> new RemainderUse((UseRemainder) remainder));
+
+    public RemainderUse(UseRemainder remainder) {
+        super(remainder);
+    }
 
     public RemainderUse(ItemStack remainder) {
         super(UseRemainder.useRemainder(remainder));

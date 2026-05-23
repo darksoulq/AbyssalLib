@@ -1,14 +1,13 @@
 package com.github.darksoulq.abyssallib.world.advancement;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.network.protocol.game.ClientboundUpdateAdvancementsPacket;
 import net.minecraft.resources.Identifier;
-import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -121,11 +120,11 @@ public class Toast {
         ((CraftPlayer) player).getHandle().connection.send(addPacket);
         ((CraftPlayer) player).getHandle().connection.send(progressPacket);
 
-        Bukkit.getScheduler().runTaskLater(AbyssalLib.getInstance(), () -> {
+        AbyssalLib.SCHEDULER.schedule(() -> {
             if (player.isOnline()) {
                 ((CraftPlayer) player).getHandle().connection.send(removePacket);
             }
-        }, 100L);
+        }).after(100L, Clock.TICKS).once();
     }
 
     /**

@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
 import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
 import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -316,10 +317,10 @@ public class PermissionWebServer {
             this.enabled = true;
             AbyssalLib.getInstance().getLogger().info("Permission Web Editor started at " + protocol + "://" + host + ":" + port);
 
-            Bukkit.getScheduler().runTaskTimerAsynchronously(AbyssalLib.getInstance(), () -> {
+            AbyssalLib.SCHEDULER.schedule(() -> {
                 long now = System.currentTimeMillis();
                 sessions.entrySet().removeIf(e -> now > e.getValue());
-            }, 1200L, 1200L);
+            }).async().after(1200L, Clock.TICKS).repeatEvery(1200L, Clock.TICKS);
 
         } catch (IOException e) {
             AbyssalLib.getInstance().getLogger().severe("PermissionWebServer failed: " + e.getMessage());

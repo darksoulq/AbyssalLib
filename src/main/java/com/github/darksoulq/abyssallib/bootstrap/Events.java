@@ -5,7 +5,7 @@ import com.github.darksoulq.abyssallib.server.chat.ChatInputHandler;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.internal.*;
 
-public final class EventRegistry {
+public final class Events {
 
     public static void init(AbyssalLib plugin) {
         AbyssalLib.EVENT_BUS = new EventBus(plugin);

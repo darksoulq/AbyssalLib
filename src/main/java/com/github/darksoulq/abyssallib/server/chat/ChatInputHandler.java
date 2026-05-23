@@ -3,11 +3,10 @@ package com.github.darksoulq.abyssallib.server.chat;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
 import java.util.UUID;
@@ -99,12 +98,12 @@ public class ChatInputHandler {
         }
 
         if (timeoutTicks > 0) {
-            TaskUtil.delayedTask(AbyssalLib.getInstance(), (int) timeoutTicks, () -> {
+            AbyssalLib.SCHEDULER.schedule(() -> {
                 Consumer<String> removed = INPUT_MAP.remove(uuid);
                 if (removed != null) {
                     player.sendMessage(TextUtil.parse("<gray>[<red>Timeout</red>] <white>Input request expired.</white>"));
                 }
-            });
+            }).after(timeoutTicks, Clock.TICKS).once();
         }
     }
 
@@ -126,12 +125,7 @@ public class ChatInputHandler {
             event.setCancelled(true);
             String plainMessage = TextUtil.MM.serialize(event.message());
 
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    handler.accept(plainMessage);
-                }
-            }.runTask(AbyssalLib.getInstance());
+            AbyssalLib.SCHEDULER.schedule(() -> handler.accept(plainMessage)).once();
         }
     }
 }

@@ -5,6 +5,9 @@ import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
+import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
+import com.github.darksoulq.abyssallib.server.util.regional.Locatable;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.data.tag.impl.BlockTag;
@@ -38,7 +41,7 @@ import java.util.function.Supplier;
  * To create a custom block, extend this class or use the default implementation
  * with modified {@link BlockProperties}.
  */
-public class CustomBlock implements Cloneable {
+public class CustomBlock implements Cloneable, Locatable {
 
     /**
      * The unique identifier of this block.
@@ -59,6 +62,11 @@ public class CustomBlock implements Cloneable {
      * The associated block entity, if any.
      */
     private BlockEntity entity;
+
+    /**
+     * The task handling ticking execution sequentially.
+     */
+    private ScheduledTask tickTask;
 
     /**
      * The physical and interaction properties of this block.
@@ -151,6 +159,7 @@ public class CustomBlock implements Cloneable {
      *
      * @return the location
      */
+    @Override
     public Location getLocation() {
         return location;
     }
@@ -195,9 +204,34 @@ public class CustomBlock implements Cloneable {
             }
 
             BlockManager.register(this);
+            startTicking();
         } else {
             onLoad();
         }
+    }
+
+    /**
+     * Places the block at the specified Bukkit block location during world generation.
+     * This bypasses all chunk-loading event triggers and regional tick scheduling,
+     * allowing the block to remain dormant until naturally loaded by the server.
+     *
+     * @param block the target block
+     */
+    public void placeForWorldGen(Block block) {
+        if (!material.isBlock()) {
+            AbyssalLib.getInstance().getLogger().severe("Invalid block material for " + id);
+            return;
+        }
+
+        setLocation(block.getLocation());
+
+        if (block.getType() != material) block.setType(material);
+        BlockEntity newEntity = createBlockEntity(getLocation());
+        if (newEntity != null) {
+            setEntity(newEntity);
+        }
+
+        BlockManager.register(this);
     }
 
     /**
@@ -311,12 +345,57 @@ public class CustomBlock implements Cloneable {
     /**
      * Called when the block is loaded from disk.
      */
-    public void onLoad() {}
+    public void onLoad() {
+        startTicking();
+    }
 
     /**
      * Called when the block is unloaded (chunk unload or server stop).
      */
-    public void onUnLoad() {}
+    public void onUnLoad() {
+        stopTicking();
+    }
+
+    /**
+     * Called every server tick. Override to provide active logic.
+     */
+    public void onTick() {}
+
+    /**
+     * Called during a random world tick.
+     */
+    public void onRandomTick() {}
+
+    /**
+     * Intelligently starts regional tick evaluations.
+     */
+    protected void startTicking() {
+        if (tickTask == null && location != null) {
+            tickTask = AbyssalLib.SCHEDULER.schedule(() -> {
+                if (location.getBlock().getType() != material) {
+                    stopTicking();
+                    BlockManager.remove(location);
+                    return;
+                }
+
+                onTick();
+
+                if (ThreadLocalRandom.current().nextFloat() < 0.001f) {
+                    onRandomTick();
+                }
+            }).region(location).repeatEvery(1, Clock.TICKS);
+        }
+    }
+
+    /**
+     * Disengages logic evaluators cancelling any regional task links.
+     */
+    protected void stopTicking() {
+        if (tickTask != null) {
+            tickTask.cancel();
+            tickTask = null;
+        }
+    }
 
     /**
      * Called when a player interacts with the block.

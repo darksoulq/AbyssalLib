@@ -58,6 +58,11 @@ public class Item implements Cloneable {
     private ComponentMap componentMap;
 
     /**
+     * Whether or not this item should appear in give command
+     */
+    private boolean hidden = false;
+
+    /**
      * A list of local item translation providers applied strictly to this custom item instance.
      */
     private List<ItemTranslationProvider> translationProviders = new ArrayList<>();
@@ -258,6 +263,22 @@ public class Item implements Cloneable {
         tag.add(ItemPredicate.builder()
             .id(id)
             .build());
+    }
+
+    /**
+     * Sets whether or not this item should be hidden in /give
+     * @param hidden whether or not to hide the item
+     */
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    /**
+     * Gets whether or not this item should be hidden in /give
+     * @return whether or not to hide the item
+     */
+    public boolean isHidden() {
+        return this.hidden;
     }
 
     /**

@@ -82,11 +82,11 @@ public class AdvancementEvents {
 
     private void checkAdvancements(Player player, Event event) {
         if (!Bukkit.isPrimaryThread()) {
-            Bukkit.getScheduler().runTask(AbyssalLib.getInstance(), () -> {
+            AbyssalLib.SCHEDULER.schedule(() -> {
                 if (player.isOnline()) {
                     Registries.ADVANCEMENTS.getAll().values().forEach(customAdv -> customAdv.evaluate(player, event));
                 }
-            });
+            }).once();
         } else {
             Registries.ADVANCEMENTS.getAll().values().forEach(customAdv -> customAdv.evaluate(player, event));
         }

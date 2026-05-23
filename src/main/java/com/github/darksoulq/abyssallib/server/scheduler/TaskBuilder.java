@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.server.scheduler;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 public class TaskBuilder {
     private final Scheduler scheduler;
@@ -13,8 +13,8 @@ public class TaskBuilder {
     private Location location = null;
     private long delay = 0;
     private Clock delayClock = Clock.TICKS;
-    private Supplier<Boolean> untilCondition = null;
-    private Supplier<Boolean> whileCondition = null;
+    private BooleanSupplier untilCondition = null;
+    private BooleanSupplier whileCondition = null;
 
     public TaskBuilder(Scheduler scheduler, Runnable action) {
         this.scheduler = scheduler;
@@ -58,12 +58,12 @@ public class TaskBuilder {
         return after(time, clock.unit(), clock);
     }
 
-    public TaskBuilder repeatUntil(Supplier<Boolean> condition) {
+    public TaskBuilder repeatUntil(BooleanSupplier condition) {
         this.untilCondition = condition;
         return this;
     }
 
-    public TaskBuilder repeatWhile(Supplier<Boolean> condition) {
+    public TaskBuilder repeatWhile(BooleanSupplier condition) {
         this.whileCondition = condition;
         return this;
     }

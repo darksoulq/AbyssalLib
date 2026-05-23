@@ -6,61 +6,71 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 public class AbstractScheduledTask {
     protected final CompletableFuture<Void> completion = new CompletableFuture<>();
     protected volatile boolean cancelled = false;
     protected volatile boolean running = false;
     protected volatile Throwable failure = null;
-    protected volatile Instant nextExecution = Instant.now();
+    private volatile long nextExecutionMillis = -1;
 
-    private final Supplier<Boolean> until;
-    private final Supplier<Boolean> whileCond;
+    private final BooleanSupplier until;
+    private final BooleanSupplier whileCond;
     private final Entity entity;
 
-    public AbstractScheduledTask(Supplier<Boolean> until, Supplier<Boolean> whileCond, Entity entity) {
+    public AbstractScheduledTask(BooleanSupplier until, BooleanSupplier whileCond, Entity entity) {
         this.until = until;
         this.whileCond = whileCond;
         this.entity = entity;
     }
 
-    public Runnable getWrappedRunnable(Runnable action, long delayMillis, long periodMillis) {
-        nextExecution = Instant.now().plusMillis(delayMillis);
+    public Runnable getWrappedRunnable(Runnable action, long periodMillis) {
         return () -> {
             if (cancelled) return;
-            if (entity != null && !entity.isValid()) { cancel(); return; }
-            if (until != null && until.get()) { cancel(); return; }
-            if (whileCond != null && !whileCond.get()) { cancel(); return; }
+            if (entity != null && !entity.isValid()) {
+                cancel();
+                return;
+            }
+            if (until != null && until.getAsBoolean()) {
+                cancel();
+                return;
+            }
+            if (whileCond != null && !whileCond.getAsBoolean()) {
+                cancel();
+                return;
+            }
 
             running = true;
             try {
                 action.run();
+                if (periodMillis > 0) {
+                    nextExecutionMillis = System.currentTimeMillis() + periodMillis;
+                } else {
+                    cancel();
+                }
             } catch (Throwable t) {
                 failure = t;
                 cancel();
                 completion.completeExceptionally(t);
-            } finally {
-                running = false;
-                if (!cancelled) {
-                    if (periodMillis <= 0) {
-                        cancel();
-                    } else {
-                        nextExecution = Instant.now().plusMillis(periodMillis);
-                    }
-                }
             }
+            running = false;
         };
     }
 
     public void cancel() {
+        if (cancelled) return;
         cancelled = true;
         if (!completion.isDone()) completion.complete(null);
     }
 
     public boolean isCancelled() { return cancelled; }
     public boolean isRunning() { return running; }
-    public Instant nextExecution() { return nextExecution; }
+
+    public Instant nextExecution() {
+        return nextExecutionMillis == -1 ? Instant.now() : Instant.ofEpochMilli(nextExecutionMillis);
+    }
+
     public Optional<Throwable> failure() { return Optional.ofNullable(failure); }
     public CompletionStage<Void> completion() { return completion; }
 }

@@ -21,12 +21,11 @@ import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifiers;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviders;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicateLoader;
 import com.github.darksoulq.abyssallib.world.item.Items;
-import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemCategories;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessors;
 
-public final class ContentRegistry {
+public final class Content {
 
     public static void init() {
         Components.DATA_COMPONENTS_VANILLA.apply();

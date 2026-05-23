@@ -135,7 +135,7 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     public void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data) {
         setBlock(x, y, z, data);
         VirtualBlock virtual = new VirtualBlock(this.getWorld(), x, y, z, data.getMaterial());
-        block.place(virtual, false);
+        block.placeForWorldGen(virtual);
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
@@ -9,7 +8,7 @@ import com.github.darksoulq.abyssallib.server.event.custom.block.BlockBrokenEven
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockPlacedEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.world.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
@@ -43,7 +42,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class BlockEvents {
 
@@ -82,7 +80,10 @@ public class BlockEvents {
 
         if (e.getBlock().getEntity() instanceof StructureBlockEntity sbe) {
             e.setCancelled(true);
-            TaskUtil.delayedTask(AbyssalLib.getInstance(), 2, () ->  new StructureBlockMenu(sbe).open(e.getPlayer()));
+            AbyssalLib.SCHEDULER.schedule(() -> new StructureBlockMenu(sbe).open(e.getPlayer()))
+                .region(e.getBlock().getLocation())
+                .after(2L, Clock.TICKS)
+                .once();
         }
     }
 
@@ -92,7 +93,6 @@ public class BlockEvents {
         List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
         for (CustomBlock block : blocks) {
-            BlockManager.ACTIVE_BLOCKS.add(block.getLocation());
             block.onLoad();
         }
     }
@@ -102,7 +102,6 @@ public class BlockEvents {
         List<CustomBlock> blocks = BlockManager.getBlocksInChunk(event.getChunk());
         if (blocks.isEmpty()) return;
         for (CustomBlock block : blocks) {
-            BlockManager.ACTIVE_BLOCKS.remove(block.getLocation());
             block.onUnLoad();
         }
     }
@@ -494,29 +493,6 @@ public class BlockEvents {
         }
     }
 
-    @SubscribeEvent(ignoreCancelled = false)
-    public void onServerTick(ServerTickEndEvent event) {
-        for (Location loc : BlockManager.ACTIVE_BLOCKS) {
-            CustomBlock block = CustomBlock.resolve(loc);
-
-            if (block == null) {
-                continue;
-            }
-
-            if (loc.getBlock().getType() != block.getMaterial()) {
-                BlockManager.remove(loc);
-                continue;
-            }
-
-            if (block.getEntity() != null) {
-                block.getEntity().serverTick();
-                if (ThreadLocalRandom.current().nextFloat() < 0.001f) {
-                    block.getEntity().randomTick();
-                }
-            }
-        }
-    }
-
     public static void dropBlockLoot(Location loc, CustomBlock block, ItemStack tool, BlockBrokenEvent breakEvent, boolean silkTouch, int fortuneLevel) {
         BlockProperties props = block.properties;
 
@@ -565,10 +541,12 @@ public class BlockEvents {
     public void onBlockBreakPDC(BlockBreakEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
     }
+
     @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockFadePDC(BlockFadeEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());
     }
+
     @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockExplodePDC(BlockExplodeEvent event) {
         if (!event.isCancelled()) {
@@ -578,6 +556,7 @@ public class BlockEvents {
             }
         }
     }
+
     @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onBlockBurnPDC(BlockBurnEvent event) {
         if (!event.isCancelled()) BlockPersistentData.remove(event.getBlock());

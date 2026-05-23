@@ -1,10 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gui;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
+import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryView;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class GuiManager {
     /**
      * A map of active BukkitTasks to their corresponding GUiViews.
      */
-    public static final Map<GuiView, BukkitTask> TICK_VIEWS = new HashMap<>();
+    public static final Map<GuiView, ScheduledTask> TICK_VIEWS = new HashMap<>();
 
     /**
      * Opens a custom GUI for a player.
@@ -53,7 +53,7 @@ public class GuiManager {
         InventoryView view = player.getOpenInventory();
         GuiView guiView = OPEN_VIEWS.remove(view);
         if (guiView != null) {
-            BukkitTask task = TICK_VIEWS.remove(guiView);
+            ScheduledTask task = TICK_VIEWS.remove(guiView);
             if (task != null) task.cancel();
             guiView.close(player);
         }
@@ -67,7 +67,7 @@ public class GuiManager {
      */
     public static void remove(GuiView view) {
         OPEN_VIEWS.remove(view.getInventoryView());
-        BukkitTask task = TICK_VIEWS.remove(view);
+        ScheduledTask task = TICK_VIEWS.remove(view);
         if (task != null) task.cancel();
     }
 
@@ -78,12 +78,7 @@ public class GuiManager {
      * @param interval The interval between ticks.
      * @return The BukkitTask that can be cancelled whenever needed.
      */
-    private static BukkitTask startGuiTick(GuiView view, int interval) {
-        return new BukkitRunnable() {
-            @Override
-            public void run() {
-                view.render();
-            }
-        }.runTaskTimer(AbyssalLib.getInstance(), 0, interval);
+    private static ScheduledTask startGuiTick(GuiView view, int interval) {
+        return AbyssalLib.SCHEDULER.schedule(view::render).repeatEvery(interval, Clock.TICKS);
     }
 }

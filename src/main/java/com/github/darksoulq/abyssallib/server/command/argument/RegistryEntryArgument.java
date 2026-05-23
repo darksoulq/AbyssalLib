@@ -17,6 +17,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 @NullMarked
 public class RegistryEntryArgument<T> implements CustomArgumentType<T, NamespacedKey> {
@@ -26,13 +27,19 @@ public class RegistryEntryArgument<T> implements CustomArgumentType<T, Namespace
     );
 
     private final Registry<T> registry;
+    private final Predicate<T> filter;
 
-    public RegistryEntryArgument(Registry<T> registry) {
+    public RegistryEntryArgument(Registry<T> registry, Predicate<T> filter) {
         this.registry = registry;
+        this.filter = filter;
     }
 
     public static <T> RegistryEntryArgument<T> registryEntry(Registry<T> registry) {
-        return new RegistryEntryArgument<>(registry);
+        return new RegistryEntryArgument<>(registry, t -> true);
+    }
+
+    public static <T> RegistryEntryArgument<T> registryEntry(Registry<T> registry, Predicate<T> filter) {
+        return new RegistryEntryArgument<>(registry, filter);
     }
 
     @Override
@@ -42,8 +49,11 @@ public class RegistryEntryArgument<T> implements CustomArgumentType<T, Namespace
             reader.skip();
         }
         final String id = reader.getString().substring(start, reader.getCursor());
-
-        return registry.get(id);
+        T entry = registry.get(id);
+        if (!filter.test(entry)) {
+            throw ERROR_UNKNOWN_ENTRY.create(id);
+        }
+        return entry;
     }
 
     @Override
@@ -54,11 +64,11 @@ public class RegistryEntryArgument<T> implements CustomArgumentType<T, Namespace
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         String remaining = builder.getRemainingLowerCase();
-        for (String id : registry.getAll().keySet()) {
-            if (matchesSubStr(remaining, id.toLowerCase(Locale.ROOT))) {
+        registry.getAll().forEach((id, val) -> {
+            if (filter.test(val) && matchesSubStr(remaining, id.toLowerCase(Locale.ROOT))) {
                 builder.suggest(id);
             }
-        }
+        });
         return builder.buildFuture();
     }
 

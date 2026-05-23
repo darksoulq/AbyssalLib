@@ -29,6 +29,8 @@ class BlockBuilder(val id: Key, val material: Material) {
 
     private var onLoadHandler: (() -> Unit)? = null
     private var onUnLoadHandler: (() -> Unit)? = null
+    private var onTickHandler: (() -> Unit)? = null
+    private var onRandomTickHandler: (() -> Unit)? = null
     private var interactHandler: ((BlockInteractionEvent) -> ActionResult)? = null
     private var placeHandler: ((Player, Location, ItemStack) -> ActionResult)? = null
     private var breakHandler: ((Player, Location, ItemStack) -> ActionResult)? = null
@@ -68,8 +70,6 @@ class BlockBuilder(val id: Key, val material: Material) {
             object : BlockEntity(block) {
                 private val dynamicProperties = builder.properties
 
-                override fun serverTick() = builder.serverTickHandler?.invoke(this) ?: super.serverTick()
-                override fun randomTick() = builder.randomTickHandler?.invoke(this) ?: super.randomTick()
                 override fun onLoad() = builder.onLoadHandler?.invoke(this) ?: super.onLoad()
                 override fun onSave() = builder.onSaveHandler?.invoke(this) ?: super.onSave()
 
@@ -100,6 +100,8 @@ class BlockBuilder(val id: Key, val material: Material) {
 
     fun onLoad(handler: () -> Unit) { onLoadHandler = handler }
     fun onUnLoad(handler: () -> Unit) { onUnLoadHandler = handler }
+    fun onTick(handler: () -> Unit) { onTickHandler = handler }
+    fun onRandomTick(handler: () -> Unit) { onRandomTickHandler = handler }
     fun onInteract(handler: (BlockInteractionEvent) -> ActionResult) { interactHandler = handler }
     fun onPlace(handler: (Player, Location, ItemStack) -> ActionResult) { placeHandler = handler }
     fun onBreak(handler: (Player, Location, ItemStack) -> ActionResult) { breakHandler = handler }
@@ -128,8 +130,16 @@ class BlockBuilder(val id: Key, val material: Material) {
                 return entityFactory?.invoke(this)
             }
 
-            override fun onLoad() = onLoadHandler?.invoke() ?: super.onLoad()
-            override fun onUnLoad() = onUnLoadHandler?.invoke() ?: super.onUnLoad()
+            override fun onLoad() {
+                onLoadHandler?.invoke()
+                super.onLoad()
+            }
+            override fun onUnLoad() {
+                onUnLoadHandler?.invoke()
+                super.onUnLoad()
+            }
+            override fun onTick() = onTickHandler?.invoke() ?: super.onTick()
+            override fun onRandomTick() = onRandomTickHandler?.invoke() ?: super.onRandomTick()
             override fun onInteract(event: BlockInteractionEvent) = interactHandler?.invoke(event) ?: super.onInteract(event)
             override fun onPlace(player: Player, loc: Location, stack: ItemStack) = placeHandler?.invoke(player, loc, stack) ?: super.onPlace(player, loc, stack)
             override fun onBreak(player: Player, loc: Location, tool: ItemStack) = breakHandler?.invoke(player, loc, tool) ?: super.onBreak(player, loc, tool)

@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.context.gui.GuiClickContext;
 import com.github.darksoulq.abyssallib.server.event.context.gui.GuiDragContext;
+import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
 import com.github.darksoulq.abyssallib.world.gui.GuiElement;
 import com.github.darksoulq.abyssallib.world.gui.GuiFlag;
 import com.github.darksoulq.abyssallib.world.gui.GuiManager;
@@ -14,7 +15,6 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.scheduler.BukkitTask;
 
 public class GuiEvents {
 
@@ -79,7 +79,7 @@ public class GuiEvents {
     public void onClose(InventoryCloseEvent event) {
         GuiView view = GuiManager.OPEN_VIEWS.remove(event.getView());
         if (view != null) {
-            BukkitTask task = GuiManager.TICK_VIEWS.remove(view);
+            ScheduledTask task = GuiManager.TICK_VIEWS.remove(view);
             if (task != null) task.cancel();
             view.getGui().getOnClose().accept(view);
         }

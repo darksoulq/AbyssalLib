@@ -87,7 +87,7 @@ public class StructureBlockEntity extends BlockEntity {
             points.add(new Pixel(x, y, i, Color.BLUE));
         }
 
-        Generator boxGenerator = tick -> points;
+        Generator boxGenerator = _ -> points;
 
         particles = Particles.builder()
             .origin(origin)
@@ -134,7 +134,7 @@ public class StructureBlockEntity extends BlockEntity {
             if (structure == null) return false;
 
             Location target = getBlock().getLocation().clone().add(offsetX.get(), offsetY.get(), offsetZ.get());
-            structure.placeAsync(AbyssalLib.getInstance(), target, rotation.get(), mirror.get(), integrity.get(), 200);
+            structure.placeAsync(AbyssalLib.getInstance(), target, rotation.get(), mirror.get(), integrity.get(), AbyssalLib.CONFIG.features.structureBlocksPlacedPerTick.get());
             return true;
         } catch (Exception e) {
             e.printStackTrace();

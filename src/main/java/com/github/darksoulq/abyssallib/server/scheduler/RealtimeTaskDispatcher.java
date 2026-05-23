@@ -9,14 +9,10 @@ public class RealtimeTaskDispatcher {
     private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(4);
 
     public static ScheduledTask schedule(Runnable action, long delayMillis, long periodMillis, AbstractScheduledTask abstractTask) {
-        Runnable wrapped = abstractTask.getWrappedRunnable(action, delayMillis, periodMillis);
-        ScheduledFuture<?> future;
-
-        if (periodMillis > 0) {
-            future = EXECUTOR.scheduleAtFixedRate(wrapped, delayMillis, periodMillis, TimeUnit.MILLISECONDS);
-        } else {
-            future = EXECUTOR.schedule(wrapped, delayMillis, TimeUnit.MILLISECONDS);
-        }
+        Runnable wrapped = abstractTask.getWrappedRunnable(action, periodMillis);
+        ScheduledFuture<?> future = periodMillis > 0
+            ? EXECUTOR.scheduleAtFixedRate(wrapped, delayMillis, periodMillis, TimeUnit.MILLISECONDS)
+            : EXECUTOR.schedule(wrapped, delayMillis, TimeUnit.MILLISECONDS);
 
         return new ScheduledTask() {
             @Override public void cancel() { abstractTask.cancel(); future.cancel(false); }

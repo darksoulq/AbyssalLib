@@ -19,7 +19,6 @@ import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
-import io.papermc.paper.registry.tag.TagKey;
 import io.papermc.paper.text.Filtered;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.util.TriState;

@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
-import com.github.darksoulq.abyssallib.server.command.internal.InternalCommand;
+import com.github.darksoulq.abyssallib.server.command.internal.ReloadCommand;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent;
 import net.kyori.adventure.resource.ResourcePackInfo;
@@ -18,7 +18,7 @@ public class PackEvent {
     public void onPLayerJoin(PlayerJoinEvent e) {
         if (!AbyssalLib.CONFIG.rp.sendPhase.get().equals(PluginConfig.SendPhase.JOIN)) return;
         List<ResourcePackInfo> rps = new ArrayList<>();
-        InternalCommand.loadRPInfos(rps, false);
+        ReloadCommand.loadRPInfos(rps, false);
         if (!rps.isEmpty()) {
             e.getPlayer().sendResourcePacks(ResourcePackRequest.resourcePackRequest()
                 .packs(rps)
@@ -32,7 +32,7 @@ public class PackEvent {
     public void onPlayerConfig(AsyncPlayerConnectionConfigureEvent e) {
         if (!AbyssalLib.CONFIG.rp.sendPhase.get().equals(PluginConfig.SendPhase.CONFIGURATION)) return;
         List<ResourcePackInfo> rps = new ArrayList<>();
-        InternalCommand.loadRPInfos(rps, false);
+        ReloadCommand.loadRPInfos(rps, false);
 
         if (!rps.isEmpty()) {
             final Object lock = new Object();

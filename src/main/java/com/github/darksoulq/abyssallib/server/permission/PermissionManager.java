@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.server.permission;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
@@ -240,7 +242,7 @@ public class PermissionManager {
      * Starts the asynchronous task to purge expired nodes and update holders.
      */
     private void startCleanupTask() {
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+        AbyssalLib.SCHEDULER.schedule(() -> {
             boolean groupChanged = false;
             for (PermissionGroup group : Registries.PERMISSION_GROUPS.getAll().values()) {
                 if (group.clearExpired()) {
@@ -255,9 +257,9 @@ public class PermissionManager {
             for (PermissionUser user : users.values()) {
                 if (user.clearExpired()) {
                     saveUser(user);
-                    Bukkit.getScheduler().runTask(plugin, () -> updatePlayer(user.getUuid()));
+                    AbyssalLib.SCHEDULER.schedule(() -> updatePlayer(user.getUuid())).once();
                 }
             }
-        }, 200L, 200L);
+        }).async().after(200L, Clock.TICKS).repeatEvery(200L, Clock.TICKS);
     }
 }

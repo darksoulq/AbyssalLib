@@ -9,109 +9,130 @@ import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.util.TaskUtil;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
+import com.github.darksoulq.abyssallib.server.util.regional.Locatable;
+import com.github.darksoulq.abyssallib.server.util.regional.RegionKey;
+import com.github.darksoulq.abyssallib.server.util.regional.RegionalHashMap;
 import com.github.darksoulq.abyssallib.world.block.BlockEntity;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Objects;
 
 public class BlockManager {
 
-    public static final Map<String, CustomBlock> BLOCKS = new ConcurrentHashMap<>();
-    public static final List<Location> ACTIVE_BLOCKS = new CopyOnWriteArrayList<>();
+    public record BlockPos(Location location) implements Locatable {
+        @Override
+        public Location getLocation() {
+            return location;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BlockPos blockPos)) return false;
+            return location.getWorld().getUID().equals(blockPos.location.getWorld().getUID()) &&
+                location.getBlockX() == blockPos.location.getBlockX() &&
+                location.getBlockY() == blockPos.location.getBlockY() &&
+                location.getBlockZ() == blockPos.location.getBlockZ();
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        }
+    }
+
+    public static final RegionalHashMap<BlockPos, CustomBlock> BLOCKS = new RegionalHashMap<>(true);
     private static Database DATABASE;
 
     public static void load() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                int saved = BlockManager.save();
-                if (saved > 0) {
-                    AbyssalLib.LOGGER.info("Saved " + saved + " blocks");
-                }
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            int saved = BlockManager.save();
+            if (saved > 0) {
+                AbyssalLib.LOGGER.info("Saved " + saved + " blocks");
             }
-        }.runTaskTimerAsynchronously(AbyssalLib.getInstance(), 20L * 60 * 2, 20L * 60 * 5);
+        }).async().after(2400L, Clock.TICKS).repeatEvery(6000L, Clock.TICKS);
 
-        Try.run(() -> {
-            DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
-            DATABASE.connect();
-            DATABASE.executor().create("blocks")
-                .ifNotExists()
-                .column("world", "TEXT")
-                .column("x", "INTEGER")
-                .column("y", "INTEGER")
-                .column("z", "INTEGER")
-                .column("block_id", "TEXT")
-                .column("data", "TEXT")
-                .primaryKey("world", "x", "y", "z")
-                .execute();
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            Try.run(() -> {
+                DATABASE = new Database(new File(AbyssalLib.getInstance().getDataFolder(), "blocks.db"));
+                DATABASE.connect();
+                DATABASE.executor().create("blocks")
+                    .ifNotExists()
+                    .column("world", "TEXT")
+                    .column("x", "INTEGER")
+                    .column("y", "INTEGER")
+                    .column("z", "INTEGER")
+                    .column("block_id", "TEXT")
+                    .column("data", "TEXT")
+                    .primaryKey("world", "x", "y", "z")
+                    .execute();
 
-            TextUtil.buildGson();
+                TextUtil.buildGson();
 
-            List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
-                String world = rs.getString("world");
-                int x = rs.getInt("x");
-                int y = rs.getInt("y");
-                int z = rs.getInt("z");
-                String blockId = rs.getString("block_id");
-                String dataJson = rs.getString("data");
-                return new BlockRow(world, x, y, z, blockId, dataJson);
+                List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs -> {
+                    String world = rs.getString("world");
+                    int x = rs.getInt("x");
+                    int y = rs.getInt("y");
+                    int z = rs.getInt("z");
+                    String blockId = rs.getString("block_id");
+                    String dataJson = rs.getString("data");
+                    return new BlockRow(world, x, y, z, blockId, dataJson);
+                });
+
+                AbyssalLib.SCHEDULER.schedule(() -> {
+                    for (BlockRow row : rows) {
+                        if (Bukkit.getWorld(row.world) == null) continue;
+
+                        Location loc = new Location(Bukkit.getWorld(row.world), row.x, row.y, row.z);
+
+                        if (!Registries.BLOCKS.contains(row.blockId)) {
+                            AbyssalLib.getInstance().getLogger().warning("Unknown block id in DB: " + row.blockId);
+                            continue;
+                        }
+
+                        CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
+                        block.setLocation(loc);
+
+                        BlockEntity entity = block.createBlockEntity(loc);
+                        if (entity != null) {
+                            Try.run(() -> {
+                                entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
+                                entity.onLoad();
+                                block.setEntity(entity);
+                            }).onFailure(Throwable::printStackTrace);
+                        }
+
+                        block.onLoad();
+                        BLOCKS.put(new BlockPos(loc), block);
+                    }
+
+                    AbyssalLib.LOGGER.info("Loaded " + BLOCKS.size() + " Blocks.");
+                }).global().once();
+            }).onFailure(t -> {
+                AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + t.getMessage());
+                t.printStackTrace();
             });
-
-            for (BlockRow row : rows) {
-                if (Bukkit.getWorld(row.world) == null) continue;
-
-                Location loc = new Location(Bukkit.getWorld(row.world), row.x, row.y, row.z);
-
-                if (!Registries.BLOCKS.contains(row.blockId)) {
-                    AbyssalLib.getInstance().getLogger().warning("Unknown block id in DB: " + row.blockId);
-                    continue;
-                }
-
-                CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
-                block.setLocation(loc);
-
-                BlockEntity entity = block.createBlockEntity(loc);
-                if (entity != null) {
-                    Try.run(() -> {
-                        entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
-                        entity.onLoad();
-                        block.setEntity(entity);
-                    }).onFailure(Throwable::printStackTrace);
-                }
-
-                block.onLoad();
-
-                BLOCKS.put(locKey(loc), block);
-            }
-
-            AbyssalLib.LOGGER.info("Loaded " + BLOCKS.size() + " Blocks.");
-        }).onFailure(t -> {
-            AbyssalLib.getInstance().getLogger().severe("Failed to load block database: " + t.getMessage());
-            t.printStackTrace();
-        });
+        }).async().once();
     }
 
     public static void register(CustomBlock block) {
         Location loc = block.getLocation();
         if (loc == null) return;
 
-        BLOCKS.put(locKey(loc), block);
-        ACTIVE_BLOCKS.add(block.getLocation());
+        BLOCKS.put(new BlockPos(loc), block);
         save(block);
     }
 
     public static CustomBlock get(Location loc) {
-        return BLOCKS.get(locKey(loc));
+        if (loc == null) return null;
+        return BLOCKS.get(new BlockPos(loc));
     }
 
     public static void remove(CustomBlock block) {
@@ -119,19 +140,23 @@ public class BlockManager {
     }
 
     public static void remove(Location loc) {
-        BLOCKS.remove(locKey(loc));
-        ACTIVE_BLOCKS.remove(loc);
+        if (loc == null) return;
 
-        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
+        CustomBlock block = BLOCKS.remove(new BlockPos(loc));
+        if (block != null) {
+            block.onUnLoad();
+        }
+
+        AbyssalLib.SCHEDULER.schedule(() -> {
             DATABASE.executor().table("blocks").delete()
                 .where("world = ? AND x = ? AND y = ? AND z = ?",
                     loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())
                 .execute();
-        });
+        }).async().once();
     }
 
     public static void save(CustomBlock block) {
-        TaskUtil.delayedAsyncTask(AbyssalLib.getInstance(), 0, () -> {
+        AbyssalLib.SCHEDULER.schedule(() -> {
             Location loc = block.getLocation();
             if (loc == null) return;
 
@@ -154,7 +179,7 @@ public class BlockManager {
                 .value("block_id", block.getId().toString())
                 .value("data", json)
                 .execute();
-        });
+        }).async().once();
     }
 
     public static int save() {
@@ -200,23 +225,8 @@ public class BlockManager {
     }
 
     public static List<CustomBlock> getBlocksInChunk(Chunk chunk) {
-        List<CustomBlock> blocks = new ArrayList<>();
-        String worldName = chunk.getWorld().getName();
-
-        for (CustomBlock block : BLOCKS.values()) {
-            Location loc = block.getLocation();
-            if (!loc.getWorld().getName().equals(worldName)) continue;
-            int cx = loc.getBlockX() >> 4;
-            int cz = loc.getBlockZ() >> 4;
-            if (cx == chunk.getX() && cz == chunk.getZ()) {
-                blocks.add(block);
-            }
-        }
-        return blocks;
-    }
-
-    private static String locKey(Location loc) {
-        return loc.getWorld().getName() + ":" + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
+        RegionKey key = new RegionKey(chunk.getWorld().getUID(), chunk.getX(), chunk.getZ());
+        return new ArrayList<>(BLOCKS.getRegion(key).values());
     }
 
     private record BlockRow(String world, int x, int y, int z, String blockId, String dataJson) { }
