@@ -15,11 +15,15 @@ public class OminousAmplifier extends DataComponent<Integer> implements Vanilla 
             OminousAmplifier::new,
             OminousAmplifier::getValue
     );
-    public static final DataComponentType<OminousAmplifier> TYPE = DataComponentType.valued(CODEC, OminousAmplifier::new);
+    public static final DataComponentType<OminousAmplifier> TYPE = DataComponentType.valued(CODEC, amplifier -> new OminousAmplifier((OminousBottleAmplifier) amplifier));
 
     @IntRange(from = 0, to = 4)
     public OminousAmplifier(int amplifier) {
         super(amplifier);
+    }
+
+    public OminousAmplifier(OminousBottleAmplifier amplifier) {
+        super(amplifier.amplifier());
     }
 
     @Override

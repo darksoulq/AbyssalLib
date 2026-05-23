@@ -79,6 +79,6 @@ public class GuiManager {
      * @return The BukkitTask that can be cancelled whenever needed.
      */
     private static ScheduledTask startGuiTick(GuiView view, int interval) {
-        return AbyssalLib.SCHEDULER.schedule(view::render).repeatEvery(interval, Clock.TICKS);
+        return AbyssalLib.SCHEDULER.schedule(view::render).entity(view.getPlayer()).repeatEvery(interval, Clock.TICKS);
     }
 }
