@@ -26,7 +26,8 @@ import java.util.Map;
  * This loader supports deep directory scanning and can parse both JSON and YAML file formats.
  * Files must define a {@code type} (to resolve the {@link TagType} and its codec) and an {@code id}
  * (to register the instantiated {@link Tag} into the central registry). It automatically handles
- * appending data to existing tags and recursively resolving cross-tag inclusions.
+ * appending data to existing tags and recursively resolving cross-tag inclusions, unless the
+ * {@code replace} boolean field is set to {@code true}, which will completely override previous entries.
  */
 public class TagLoader {
 
@@ -42,10 +43,10 @@ public class TagLoader {
     public static int loadFolder(File folder) {
         int loaded = 0;
         if (!folder.exists() || !folder.isDirectory()) return loaded;
-        
+
         File[] files = folder.listFiles();
         if (files == null) return loaded;
-        
+
         for (File file : files) {
             if (file.isDirectory()) {
                 loaded += loadFolder(file);
@@ -191,6 +192,14 @@ public class TagLoader {
             String typeStr = Codecs.STRING.decode(ops, typeObj);
             String idStr = Codecs.STRING.decode(ops, idObj);
 
+            boolean replace = false;
+            D replaceObj = map.get(ops.createString("replace"));
+            if (replaceObj != null) {
+                try {
+                    replace = Codecs.BOOLEAN.decode(ops, replaceObj);
+                } catch (Exception ignored) {}
+            }
+
             TagType<T, V> type = (TagType<T, V>) Registries.TAG_TYPES.get(typeStr);
             if (type == null) {
                 AbyssalLib.LOGGER.warning("Unknown tag type '" + typeStr + "' referenced in " + source);
@@ -199,6 +208,15 @@ public class TagLoader {
 
             Key id = Key.key(idStr);
             Tag<T, V> tag = type.create(id);
+            Tag<T, V> existing = (Tag<T, V>) Registries.TAGS.get(idStr);
+
+            if (replace) {
+                if (existing != null) {
+                    Registries.TAGS.remove(idStr);
+                }
+                PENDING_INCLUDES.remove(idStr);
+                existing = null;
+            }
 
             D valuesObj = map.get(ops.createString("values"));
             if (valuesObj != null) {
@@ -216,7 +234,6 @@ public class TagLoader {
                 }
             }
 
-            Tag<T, V> existing = (Tag<T, V>) Registries.TAGS.get(idStr);
             if (existing != null && existing.getType() == type) {
                 tag.getValues().forEach(existing::add);
             } else {
@@ -242,7 +259,7 @@ public class TagLoader {
 
             for (String includeId : entry.getValue()) {
                 Tag<?, ?> included = Registries.TAGS.get(includeId);
-                
+
                 if (included != null) {
                     if (parent.getType() == included.getType()) {
                         unsafeInclude(parent, included);
@@ -254,7 +271,7 @@ public class TagLoader {
                 }
             }
         }
-        
+
         PENDING_INCLUDES.clear();
     }
 

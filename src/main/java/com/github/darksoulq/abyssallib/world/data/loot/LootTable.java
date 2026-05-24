@@ -38,9 +38,18 @@ public class LootTable {
      * @param vanillaId     The targeted namespace mapping dictating override bounds.
      */
     public LootTable(List<LootPool> pools, MergeStrategy mergeStrategy, @Nullable String vanillaId) {
-        this.pools = pools;
+        this.pools = new ArrayList<>(pools);
         this.mergeStrategy = mergeStrategy;
         this.vanillaId = vanillaId;
+    }
+
+    /**
+     * Retrieves the internal collection of configured loot pools dictating sequential evaluation phases.
+     *
+     * @return The list of functional pools generating drops.
+     */
+    public List<LootPool> getPools() {
+        return pools;
     }
 
     /**

@@ -2,25 +2,15 @@ package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RegistryApplyEvent;
-import com.github.darksoulq.abyssallib.server.event.internal.ServerEvents;
+import com.github.darksoulq.abyssallib.server.registry.modifier.*;
 import com.github.darksoulq.abyssallib.server.registry.object.Holder;
-import com.github.darksoulq.abyssallib.world.advancement.Advancement;
-import com.github.darksoulq.abyssallib.world.block.BlockPredicate;
-import com.github.darksoulq.abyssallib.world.block.CustomBlock;
-import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
-import com.github.darksoulq.abyssallib.world.entity.EntityPredicate;
-import com.github.darksoulq.abyssallib.world.item.Item;
-import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import net.kyori.adventure.key.Key;
-import net.minecraft.advancements.AdvancementHolder;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerAdvancementManager;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A specialized registry utility that defers object registration until the server is ready.
@@ -32,6 +22,19 @@ import java.util.function.Function;
  * The type of objects handled by this registry.
  */
 public final class DeferredRegistry<T> {
+
+    /**
+     * The list of global modifiers applied dynamically during the registration process.
+     */
+    private static final List<Supplier<DeferredRegistryModifier>> MODIFIERS = new ArrayList<>();
+
+    static {
+        MODIFIERS.add(BlockModifier::new);
+        MODIFIERS.add(ItemModifier::new);
+        MODIFIERS.add(EntityModifier::new);
+        MODIFIERS.add(AdvancementModifier::new);
+        MODIFIERS.add(LootTableModifier::new);
+    }
 
     /**
      * The target master registry where objects will eventually reside.
@@ -62,6 +65,17 @@ public final class DeferredRegistry<T> {
     }
 
     /**
+     * Registers a custom modifier factory to dynamically intercept and handle external
+     * registration side effects (e.g., blocks automatically registering item forms).
+     *
+     * @param modifierFactory
+     * The supplier providing instances of the custom modifier.
+     */
+    public static void registerModifier(Supplier<DeferredRegistryModifier> modifierFactory) {
+        MODIFIERS.add(modifierFactory);
+    }
+
+    /**
      * Factory method to create a new deferred registry instance.
      *
      * @param <T>
@@ -79,15 +93,13 @@ public final class DeferredRegistry<T> {
 
     /**
      * Queues an object for registration.
-     * Instead of returning the object directly, this returns a {@link Holder}, which
-     * allows for lazy initialization and safe cross-referencing during static init.
      *
      * @param name
      * The unique name (path) within this registry's namespace.
      * @param supplier
      * A function that creates the object using the generated {@link Key}.
      * @return
-     * A {@link T}  registered object.
+     * A {@link T} registered object.
      * @throws IllegalStateException
      * If the name has already been registered in this deferred registry.
      */
@@ -103,61 +115,37 @@ public final class DeferredRegistry<T> {
 
     /**
      * Finalizes the registration process by moving all deferred entries into the master registry.
-     * This method triggers the instantiation of all {@link Holder} objects and handles
-     * secondary registration for blocks and items.
+     * This method  runs all mapped
+     * {@link DeferredRegistryModifier} rules.
      */
     public void apply() {
         RegistryApplyEvent<T> event = new RegistryApplyEvent<>(registry, this);
         Bukkit.getPluginManager().callEvent(event);
+
         if (event.isCancelled()) {
             AbyssalLib.getInstance().getLogger().info("Registry apply cancelled for plugin: " + pluginId);
             return;
         }
 
-        List<AdvancementHolder> newAdvancements = new ArrayList<>();
-        Map<AdvancementHolder, Advancement> customAdvancementMap = new HashMap<>();
+        List<DeferredRegistryModifier> activeModifiers = new ArrayList<>();
+        for (Supplier<DeferredRegistryModifier> supplier : MODIFIERS) {
+            activeModifiers.add(supplier.get());
+        }
 
         for (Map.Entry<String, Holder<T>> entry : entries.entrySet()) {
             T value = entry.getValue().get();
             String idString = pluginId + ":" + entry.getKey();
+
             registry.register(idString, value);
 
-            if (value instanceof CustomBlock block && block.generateItem()) {
-                Registries.BLOCK_PREDICATES.register(idString, BlockPredicate.builder()
-                    .id(Key.key(idString))
-                    .build());
-                Item blockItem = block.getItem().get();
-                Registries.ITEM_PREDICATES.register(idString, ItemPredicate.builder()
-                    .id(Key.key(idString))
-                    .build());
-                Registries.ITEMS.register(idString, blockItem);
-            }
-
-            if (value instanceof Item) {
-                Registries.ITEM_PREDICATES.register(idString, ItemPredicate.builder()
-                    .id(Key.key(idString))
-                    .build());
-            }
-
-            if (value instanceof CustomEntity<?>) {
-                Registries.ENTITY_PREDICATES.register(idString, EntityPredicate.builder()
-                    .id(Key.key(idString))
-                    .build());
-            }
-
-            if (value instanceof Advancement customAdv) {
-                AdvancementHolder holder = customAdv.toNMSHolder();
-                newAdvancements.add(holder);
-                customAdvancementMap.put(holder, customAdv);
-
-                ServerAdvancementManager manager = MinecraftServer.getServer().getAdvancements();
-                Map<Identifier, AdvancementHolder> mutableAdvancements = new HashMap<>(manager.advancements);
-                mutableAdvancements.put(holder.id(), holder);
-                manager.advancements = mutableAdvancements;
+            for (DeferredRegistryModifier modifier : activeModifiers) {
+                modifier.onRegister(idString, value);
             }
         }
 
-        ServerEvents.applyAdvancementLayout(newAdvancements, customAdvancementMap);
+        for (DeferredRegistryModifier modifier : activeModifiers) {
+            modifier.postApply();
+        }
 
         entries.clear();
     }

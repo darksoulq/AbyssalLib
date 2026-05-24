@@ -70,7 +70,23 @@ public class LootLoader {
 
             LootTable table = load(path);
             if (table != null) {
-                Registries.LOOT_TABLES.register(id, table);
+                String targetId = table.getVanillaId() != null ? table.getVanillaId() : id;
+                LootTable existing = Registries.LOOT_TABLES.get(targetId);
+
+                if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
+                    if (existing != null) {
+                        Registries.LOOT_TABLES.remove(targetId);
+                    }
+                    Registries.LOOT_TABLES.register(targetId, table);
+                } else if (table.getMergeStrategy() == MergeStrategy.MERGE) {
+                    if (existing != null) {
+                        existing.getPools().addAll(table.getPools());
+                    } else {
+                        Registries.LOOT_TABLES.register(targetId, table);
+                    }
+                } else {
+                    Registries.LOOT_TABLES.register(targetId, table);
+                }
             }
         } catch (Exception e) {
             AbyssalLib.LOGGER.warning("Failed to load loot table " + path);

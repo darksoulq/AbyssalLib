@@ -49,7 +49,7 @@ public class ItemMenu {
 
             if (categoryCount == 0) {
                 itemCount = Registries.ITEMS.getAll().keySet().stream()
-                    .filter(key -> key.startsWith(plugin + ":") && !key.endsWith(":plugin_icon") || !Registries.ITEMS.get(key).isHidden())
+                    .filter(key -> key.startsWith(plugin + ":") && !key.endsWith(":plugin_icon") && !Registries.ITEMS.get(key).isHidden())
                     .count();
                 if (itemCount == 0) continue;
             } else {
@@ -77,6 +77,7 @@ public class ItemMenu {
             List<Item> defaultItems = Registries.ITEMS.getAll().entrySet().stream()
                 .filter(e -> e.getKey().startsWith(namespace + ":"))
                 .filter(e -> !e.getKey().endsWith(":plugin_icon"))
+                .filter(e -> e.getValue().isHidden())
                 .map(Map.Entry::getValue)
                 .toList();
 
