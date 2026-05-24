@@ -34,6 +34,7 @@ public final class DeferredRegistry<T> {
         MODIFIERS.add(EntityModifier::new);
         MODIFIERS.add(AdvancementModifier::new);
         MODIFIERS.add(LootTableModifier::new);
+        MODIFIERS.add(RecipeModifier::new);
     }
 
     /**

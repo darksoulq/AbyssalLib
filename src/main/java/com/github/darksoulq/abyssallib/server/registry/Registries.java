@@ -32,11 +32,11 @@ import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemCategory;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
+import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessorType;
-import io.papermc.paper.potion.PotionMix;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.inventory.*;
 
 public class Registries {
     public static final Registry<EnergyUnit> ENERGY_UNITS = new Registry<>();
@@ -83,14 +83,6 @@ public class Registries {
     public static final Registry<Placeholder<?>> PLACEHOLDERS = new Registry<>();
     public static final Registry<Currency> CURRENCIES = new Registry<>();
 
-    public static final Registry<ShapedRecipe> SHAPED_RECIPES = new Registry<>();
-    public static final Registry<ShapelessRecipe> SHAPELESS_RECIPES = new Registry<>();
-    public static final Registry<TransmuteRecipe> TRANSMUTE_RECIPES = new Registry<>();
-    public static final Registry<FurnaceRecipe> FURNACE_RECIPES = new Registry<>();
-    public static final Registry<BlastingRecipe> BLASTING_RECIPES = new Registry<>();
-    public static final Registry<SmokingRecipe> SMOKING_RECIPES = new Registry<>();
-    public static final Registry<CampfireRecipe> CAMPFIRE_RECIPES = new Registry<>();
-    public static final Registry<StonecuttingRecipe> STONECUTTING_RECIPES = new Registry<>();
-    public static final Registry<SmithingTransformRecipe> SMITHING_TRANSFORM_RECIPES = new Registry<>();
-    public static final Registry<PotionMix> POTION_MIXES = new Registry<>();
+    public static final Registry<RecipeType<?>> RECIPE_TYPES = new Registry<>();
+    public static final Registry<CustomRecipe> RECIPES = new Registry<>();
 }
