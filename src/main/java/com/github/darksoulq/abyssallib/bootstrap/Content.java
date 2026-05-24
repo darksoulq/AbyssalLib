@@ -23,11 +23,14 @@ import com.github.darksoulq.abyssallib.world.item.ItemPredicateLoader;
 import com.github.darksoulq.abyssallib.world.item.Items;
 import com.github.darksoulq.abyssallib.world.item.component.Components;
 import com.github.darksoulq.abyssallib.world.item.internal.ItemCategories;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeTypes;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessors;
 
 public final class Content {
 
     public static void init() {
+        RecipeTypes.RECIPE_TYPES.apply();
+
         Components.DATA_COMPONENTS_VANILLA.apply();
         Components.DATA_COMPONENTS.apply();
         ItemPredicateLoader.loadPredicates();
