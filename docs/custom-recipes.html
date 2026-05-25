@@ -1,0 +1,90 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-25T21:57:10.159278"><title>Custom Recipes | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"loading-recipes","level":0,"title":"Loading Recipes","anchor":"#loading-recipes"},{"id":"global-recipe-properties","level":0,"title":"Global Recipe Properties","anchor":"#global-recipe-properties"},{"id":"creating-a-custom-recipe-type","level":0,"title":"Creating a Custom Recipe Type","anchor":"#creating-a-custom-recipe-type"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Custom Recipes | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/custom-recipes.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Custom Recipes | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/custom-recipes.html#webpage",
+    "url": "writerside-documentation/custom-recipes.html",
+    "name": "Custom Recipes | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="custom-recipes" data-main-title="Custom Recipes" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Recipes"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="custom-recipes" id="custom-recipes.md">Custom Recipes</h1><p id="-h6lnww_4">AbyssalLib provides a <code class="code" id="-h6lnww_8">RecipeLoader</code> that allows you to define standard and custom recipes entirely through JSON or YAML files.</p><section class="chapter"><h2 id="loading-recipes" data-toc="loading-recipes">Loading Recipes</h2><p id="-h6lnww_9">To load recipes, point the <code class="code" id="-h6lnww_12">RecipeLoader</code> to a folder on your server or a resource path inside your plugin's JAR.</p><div class="code-block" data-lang="java">
+public class MyPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        // Load default recipes packed inside your plugin's JAR (e.g., src/main/resources/recipes/)
+        RecipeLoader.loadResource(this, &quot;recipes/&quot;);
+        
+        // Alternatively, load from a folder in your plugin's data directory
+        File recipeDir = new File(getDataFolder(), &quot;recipes&quot;);
+        if (recipeDir.exists()) {
+            RecipeLoader.loadFolder(recipeDir);
+        }
+    }
+}
+</div></section><section class="chapter"><h2 id="global-recipe-properties" data-toc="global-recipe-properties">Global Recipe Properties</h2><p id="-h6lnww_13">Every recipe file, regardless of its type, shares a few core properties handled by the loader.</p><ul class="list _bullet" id="-h6lnww_14"><li class="list__item" id="-h6lnww_17"><p id="-h6lnww_21"><code class="code" id="-h6lnww_22">id</code>: (Required) The namespaced key of the recipe (e.g., <code class="code" id="-h6lnww_23">myplugin:mythril_sword</code>).</p></li><li class="list__item" id="-h6lnww_18"><p id="-h6lnww_24"><code class="code" id="-h6lnww_25">type</code>: (Required) The registered type of the recipe (e.g., <code class="code" id="-h6lnww_26">minecraft:shaped</code>, <code class="code" id="-h6lnww_27">myplugin:crusher</code>).</p></li><li class="list__item" id="-h6lnww_19"><p id="-h6lnww_28"><code class="code" id="-h6lnww_29">replace</code>: (Optional, Default: <code class="code" id="-h6lnww_30">false</code>) If <code class="code" id="-h6lnww_31">true</code>, this recipe will overwrite any existing recipe with the same <code class="code" id="-h6lnww_32">id</code>.</p></li><li class="list__item" id="-h6lnww_20"><p id="-h6lnww_33"><code class="code" id="-h6lnww_34">disabled</code>: (Optional, Default: <code class="code" id="-h6lnww_35">false</code>) If <code class="code" id="-h6lnww_36">true</code>, the loader will actively remove the recipe matching the <code class="code" id="-h6lnww_37">id</code> from the server. <span class="control" id="-h6lnww_38">This is highly useful for removing vanilla recipes!</span></p></li></ul><div class="code-block" data-lang="yaml">
+# Example: Disabling the vanilla diamond sword recipe
+id: &quot;minecraft:diamond_sword&quot;
+disabled: true
+</div></section><section class="chapter"><h2 id="creating-a-custom-recipe-type" data-toc="creating-a-custom-recipe-type">Creating a Custom Recipe Type</h2><p id="-h6lnww_39">If you are building custom crafting mechanics (like a custom Crusher block, an Altar, or a Forge), you can create your own recipe type. This allows server owners to add recipes for your custom machines using the exact same YAML/JSON system.</p><section class="chapter"><h3 id="1-implement-customrecipe" data-toc="1-implement-customrecipe">1. Implement CustomRecipe</h3><p id="-h6lnww_43">First, create a class or record that implements the <code class="code" id="-h6lnww_45">CustomRecipe</code> interface. You must define a <code class="code" id="-h6lnww_46">Codec</code> so the <code class="code" id="-h6lnww_47">RecipeLoader</code> knows how to parse your specific fields.</p><div class="code-block" data-lang="java">
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordCodecBuilder;
+import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.RecipeChoice;
+import java.util.Optional;
+
+public record CrusherRecipe(NamespacedKey id, RecipeChoice input, ItemStack result, boolean replace) implements CustomRecipe {
+
+    // Build the Codec to parse the YAML/JSON fields
+    public static final Codec&lt;CrusherRecipe&gt; CODEC = RecordCodecBuilder.create(
+        Codecs.NAMESPACED_KEY.fieldOf(&quot;id&quot;, CrusherRecipe::getKey),
+        Codecs.RECIPE_CHOICE.fieldOf(&quot;input&quot;, CrusherRecipe::input),
+        Codecs.ITEM_STACK.fieldOf(&quot;result&quot;, CrusherRecipe::result),
+        Codecs.BOOLEAN.optional().fieldOf(&quot;replace&quot;, r -&gt; Optional.of(r.replace())),
+        
+        // Constructor mapping
+        (id, input, result, replace) -&gt; new CrusherRecipe(id, input, result, replace.orElse(false))
+    );
+
+    // Define the type reference (we will register this later)
+    public static final RecipeType&lt;CrusherRecipe&gt; TYPE = () -&gt; CODEC;
+
+    @Override
+    public NamespacedKey getKey() {
+        return id;
+    }
+
+    @Override
+    public RecipeType&lt;?&gt; getType() {
+        return TYPE;
+    }
+}
+</div></section><section class="chapter"><h3 id="2-register-the-recipe-type" data-toc="2-register-the-recipe-type">2. Register the Recipe Type</h3><p id="-h6lnww_48">Once your class is built, register the <code class="code" id="-h6lnww_50">RecipeType</code> into AbyssalLib's recipe type registry.</p><div class="code-block" data-lang="java">
+import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
+
+public class MyRecipeTypes {
+    // Create a registry under your plugin's namespace
+    public static final DeferredRegistry&lt;RecipeType&lt;?&gt;&gt; TYPES = DeferredRegistry.create(Registries.RECIPE_TYPES, &quot;myplugin&quot;);
+
+    // Register the custom Crusher recipe type
+    public static final RecipeType&lt;?&gt; CRUSHER = TYPES.register(&quot;crusher&quot;, _ -&gt; CrusherRecipe.TYPE);
+}
+</div></section><section class="chapter"><h3 id="3-write-the-yaml" data-toc="3-write-the-yaml">3. Write the YAML</h3><p id="-h6lnww_51">Users can now create files using your completely custom recipe type. The <code class="code" id="-h6lnww_53">RecipeLoader</code> will automatically detect it, parse the <code class="code" id="-h6lnww_54">input</code> and <code class="code" id="-h6lnww_55">result</code> correctly, and store it in the registry for your custom machine to access later.</p><div class="code-block" data-lang="yaml">
+id: &quot;myplugin:crush_cobblestone&quot;
+type: &quot;myplugin:crusher&quot;
+input: &quot;minecraft:cobblestone&quot;
+result:
+  id: &quot;minecraft:gravel&quot;
+  amount: 1
+</div></section></section><div class="last-modified">25 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="custom-gui-layers.html" class="navigation-links__prev">Custom GuiLayers</a><a href="default-recipe-types.html" class="navigation-links__next">Default Recipe Types</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

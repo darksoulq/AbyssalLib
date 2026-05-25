@@ -26,6 +26,11 @@
         <toc-element topic="custom-gui-elements.md"/>
         <toc-element topic="custom-gui-layers.md"/>
     </toc-element>
+    <toc-element toc-title="Recipes">
+        <toc-element topic="custom-recipes.md">
+        </toc-element>
+        <toc-element topic="default-recipe-types.md"/>
+    </toc-element>
     <toc-element toc-title="Advancements">
         <toc-element topic="first-advancement.md"/>
         <toc-element topic="custom-rewards.md"/>

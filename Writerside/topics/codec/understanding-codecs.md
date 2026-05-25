@@ -1,5 +1,5 @@
 # Understanding Codecs
-<link-summary>Introduction to bidirectional serialization, DynamicOps implementations, and sub-methods</link-summary>
+<link-summary>Introduction to bidirectional serialization, DynamicOps, and codec manipulation</link-summary>
 
 The Codec API provides a standardized, format-agnostic way to serialize and deserialize Java objects. Instead of writing separate logic to read from JSON, write to JSON, read from YAML, and write to YAML, you define the structure of your object *once* using a `Codec<T>`.
 
@@ -9,7 +9,9 @@ A `Codec<T>` represents the exact rules for converting a Java object of type `T`
 Codecs operate bidirectionally. Every codec guarantees two primary operations:
 
 1. **Decoding (`decode`):** Translates raw data into a Java object. Throws a `CodecException` if the data is malformed or missing required fields.
-2. **Encoding (`encode`):** Translates a Java object back into raw data.
+2. **Encoding (`encode`):** Translates a Java object back into raw data. Throws a `CodecException` if the object contains non-serializable states.
+
+---
 
 ### Executing Codecs (DynamicOps)
 A `Codec` only defines the *rules* for translation. To actually serialize or deserialize data, you must execute the codec using a `DynamicOps` provider.
@@ -20,32 +22,26 @@ The `DynamicOps<T>` interface acts as the bridge. It defines exactly how to crea
 <tr>
 <th>Implementation</th>
 <th>Target Format</th>
-<th>Use Case</th>
 </tr>
 <tr>
 <td><code>JsonOps.INSTANCE</code></td>
 <td>Jackson <code>JsonNode</code></td>
-<td>Used for web requests, datapacks, advancements, and strict structured data storage.</td>
 </tr>
 <tr>
 <td><code>YamlOps.INSTANCE</code></td>
 <td>SnakeYAML / Bukkit YAML</td>
-<td>Used natively by the Config API for player-facing configuration files.</td>
 </tr>
 <tr>
 <td><code>NbtOps.INSTANCE</code></td>
 <td>Minecraft <code>Tag</code></td>
-<td>Direct serialization to/from native NBT tags (CompoundTag, ListTag, etc.) without intermediate JSON conversion. Perfect for custom item data or chunk storage.</td>
 </tr>
 <tr>
 <td><code>ByteOps.INSTANCE</code></td>
 <td><code>byte[]</code> (Binary)</td>
-<td>Serializes data into raw byte arrays using a custom length-prefixed binary protocol. Ideal for network packets or highly compressed data.</td>
 </tr>
 <tr>
 <td><code>StringOps.INSTANCE</code></td>
 <td><code>String</code></td>
-<td>Serializes data into a custom string-based format with literal suffixes (e.g., <code>100L</code>, <code>2.0d</code>) and bracketed collections (<code>[a,b]</code>, <code>{k:v}</code>). Useful for inline commands or SQL database cells.</td>
 </tr>
 </table>
 
@@ -74,6 +70,8 @@ try {
 <note>
 If you are using the <code>Config</code> API, you do not need to manually call <code>YamlOps.INSTANCE</code>. The <code>Config.Value&lt;T&gt;</code> wrapper handles the YAML encoding and decoding automatically when you pass a codec into its definition.
 </note>
+
+---
 
 ### Codec Modifiers (Sub-methods)
 The `Codec` interface provides numerous default instance methods that allow you to modify how an existing codec behaves without needing to rewrite it.
@@ -108,6 +106,10 @@ The `Codec` interface provides numerous default instance methods that allow you 
 <td>Transforms a <code>Codec&lt;T&gt;</code> into a <code>Codec&lt;R&gt;</code> by providing two-way conversion functions. Useful for wrapping primitive values into custom classes.</td>
 </tr>
 <tr>
+<td><code>flatXmap(forward, backward)</code></td>
+<td>Similar to <code>xmap</code>, but the conversion functions return an <code>Optional</code>. If the function returns <code>Optional.empty()</code>, the codec deliberately throws a <code>CodecException</code>.</td>
+</tr>
+<tr>
 <td><code>fieldOf(name, getter)</code></td>
 <td>Binds this codec to a specific string key/name, returning a <code>Field</code> definition for use inside the <code>RecordCodecBuilder</code>.</td>
 </tr>
@@ -117,13 +119,19 @@ The `Codec` interface provides numerous default instance methods that allow you 
 </tr>
 </table>
 
+---
+
 ### Static Combiners and Factories
-You can also combine multiple codecs together using the static factory methods provided on the `Codec` interface.
+You can also build and combine multiple codecs together using the static factory methods provided on the `Codec` interface.
 
 <table>
 <tr>
 <th>Method</th>
 <th>Description</th>
+</tr>
+<tr>
+<td><code>Codec.of(...)</code></td>
+<td>Creates a base codec either from mapping functions or explicit <code>Encoder</code> and <code>Decoder</code> interfaces.</td>
 </tr>
 <tr>
 <td><code>Codec.fallback(primary, secondary)</code></td>
@@ -139,6 +147,14 @@ You can also combine multiple codecs together using the static factory methods p
 </tr>
 <tr>
 <td><code>Codec.map(keyCodec, valCodec)</code></td>
-<td>Creates a codec that maps dynamic key-value pairs (e.g., a <code>HashMap</code>).</td>
+<td>Creates a codec that maps dynamic key-value pairs (e.g., a <code>LinkedHashMap</code>).</td>
+</tr>
+<tr>
+<td><code>Codec.enumCodec(Class)</code></td>
+<td>Automatically generates a standard string-based codec for a given Java Enum.</td>
+</tr>
+<tr>
+<td><code>Codec.recursive(Function)</code></td>
+<td>Creates a lazy-evaluated codec capable of resolving cyclic dependencies correctly without infinite loops.</td>
 </tr>
 </table>
