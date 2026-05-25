@@ -2,7 +2,13 @@ package com.github.darksoulq.abyssallib.common.serialization;
 
 import com.github.darksoulq.abyssallib.common.util.Either;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -177,6 +183,36 @@ public interface Codec<T> {
         }
     }
 
+    interface Decoder<T> {
+        <D> T decode(DynamicOps<D> ops, D input);
+    }
+
+    interface Encoder<T> {
+        <D> D encode(DynamicOps<D> ops, T value);
+    }
+
+    /**
+     * Factory method to create a codec using explicit context-aware decoders and encoders.
+     *
+     * @param <T>     The target Java type.
+     * @param decoder Function to read data utilizing the provided DynamicOps.
+     * @param encoder Function to write data utilizing the provided DynamicOps.
+     * @return A custom Codec implementation.
+     */
+    static <T> Codec<T> of(Decoder<T> decoder, Encoder<T> encoder) {
+        return new Codec<>() {
+            @Override
+            public <D> T decode(DynamicOps<D> ops, D input) {
+                return decoder.decode(ops, input);
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, T value) {
+                return encoder.encode(ops, value);
+            }
+        };
+    }
+
     /**
      * Factory method to create a simple codec from mapping functions.
      *
@@ -285,6 +321,35 @@ public interface Codec<T> {
     }
 
     /**
+     * Constructs a codec capable of resolving cyclic dependencies correctly.
+     * @param <T>    The target Java type.
+     * @param builder A function yielding the codec upon execution.
+     * @return A proper recursive Codec utilizing lazy evaluation.
+     */
+    static <T> Codec<T> recursive(Function<Codec<T>, Codec<T>> builder) {
+        return new Codec<>() {
+            private Codec<T> lazy;
+
+            private Codec<T> getCodec() {
+                if (lazy == null) {
+                    lazy = builder.apply(this);
+                }
+                return lazy;
+            }
+
+            @Override
+            public <D> T decode(DynamicOps<D> ops, D input) {
+                return getCodec().decode(ops, input);
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, T value) {
+                return getCodec().encode(ops, value);
+            }
+        };
+    }
+
+    /**
      * Transforms this codec to handle a new type R via two-way conversion functions.
      *
      * @param <R>      The new target Java type.
@@ -308,6 +373,31 @@ public interface Codec<T> {
     }
 
     /**
+     * Transforms this codec to handle a new type R, supporting failures mapped to Optional.empty().
+     *
+     * @param <R>  The new target Java type.
+     * @param to   Conversion function from T to Optional R.
+     * @param from Conversion function from R to Optional T.
+     * @return A natively flat-mapped Codec.
+     */
+    default <R> Codec<R> flatXmap(Function<? super T, Optional<? extends R>> to, Function<? super R, Optional<? extends T>> from) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> R decode(DynamicOps<D> ops, D input) {
+                T decoded = self.decode(ops, input);
+                return to.apply(decoded).orElseThrow(() -> new CodecException("flatXmap to function returned empty for " + decoded));
+            }
+
+            @Override
+            public <D> D encode(DynamicOps<D> ops, R value) {
+                T encoded = from.apply(value).orElseThrow(() -> new CodecException("flatXmap from function returned empty for " + value));
+                return self.encode(ops, encoded);
+            }
+        };
+    }
+
+    /**
      * Wraps this codec with a default value to be used if decoding fails or returns null.
      *
      * @param defaultValue The value to return on failure.
@@ -317,6 +407,9 @@ public interface Codec<T> {
         Codec<T> self = this;
         return new Codec<>() {
             @Override public <D> T decode(DynamicOps<D> ops, D input) {
+                if (input == null || input.equals(ops.empty())) {
+                    return defaultValue;
+                }
                 try {
                     T result = self.decode(ops, input);
                     return result != null ? result : defaultValue;
