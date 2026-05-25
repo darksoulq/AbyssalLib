@@ -183,10 +183,12 @@ public interface Codec<T> {
         }
     }
 
+    @FunctionalInterface
     interface Decoder<T> {
         <D> T decode(DynamicOps<D> ops, D input);
     }
 
+    @FunctionalInterface
     interface Encoder<T> {
         <D> D encode(DynamicOps<D> ops, T value);
     }
