@@ -57,7 +57,7 @@ If a field in your object is not strictly required, append the <code>.optional()
 ### DynamicOps-Aware Codecs
 While `RecordCodecBuilder` is excellent for standard, flat objects, it completely abstracts away the `DynamicOps` provider. Sometimes, you need direct access to the `ops` instance to read dynamic maps, handle deeply nested unknown structures, or process highly specific legacy data formats.
 
-In these cases, you can use the DynamicOps-aware overload of `Codec.of(Decoder, Encoder)`. Because `Decoder` and `Encoder` are `@FunctionalInterface`s, this can be written cleanly using lambdas. This grants you full control over reading and writing the serialized tree without needing to manually implement the entire `Codec` interface.
+In these cases, you can use the DynamicOps-aware overload of `Codec.of(Decoder, Encoder)`. By passing explicit instances of `Codec.Decoder` and `Codec.Encoder`, you gain full control over reading and writing the serialized tree without needing to manually implement the entire `Codec` interface.
 
 ```Java
 public class CustomData {
@@ -73,22 +73,28 @@ public class CustomData {
     public int getCount() { return count; }
 
     public static final Codec<CustomData> CODEC = Codec.of(
-        (ops, input) -> {
-            // 1. Direct access to 'ops' allows manual traversal of the serialized tree.
-            var map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected a map"));
+        new Codec.Decoder<CustomData>() {
+            @Override
+            public <D> CustomData decode(DynamicOps<D> ops, D input) {
+                // 1. Direct access to 'ops' allows manual traversal of the serialized tree.
+                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected a map"));
 
-            // 2. Extract and decode fields manually
-            String name = Codecs.STRING.decode(ops, map.get(ops.createString("name")));
-            int count = Codecs.INT.decode(ops, map.get(ops.createString("count")));
+                // 2. Extract and decode fields manually
+                String name = Codecs.STRING.decode(ops, map.get(ops.createString("name")));
+                int count = Codecs.INT.decode(ops, map.get(ops.createString("count")));
 
-            return new CustomData(name, count);
+                return new CustomData(name, count);
+            }
         },
-        (ops, value) -> {
-            // Manually construct the serialized map using 'ops' creation methods
-            return ops.createMap(Map.of(
-                ops.createString("name"), Codecs.STRING.encode(ops, value.getName()),
-                ops.createString("count"), Codecs.INT.encode(ops, value.getCount())
-            ));
+        new Codec.Encoder<CustomData>() {
+            @Override
+            public <D> D encode(DynamicOps<D> ops, CustomData value) {
+                // Manually construct the serialized map using 'ops' creation methods
+                return ops.createMap(Map.of(
+                    ops.createString("name"), Codecs.STRING.encode(ops, value.getName()),
+                    ops.createString("count"), Codecs.INT.encode(ops, value.getCount())
+                ));
+            }
         }
     );
 }
