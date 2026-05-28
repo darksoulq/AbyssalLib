@@ -77,11 +77,13 @@ public class ItemMenu {
             List<Item> defaultItems = Registries.ITEMS.getAll().entrySet().stream()
                 .filter(e -> e.getKey().startsWith(namespace + ":"))
                 .filter(e -> !e.getKey().endsWith(":plugin_icon"))
-                .filter(e -> e.getValue().isHidden())
+                .filter(e -> !e.getValue().isHidden())
                 .map(Map.Entry::getValue)
                 .toList();
 
-            if (defaultItems.isEmpty()) return;
+            if (defaultItems.isEmpty()) {
+                GuiManager.close(player);
+            };
 
             Item pluginIconItem = Registries.ITEMS.get(namespace + ":plugin_icon");
             ItemStack iconStack = pluginIconItem != null ? pluginIconItem.getStack().clone() : new ItemStack(Material.STONE);
