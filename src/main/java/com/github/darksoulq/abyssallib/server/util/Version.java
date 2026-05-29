@@ -5,8 +5,10 @@ import java.util.regex.Pattern;
 public class Version implements Comparable<Version> {
     private static final Pattern SPLIT = Pattern.compile("[^a-zA-Z0-9]+");
     private final String[] parts;
+    private final String original;
 
     public Version(String version) {
+        this.original = version;
         this.parts = SPLIT.split(version);
     }
 
@@ -31,5 +33,10 @@ public class Version implements Comparable<Version> {
             }
         }
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return original;
     }
 }

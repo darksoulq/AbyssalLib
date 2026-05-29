@@ -62,7 +62,7 @@ public final class AbyssalLib extends JavaPlugin {
         }
 
         new UpdateChecker(this, "abyssallib", true).check(result -> {
-            getLogger().warning("A new update is available: " + result.version());
+            getLogger().warning("A new update is available: " + result.version().toString());
             getLogger().warning("Download at: " + result.link());
         });
     }
