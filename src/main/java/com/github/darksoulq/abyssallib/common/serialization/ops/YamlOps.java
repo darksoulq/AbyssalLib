@@ -113,7 +113,10 @@ public class YamlOps extends DynamicOps<Object> {
      */
     @Override
     public Optional<Integer> getIntValue(Object input) {
-        return input instanceof Integer i ? Optional.of(i) : Optional.empty();
+        if (input instanceof Number n) {
+            return Optional.of(n.intValue());
+        }
+        return Optional.empty();
     }
 
     /**
@@ -122,7 +125,10 @@ public class YamlOps extends DynamicOps<Object> {
      */
     @Override
     public Optional<Long> getLongValue(Object input) {
-        return input instanceof Long l ? Optional.of(l) : Optional.empty();
+        if (input instanceof Number n) {
+            return Optional.of(n.longValue());
+        }
+        return Optional.empty();
     }
 
     /**
@@ -131,7 +137,10 @@ public class YamlOps extends DynamicOps<Object> {
      */
     @Override
     public Optional<Float> getFloatValue(Object input) {
-        return input instanceof Float f ? Optional.of(f) : Optional.empty();
+        if (input instanceof Number n) {
+            return Optional.of(n.floatValue());
+        }
+        return Optional.empty();
     }
 
     /**
@@ -140,7 +149,10 @@ public class YamlOps extends DynamicOps<Object> {
      */
     @Override
     public Optional<Double> getDoubleValue(Object input) {
-        return input instanceof Double d ? Optional.of(d) : Optional.empty();
+        if (input instanceof Number n) {
+            return Optional.of(n.doubleValue());
+        }
+        return Optional.empty();
     }
 
     /**

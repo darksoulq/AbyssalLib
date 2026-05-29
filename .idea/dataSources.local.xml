@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal" created-in="IU-253.31033.145">
+    <data-source name="blocks" uuid="533a5cb6-388a-4b1f-9969-821bdb9b5bdc">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="SQLITE" />
+      <schema-mapping />
+    </data-source>
+    <data-source name="entities" uuid="c75a2543-d4d2-4ba4-87c8-22a91ce4e02a">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="SQLITE" />
+      <schema-mapping />
+    </data-source>
+    <data-source name="multiblocks" uuid="07fbe282-d4aa-4330-b923-0b99903439cc">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="SQLITE" />
+      <schema-mapping />
+    </data-source>
+    <data-source name="player_statistics" uuid="70aecb2a-45b9-4f57-85e8-6ccf4ca4468f">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="SQLITE" />
+      <schema-mapping />
+    </data-source>
+  </component>
+</project>
