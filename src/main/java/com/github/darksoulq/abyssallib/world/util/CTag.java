@@ -159,9 +159,20 @@ public class CTag {
         if (data == null) data = CustomData.EMPTY;
 
         CompoundTag tag = data.copyTag();
-        tag.put("CustomData", container.toVanilla());
+        CompoundTag vanillaContainer = container.toVanilla();
 
-        nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        if (vanillaContainer.isEmpty()) {
+            tag.remove("CustomData");
+        } else {
+            tag.put("CustomData", vanillaContainer);
+        }
+
+        if (tag.isEmpty()) {
+            nms.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            nms.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
+
         ItemStack updated = CraftItemStack.asBukkitCopy(nms);
         stack.setItemMeta(updated.getItemMeta());
     }

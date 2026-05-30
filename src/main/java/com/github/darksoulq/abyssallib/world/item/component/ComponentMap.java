@@ -30,8 +30,6 @@ import java.util.Map;
  */
 @SuppressWarnings("UnstableApiUsage")
 public class ComponentMap {
-    private static final Map<io.papermc.paper.datacomponent.DataComponentType, DataComponentType<?>> VANILLA_MAP = new HashMap<>();
-
     /** The internal storage mapping component types to their active instances. */
     private final Map<DataComponentType<?>, DataComponent<?>> components = new HashMap<>();
     /** The item instance associated with this map, or null if assigned to an entity. */
@@ -211,7 +209,11 @@ public class ComponentMap {
             }
         }
 
-        rootTag.put("CustomComponents", customTag);
+        if (!customTag.isEmpty()) {
+            rootTag.put("CustomComponents", customTag);
+        } else {
+            rootTag.remove("CustomComponents");
+        }
 
         if (item != null) item.setCTag(root);
         if (entity != null) entity.setCTag(root);
