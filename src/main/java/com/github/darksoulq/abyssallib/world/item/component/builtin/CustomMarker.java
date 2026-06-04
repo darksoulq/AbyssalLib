@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
@@ -11,6 +12,7 @@ public class CustomMarker extends DataComponent<Key> {
         CustomMarker::new,
         CustomMarker::getValue
     );
+
     public static final DataComponentType<CustomMarker> TYPE = DataComponentType.simple(CODEC);
 
     public CustomMarker(Key id) {

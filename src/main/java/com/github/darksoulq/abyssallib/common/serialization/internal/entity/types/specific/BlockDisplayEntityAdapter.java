@@ -1,11 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
@@ -21,19 +17,25 @@ public class BlockDisplayEntityAdapter extends EntityAdapter<BlockDisplay> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, BlockDisplay value, Map<D, D> map) throws Codec.CodecException {
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, BlockDisplay value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
         BlockInfo info = new BlockInfo(new Vector(0, 0, 0), value.getBlock(), null, null, null);
-        map.put(ops.createString("block_info"), ExtraCodecs.BLOCK_INFO.encode(ops, info));
+        ctx.write("block_info", ExtraCodecs.BLOCK_INFO, info);
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof BlockDisplay display)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof BlockDisplay display)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("block_info")))).onSuccess(info -> {
+        ctx.readOptional("block_info", ExtraCodecs.BLOCK_INFO, opt -> opt.ifPresent(info -> {
             if (info.block() instanceof BlockData bd) {
                 display.setBlock(bd);
             }
-        });
+        }));
+
+        return ctx.result();
     }
 }

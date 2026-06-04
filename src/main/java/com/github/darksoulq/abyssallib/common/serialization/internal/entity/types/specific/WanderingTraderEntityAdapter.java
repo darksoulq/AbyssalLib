@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.WanderingTrader;
 
@@ -18,27 +15,28 @@ public class WanderingTraderEntityAdapter extends EntityAdapter<WanderingTrader>
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, WanderingTrader value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("despawn_delay"), Codecs.INT.encode(ops, value.getDespawnDelay()));
-        map.put(ops.createString("can_drink_potion"), Codecs.BOOLEAN.encode(ops, value.canDrinkPotion()));
-        map.put(ops.createString("can_drink_milk"), Codecs.BOOLEAN.encode(ops, value.canDrinkMilk()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, WanderingTrader value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getWanderingTowards() != null) {
-            map.put(ops.createString("wandering_towards"), Codecs.LOCATION.encode(ops, value.getWanderingTowards()));
-        }
+        ctx.write("despawn_delay", Codecs.INT, value.getDespawnDelay())
+            .write("can_drink_potion", Codecs.BOOLEAN, value.canDrinkPotion())
+            .write("can_drink_milk", Codecs.BOOLEAN, value.canDrinkMilk())
+            .writeNullable("wandering_towards", Codecs.LOCATION, value.getWanderingTowards());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof WanderingTrader trader)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof WanderingTrader trader)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("despawn_delay")))).onSuccess(trader::setDespawnDelay);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_drink_potion")))).onSuccess(trader::setCanDrinkPotion);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_drink_milk")))).onSuccess(trader::setCanDrinkMilk);
+        ctx.readOptional("despawn_delay", Codecs.INT, opt -> opt.ifPresent(trader::setDespawnDelay))
+            .readOptional("can_drink_potion", Codecs.BOOLEAN, opt -> opt.ifPresent(trader::setCanDrinkPotion))
+            .readOptional("can_drink_milk", Codecs.BOOLEAN, opt -> opt.ifPresent(trader::setCanDrinkMilk))
+            .readOptional("wandering_towards", Codecs.LOCATION, opt -> opt.ifPresent(trader::setWanderingTowards));
 
-        D locData = map.get(ops.createString("wandering_towards"));
-        if (locData != null) {
-            Try.of(() -> Codecs.LOCATION.decode(ops, locData)).onSuccess(trader::setWanderingTowards);
-        }
+        return ctx.result();
     }
 }

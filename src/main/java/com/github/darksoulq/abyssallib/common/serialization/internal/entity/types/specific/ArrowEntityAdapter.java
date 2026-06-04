@@ -1,11 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.potion.PotionType;
@@ -20,37 +16,39 @@ public class ArrowEntityAdapter extends EntityAdapter<Arrow> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Arrow value, Map<D, D> map) throws Codec.CodecException {
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Arrow value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
         if (value.getBasePotionType() != null) {
-            map.put(ops.createString("base_potion_type"), Codecs.STRING.encode(ops, value.getBasePotionType().name()));
+            ctx.write("base_potion_type", Codecs.STRING, value.getBasePotionType().name());
         }
-        if (value.getColor() != null) {
-            map.put(ops.createString("color"), Codecs.COLOR.encode(ops, value.getColor()));
-        }
+
+        ctx.writeNullable("color", Codecs.COLOR, value.getColor());
+
         if (value.hasCustomEffects()) {
-            map.put(ops.createString("custom_effects"), ExtraCodecs.POTION_EFFECT.list().encode(ops, value.getCustomEffects()));
+            ctx.write("custom_effects", ExtraCodecs.POTION_EFFECT.list(), value.getCustomEffects());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Arrow arrow)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Arrow arrow)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D typeData = map.get(ops.createString("base_potion_type"));
-        if (typeData != null) {
-            Try.of(() -> Codecs.STRING.decode(ops, typeData)).onSuccess(s -> arrow.setBasePotionType(PotionType.valueOf(s)));
-        }
+        ctx.readOptional("base_potion_type", Codecs.STRING, opt -> opt.ifPresent(typeStr -> {
+                try {
+                    arrow.setBasePotionType(PotionType.valueOf(typeStr));
+                } catch (Exception ignored) {
+                }
+            }))
+            .readOptional("color", Codecs.COLOR, opt -> opt.ifPresent(arrow::setColor))
+            .readOptional("custom_effects", ExtraCodecs.POTION_EFFECT.list(), opt -> opt.ifPresent(effects -> {
+                effects.forEach(effect -> arrow.addCustomEffect(effect, true));
+            }));
 
-        D colorData = map.get(ops.createString("color"));
-        if (colorData != null) {
-            Try.of(() -> Codecs.COLOR.decode(ops, colorData)).onSuccess(arrow::setColor);
-        }
-
-        D effectsData = map.get(ops.createString("custom_effects"));
-        if (effectsData != null) {
-            Try.of(() -> ExtraCodecs.POTION_EFFECT.list().decode(ops, effectsData)).onSuccess(list -> {
-                list.forEach(effect -> arrow.addCustomEffect(effect, true));
-            });
-        }
+        return ctx.result();
     }
 }

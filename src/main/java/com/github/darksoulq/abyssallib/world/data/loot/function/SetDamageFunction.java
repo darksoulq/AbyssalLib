@@ -2,15 +2,12 @@ package com.github.darksoulq.abyssallib.world.data.loot.function;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A loot function that sets the damage (durability loss) of a generated item based on a percentage range.
@@ -27,41 +24,10 @@ public class SetDamageFunction extends LootFunction {
      * It requires "min" and "max" float fields representing the damage percentage range (0.0 to 1.0).
      * </p>
      */
-    public static final Codec<SetDamageFunction> CODEC = new Codec<>() {
-        /**
-         * Decodes a SetDamageFunction instance from the provided serialized data.
-         *
-         * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param input The serialized input data.
-         * @param <D>   The type of the data being processed.
-         * @return A new instance of {@link SetDamageFunction}.
-         * @throws CodecException If "min" or "max" fields are missing or invalid.
-         */
-        @Override
-        public <D> SetDamageFunction decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            float min = Codecs.FLOAT.decode(ops, map.get(ops.createString("min")));
-            float max = Codecs.FLOAT.decode(ops, map.get(ops.createString("max")));
-            return new SetDamageFunction(min, max);
-        }
-
-        /**
-         * Encodes the SetDamageFunction instance into a serialized format.
-         *
-         * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param value The function instance to encode.
-         * @param <D>   The type of the data being processed.
-         * @return A map representing the encoded min and max damage percentages.
-         * @throws CodecException If the encoding process fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, SetDamageFunction value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("min"), Codecs.FLOAT.encode(ops, value.min));
-            map.put(ops.createString("max"), Codecs.FLOAT.encode(ops, value.max));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<SetDamageFunction> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.fieldOf("min").forGetter(SetDamageFunction.class, p -> p.min),
+        Codecs.FLOAT.fieldOf("max").forGetter(SetDamageFunction.class, p -> p.max)
+    ).apply(instance, SetDamageFunction::new)).describe("SetDamageFunction");
 
     /**
      * The registered type definition for the set damage loot function.

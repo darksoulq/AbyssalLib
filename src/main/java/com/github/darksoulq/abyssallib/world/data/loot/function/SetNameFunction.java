@@ -2,16 +2,13 @@ package com.github.darksoulq.abyssallib.world.data.loot.function;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A loot function that overrides the custom display name of a generated item.
@@ -29,39 +26,9 @@ public class SetNameFunction extends LootFunction {
      * It maps the "name" field to a serialized Adventure {@link Component}.
      * </p>
      */
-    public static final Codec<SetNameFunction> CODEC = new Codec<>() {
-        /**
-         * Decodes a SetNameFunction instance from the provided data.
-         *
-         * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param input The serialized input data.
-         * @param <D>   The type of the data being processed.
-         * @return A new instance of {@link SetNameFunction}.
-         * @throws CodecException If the "name" field is missing or invalid.
-         */
-        @Override
-        public <D> SetNameFunction decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            Component name = Codecs.TEXT_COMPONENT.decode(ops, map.get(ops.createString("name")));
-            return new SetNameFunction(name);
-        }
-
-        /**
-         * Encodes the SetNameFunction instance into a serialized format.
-         *
-         * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param value The function instance to encode.
-         * @param <D>   The type of the data being processed.
-         * @return A map representing the encoded component name.
-         * @throws CodecException If the encoding process fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, SetNameFunction value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("name"), Codecs.TEXT_COMPONENT.encode(ops, value.name));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<SetNameFunction> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.TEXT_COMPONENT.fieldOf("name").forGetter(SetNameFunction.class, p -> p.name)
+    ).apply(instance, SetNameFunction::new)).describe("SetNameFunction");
 
     /**
      * The registered type definition for the set name loot function.

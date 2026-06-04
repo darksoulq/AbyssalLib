@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.structure.processor.impl;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.structure.processor.StructureProcessor;
@@ -12,10 +12,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A structure processor that prevents specific blocks from being placed.
@@ -32,43 +30,9 @@ public class BlockIgnoreProcessor extends StructureProcessor {
      * It maps the "blocks" field, which is a list of strings representing the
      * namespaced IDs to be ignored.
      */
-    public static final Codec<BlockIgnoreProcessor> CODEC = new Codec<>() {
-        /**
-         * Decodes a BlockIgnoreProcessor from the provided serialized data.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input data.
-         * @param <D>   The data format type.
-         * @return A new instance of {@link BlockIgnoreProcessor}.
-         * @throws CodecException If the map structure is invalid.
-         */
-        @Override
-        public <D> BlockIgnoreProcessor decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            D listNode = map.get(ops.createString("blocks"));
-            List<String> blocks = new ArrayList<>();
-            if (listNode != null) {
-                blocks = Codecs.STRING.list().decode(ops, listNode);
-            }
-            return new BlockIgnoreProcessor(blocks);
-        }
-
-        /**
-         * Encodes the BlockIgnoreProcessor into a serialized format.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The processor instance to encode.
-         * @param <D>   The data format type.
-         * @return A map containing the list of ignored block IDs.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, BlockIgnoreProcessor value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("blocks"), Codecs.STRING.list().encode(ops, value.ignoredIds));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<BlockIgnoreProcessor> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.STRING.list().optionalFieldOf("blocks", Collections.emptyList()).forGetter(BlockIgnoreProcessor.class, p -> p.ignoredIds)
+    ).apply(instance, BlockIgnoreProcessor::new)).describe("BlockIgnoreProcessor");
 
     /**
      * The registered type definition for the block ignore structure processor.

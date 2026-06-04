@@ -2,14 +2,12 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.trunk;
 
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -25,17 +23,7 @@ public class StraightTrunkPlacer extends TrunkPlacer {
      * The codec used for serializing and deserializing the straight trunk placer.
      * This placer has no configurable variables, so it encodes to an empty map.
      */
-    public static final Codec<StraightTrunkPlacer> CODEC = new Codec<>() {
-        @Override
-        public <D> StraightTrunkPlacer decode(DynamicOps<D> ops, D input) {
-            return new StraightTrunkPlacer();
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, StraightTrunkPlacer value) {
-            return ops.createMap(new HashMap<>());
-        }
-    };
+    public static final Codec<StraightTrunkPlacer> CODEC = Codec.unit(StraightTrunkPlacer::new).describe("StraightTrunkPlacer");
 
     /**
      * The registered type definition for the straight trunk placer.
@@ -62,7 +50,7 @@ public class StraightTrunkPlacer extends TrunkPlacer {
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, i, 0);
             if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
-            
+
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {
                 WorldGenUtils.placeBlock(level, target, stateToPlace);

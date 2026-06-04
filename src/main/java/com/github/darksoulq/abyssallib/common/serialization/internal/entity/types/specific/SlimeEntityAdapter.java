@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Slime;
 
@@ -18,16 +15,24 @@ public class SlimeEntityAdapter extends EntityAdapter<Slime> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Slime value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("slime_size"), Codecs.INT.encode(ops, value.getSize()));
-        map.put(ops.createString("can_wander"), Codecs.BOOLEAN.encode(ops, value.canWander()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Slime value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("slime_size", Codecs.INT, value.getSize())
+            .write("can_wander", Codecs.BOOLEAN, value.canWander());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Slime slime)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Slime slime)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("slime_size")))).onSuccess(slime::setSize);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_wander")))).onSuccess(slime::setWander);
+        ctx.readOptional("slime_size", Codecs.INT, opt -> opt.ifPresent(slime::setSize))
+            .readOptional("can_wander", Codecs.BOOLEAN, opt -> opt.ifPresent(slime::setWander));
+
+        return ctx.result();
     }
 }

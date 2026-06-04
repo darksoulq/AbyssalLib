@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Trident;
 
@@ -18,20 +15,28 @@ public class TridentEntityAdapter extends EntityAdapter<Trident> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Trident value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("has_glint"), Codecs.BOOLEAN.encode(ops, value.hasGlint()));
-        map.put(ops.createString("loyalty_level"), Codecs.INT.encode(ops, value.getLoyaltyLevel()));
-        map.put(ops.createString("has_dealt_damage"), Codecs.BOOLEAN.encode(ops, value.hasDealtDamage()));
-        map.put(ops.createString("damage"), Codecs.DOUBLE.encode(ops, value.getDamage()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Trident value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("has_glint", Codecs.BOOLEAN, value.hasGlint())
+            .write("loyalty_level", Codecs.INT, value.getLoyaltyLevel())
+            .write("has_dealt_damage", Codecs.BOOLEAN, value.hasDealtDamage())
+            .write("damage", Codecs.DOUBLE, value.getDamage());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Trident trident)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Trident trident)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_glint")))).onSuccess(trident::setGlint);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("loyalty_level")))).onSuccess(trident::setLoyaltyLevel);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_dealt_damage")))).onSuccess(trident::setHasDealtDamage);
-        Try.of(() -> Codecs.DOUBLE.decode(ops, map.get(ops.createString("damage")))).onSuccess(trident::setDamage);
+        ctx.readOptional("has_glint", Codecs.BOOLEAN, opt -> opt.ifPresent(trident::setGlint))
+            .readOptional("loyalty_level", Codecs.INT, opt -> opt.ifPresent(trident::setLoyaltyLevel))
+            .readOptional("has_dealt_damage", Codecs.BOOLEAN, opt -> opt.ifPresent(trident::setHasDealtDamage))
+            .readOptional("damage", Codecs.DOUBLE, opt -> opt.ifPresent(trident::setDamage));
+
+        return ctx.result();
     }
 }

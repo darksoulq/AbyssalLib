@@ -2,15 +2,13 @@ package com.github.darksoulq.abyssallib.world.gen.placement.modifier;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementContext;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
 import org.bukkit.HeightMap;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -25,44 +23,11 @@ public class SurfaceRelativeThresholdModifier extends PlacementModifier {
     /**
      * The codec used for serializing and deserializing the surface relative threshold modifier.
      */
-    public static final Codec<SurfaceRelativeThresholdModifier> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the modifier from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the surface relative threshold modifier.
-         * @throws CodecException If the required fields are missing.
-         */
-        @Override
-        public <D> SurfaceRelativeThresholdModifier decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            HeightMap heightmap = Codec.enumCodec(HeightMap.class).decode(ops, map.get(ops.createString("heightmap")));
-            int minInclusive = Codecs.INT.decode(ops, map.get(ops.createString("min_inclusive")));
-            int maxInclusive = Codecs.INT.decode(ops, map.get(ops.createString("max_inclusive")));
-            return new SurfaceRelativeThresholdModifier(heightmap, minInclusive, maxInclusive);
-        }
-
-        /**
-         * Encodes the modifier into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The modifier instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, SurfaceRelativeThresholdModifier value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("heightmap"), Codec.enumCodec(HeightMap.class).encode(ops, value.heightmap));
-            map.put(ops.createString("min_inclusive"), Codecs.INT.encode(ops, value.minInclusive));
-            map.put(ops.createString("max_inclusive"), Codecs.INT.encode(ops, value.maxInclusive));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<SurfaceRelativeThresholdModifier> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codec.enumCodec(HeightMap.class).fieldOf("heightmap").forGetter(SurfaceRelativeThresholdModifier.class, p -> p.heightmap),
+        Codecs.INT.fieldOf("min_inclusive").forGetter(SurfaceRelativeThresholdModifier.class, p -> p.minInclusive),
+        Codecs.INT.fieldOf("max_inclusive").forGetter(SurfaceRelativeThresholdModifier.class, p -> p.maxInclusive)
+    ).apply(instance, SurfaceRelativeThresholdModifier::new)).describe("SurfaceRelativeThresholdModifier");
 
     /**
      * The registered type definition for the surface relative threshold placement modifier.

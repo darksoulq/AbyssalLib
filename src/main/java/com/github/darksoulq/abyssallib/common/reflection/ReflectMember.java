@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
+import java.util.NoSuchElementException;
 
 public abstract class ReflectMember<M extends AccessibleObject & Member> {
 
@@ -12,8 +13,12 @@ public abstract class ReflectMember<M extends AccessibleObject & Member> {
 
     protected ReflectMember(M member) {
         this.member = member;
-        this.member.setAccessible(true);
         this.modifiers = member.getModifiers();
+    }
+
+    public ReflectMember<M> accessible() {
+        this.member.setAccessible(true);
+        return this;
     }
 
     public M getUnderlyingMember() {
@@ -46,7 +51,10 @@ public abstract class ReflectMember<M extends AccessibleObject & Member> {
 
     public <A extends Annotation> Result<A> getAnnotation(Class<A> annotationClass) {
         A annotation = member.getAnnotation(annotationClass);
-        return annotation != null ? Result.success(annotation) : Result.failure(new NullPointerException("Annotation not found"));
+        if (annotation == null) {
+            return Result.failure(new NoSuchElementException("Annotation not found: " + annotationClass.getName()));
+        }
+        return Result.success(annotation);
     }
 
     public <A extends Annotation> Result<ReflectAnnotation<A>> getReflectAnnotation(Class<A> annotationClass) {
@@ -63,5 +71,23 @@ public abstract class ReflectMember<M extends AccessibleObject & Member> {
 
     public Annotation[] getDeclaredAnnotations() {
         return member.getDeclaredAnnotations();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReflectMember<?> that = (ReflectMember<?>) o;
+        return member.equals(that.member);
+    }
+
+    @Override
+    public int hashCode() {
+        return member.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return member.toString();
     }
 }

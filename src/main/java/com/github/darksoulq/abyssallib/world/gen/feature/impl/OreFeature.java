@@ -10,9 +10,7 @@ import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvid
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -82,7 +80,7 @@ public class OreFeature extends Feature<OreFeature.Config> {
 
                         if (xDist * xDist + yDist * yDist + zDist * zDist < 1.0D && minHeight <= y && y < maxHeight) {
                             Location loc = new Location(context.level().getWorld(), x, y, z);
-                            
+
                             for (Target target : context.config().targets) {
                                 if (WorldGenUtils.isValidBlock(context.level(), loc, target.target)) {
                                     BlockInfo stateToPlace = target.stateProvider().getState(random, loc);
@@ -121,42 +119,10 @@ public class OreFeature extends Feature<OreFeature.Config> {
         /**
          * The codec for serializing and deserializing a target rule.
          */
-        public static final Codec<Target> CODEC = new Codec<>() {
-
-            /**
-             * Decodes a target rule from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new target instance.
-             * @throws CodecException If the map structure is invalid.
-             */
-            @Override
-            public <D> Target decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                List<BlockInfo> target = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("target")));
-                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
-                return new Target(target, stateProvider);
-            }
-
-            /**
-             * Encodes a target rule into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The target instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Target value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("target"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.target));
-                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Target> CODEC = RecordBuilder.create(instance -> instance.group(
+            ExtraCodecs.BLOCK_INFO.list().fieldOf("target").forGetter(Target.class, Target::target),
+            BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Target.class, Target::stateProvider)
+        ).apply(instance, Target::new)).describe("OreTarget");
     }
 
     /**
@@ -170,41 +136,9 @@ public class OreFeature extends Feature<OreFeature.Config> {
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                List<Target> targets = Target.CODEC.list().decode(ops, map.get(ops.createString("targets")));
-                int size = Codecs.INT.decode(ops, map.get(ops.createString("size")));
-                return new Config(targets, size);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("targets"), Target.CODEC.list().encode(ops, value.targets));
-                map.put(ops.createString("size"), Codecs.INT.encode(ops, value.size));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            Target.CODEC.list().fieldOf("targets").forGetter(Config.class, Config::targets),
+            Codecs.INT.fieldOf("size").forGetter(Config.class, Config::size)
+        ).apply(instance, Config::new)).describe("OreConfig");
     }
 }

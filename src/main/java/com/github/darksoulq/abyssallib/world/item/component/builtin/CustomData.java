@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
@@ -16,15 +17,20 @@ public class CustomData extends DataComponent<CompoundTag> implements Vanilla {
 
     public static final Codec<CustomData> CODEC = new Codec<>() {
         @Override
-        public <D> CustomData decode(DynamicOps<D> ops, D input) throws CodecException {
-            return new CustomData(ExtraCodecs.COMPOUND_TAG.decode(ops, input));
+        public <D> DataResult<CustomData> decode(DynamicOps<D> ops, D input) {
+            return ExtraCodecs.COMPOUND_TAG.decode(ops, input).map(CustomData::new);
         }
 
         @Override
-        public <D> D encode(DynamicOps<D> ops, CustomData component) throws CodecException {
+        public <D> DataResult<D> encode(DynamicOps<D> ops, CustomData component) {
             CompoundTag tag = component.getValue().copy();
             tag.remove("CustomData");
             return ExtraCodecs.COMPOUND_TAG.encode(ops, tag);
+        }
+
+        @Override
+        public String describe() {
+            return "CustomData";
         }
     };
 

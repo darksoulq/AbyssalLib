@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Ravager;
 
@@ -18,18 +15,26 @@ public class RavagerEntityAdapter extends EntityAdapter<Ravager> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Ravager value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("attack_ticks"), Codecs.INT.encode(ops, value.getAttackTicks()));
-        map.put(ops.createString("stunned_ticks"), Codecs.INT.encode(ops, value.getStunnedTicks()));
-        map.put(ops.createString("roar_ticks"), Codecs.INT.encode(ops, value.getRoarTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Ravager value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("attack_ticks", Codecs.INT, value.getAttackTicks())
+            .write("stunned_ticks", Codecs.INT, value.getStunnedTicks())
+            .write("roar_ticks", Codecs.INT, value.getRoarTicks());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Ravager ravager)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Ravager ravager)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("attack_ticks")))).onSuccess(ravager::setAttackTicks);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("stunned_ticks")))).onSuccess(ravager::setStunnedTicks);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("roar_ticks")))).onSuccess(ravager::setRoarTicks);
+        ctx.readOptional("attack_ticks", Codecs.INT, opt -> opt.ifPresent(ravager::setAttackTicks))
+            .readOptional("stunned_ticks", Codecs.INT, opt -> opt.ifPresent(ravager::setStunnedTicks))
+            .readOptional("roar_ticks", Codecs.INT, opt -> opt.ifPresent(ravager::setRoarTicks));
+
+        return ctx.result();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.item.component;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.NbtOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
@@ -70,6 +71,9 @@ public class ComponentMap {
         load();
     }
 
+    /**
+     * Dispatches active data initialization operations matching current bindings securely safely.
+     */
     public void load() {
         if (this.item != null) loadItem();
         if (this.entity != null) loadEntity();
@@ -262,7 +266,11 @@ public class ComponentMap {
         return Try.of(() -> {
             @SuppressWarnings("unchecked")
             DataComponentType<DataComponent<T>> type = (DataComponentType<DataComponent<T>>) component.getType();
-            return type.codec().encode(ops, component);
+            DataResult<D> result = type.codec().encode(ops, component);
+            if (result.isError()) {
+                throw new RuntimeException("Serialization failure: " + result.error().get());
+            }
+            return result.getOrThrow();
         }).get();
     }
 
@@ -282,13 +290,17 @@ public class ComponentMap {
                 Tag nbtData = customTag.get(id);
                 if (nbtData == null) continue;
 
-                Try.of(() -> type.codec().decode(NbtOps.INSTANCE, nbtData))
-                    .onSuccess(decoded -> {
-                        if (decoded != null) components.put(type, decoded);
-                    })
-                    .onFailure(t ->
-                        AbyssalLib.getInstance().getLogger().severe("Failed to load component " + id + ": " + t.getMessage())
-                    );
+                Try.of(() -> {
+                    DataResult<?> result = type.codec().decode(NbtOps.INSTANCE, nbtData);
+                    if (result.isError()) {
+                        throw new RuntimeException(result.error().get());
+                    }
+                    return result.getOrThrow();
+                }).onSuccess(decoded -> {
+                    if (decoded != null) components.put(type, (DataComponent<?>) decoded);
+                }).onFailure(t ->
+                    AbyssalLib.getInstance().getLogger().severe("Failed to load component " + id + ": " + t.getMessage())
+                );
             }
         });
     }

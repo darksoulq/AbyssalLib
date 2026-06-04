@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.data.loot;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -116,25 +116,9 @@ public class LootTable {
     /**
      * The codec managing the serialization conversion linking active memory representations to storage payloads.
      */
-    public static final Codec<LootTable> CODEC = new Codec<>() {
-        @Override
-        public <D> LootTable decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            List<LootPool> pools = LootPool.CODEC.list().decode(ops, map.get(ops.createString("pools")));
-            MergeStrategy strategy = Codec.enumCodec(MergeStrategy.class).orElse(MergeStrategy.NONE).decode(ops, map.get(ops.createString("merge_strategy")));
-            Optional<String> vid = Codecs.STRING.optional().decode(ops, map.get(ops.createString("vanilla_id")));
-            return new LootTable(pools, strategy, vid.orElse(null));
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, LootTable value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("pools"), LootPool.CODEC.list().encode(ops, value.pools));
-            map.put(ops.createString("merge_strategy"), Codec.enumCodec(MergeStrategy.class).encode(ops, value.mergeStrategy));
-            if (value.vanillaId != null) {
-                map.put(ops.createString("vanilla_id"), Codecs.STRING.encode(ops, value.vanillaId));
-            }
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<LootTable> CODEC = RecordBuilder.create(instance -> instance.group(
+        LootPool.CODEC.list().fieldOf("pools").forGetter(LootTable.class, LootTable::getPools),
+        Codec.enumCodec(MergeStrategy.class).optionalFieldOf("merge_strategy", MergeStrategy.NONE).forGetter(LootTable.class, LootTable::getMergeStrategy),
+        Codecs.STRING.nullable().optionalFieldOf("vanilla_id", null).forGetter(LootTable.class, LootTable::getVanillaId)
+    ).apply(instance, LootTable::new)).describe("LootTable");
 }

@@ -1,32 +1,34 @@
 package com.github.darksoulq.abyssallib.common.reflection;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReflectMethod<R> extends ReflectMember<Method> {
 
-    private final MethodHandle handle;
-    private final ReflectType genericReturnType;
-    private final ReflectType[] genericParameterTypes;
+    private final TypeDescriptor genericReturnType;
+    private final List<TypeDescriptor> genericParameterTypes;
 
-    protected ReflectMethod(Method method) throws IllegalAccessException {
+    protected ReflectMethod(Method method) {
         super(method);
-        this.handle = MethodHandles.lookup().unreflect(method);
-        this.genericReturnType = new ReflectType(method.getGenericReturnType());
-
-        java.lang.reflect.Type[] gParamTypes = method.getGenericParameterTypes();
-        this.genericParameterTypes = new ReflectType[gParamTypes.length];
-        for (int i = 0; i < gParamTypes.length; i++) {
-            this.genericParameterTypes[i] = new ReflectType(gParamTypes[i]);
+        this.genericReturnType = new TypeDescriptor(method.getGenericReturnType());
+        this.genericParameterTypes = new ArrayList<>();
+        for (java.lang.reflect.Type t : method.getGenericParameterTypes()) {
+            this.genericParameterTypes.add(new TypeDescriptor(t));
         }
+    }
+
+    @Override
+    public ReflectMethod<R> accessible() {
+        super.accessible();
+        return this;
     }
 
     public Class<?> getReturnType() {
         return member.getReturnType();
     }
 
-    public ReflectType getGenericReturnType() {
+    public TypeDescriptor getGenericReturnType() {
         return genericReturnType;
     }
 
@@ -34,8 +36,8 @@ public class ReflectMethod<R> extends ReflectMember<Method> {
         return member.getParameterTypes();
     }
 
-    public ReflectType[] getGenericParameterTypes() {
-        return genericParameterTypes.clone();
+    public List<TypeDescriptor> getGenericParameterTypes() {
+        return new ArrayList<>(genericParameterTypes);
     }
 
     public int getParameterCount() {
@@ -45,18 +47,9 @@ public class ReflectMethod<R> extends ReflectMember<Method> {
     @SuppressWarnings("unchecked")
     public Result<R> invoke(Object instance, Object... args) {
         try {
-            Object[] finalArgs;
-            if (isStatic()) {
-                finalArgs = args;
-            } else {
-                if (instance == null) return Result.failure(new NullPointerException("Instance cannot be null for non-static method: " + getName()));
-                finalArgs = new Object[args.length + 1];
-                finalArgs[0] = instance;
-                System.arraycopy(args, 0, finalArgs, 1, args.length);
-            }
-            return Result.success((R) handle.invokeWithArguments(finalArgs));
-        } catch (Throwable t) {
-            return Result.failure(t);
+            return Result.success((R) member.invoke(instance, args));
+        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+            return Result.failure(e);
         }
     }
 

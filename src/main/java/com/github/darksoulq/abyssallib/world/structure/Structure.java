@@ -1,13 +1,8 @@
 package com.github.darksoulq.abyssallib.world.structure;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
-import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
-import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.scheduler.Clock;
@@ -43,11 +38,6 @@ import java.util.concurrent.CompletableFuture;
 public class Structure {
 
     /**
-     * Shared {@link JsonNodeFactory} used to efficiently construct JSON nodes during serialization.
-     */
-    private static final JsonNodeFactory FACTORY = JsonNodeFactory.instance;
-
-    /**
      * Palette of unique block state entries.
      * Each entry represents a unique block identifier and its optional state data to prevent
      * redundant data storage across the structure.
@@ -75,15 +65,75 @@ public class Structure {
      */
     private Vector size;
 
+    public Structure() {
+    }
+
+    public Structure(Vector size, List<PaletteEntry> palette, List<StructureBlock> blocks, List<StructureEntity> entities) {
+        this.size = size;
+        this.palette.addAll(palette);
+        this.blocks.addAll(blocks);
+        this.entities.addAll(entities);
+    }
+
+    /**
+     * A lightweight data record describing a unique combination of block type and properties.
+     *
+     * @param id     The namespaced identifier for the block material or custom implementation.
+     * @param states Serialized block-states object (nullable).
+     */
+    public record PaletteEntry(String id, @Nullable Object states) {
+    }
+
+    public static final Codec<PaletteEntry> PALETTE_ENTRY_CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.STRING.fieldOf("Name").forGetter(PaletteEntry.class, PaletteEntry::id),
+        Codecs.PASSTHROUGH.nullable().optionalFieldOf("States", null).forGetter(PaletteEntry.class, PaletteEntry::states)
+    ).apply(instance, PaletteEntry::new)).describe("PaletteEntry");
+
+    /**
+     * A structural marker indicating the position and index configuration of a discrete block.
+     *
+     * @param pos        The relative vector offset.
+     * @param stateIndex The pointer index resolving to a definition inside the structure palette.
+     * @param properties Extra custom NBT-like properties bound directly to the block logic.
+     * @param nbt        Standard vanilla tile-entity data (nullable).
+     */
+    public record StructureBlock(Vector pos, int stateIndex, @Nullable Object properties, @Nullable Object nbt) {
+    }
+
+    public static final Codec<StructureBlock> STRUCTURE_BLOCK_CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.VECTOR_I.fieldOf("pos").forGetter(StructureBlock.class, StructureBlock::pos),
+        Codecs.INT.fieldOf("state").forGetter(StructureBlock.class, StructureBlock::stateIndex),
+        Codecs.PASSTHROUGH.nullable().optionalFieldOf("properties", null).forGetter(StructureBlock.class, StructureBlock::properties),
+        Codecs.PASSTHROUGH.nullable().optionalFieldOf("nbt", null).forGetter(StructureBlock.class, StructureBlock::nbt)
+    ).apply(instance, StructureBlock::new)).describe("StructureBlock");
+
+    /**
+     * A structural marker holding a serialized entity and its exact relative spatial location.
+     *
+     * @param pos    The floating-point {@link Vector} detailing position offsets.
+     * @param entity The heavily abstracted {@link SavedEntity} container representing the deserialized mob or object.
+     */
+    public record StructureEntity(Vector pos, SavedEntity entity) {
+    }
+
+    public static final Codec<StructureEntity> STRUCTURE_ENTITY_CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.VECTOR_F.fieldOf("pos").forGetter(StructureEntity.class, StructureEntity::pos),
+        ExtraCodecs.SAVED_ENTITY.fieldOf("data").forGetter(StructureEntity.class, StructureEntity::entity)
+    ).apply(instance, StructureEntity::new)).describe("StructureEntity");
+
+    public static final Codec<Structure> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.VECTOR_I.optionalFieldOf("size", new Vector(0, 0, 0)).forGetter(Structure.class, s -> s.size),
+        PALETTE_ENTRY_CODEC.list().optionalFieldOf("palette", Collections.emptyList()).forGetter(Structure.class, s -> s.palette),
+        STRUCTURE_BLOCK_CODEC.list().optionalFieldOf("blocks", Collections.emptyList()).forGetter(Structure.class, s -> s.blocks),
+        STRUCTURE_ENTITY_CODEC.list().optionalFieldOf("entities", Collections.emptyList()).forGetter(Structure.class, s -> s.entities)
+    ).apply(instance, Structure::new)).describe("Structure");
+
     /**
      * Captures all blocks within the defined region, excluding entities.
      *
-     * @param corner1
-     * The first corner {@link Location} bounding the region.
-     * @param corner2
-     * The opposite corner {@link Location} bounding the region.
-     * @param origin
-     * The designated origin {@link Location} utilized for relative positioning.
+     * @param corner1 The first corner {@link Location} bounding the region.
+     * @param corner2 The opposite corner {@link Location} bounding the region.
+     * @param origin  The designated origin {@link Location} utilized for relative positioning.
      */
     public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin) {
         fill(corner1, corner2, origin, true);
@@ -93,15 +143,12 @@ public class Structure {
      * Captures blocks and optionally entities within the defined physical region.
      * Regional processor dynamically executes chunk-safe block mapping on Folia or Bukkit.
      *
-     * @param corner1
-     * The first corner {@link Location} bounding the region.
-     * @param corner2
-     * The opposite corner {@link Location} bounding the region.
-     * @param origin
-     * The origin {@link Location} used for zero-point relative alignment.
-     * @param includeEntities
-     * True if entities within the bounding box should be captured and serialized.
+     * @param corner1         The first corner {@link Location} bounding the region.
+     * @param corner2         The opposite corner {@link Location} bounding the region.
+     * @param origin          The origin {@link Location} used for zero-point relative alignment.
+     * @param includeEntities True if entities within the bounding box should be captured and serialized.
      */
+    @SuppressWarnings("unchecked")
     public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin, boolean includeEntities) {
         palette.clear();
         blocks.clear();
@@ -128,7 +175,16 @@ public class Structure {
             }
 
             BlockInfo info = BlockInfo.resolve(block);
-            PaletteEntry entry = new PaletteEntry(info.getAsString(), info.states());
+
+            Object statesObj = null;
+            Object propsObj = null;
+            Object nbtObj = null;
+
+            if (info.states() != null) statesObj = info.states();
+            if (info.properties() != null) propsObj = info.properties();
+            if (info.nbt() != null) nbtObj = info.nbt();
+
+            PaletteEntry entry = new PaletteEntry(info.getAsString(), statesObj);
 
             int paletteIndex;
             synchronized (paletteLookup) {
@@ -140,12 +196,10 @@ public class Structure {
 
             synchronized (blocks) {
                 blocks.add(new StructureBlock(
-                    block.getX() - originX,
-                    block.getY() - originY,
-                    block.getZ() - originZ,
+                    new Vector(block.getX() - originX, block.getY() - originY, block.getZ() - originZ),
                     paletteIndex,
-                    info.properties(),
-                    info.nbt()
+                    propsObj,
+                    nbtObj
                 ));
             }
 
@@ -171,20 +225,13 @@ public class Structure {
     /**
      * Places this structure asynchronously using a scheduled repeating task securely evaluating regional boundaries.
      *
-     * @param plugin
-     * The {@link Plugin} utilized for scheduling the task.
-     * @param origin
-     * The target placement origin {@link Location}.
-     * @param rotation
-     * The {@link StructureRotation} to apply.
-     * @param mirror
-     * The {@link Mirror} transformation to apply.
-     * @param integrity
-     * The survival chance [0.0 - 1.0] for each individual block.
-     * @param blocksPerTick
-     * The maximum number of blocks to process per execution slice.
-     * @return
-     * A {@link CompletableFuture} that resolves when the entire placement operation completes.
+     * @param plugin        The {@link Plugin} utilized for scheduling the task.
+     * @param origin        The target placement origin {@link Location}.
+     * @param rotation      The {@link StructureRotation} to apply.
+     * @param mirror        The {@link Mirror} transformation to apply.
+     * @param integrity     The survival chance [0.0 - 1.0] for each individual block.
+     * @param blocksPerTick The maximum number of blocks to process per execution slice.
+     * @return A {@link CompletableFuture} that resolves when the entire placement operation completes.
      */
     public CompletableFuture<Void> placeAsync(@NotNull Plugin plugin, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity, int blocksPerTick) {
         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -195,14 +242,10 @@ public class Structure {
     /**
      * Places this structure synchronously targeting regional thread execution requirements seamlessly.
      *
-     * @param origin
-     * The target placement origin {@link Location}.
-     * @param rotation
-     * The {@link StructureRotation} to apply.
-     * @param mirror
-     * The {@link Mirror} transformation to apply.
-     * @param integrity
-     * The survival chance [0.0 - 1.0] for each individual block.
+     * @param origin    The target placement origin {@link Location}.
+     * @param rotation  The {@link StructureRotation} to apply.
+     * @param mirror    The {@link Mirror} transformation to apply.
+     * @param integrity The survival chance [0.0 - 1.0] for each individual block.
      */
     public void place(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         AbyssalLib.SCHEDULER.schedule(() -> {
@@ -225,16 +268,11 @@ public class Structure {
      * Places this structure inside an asynchronous or virtual {@link WorldGenAccess} context.
      * Handles deferring out-of-bounds placements back to regional scheduled executions explicitly ensuring safe completion.
      *
-     * @param level
-     * The {@link WorldGenAccess} bridging chunk generation.
-     * @param origin
-     * The target placement origin {@link Location}.
-     * @param rotation
-     * The {@link StructureRotation} to apply.
-     * @param mirror
-     * The {@link Mirror} transformation to apply.
-     * @param integrity
-     * The survival chance [0.0 - 1.0] for each individual block.
+     * @param level     The {@link WorldGenAccess} bridging chunk generation.
+     * @param origin    The target placement origin {@link Location}.
+     * @param rotation  The {@link StructureRotation} to apply.
+     * @param mirror    The {@link Mirror} transformation to apply.
+     * @param integrity The survival chance [0.0 - 1.0] for each individual block.
      */
     public void place(@NotNull WorldGenAccess level, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity) {
         Random random = new Random();
@@ -267,8 +305,7 @@ public class Structure {
     /**
      * Appends a {@link StructureProcessor} to the placement pipeline.
      *
-     * @param processor
-     * The {@link StructureProcessor} to add.
+     * @param processor The {@link StructureProcessor} to add.
      */
     public void addProcessor(StructureProcessor processor) {
         processors.add(processor);
@@ -278,15 +315,12 @@ public class Structure {
      * Pre-calculates transformed BlockData instances for every entry in the palette.
      * This avoids redundant calculations during the placement loop.
      *
-     * @param dataOut
-     * The output array for baked vanilla {@link BlockData}.
-     * @param customOut
-     * The output array for baked {@link CustomBlock} objects.
-     * @param rotation
-     * The specified {@link StructureRotation}.
-     * @param mirror
-     * The specified {@link Mirror} transform.
+     * @param dataOut   The output array for baked vanilla {@link BlockData}.
+     * @param customOut The output array for baked {@link CustomBlock} objects.
+     * @param rotation  The specified {@link StructureRotation}.
+     * @param mirror    The specified {@link Mirror} transform.
      */
+    @SuppressWarnings("unchecked")
     private void bakePalette(BlockData[] dataOut, CustomBlock[] customOut, StructureRotation rotation, Mirror mirror) {
         for (int i = 0; i < palette.size(); i++) {
             PaletteEntry entry = palette.get(i);
@@ -297,7 +331,8 @@ public class Structure {
                     if (mat.isBlock()) {
                         blockObj = mat.createBlockData();
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             } else {
                 CustomBlock cb = Registries.BLOCKS.get(entry.id());
                 if (cb != null) {
@@ -306,7 +341,12 @@ public class Structure {
             }
 
             if (blockObj != null) {
-                BlockInfo temp = new BlockInfo(null, blockObj, entry.states(), null, null);
+                ObjectNode statesNode = null;
+                if (entry.states() != null && entry.states() instanceof ObjectNode n) {
+                    statesNode = n;
+                }
+
+                BlockInfo temp = new BlockInfo(null, blockObj, statesNode, null, null);
                 BlockData bd = WorldGenUtils.bakeData(temp, rotation, mirror);
                 if (bd instanceof Leaves leaves) {
                     leaves.setPersistent(true);
@@ -322,22 +362,14 @@ public class Structure {
     /**
      * Core routine for evaluating, transforming, processing, and executing the placement of a single block.
      *
-     * @param level
-     * The generation context, or null for a live Bukkit world.
-     * @param origin
-     * The absolute origin {@link Location}.
-     * @param sb
-     * The lightweight {@link StructureBlock} reference.
-     * @param rotation
-     * The structural rotation logic.
-     * @param mirror
-     * The structural mirror logic.
-     * @param bakedData
-     * The cached array of vanilla block data.
-     * @param bakedCustom
-     * The cached array of custom block references.
-     * @param deferred
-     * A collection to catch blocks that fall outside safe generation chunk boundaries.
+     * @param level       The generation context, or null for a live Bukkit world.
+     * @param origin      The absolute origin {@link Location}.
+     * @param sb          The lightweight {@link StructureBlock} reference.
+     * @param rotation    The structural rotation logic.
+     * @param mirror      The structural mirror logic.
+     * @param bakedData   The cached array of vanilla block data.
+     * @param bakedCustom The cached array of custom block references.
+     * @param deferred    A collection to catch blocks that fall outside safe generation chunk boundaries.
      */
     private void processStructureBlock(WorldGenAccess level, Location origin, StructureBlock sb, StructureRotation rotation, Mirror mirror, BlockData[] bakedData, CustomBlock[] bakedCustom, List<StructureBlock> deferred) {
         if (sb.stateIndex() < 0 || sb.stateIndex() >= palette.size()) {
@@ -348,7 +380,7 @@ public class Structure {
             return;
         }
 
-        Vector transformed = transform(new Vector(sb.x(), sb.y(), sb.z()), mirror, rotation);
+        Vector transformed = transform(sb.pos().clone(), mirror, rotation);
         Location target = origin.clone().add(transformed);
 
         if (target.getBlockY() < origin.getWorld().getMinHeight() || target.getBlockY() >= origin.getWorld().getMaxHeight()) {
@@ -362,6 +394,17 @@ public class Structure {
             return;
         }
 
+        ObjectNode propertiesNode = null;
+        ObjectNode nbtNode = null;
+        ObjectNode statesNode = null;
+
+        if (sb.properties() != null && sb.properties() instanceof ObjectNode n)
+            propertiesNode = n;
+        if (sb.nbt() != null && sb.nbt() instanceof ObjectNode n) nbtNode = n;
+        if (palette.get(sb.stateIndex()).states() != null && palette.get(sb.stateIndex()).states() instanceof ObjectNode n)
+            statesNode = n;
+
+
         if (processors.isEmpty() && sb.nbt() == null && sb.properties() == null) {
             if (level == null && !target.isChunkLoaded()) {
                 target.getChunk().load(true);
@@ -372,11 +415,11 @@ public class Structure {
             }
 
             CustomBlock cb = bakedCustom[sb.stateIndex()];
-            WorldGenUtils.placeBlock(level, target, new BlockInfo(transformed, cb != null ? cb : bd, palette.get(sb.stateIndex()).states(), null, null), bd.clone(), cb != null ? cb.clone() : null);
+            WorldGenUtils.placeBlock(level, target, new BlockInfo(transformed, cb != null ? cb : bd, statesNode, null, null), bd.clone(), cb != null ? cb.clone() : null);
         } else {
             CustomBlock cb = bakedCustom[sb.stateIndex()];
-            BlockInfo original = new BlockInfo(null, cb != null ? cb : bd, palette.get(sb.stateIndex()).states(), sb.properties(), sb.nbt());
-            BlockInfo current = new BlockInfo(transformed, cb != null ? cb : bd, palette.get(sb.stateIndex()).states(), sb.properties(), sb.nbt());
+            BlockInfo original = new BlockInfo(null, cb != null ? cb : bd, statesNode, propertiesNode, nbtNode);
+            BlockInfo current = new BlockInfo(transformed, cb != null ? cb : bd, statesNode, propertiesNode, nbtNode);
 
             for (StructureProcessor processor : processors) {
                 current = (level != null) ? processor.process(level, origin, current, original) : processor.process(origin.getWorld(), origin, current, original);
@@ -418,18 +461,12 @@ public class Structure {
     /**
      * Transforms and spawns all stored entities tied to the structure.
      *
-     * @param level
-     * The generation context. Null if live Bukkit placement.
-     * @param origin
-     * The placement origin {@link Location}.
-     * @param rotation
-     * The spatial rotation.
-     * @param mirror
-     * The spatial mirror transform.
-     * @param ents
-     * The source list of {@link StructureEntity} definitions.
-     * @param deferred
-     * Collection to hold entities spawned out of bounds during async generation.
+     * @param level    The generation context. Null if live Bukkit placement.
+     * @param origin   The placement origin {@link Location}.
+     * @param rotation The spatial rotation.
+     * @param mirror   The spatial mirror transform.
+     * @param ents     The source list of {@link StructureEntity} definitions.
+     * @param deferred Collection to hold entities spawned out of bounds during async generation.
      */
     private void placeEntities(WorldGenAccess level, Location origin, StructureRotation rotation, Mirror mirror, List<StructureEntity> ents, List<StructureEntity> deferred) {
         for (StructureEntity se : ents) {
@@ -463,14 +500,10 @@ public class Structure {
     /**
      * Applies matrix transformations (mirroring and rotation) to a discrete block vector.
      *
-     * @param pos
-     * The original relative {@link Vector} position.
-     * @param mirror
-     * The applied {@link Mirror}.
-     * @param rotation
-     * The applied {@link StructureRotation}.
-     * @return
-     * The newly calculated offset {@link Vector}.
+     * @param pos      The original relative {@link Vector} position.
+     * @param mirror   The applied {@link Mirror}.
+     * @param rotation The applied {@link StructureRotation}.
+     * @return The newly calculated offset {@link Vector}.
      */
     private Vector transform(Vector pos, Mirror mirror, StructureRotation rotation) {
         int x = pos.getBlockX();
@@ -509,14 +542,10 @@ public class Structure {
     /**
      * Applies floating-point matrix transformations to an entity's relative position.
      *
-     * @param pos
-     * The original relative {@link Vector} position.
-     * @param mirror
-     * The applied {@link Mirror}.
-     * @param rotation
-     * The applied {@link StructureRotation}.
-     * @return
-     * The newly calculated offset {@link Vector}.
+     * @param pos      The original relative {@link Vector} position.
+     * @param mirror   The applied {@link Mirror}.
+     * @param rotation The applied {@link StructureRotation}.
+     * @return The newly calculated offset {@link Vector}.
      */
     private Vector transformEntityPos(Vector pos, Mirror mirror, StructureRotation rotation) {
         double x = pos.getX();
@@ -552,104 +581,6 @@ public class Structure {
         return new Vector(newX, y, newZ);
     }
 
-    /**
-     * Serializes this entire structure into an optimized JSON node tree.
-     *
-     * @return
-     * The serialized Jackson {@link ObjectNode}.
-     */
-    public ObjectNode serialize() {
-        ObjectNode root = FACTORY.objectNode();
-        root.putPOJO("size", new int[]{size.getBlockX(), size.getBlockY(), size.getBlockZ()});
-
-        ArrayNode paletteArray = root.putArray("palette");
-        for (PaletteEntry entry : palette) {
-            ObjectNode node = paletteArray.addObject();
-            node.put("Name", entry.id());
-            if (entry.states() != null) {
-                node.set("States", entry.states());
-            }
-        }
-
-        ArrayNode blockArray = root.putArray("blocks");
-        for (StructureBlock sb : blocks) {
-            ObjectNode b = blockArray.addObject();
-            b.putArray("pos").add(sb.x()).add(sb.y()).add(sb.z());
-            b.put("state", sb.stateIndex());
-            if (sb.properties() != null) {
-                b.set("properties", sb.properties());
-            }
-            if (sb.nbt() != null) {
-                b.set("nbt", sb.nbt());
-            }
-        }
-
-        if (!entities.isEmpty()) {
-            ArrayNode entityArray = root.putArray("entities");
-            for (StructureEntity se : entities) {
-                ObjectNode eNode = entityArray.addObject();
-                eNode.putArray("pos").add(se.pos().getX()).add(se.pos().getY()).add(se.pos().getZ());
-                try {
-                    eNode.set("data", (JsonNode) ExtraCodecs.SAVED_ENTITY.encode(JsonOps.INSTANCE, se.entity()));
-                } catch (Exception ignored) {}
-            }
-        }
-
-        return root;
-    }
-
-    /**
-     * Deserializes a complete {@link Structure} definition from a JSON node tree.
-     *
-     * @param root
-     * The parsed root {@link JsonNode} generated by Jackson.
-     * @return
-     * The reconstructed {@link Structure} instance.
-     */
-    public static Structure deserialize(JsonNode root) {
-        Structure structure = new Structure();
-
-        if (root.has("size")) {
-            JsonNode s = root.get("size");
-            structure.size = new Vector(s.get(0).asInt(), s.get(1).asInt(), s.get(2).asInt());
-        }
-
-        if (root.has("palette")) {
-            for (JsonNode node : root.get("palette")) {
-                structure.palette.add(new PaletteEntry(
-                    node.get("Name").asText(),
-                    node.has("States") ? (ObjectNode) node.get("States") : null
-                ));
-            }
-        }
-
-        if (root.has("blocks")) {
-            for (JsonNode node : root.get("blocks")) {
-                JsonNode pos = node.get("pos");
-                structure.blocks.add(new StructureBlock(
-                    pos.get(0).asInt(),
-                    pos.get(1).asInt(),
-                    pos.get(2).asInt(),
-                    node.get("state").asInt(),
-                    node.has("properties") ? (ObjectNode) node.get("properties") : null,
-                    node.has("nbt") ? (ObjectNode) node.get("nbt") : null
-                ));
-            }
-        }
-
-        if (root.has("entities")) {
-            for (JsonNode node : root.get("entities")) {
-                JsonNode pos = node.get("pos");
-                Vector vector = new Vector(pos.get(0).asDouble(), pos.get(1).asDouble(), pos.get(2).asDouble());
-                try {
-                    SavedEntity saved = ExtraCodecs.SAVED_ENTITY.decode(JsonOps.INSTANCE, node.get("data"));
-                    structure.entities.add(new StructureEntity(vector, saved));
-                } catch (Exception ignored) {}
-            }
-        }
-
-        return structure;
-    }
 
     /**
      * Internal class responsible for throttling asynchronous structure placement safely across threads.
@@ -706,42 +637,4 @@ public class Structure {
             }
         }
     }
-
-    /**
-     * A lightweight data record describing a unique combination of block type and properties.
-     *
-     * @param id
-     * The namespaced identifier for the block material or custom implementation.
-     * @param states
-     * Serialized block-states in JSON format (nullable).
-     */
-    private record PaletteEntry(String id, @Nullable ObjectNode states) {}
-
-    /**
-     * A structural marker indicating the position and index configuration of a discrete block.
-     *
-     * @param x
-     * The relative integer offset on the X axis.
-     * @param y
-     * The relative integer offset on the Y axis.
-     * @param z
-     * The relative integer offset on the Z axis.
-     * @param stateIndex
-     * The pointer index resolving to a definition inside the structure palette.
-     * @param properties
-     * Extra custom NBT-like properties bound directly to the block logic.
-     * @param nbt
-     * Standard vanilla tile-entity data (nullable).
-     */
-    private record StructureBlock(int x, int y, int z, int stateIndex, @Nullable ObjectNode properties, @Nullable ObjectNode nbt) {}
-
-    /**
-     * A structural marker holding a serialized entity and its exact relative spatial location.
-     *
-     * @param pos
-     * The floating-point {@link Vector} detailing position offsets.
-     * @param entity
-     * The heavily abstracted {@link SavedEntity} container representing the deserialized mob or object.
-     */
-    public record StructureEntity(Vector pos, SavedEntity entity) {}
 }

@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Evoker;
@@ -20,24 +17,27 @@ public class EvokerEntityAdapter extends EntityAdapter<Evoker> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Evoker value, Map<D, D> map) throws Codec.CodecException {
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Evoker value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
         if (value.getWololoTarget() != null) {
-            map.put(ops.createString("wololo_target_uuid"), Codecs.UUID.encode(ops, value.getWololoTarget().getUniqueId()));
+            ctx.write("wololo_target_uuid", Codecs.UUID, value.getWololoTarget().getUniqueId());
         }
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Evoker evoker)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Evoker evoker)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D targetData = map.get(ops.createString("wololo_target_uuid"));
-        if (targetData != null) {
-            Try.of(() -> Codecs.UUID.decode(ops, targetData)).onSuccess(uuid -> {
-                Entity target = Bukkit.getEntity(uuid);
-                if (target instanceof Sheep sheep) {
-                    evoker.setWololoTarget(sheep);
-                }
-            });
-        }
+        ctx.readOptional("wololo_target_uuid", Codecs.UUID, opt -> opt.ifPresent(uuid -> {
+            Entity target = Bukkit.getEntity(uuid);
+            if (target instanceof Sheep sheep) {
+                evoker.setWololoTarget(sheep);
+            }
+        }));
+
+        return ctx.result();
     }
 }

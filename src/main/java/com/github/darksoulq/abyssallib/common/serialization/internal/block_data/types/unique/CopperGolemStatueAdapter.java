@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types.unique;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import org.bukkit.block.data.BlockData;
@@ -15,14 +17,18 @@ public class CopperGolemStatueAdapter extends Adapter<CopperGolemStatue> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, CopperGolemStatue value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, CopperGolemStatue value) {
         return CODEC.encode(ops, value.getCopperGolemPose());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, BlockData base) throws Codec.CodecException {
-        if (!(base instanceof CopperGolemStatue copperGolemStatue)) return;
-        CopperGolemStatue.Pose value = CODEC.decode(ops, input);
-        copperGolemStatue.setCopperGolemPose(value);
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, BlockData base) {
+        if (!(base instanceof CopperGolemStatue copperGolemStatue))
+            return DataResult.error(DataError.custom("Base is not CopperGolemStatue, got: " + base.getClass().getSimpleName()));
+
+        return CODEC.decode(ops, input).flatMap(value -> {
+            copperGolemStatue.setCopperGolemPose(value);
+            return DataResult.success(null);
+        });
     }
 }

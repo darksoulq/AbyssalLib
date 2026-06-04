@@ -5,11 +5,12 @@ import com.github.darksoulq.abyssallib.world.recipe.BukkitRecipeProvider;
 import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.TransmuteRecipe;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.recipe.CraftingBookCategory;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 
@@ -35,7 +36,7 @@ public class CustomTransmuteRecipe implements CustomRecipe, BukkitRecipeProvider
     }
 
     @Override
-    public NamespacedKey getKey() {
+    public @NonNull NamespacedKey getKey() {
         return id;
     }
 

@@ -1,13 +1,15 @@
 package com.github.darksoulq.abyssallib.world.gen.state.provider.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviderType;
 import org.bukkit.Location;
 import org.bukkit.util.noise.SimplexNoiseGenerator;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -21,46 +23,12 @@ public class NoiseThresholdBlockStateProvider extends BlockStateProvider {
     /**
      * The codec used for serializing and deserializing the noise threshold provider.
      */
-    public static final Codec<NoiseThresholdBlockStateProvider> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the provider from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the noise threshold block state provider.
-         * @throws CodecException If required fields are missing.
-         */
-        @Override
-        public <D> NoiseThresholdBlockStateProvider decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            double scale = Codecs.DOUBLE.decode(ops, map.get(ops.createString("scale")));
-            double threshold = Codecs.DOUBLE.decode(ops, map.get(ops.createString("threshold")));
-            BlockInfo normalState = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("normal_state")));
-            BlockInfo highState = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("high_state")));
-            return new NoiseThresholdBlockStateProvider(scale, threshold, normalState, highState);
-        }
-
-        /**
-         * Encodes the provider into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The provider instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, NoiseThresholdBlockStateProvider value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("scale"), Codecs.DOUBLE.encode(ops, value.scale));
-            map.put(ops.createString("threshold"), Codecs.DOUBLE.encode(ops, value.threshold));
-            map.put(ops.createString("normal_state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.normalState));
-            map.put(ops.createString("high_state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.highState));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<NoiseThresholdBlockStateProvider> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.DOUBLE.fieldOf("scale").forGetter(NoiseThresholdBlockStateProvider.class, p -> p.scale),
+        Codecs.DOUBLE.fieldOf("threshold").forGetter(NoiseThresholdBlockStateProvider.class, p -> p.threshold),
+        ExtraCodecs.BLOCK_INFO.fieldOf("normal_state").forGetter(NoiseThresholdBlockStateProvider.class, p -> p.normalState),
+        ExtraCodecs.BLOCK_INFO.fieldOf("high_state").forGetter(NoiseThresholdBlockStateProvider.class, p -> p.highState)
+    ).apply(instance, NoiseThresholdBlockStateProvider::new)).describe("NoiseThresholdBlockStateProvider");
 
     /**
      * The registered type definition for the noise threshold block state provider.

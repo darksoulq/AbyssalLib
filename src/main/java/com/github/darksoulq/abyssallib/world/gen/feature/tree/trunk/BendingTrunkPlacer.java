@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.trunk;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
@@ -11,7 +11,9 @@ import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * A sophisticated trunk placer that generates a straight vertical column before sharply
@@ -29,40 +31,9 @@ public class BendingTrunkPlacer extends TrunkPlacer {
     /**
      * The codec responsible for managing the serialization and deserialization of the bending trunk constraints.
      */
-    public static final Codec<BendingTrunkPlacer> CODEC = new Codec<>() {
-
-        /**
-         * Parses the primitive data maps natively into the functional structured class memory.
-         *
-         * @param ops   The translation engine natively binding format boundaries.
-         * @param input The unparsed data object footprint.
-         * @param <D>   The structural constraint defining the data node format.
-         * @return The correctly instantiated memory logic model.
-         * @throws CodecException Resolves strictly upon critically failing data integrity validation checks.
-         */
-        @Override
-        public <D> BendingTrunkPlacer decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int bendLength = Codecs.INT.decode(ops, map.get(ops.createString("bend_length")));
-            return new BendingTrunkPlacer(bendLength);
-        }
-
-        /**
-         * Translates the initialized functional memory states back into completely formatted map objects securely.
-         *
-         * @param ops   The translation engine natively binding format boundaries.
-         * @param value The active initialized target logic model holding configuration states.
-         * @param <D>   The structural constraint defining the data node format.
-         * @return The thoroughly constructed serialized payload tree natively formatted correctly.
-         * @throws CodecException Resolves strictly upon encountering unrecoverable transformation pipeline faults.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, BendingTrunkPlacer value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("bend_length"), Codecs.INT.encode(ops, value.bendLength));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<BendingTrunkPlacer> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("bend_length").forGetter(BendingTrunkPlacer.class, p -> p.bendLength)
+    ).apply(instance, BendingTrunkPlacer::new)).describe("BendingTrunkPlacer");
 
     /**
      * The formally registered type enumeration linking the placer exactly into the standard registry maps.

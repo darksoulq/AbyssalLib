@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.ChestedHorse;
 import org.bukkit.entity.Entity;
 
@@ -18,13 +15,20 @@ public class ChestedHorseEntityAdapter extends EntityAdapter<ChestedHorse> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, ChestedHorse value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("is_carrying_chest"), Codecs.BOOLEAN.encode(ops, value.isCarryingChest()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, ChestedHorse value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+        ctx.write("is_carrying_chest", Codecs.BOOLEAN, value.isCarryingChest());
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof ChestedHorse horse)) return;
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_carrying_chest")))).onSuccess(horse::setCarryingChest);
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof ChestedHorse horse)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
+
+        ctx.readOptional("is_carrying_chest", Codecs.BOOLEAN, opt -> opt.ifPresent(horse::setCarryingChest));
+
+        return ctx.result();
     }
 }

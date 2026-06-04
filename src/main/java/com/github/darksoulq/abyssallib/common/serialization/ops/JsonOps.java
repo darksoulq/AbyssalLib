@@ -9,24 +9,33 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import java.util.*;
 
 /**
- * An implementation of {@link DynamicOps} for Jackson's {@link JsonNode} tree model.
- * This class allows {@link com.github.darksoulq.abyssallib.common.serialization.Codec}s
- * to serialize and deserialize Java objects to and from JSON structures.
+ * A {@link DynamicOps} implementation backed by Jackson's {@link JsonNode} tree model.
+ * <p>
+ * This implementation allows codecs to serialize and deserialize structured data
+ * into standard JSON representations using Jackson's immutable tree API.
  */
 public class JsonOps extends DynamicOps<JsonNode> {
 
-    /** Singleton instance of JsonOps to avoid unnecessary allocations. */
+    /**
+     * Singleton instance of {@code JsonOps}.
+     */
     public static final JsonOps INSTANCE = new JsonOps();
 
+    /**
+     * Underlying Jackson object mapper used for JSON operations.
+     */
     public final ObjectMapper mapper = new JsonMapper();
 
-    /** Private constructor for singleton pattern. */
+    /**
+     * Creates a new {@code JsonOps} instance.
+     */
     private JsonOps() {}
 
     /**
-     * Creates a {@link TextNode} from a String.
-     * @param value The string value.
-     * @return A JSON text node.
+     * Creates a JSON string node.
+     *
+     * @param value the string value
+     * @return a {@link TextNode} containing the value
      */
     @Override
     public JsonNode createString(String value) {
@@ -34,9 +43,32 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates an {@link IntNode} from an integer.
-     * @param value The int value.
-     * @return A JSON integer node.
+     * Creates a JSON numeric node representing a byte.
+     *
+     * @param value the byte value
+     * @return an {@link IntNode}
+     */
+    @Override
+    public JsonNode createByte(byte value) {
+        return IntNode.valueOf(value);
+    }
+
+    /**
+     * Creates a JSON numeric node representing a short.
+     *
+     * @param value the short value
+     * @return an {@link IntNode}
+     */
+    @Override
+    public JsonNode createShort(short value) {
+        return IntNode.valueOf(value);
+    }
+
+    /**
+     * Creates a JSON numeric node representing an int.
+     *
+     * @param value the int value
+     * @return an {@link IntNode}
      */
     @Override
     public JsonNode createInt(int value) {
@@ -44,9 +76,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates a {@link LongNode} from a long.
-     * @param value The long value.
-     * @return A JSON long node.
+     * Creates a JSON numeric node representing a long.
+     *
+     * @param value the long value
+     * @return a {@link LongNode}
      */
     @Override
     public JsonNode createLong(long value) {
@@ -54,9 +87,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates a {@link FloatNode} from a float.
-     * @param value The float value.
-     * @return A JSON float node.
+     * Creates a JSON numeric node representing a float.
+     *
+     * @param value the float value
+     * @return a {@link FloatNode}
      */
     @Override
     public JsonNode createFloat(float value) {
@@ -64,9 +98,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates a {@link DoubleNode} from a double.
-     * @param value The double value.
-     * @return A JSON double node.
+     * Creates a JSON numeric node representing a double.
+     *
+     * @param value the double value
+     * @return a {@link DoubleNode}
      */
     @Override
     public JsonNode createDouble(double value) {
@@ -74,9 +109,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates a {@link BooleanNode} from a boolean.
-     * @param value The boolean value.
-     * @return A JSON boolean node.
+     * Creates a JSON boolean node.
+     *
+     * @param value the boolean value
+     * @return a {@link BooleanNode}
      */
     @Override
     public JsonNode createBoolean(boolean value) {
@@ -84,9 +120,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates an {@link ArrayNode} from a list of JSON nodes.
-     * @param elements The list of nodes to include.
-     * @return A JSON array node.
+     * Creates a JSON array node from a list of elements.
+     *
+     * @param elements the list of JSON nodes
+     * @return an {@link ArrayNode}
      */
     @Override
     public JsonNode createList(List<JsonNode> elements) {
@@ -96,10 +133,12 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Creates an {@link ObjectNode} from a map of JSON nodes.
-     * Keys are converted to strings via {@link JsonNode#asText()}.
-     * @param map The map of key-value nodes.
-     * @return A JSON object node.
+     * Creates a JSON object node from a map of key-value pairs.
+     * <p>
+     * Keys are converted to strings using {@link JsonNode#asText()}.
+     *
+     * @param map the map of JSON nodes
+     * @return an {@link ObjectNode}
      */
     @Override
     public JsonNode createMap(Map<JsonNode, JsonNode> map) {
@@ -111,9 +150,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Extracts a String from a JSON node if it is textual.
-     * @param input The JSON node.
-     * @return An Optional containing the string, or empty.
+     * Extracts a string value from a JSON node if it is textual.
+     *
+     * @param input the JSON node
+     * @return the string value if present
      */
     @Override
     public Optional<String> getStringValue(JsonNode input) {
@@ -121,9 +161,21 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Extracts an Integer from a JSON node if it is a number.
-     * @param input The JSON node.
-     * @return An Optional containing the integer, or empty.
+     * Extracts a numeric value from a JSON node if it is numeric.
+     *
+     * @param input the JSON node
+     * @return the number value if present
+     */
+    @Override
+    public Optional<Number> getNumberValue(JsonNode input) {
+        return input.isNumber() ? Optional.of(input.numberValue()) : Optional.empty();
+    }
+
+    /**
+     * Extracts an integer value from a JSON node if it is numeric.
+     *
+     * @param input the JSON node
+     * @return the integer value if present
      */
     @Override
     public Optional<Integer> getIntValue(JsonNode input) {
@@ -131,9 +183,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Extracts a Long from a JSON node if it is a number.
-     * @param input The JSON node.
-     * @return An Optional containing the long, or empty.
+     * Extracts a long value from a JSON node if it is numeric.
+     *
+     * @param input the JSON node
+     * @return the long value if present
      */
     @Override
     public Optional<Long> getLongValue(JsonNode input) {
@@ -141,9 +194,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Extracts a Float from a JSON node if it is a number.
-     * @param input The JSON node.
-     * @return An Optional containing the float, or empty.
+     * Extracts a float value from a JSON node if it is numeric.
+     *
+     * @param input the JSON node
+     * @return the float value if present
      */
     @Override
     public Optional<Float> getFloatValue(JsonNode input) {
@@ -151,9 +205,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Extracts a Double from a JSON node if it is a number.
-     * @param input The JSON node.
-     * @return An Optional containing the double, or empty.
+     * Extracts a double value from a JSON node if it is numeric.
+     *
+     * @param input the JSON node
+     * @return the double value if present
      */
     @Override
     public Optional<Double> getDoubleValue(JsonNode input) {
@@ -161,9 +216,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Extracts a Boolean from a JSON node if it is a boolean.
-     * @param input The JSON node.
-     * @return An Optional containing the boolean, or empty.
+     * Extracts a boolean value from a JSON node if it is boolean.
+     *
+     * @param input the JSON node
+     * @return the boolean value if present
      */
     @Override
     public Optional<Boolean> getBooleanValue(JsonNode input) {
@@ -171,9 +227,10 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Converts a JSON array node into a List of nodes.
-     * @param input The JSON node.
-     * @return An Optional containing the list, or empty if not an array.
+     * Converts a JSON array node into a list of JSON nodes.
+     *
+     * @param input the JSON node
+     * @return the list of elements if the node is an array
      */
     @Override
     public Optional<List<JsonNode>> getList(JsonNode input) {
@@ -184,22 +241,58 @@ public class JsonOps extends DynamicOps<JsonNode> {
     }
 
     /**
-     * Converts a JSON object node into a Map of nodes.
-     * Keys are wrapped in {@link TextNode}s.
-     * @param input The JSON node.
-     * @return An Optional containing the map, or empty if not an object.
+     * Converts a JSON object node into a map of JSON nodes.
+     *
+     * @param input the JSON node
+     * @return the map of entries if the node is an object
      */
     @Override
     public Optional<Map<JsonNode, JsonNode>> getMap(JsonNode input) {
         if (!input.isObject()) return Optional.empty();
         Map<JsonNode, JsonNode> map = new LinkedHashMap<>();
-        input.fields().forEachRemaining(entry -> map.put(TextNode.valueOf(entry.getKey()), entry.getValue()));
+        input.fields().forEachRemaining(entry ->
+            map.put(TextNode.valueOf(entry.getKey()), entry.getValue())
+        );
         return Optional.of(map);
     }
 
     /**
-     * Returns the representation of a null value in JSON.
-     * @return {@link NullNode#instance}.
+     * Returns the keys of a JSON object node.
+     *
+     * @param input the JSON node
+     * @return an iterable of field names if the node is an object
+     */
+    @Override
+    public Optional<Iterable<String>> getKeys(JsonNode input) {
+        return input.isObject() ? Optional.of(input::fieldNames) : Optional.empty();
+    }
+
+    /**
+     * Returns the number of elements in a JSON container node.
+     *
+     * @param input the JSON node
+     * @return the size if the node is a container
+     */
+    @Override
+    public OptionalInt size(JsonNode input) {
+        return input.isContainerNode() ? OptionalInt.of(input.size()) : OptionalInt.empty();
+    }
+
+    /**
+     * Creates a deep copy of the JSON node.
+     *
+     * @param input the JSON node
+     * @return a deep-copied node
+     */
+    @Override
+    public JsonNode copy(JsonNode input) {
+        return input.deepCopy();
+    }
+
+    /**
+     * Returns the representation of an empty JSON value.
+     *
+     * @return {@link NullNode#instance}
      */
     @Override
     public JsonNode empty() {

@@ -5,10 +5,11 @@ import com.github.darksoulq.abyssallib.world.recipe.BukkitRecipeProvider;
 import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.SmithingTransformRecipe;
-import org.bukkit.inventory.ItemStack;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 
@@ -34,7 +35,7 @@ public class CustomSmithingTransformRecipe implements CustomRecipe, BukkitRecipe
     }
 
     @Override
-    public NamespacedKey getKey() {
+    public @NonNull NamespacedKey getKey() {
         return id;
     }
 

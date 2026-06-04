@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.data.loot.function;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
@@ -10,7 +9,6 @@ import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 
-import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -31,31 +29,7 @@ public class FurnaceSmeltFunction extends LootFunction {
      * state, it encodes to and decodes from an empty map structure.
      * </p>
      */
-    public static final Codec<FurnaceSmeltFunction> CODEC = new Codec<>() {
-        /**
-         * Decodes a FurnaceSmeltFunction instance.
-         * * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param input The serialized input data.
-         * @param <D>   The type of the data being processed.
-         * @return A new instance of {@link FurnaceSmeltFunction}.
-         */
-        @Override
-        public <D> FurnaceSmeltFunction decode(DynamicOps<D> ops, D input) {
-            return new FurnaceSmeltFunction();
-        }
-
-        /**
-         * Encodes the FurnaceSmeltFunction instance.
-         * * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param value The function instance to encode.
-         * @param <D>   The type of the data being processed.
-         * @return An empty map representing the encoded state.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, FurnaceSmeltFunction value) {
-            return ops.createMap(Collections.emptyMap());
-        }
-    };
+    public static final Codec<FurnaceSmeltFunction> CODEC = Codec.unit(FurnaceSmeltFunction::new).describe("FurnaceSmeltFunction");
 
     /**
      * The registered type definition for the furnace smelt loot function.

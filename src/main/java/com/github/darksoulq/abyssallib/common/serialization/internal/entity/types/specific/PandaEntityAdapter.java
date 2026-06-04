@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Panda;
 
@@ -18,30 +15,48 @@ public class PandaEntityAdapter extends EntityAdapter<Panda> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Panda value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("main_gene"), Codecs.STRING.encode(ops, value.getMainGene().name()));
-        map.put(ops.createString("hidden_gene"), Codecs.STRING.encode(ops, value.getHiddenGene().name()));
-        map.put(ops.createString("is_rolling"), Codecs.BOOLEAN.encode(ops, value.isRolling()));
-        map.put(ops.createString("is_sneezing"), Codecs.BOOLEAN.encode(ops, value.isSneezing()));
-        map.put(ops.createString("is_on_back"), Codecs.BOOLEAN.encode(ops, value.isOnBack()));
-        map.put(ops.createString("is_eating"), Codecs.BOOLEAN.encode(ops, value.isEating()));
-        map.put(ops.createString("sneeze_ticks"), Codecs.INT.encode(ops, value.getSneezeTicks()));
-        map.put(ops.createString("eating_ticks"), Codecs.INT.encode(ops, value.getEatingTicks()));
-        map.put(ops.createString("unhappy_ticks"), Codecs.INT.encode(ops, value.getUnhappyTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Panda value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("main_gene", Codecs.STRING, value.getMainGene().name())
+            .write("hidden_gene", Codecs.STRING, value.getHiddenGene().name())
+            .write("is_rolling", Codecs.BOOLEAN, value.isRolling())
+            .write("is_sneezing", Codecs.BOOLEAN, value.isSneezing())
+            .write("is_on_back", Codecs.BOOLEAN, value.isOnBack())
+            .write("is_eating", Codecs.BOOLEAN, value.isEating())
+            .write("sneeze_ticks", Codecs.INT, value.getSneezeTicks())
+            .write("eating_ticks", Codecs.INT, value.getEatingTicks())
+            .write("unhappy_ticks", Codecs.INT, value.getUnhappyTicks());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Panda panda)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Panda panda)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.STRING.decode(ops, map.get(ops.createString("main_gene")))).onSuccess(s -> panda.setMainGene(Panda.Gene.valueOf(s)));
-        Try.of(() -> Codecs.STRING.decode(ops, map.get(ops.createString("hidden_gene")))).onSuccess(s -> panda.setHiddenGene(Panda.Gene.valueOf(s)));
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_rolling")))).onSuccess(panda::setRolling);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_sneezing")))).onSuccess(panda::setSneezing);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_on_back")))).onSuccess(panda::setOnBack);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_eating")))).onSuccess(panda::setEating);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("sneeze_ticks")))).onSuccess(panda::setSneezeTicks);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("eating_ticks")))).onSuccess(panda::setEatingTicks);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("unhappy_ticks")))).onSuccess(panda::setUnhappyTicks);
+        ctx.readOptional("main_gene", Codecs.STRING, opt -> opt.ifPresent(geneStr -> {
+                try {
+                    panda.setMainGene(Panda.Gene.valueOf(geneStr));
+                } catch (Exception ignored) {
+                }
+            }))
+            .readOptional("hidden_gene", Codecs.STRING, opt -> opt.ifPresent(geneStr -> {
+                try {
+                    panda.setHiddenGene(Panda.Gene.valueOf(geneStr));
+                } catch (Exception ignored) {
+                }
+            }))
+            .readOptional("is_rolling", Codecs.BOOLEAN, opt -> opt.ifPresent(panda::setRolling))
+            .readOptional("is_sneezing", Codecs.BOOLEAN, opt -> opt.ifPresent(panda::setSneezing))
+            .readOptional("is_on_back", Codecs.BOOLEAN, opt -> opt.ifPresent(panda::setOnBack))
+            .readOptional("is_eating", Codecs.BOOLEAN, opt -> opt.ifPresent(panda::setEating))
+            .readOptional("sneeze_ticks", Codecs.INT, opt -> opt.ifPresent(panda::setSneezeTicks))
+            .readOptional("eating_ticks", Codecs.INT, opt -> opt.ifPresent(panda::setEatingTicks))
+            .readOptional("unhappy_ticks", Codecs.INT, opt -> opt.ifPresent(panda::setUnhappyTicks));
+
+        return ctx.result();
     }
 }

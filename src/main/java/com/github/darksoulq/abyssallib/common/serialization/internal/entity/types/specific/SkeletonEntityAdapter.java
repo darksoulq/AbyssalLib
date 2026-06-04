@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Skeleton;
 
@@ -18,19 +15,24 @@ public class SkeletonEntityAdapter extends EntityAdapter<Skeleton> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Skeleton value, Map<D, D> map) throws Codec.CodecException {
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Skeleton value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
         if (value.isConverting()) {
-            map.put(ops.createString("conversion_time"), Codecs.INT.encode(ops, value.getConversionTime()));
+            ctx.write("conversion_time", Codecs.INT, value.getConversionTime());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Skeleton skeleton)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Skeleton skeleton)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D conversionData = map.get(ops.createString("conversion_time"));
-        if (conversionData != null) {
-            Try.of(() -> Codecs.INT.decode(ops, conversionData)).onSuccess(skeleton::setConversionTime);
-        }
+        ctx.readOptional("conversion_time", Codecs.INT, opt -> opt.ifPresent(skeleton::setConversionTime));
+
+        return ctx.result();
     }
 }

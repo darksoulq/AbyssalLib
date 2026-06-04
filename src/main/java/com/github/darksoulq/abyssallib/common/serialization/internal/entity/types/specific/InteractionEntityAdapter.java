@@ -1,14 +1,10 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Interaction;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class InteractionEntityAdapter extends EntityAdapter<Interaction> {
@@ -19,32 +15,46 @@ public class InteractionEntityAdapter extends EntityAdapter<Interaction> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Interaction value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("interaction_width"), Codecs.FLOAT.encode(ops, value.getInteractionWidth()));
-        map.put(ops.createString("interaction_height"), Codecs.FLOAT.encode(ops, value.getInteractionHeight()));
-        map.put(ops.createString("responsive"), Codecs.BOOLEAN.encode(ops, value.isResponsive()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Interaction value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("interaction_width", Codecs.FLOAT, value.getInteractionWidth())
+            .write("interaction_height", Codecs.FLOAT, value.getInteractionHeight())
+            .write("responsive", Codecs.BOOLEAN, value.isResponsive());
 
         if (value.getLastAttack() != null) {
-            Map<D, D> attackMap = new HashMap<>();
-            attackMap.put(ops.createString("player_uuid"), Codecs.UUID.encode(ops, value.getLastAttack().getPlayer().getUniqueId()));
-            attackMap.put(ops.createString("timestamp"), Codecs.LONG.encode(ops, value.getLastAttack().getTimestamp()));
-            map.put(ops.createString("last_attack"), ops.createMap(attackMap));
+            EncodeContext<D> attackCtx = EncodeContext.of(ops);
+            attackCtx.write("player_uuid", Codecs.UUID, value.getLastAttack().getPlayer().getUniqueId());
+            attackCtx.write("timestamp", Codecs.LONG, value.getLastAttack().getTimestamp());
+            DataResult<D> atkRes = attackCtx.result();
+            if (atkRes.isSuccess()) {
+                map.put(ops.createString("last_attack"), atkRes.getOrThrow());
+            }
         }
 
         if (value.getLastInteraction() != null) {
-            Map<D, D> interactionMap = new HashMap<>();
-            interactionMap.put(ops.createString("player_uuid"), Codecs.UUID.encode(ops, value.getLastInteraction().getPlayer().getUniqueId()));
-            interactionMap.put(ops.createString("timestamp"), Codecs.LONG.encode(ops, value.getLastInteraction().getTimestamp()));
-            map.put(ops.createString("last_interaction"), ops.createMap(interactionMap));
+            EncodeContext<D> intCtx = EncodeContext.of(ops);
+            intCtx.write("player_uuid", Codecs.UUID, value.getLastInteraction().getPlayer().getUniqueId());
+            intCtx.write("timestamp", Codecs.LONG, value.getLastInteraction().getTimestamp());
+            DataResult<D> intRes = intCtx.result();
+            if (intRes.isSuccess()) {
+                map.put(ops.createString("last_interaction"), intRes.getOrThrow());
+            }
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Interaction interaction)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Interaction interaction)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("interaction_width")))).onSuccess(interaction::setInteractionWidth);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("interaction_height")))).onSuccess(interaction::setInteractionHeight);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("responsive")))).onSuccess(interaction::setResponsive);
+        ctx.readOptional("interaction_width", Codecs.FLOAT, opt -> opt.ifPresent(interaction::setInteractionWidth))
+            .readOptional("interaction_height", Codecs.FLOAT, opt -> opt.ifPresent(interaction::setInteractionHeight))
+            .readOptional("responsive", Codecs.BOOLEAN, opt -> opt.ifPresent(interaction::setResponsive));
+
+        return ctx.result();
     }
 }

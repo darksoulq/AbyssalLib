@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ThrownPotion;
 
@@ -18,14 +15,20 @@ public class ThrownPotionEntityAdapter extends EntityAdapter<ThrownPotion> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, ThrownPotion value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("item"), Codecs.ITEM_STACK.encode(ops, value.getItem()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, ThrownPotion value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+        ctx.write("item", Codecs.ITEM_STACK, value.getItem());
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof ThrownPotion potion)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof ThrownPotion potion)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("item")))).onSuccess(potion::setItem);
+        ctx.readOptional("item", Codecs.ITEM_STACK, opt -> opt.ifPresent(potion::setItem));
+
+        return ctx.result();
     }
 }

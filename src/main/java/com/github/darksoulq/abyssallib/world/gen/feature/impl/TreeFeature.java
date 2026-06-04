@@ -314,82 +314,20 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
         /**
          * Codec responsible for serializing and deserializing the config parameters.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes tree configuration data from the parsed format.
-             *
-             * @param ops   The operational integration logic.
-             * @param input The unparsed data array.
-             * @param <D>   The format type.
-             * @return The parsed tree configuration.
-             * @throws CodecException Rejects invalid properties.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-
-                BlockStateProvider trunkProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("trunk_provider")));
-                BlockStateProvider foliageProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("foliage_provider")));
-                BlockStateProvider dirtProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("dirt_provider")));
-
-                TrunkPlacer trunkPlacer = TrunkPlacer.CODEC.decode(ops, map.get(ops.createString("trunk_placer")));
-                FoliagePlacer foliagePlacer = FoliagePlacer.CODEC.decode(ops, map.get(ops.createString("foliage_placer")));
-
-                RootPlacer rootPlacer = null;
-                D rootNode = map.get(ops.createString("root_placer"));
-                if (rootNode != null) rootPlacer = RootPlacer.CODEC.decode(ops, rootNode);
-
-                List<TreeDecorator> decorators = new ArrayList<>();
-                D decNode = map.get(ops.createString("decorators"));
-                if (decNode != null) decorators = TreeDecorator.CODEC.list().decode(ops, decNode);
-
-                int baseHeight = Codecs.INT.decode(ops, map.get(ops.createString("base_height")));
-                int heightRandA = Codecs.INT.decode(ops, map.get(ops.createString("height_rand_a")));
-                int heightRandB = Codecs.INT.decode(ops, map.get(ops.createString("height_rand_b")));
-
-                int foliageRadius = Codecs.INT.decode(ops, map.get(ops.createString("foliage_radius")));
-                int foliageRadiusRand = Codecs.INT.decode(ops, map.get(ops.createString("foliage_radius_rand")));
-
-                List<BlockInfo> dirtTargets = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("dirt_targets")));
-
-                return new Config(trunkProvider, foliageProvider, dirtProvider, trunkPlacer, foliagePlacer, rootPlacer, decorators, baseHeight, heightRandA, heightRandB, foliageRadius, foliageRadiusRand, dirtTargets);
-            }
-
-            /**
-             * Encodes the instantiated tree configuration into a format wrapper.
-             *
-             * @param ops   The operational mapping processor.
-             * @param value The active configuration block.
-             * @param <D>   The format type.
-             * @return The strictly mapped encoded translation.
-             * @throws CodecException Prevents serialization failing critical logic tests.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-
-                map.put(ops.createString("trunk_provider"), BlockStateProvider.CODEC.encode(ops, value.trunkProvider));
-                map.put(ops.createString("foliage_provider"), BlockStateProvider.CODEC.encode(ops, value.foliageProvider));
-                map.put(ops.createString("dirt_provider"), BlockStateProvider.CODEC.encode(ops, value.dirtProvider));
-
-                map.put(ops.createString("trunk_placer"), TrunkPlacer.CODEC.encode(ops, value.trunkPlacer));
-                map.put(ops.createString("foliage_placer"), FoliagePlacer.CODEC.encode(ops, value.foliagePlacer));
-
-                if (value.rootPlacer != null) map.put(ops.createString("root_placer"), RootPlacer.CODEC.encode(ops, value.rootPlacer));
-                if (value.decorators != null && !value.decorators.isEmpty()) map.put(ops.createString("decorators"), TreeDecorator.CODEC.list().encode(ops, value.decorators));
-
-                map.put(ops.createString("base_height"), Codecs.INT.encode(ops, value.baseHeight));
-                map.put(ops.createString("height_rand_a"), Codecs.INT.encode(ops, value.heightRandA));
-                map.put(ops.createString("height_rand_b"), Codecs.INT.encode(ops, value.heightRandB));
-
-                map.put(ops.createString("foliage_radius"), Codecs.INT.encode(ops, value.foliageRadius));
-                map.put(ops.createString("foliage_radius_rand"), Codecs.INT.encode(ops, value.foliageRadiusRand));
-
-                map.put(ops.createString("dirt_targets"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.dirtTargets));
-
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("trunk_provider").forGetter(Config.class, Config::trunkProvider),
+            BlockStateProvider.CODEC.fieldOf("foliage_provider").forGetter(Config.class, Config::foliageProvider),
+            BlockStateProvider.CODEC.fieldOf("dirt_provider").forGetter(Config.class, Config::dirtProvider),
+            TrunkPlacer.CODEC.fieldOf("trunk_placer").forGetter(Config.class, Config::trunkPlacer),
+            FoliagePlacer.CODEC.fieldOf("foliage_placer").forGetter(Config.class, Config::foliagePlacer),
+            RootPlacer.CODEC.nullable().optionalFieldOf("root_placer", null).forGetter(Config.class, Config::rootPlacer),
+            TreeDecorator.CODEC.list().optionalFieldOf("decorators", Collections.emptyList()).forGetter(Config.class, Config::decorators),
+            Codecs.INT.fieldOf("base_height").forGetter(Config.class, Config::baseHeight),
+            Codecs.INT.fieldOf("height_rand_a").forGetter(Config.class, Config::heightRandA),
+            Codecs.INT.fieldOf("height_rand_b").forGetter(Config.class, Config::heightRandB),
+            Codecs.INT.fieldOf("foliage_radius").forGetter(Config.class, Config::foliageRadius),
+            Codecs.INT.fieldOf("foliage_radius_rand").forGetter(Config.class, Config::foliageRadiusRand),
+            ExtraCodecs.BLOCK_INFO.list().fieldOf("dirt_targets").forGetter(Config.class, Config::dirtTargets)
+        ).apply(instance, Config::new)).describe("TreeFeatureConfig");
     }
 }

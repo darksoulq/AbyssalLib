@@ -11,9 +11,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A world generation feature responsible for creating isolated liquid source blocks (springs).
@@ -57,7 +56,7 @@ public class SpringFeature extends Feature<SpringFeature.Config> {
 
         for (BlockFace face : FACES) {
             Location neighbor = origin.clone().add(face.getModX(), face.getModY(), face.getModZ());
-            
+
             if (WorldGenUtils.isValidBlock(context.level(), neighbor, config.rock())) {
                 rockCount++;
             } else if (context.level().getType(neighbor.getBlockX(), neighbor.getBlockY(), neighbor.getBlockZ()) == Material.AIR) {
@@ -100,51 +99,12 @@ public class SpringFeature extends Feature<SpringFeature.Config> {
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                
-                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
-                List<BlockInfo> rock = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("rock")));
-                boolean requiresBlockBelow = Codecs.BOOLEAN.decode(ops, map.get(ops.createString("requires_block_below")));
-                int holeCount = Codecs.INT.decode(ops, map.get(ops.createString("hole_count")));
-                int validNeighbors = Codecs.INT.decode(ops, map.get(ops.createString("valid_neighbors")));
-                
-                return new Config(stateProvider, rock, requiresBlockBelow, holeCount, validNeighbors);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                
-                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
-                map.put(ops.createString("rock"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.rock));
-                map.put(ops.createString("requires_block_below"), Codecs.BOOLEAN.encode(ops, value.requiresBlockBelow));
-                map.put(ops.createString("hole_count"), Codecs.INT.encode(ops, value.holeCount));
-                map.put(ops.createString("valid_neighbors"), Codecs.INT.encode(ops, value.validNeighbors));
-                
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Config.class, Config::stateProvider),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("rock", Collections.emptyList()).forGetter(Config.class, Config::rock),
+            Codecs.BOOLEAN.optionalFieldOf("requires_block_below", true).forGetter(Config.class, Config::requiresBlockBelow),
+            Codecs.INT.optionalFieldOf("hole_count", 1).forGetter(Config.class, Config::holeCount),
+            Codecs.INT.optionalFieldOf("valid_neighbors", 5).forGetter(Config.class, Config::validNeighbors)
+        ).apply(instance, Config::new)).describe("SpringConfig");
     }
 }

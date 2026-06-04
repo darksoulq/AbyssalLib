@@ -3,14 +3,12 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.foliage;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -22,40 +20,9 @@ public class DarkOakFoliagePlacer extends FoliagePlacer {
     /**
      * The designated codec instance responsible for serializing and deserializing the state variables of this placer.
      */
-    public static final Codec<DarkOakFoliagePlacer> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the internal configuration explicitly mapped from a serialized data container.
-         *
-         * @param ops   The operational mapping framework governing translations.
-         * @param input The unparsed initial data payload.
-         * @param <D>   The dynamic object bounds dictating parsing logic.
-         * @return The correctly instantiated placer logic implementation.
-         * @throws CodecException Resolves strictly upon encountering missing required mapping fields.
-         */
-        @Override
-        public <D> DarkOakFoliagePlacer decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int radius = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
-            return new DarkOakFoliagePlacer(radius);
-        }
-
-        /**
-         * Encodes the instantiated explicit memory states strictly into the designated map structure.
-         *
-         * @param ops   The operational mapping framework governing translations.
-         * @param value The active placer instance retaining memory states.
-         * @param <D>   The dynamic object bounds dictating parsing logic.
-         * @return The thoroughly formatted serialized representation map.
-         * @throws CodecException Resolves strictly upon internal translation conversion failures.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, DarkOakFoliagePlacer value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<DarkOakFoliagePlacer> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("radius").forGetter(DarkOakFoliagePlacer.class, p -> p.radius)
+    ).apply(instance, DarkOakFoliagePlacer::new)).describe("DarkOakFoliagePlacer");
 
     /**
      * The globally registered type definition representing the dark oak foliage placer.

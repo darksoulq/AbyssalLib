@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 
@@ -18,16 +15,34 @@ public class HorseEntityAdapter extends EntityAdapter<Horse> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Horse value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("horse_color"), Codecs.STRING.encode(ops, value.getColor().name()));
-        map.put(ops.createString("horse_style"), Codecs.STRING.encode(ops, value.getStyle().name()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Horse value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("horse_color", Codecs.STRING, value.getColor().name())
+            .write("horse_style", Codecs.STRING, value.getStyle().name());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Horse horse)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Horse horse)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.STRING.decode(ops, map.get(ops.createString("horse_color")))).onSuccess(s -> horse.setColor(Horse.Color.valueOf(s)));
-        Try.of(() -> Codecs.STRING.decode(ops, map.get(ops.createString("horse_style")))).onSuccess(s -> horse.setStyle(Horse.Style.valueOf(s)));
+        ctx.readOptional("horse_color", Codecs.STRING, opt -> opt.ifPresent(colorStr -> {
+                try {
+                    horse.setColor(Horse.Color.valueOf(colorStr));
+                } catch (Exception ignored) {
+                }
+            }))
+            .readOptional("horse_style", Codecs.STRING, opt -> opt.ifPresent(styleStr -> {
+                try {
+                    horse.setStyle(Horse.Style.valueOf(styleStr));
+                } catch (Exception ignored) {
+                }
+            }));
+
+        return ctx.result();
     }
 }

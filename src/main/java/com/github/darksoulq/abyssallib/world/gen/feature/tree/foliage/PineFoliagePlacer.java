@@ -3,14 +3,12 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.foliage;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -25,40 +23,9 @@ public class PineFoliagePlacer extends FoliagePlacer {
     /**
      * The codec used for serializing and deserializing the pine foliage placer.
      */
-    public static final Codec<PineFoliagePlacer> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the placer from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the pine foliage placer.
-         * @throws CodecException If the height field is missing.
-         */
-        @Override
-        public <D> PineFoliagePlacer decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int height = Codecs.INT.decode(ops, map.get(ops.createString("height")));
-            return new PineFoliagePlacer(height);
-        }
-
-        /**
-         * Encodes the placer into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The placer instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, PineFoliagePlacer value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("height"), Codecs.INT.encode(ops, value.height));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<PineFoliagePlacer> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("height").forGetter(PineFoliagePlacer.class, p -> p.height)
+    ).apply(instance, PineFoliagePlacer::new)).describe("PineFoliagePlacer");
 
     /**
      * The registered type definition for the pine foliage placer.
@@ -89,7 +56,7 @@ public class PineFoliagePlacer extends FoliagePlacer {
     @Override
     public void placeFoliage(WorldGenAccess level, Random random, Location attachmentPoint, BlockStateProvider foliageProvider, int radius) {
         int currentRadius = 0;
-        
+
         for (int yOffset = 0; yOffset >= -height; --yOffset) {
             for (int dx = -currentRadius; dx <= currentRadius; dx++) {
                 for (int dz = -currentRadius; dz <= currentRadius; dz++) {
@@ -99,7 +66,7 @@ public class PineFoliagePlacer extends FoliagePlacer {
 
                     Location target = attachmentPoint.clone().add(dx, yOffset, dz);
                     if (target.getBlockY() >= level.getWorld().getMaxHeight()) continue;
-                    
+
                     if (level.getType(target.getBlockX(), target.getBlockY(), target.getBlockZ()).isAir()) {
                         BlockInfo stateToPlace = foliageProvider.getState(random, target);
                         if (stateToPlace != null) {

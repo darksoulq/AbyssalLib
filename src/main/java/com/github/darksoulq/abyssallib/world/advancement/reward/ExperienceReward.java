@@ -2,33 +2,33 @@ package com.github.darksoulq.abyssallib.world.advancement.reward;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-
+/**
+ * An advancement reward that grants a fixed amount of experience points to the player.
+ */
 public class ExperienceReward implements AdvancementReward {
 
-    public static final Codec<ExperienceReward> CODEC = new Codec<>() {
-        @Override
-        public <D> ExperienceReward decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow();
-            int amount = Codecs.INT.decode(ops, map.get(ops.createString("amount")));
-            return new ExperienceReward(amount);
-        }
+    /**
+     * The codec used for serializing and deserializing the experience reward.
+     */
+    public static final Codec<ExperienceReward> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("amount").forGetter(ExperienceReward.class, p -> p.amount)
+    ).apply(instance, ExperienceReward::new)).describe("ExperienceReward");
 
-        @Override
-        public <D> D encode(DynamicOps<D> ops, ExperienceReward value) throws CodecException {
-            return ops.createMap(Map.of(
-                ops.createString("amount"), Codecs.INT.encode(ops, value.amount)
-            ));
-        }
-    };
-
+    /**
+     * The registered type definition for the experience reward.
+     */
     public static final RewardType<ExperienceReward> TYPE = () -> CODEC;
 
     private final int amount;
 
+    /**
+     * Constructs a new ExperienceReward.
+     *
+     * @param amount The integer amount of experience points to grant.
+     */
     public ExperienceReward(int amount) {
         this.amount = amount;
     }
@@ -38,6 +38,11 @@ public class ExperienceReward implements AdvancementReward {
         return TYPE;
     }
 
+    /**
+     * Adds the experience amount directly to the player.
+     *
+     * @param player The player receiving the reward.
+     */
     @Override
     public void grant(Player player) {
         player.giveExp(amount);

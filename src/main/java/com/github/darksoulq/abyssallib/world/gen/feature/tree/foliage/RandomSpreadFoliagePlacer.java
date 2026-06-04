@@ -3,14 +3,12 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.foliage;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -26,42 +24,10 @@ public class RandomSpreadFoliagePlacer extends FoliagePlacer {
     /**
      * The codec used for serializing and deserializing the random spread foliage placer.
      */
-    public static final Codec<RandomSpreadFoliagePlacer> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the placer from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the random spread foliage placer.
-         * @throws CodecException If the required fields are missing.
-         */
-        @Override
-        public <D> RandomSpreadFoliagePlacer decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int height = Codecs.INT.decode(ops, map.get(ops.createString("height")));
-            int attempts = Codecs.INT.decode(ops, map.get(ops.createString("attempts")));
-            return new RandomSpreadFoliagePlacer(height, attempts);
-        }
-
-        /**
-         * Encodes the placer into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The placer instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, RandomSpreadFoliagePlacer value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("height"), Codecs.INT.encode(ops, value.height));
-            map.put(ops.createString("attempts"), Codecs.INT.encode(ops, value.attempts));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<RandomSpreadFoliagePlacer> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("height").forGetter(RandomSpreadFoliagePlacer.class, p -> p.height),
+        Codecs.INT.fieldOf("attempts").forGetter(RandomSpreadFoliagePlacer.class, p -> p.attempts)
+    ).apply(instance, RandomSpreadFoliagePlacer::new)).describe("RandomSpreadFoliagePlacer");
 
     /**
      * The registered type definition for the random spread foliage placer.
@@ -103,7 +69,7 @@ public class RandomSpreadFoliagePlacer extends FoliagePlacer {
 
             Location target = attachmentPoint.clone().add(dx, dy, dz);
             if (target.getBlockY() >= level.getWorld().getMaxHeight()) continue;
-            
+
             if (level.getType(target.getBlockX(), target.getBlockY(), target.getBlockZ()).isAir()) {
                 BlockInfo stateToPlace = foliageProvider.getState(random, target);
                 if (stateToPlace != null) {

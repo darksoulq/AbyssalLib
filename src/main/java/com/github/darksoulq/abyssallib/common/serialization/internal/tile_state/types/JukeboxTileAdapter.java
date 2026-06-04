@@ -1,10 +1,9 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.block.Jukebox;
 import org.bukkit.block.TileState;
 
@@ -18,16 +17,24 @@ public class JukeboxTileAdapter extends TileAdapter<Jukebox> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Jukebox value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Jukebox value) {
         if (!value.getRecord().isEmpty()) {
             return Codecs.ITEM_STACK.encode(ops, value.getRecord());
         }
-        return ops.createMap(Map.of());
+        return DataResult.success(ops.createMap(Map.of()));
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Jukebox jukebox)) return;
-        Try.of(() -> Codecs.ITEM_STACK.decode(ops, input)).onSuccess(jukebox::setRecord);
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Jukebox jukebox)) return DataResult.success(null);
+
+        return Codecs.ITEM_STACK.decode(ops, input).flatMap(item -> {
+            try {
+                jukebox.setRecord(item);
+                return DataResult.success(null);
+            } catch (Exception e) {
+                return DataResult.error("Failed to set record: " + e.getMessage());
+            }
+        });
     }
 }

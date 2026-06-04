@@ -2,40 +2,40 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.data.attribute.Attribute;
 import com.github.darksoulq.abyssallib.world.data.attribute.EntityAttributes;
 import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-
+/**
+ * An advancement criterion evaluating custom RPG attributes of a player.
+ */
 public class CustomAttributeCriterion implements AdvancementCriterion {
 
-    public static final Codec<CustomAttributeCriterion> CODEC = new Codec<>() {
-        @Override
-        public <D> CustomAttributeCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow();
-            Key attrKey = Codecs.KEY.decode(ops, map.get(ops.createString("attribute")));
-            double threshold = Codecs.DOUBLE.decode(ops, map.get(ops.createString("threshold")));
-            return new CustomAttributeCriterion(attrKey, threshold);
-        }
+    /**
+     * The codec used for serializing and deserializing the custom attribute criterion.
+     */
+    public static final Codec<CustomAttributeCriterion> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.KEY.fieldOf("attribute").forGetter(CustomAttributeCriterion.class, p -> p.attrKey),
+        Codecs.DOUBLE.fieldOf("threshold").forGetter(CustomAttributeCriterion.class, p -> p.threshold)
+    ).apply(instance, CustomAttributeCriterion::new)).describe("CustomAttributeCriterion");
 
-        @Override
-        public <D> D encode(DynamicOps<D> ops, CustomAttributeCriterion value) throws CodecException {
-            return ops.createMap(Map.of(
-                ops.createString("attribute"), Codecs.KEY.encode(ops, value.attrKey),
-                ops.createString("threshold"), Codecs.DOUBLE.encode(ops, value.threshold)
-            ));
-        }
-    };
-
+    /**
+     * The registered type definition for the custom attribute criterion.
+     */
     public static final CriterionType<CustomAttributeCriterion> TYPE = () -> CODEC;
 
     private final Key attrKey;
     private final double threshold;
 
+    /**
+     * Constructs a new CustomAttributeCriterion.
+     *
+     * @param attrKey   The key of the custom attribute.
+     * @param threshold The required value.
+     */
     public CustomAttributeCriterion(Key attrKey, double threshold) {
         this.attrKey = attrKey;
         this.threshold = threshold;
@@ -46,6 +46,12 @@ public class CustomAttributeCriterion implements AdvancementCriterion {
         return TYPE;
     }
 
+    /**
+     * Checks if the player's custom attribute value meets or exceeds the threshold.
+     *
+     * @param player The player to evaluate.
+     * @return True if the condition is met.
+     */
     @Override
     public boolean isMet(Player player) {
         Attribute attribute = Registries.ATTRIBUTES.get(attrKey.asString());

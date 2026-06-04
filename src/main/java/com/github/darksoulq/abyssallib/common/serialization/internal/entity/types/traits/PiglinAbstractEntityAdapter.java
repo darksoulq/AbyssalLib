@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.PiglinAbstract;
 
@@ -18,16 +15,24 @@ public class PiglinAbstractEntityAdapter extends EntityAdapter<PiglinAbstract> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, PiglinAbstract value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("immune_to_zombification"), Codecs.BOOLEAN.encode(ops, value.isImmuneToZombification()));
-        map.put(ops.createString("conversion_time"), Codecs.INT.encode(ops, value.getConversionTime()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, PiglinAbstract value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("immune_to_zombification", Codecs.BOOLEAN, value.isImmuneToZombification())
+            .write("conversion_time", Codecs.INT, value.getConversionTime());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof PiglinAbstract piglin)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof PiglinAbstract piglin)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("immune_to_zombification")))).onSuccess(piglin::setImmuneToZombification);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("conversion_time")))).onSuccess(piglin::setConversionTime);
+        ctx.readOptional("immune_to_zombification", Codecs.BOOLEAN, opt -> opt.ifPresent(piglin::setImmuneToZombification))
+            .readOptional("conversion_time", Codecs.INT, opt -> opt.ifPresent(piglin::setConversionTime));
+
+        return ctx.result();
     }
 }

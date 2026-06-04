@@ -1,6 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
@@ -9,13 +13,12 @@ import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
- * A world generation feature that creates varied clusters of vertical pillars, 
+ * A world generation feature that creates varied clusters of vertical pillars,
  * simulating stalactites and stalagmites.
  * <p>
  * This feature randomly places multiple pillars within a defined horizontal radius.
@@ -67,7 +70,7 @@ public class DripstoneClusterFeature extends Feature<DripstoneClusterFeature.Con
                 for (int y = 0; y < localHeight; y++) {
                     Location target = currentOrigin.clone().add(0, config.upward() ? y : -y, 0);
 
-                    if (target.getBlockY() < context.level().getWorld().getMinHeight() || 
+                    if (target.getBlockY() < context.level().getWorld().getMinHeight() ||
                         target.getBlockY() >= context.level().getWorld().getMaxHeight()) {
                         break;
                     }
@@ -111,62 +114,17 @@ public class DripstoneClusterFeature extends Feature<DripstoneClusterFeature.Con
      * @param maxHeight     The maximum possible block length for the central columns.
      * @param upward        True to generate the cluster growing upwards, false for downwards.
      */
-    public record Config(
-            BlockStateProvider stateProvider,
-            List<BlockInfo> targets,
-            int radius,
-            int maxHeight,
-            boolean upward
-    ) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, int radius, int maxHeight, boolean upward) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                
-                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
-                List<BlockInfo> targets = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("targets")));
-                int radius = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
-                int maxHeight = Codecs.INT.decode(ops, map.get(ops.createString("max_height")));
-                boolean upward = Codecs.BOOLEAN.decode(ops, map.get(ops.createString("upward")));
-                
-                return new Config(stateProvider, targets, radius, maxHeight, upward);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                
-                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
-                map.put(ops.createString("targets"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.targets));
-                map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
-                map.put(ops.createString("max_height"), Codecs.INT.encode(ops, value.maxHeight));
-                map.put(ops.createString("upward"), Codecs.BOOLEAN.encode(ops, value.upward));
-                
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Config.class, Config::stateProvider),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("targets", Collections.emptyList()).forGetter(Config.class, Config::targets),
+            Codecs.INT.optionalFieldOf("radius", 4).forGetter(Config.class, Config::radius),
+            Codecs.INT.optionalFieldOf("max_height", 8).forGetter(Config.class, Config::maxHeight),
+            Codecs.BOOLEAN.optionalFieldOf("upward", false).forGetter(Config.class, Config::upward)
+        ).apply(instance, Config::new)).describe("DripstoneClusterConfig");
     }
 }

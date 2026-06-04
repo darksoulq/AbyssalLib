@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.trunk;
 
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
@@ -10,7 +9,6 @@ import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -28,17 +26,7 @@ public class GiantTrunkPlacer extends TrunkPlacer {
      * The codec used for serializing and deserializing the giant trunk placer.
      * This placer has no configurable variables, so it encodes to an empty map.
      */
-    public static final Codec<GiantTrunkPlacer> CODEC = new Codec<>() {
-        @Override
-        public <D> GiantTrunkPlacer decode(DynamicOps<D> ops, D input) {
-            return new GiantTrunkPlacer();
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, GiantTrunkPlacer value) {
-            return ops.createMap(new HashMap<>());
-        }
-    };
+    public static final Codec<GiantTrunkPlacer> CODEC = Codec.unit(GiantTrunkPlacer::new).describe("GiantTrunkPlacer");
 
     /**
      * The registered type definition for the giant trunk placer.
@@ -69,7 +57,7 @@ public class GiantTrunkPlacer extends TrunkPlacer {
                 for (int y = 0; y < height; y++) {
                     Location target = origin.clone().add(dx, y, dz);
                     if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
-                    
+
                     BlockInfo stateToPlace = trunkProvider.getState(random, target);
                     if (stateToPlace != null) {
                         WorldGenUtils.placeBlock(level, target, stateToPlace);

@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -22,21 +23,21 @@ import java.util.List;
 
 public class ProvidesBannerPatterns extends DataComponent<List<Key>> implements Vanilla {
 
-    public static final Codec<ProvidesBannerPatterns> CODEC = Codec.oneOf(
-        Codecs.KEY.xmap(
-            ProvidesBannerPatterns::new,
+    public static final Codec<ProvidesBannerPatterns> CODEC = Codec.oneOf(ProvidesBannerPatterns.class,
+        Codecs.KEY.flatXmap(
+            key -> DataResult.success(new ProvidesBannerPatterns(key)),
             component -> {
                 if (component.value.size() != 1) {
-                    throw new Codec.CodecException("Expected exactly 1 key.");
+                    return DataResult.error("Expected exactly 1 key.");
                 }
-                return component.value.getFirst();
+                return DataResult.success(component.value.getFirst());
             }
         ),
         Codecs.KEY.list().xmap(
             ProvidesBannerPatterns::new,
             ProvidesBannerPatterns::getValue
         )
-    );
+    ).describe("ProvidesBannerPatterns");
 
     public static final DataComponentType<ProvidesBannerPatterns> TYPE = DataComponentType.<ProvidesBannerPatterns, RegistryKeySet<PatternType>>valued(
         CODEC,

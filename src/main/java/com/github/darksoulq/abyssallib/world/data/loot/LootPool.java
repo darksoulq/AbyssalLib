@@ -2,13 +2,12 @@ package com.github.darksoulq.abyssallib.world.data.loot;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -63,28 +62,10 @@ public record LootPool(int rolls, int bonusRolls, List<LootEntry> entries, List<
     }
 
     /** Codec for serializing and deserializing {@link LootPool} instances. */
-    public static final Codec<LootPool> CODEC = new Codec<>() {
-        @Override
-        public <D> LootPool decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int rolls = Codecs.INT.decode(ops, map.get(ops.createString("rolls")));
-            int bonus = Codecs.INT.orElse(0).decode(ops, map.get(ops.createString("bonus_rolls")));
-            List<LootEntry> entries = LootEntry.CODEC.list().decode(ops, map.get(ops.createString("entries")));
-            List<LootCondition> conditions = new ArrayList<>();
-            if (map.containsKey(ops.createString("conditions"))) {
-                conditions = LootCondition.CODEC.list().decode(ops, map.get(ops.createString("conditions")));
-            }
-            return new LootPool(rolls, bonus, entries, conditions);
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, LootPool value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("rolls"), Codecs.INT.encode(ops, value.rolls));
-            map.put(ops.createString("bonus_rolls"), Codecs.INT.encode(ops, value.bonusRolls));
-            map.put(ops.createString("entries"), LootEntry.CODEC.list().encode(ops, value.entries));
-            map.put(ops.createString("conditions"), LootCondition.CODEC.list().encode(ops, value.conditions));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<LootPool> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("rolls").forGetter(LootPool.class, LootPool::rolls),
+        Codecs.INT.optionalFieldOf("bonus_rolls", 0).forGetter(LootPool.class, LootPool::bonusRolls),
+        LootEntry.CODEC.list().fieldOf("entries").forGetter(LootPool.class, LootPool::entries),
+        LootCondition.CODEC.list().optionalFieldOf("conditions", Collections.emptyList()).forGetter(LootPool.class, LootPool::conditions)
+    ).apply(instance, LootPool::new)).describe("LootPool");
 }

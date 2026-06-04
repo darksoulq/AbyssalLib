@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
@@ -12,9 +12,6 @@ import com.github.darksoulq.abyssallib.world.gen.internal.StructureLocator;
 import com.github.darksoulq.abyssallib.world.structure.Structure;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A world generation feature that delegates generation logic to a pre-defined,
@@ -90,69 +87,12 @@ public class StructureFeature extends Feature<StructureFeature.Config> {
         /**
          * The codec for serializing and deserializing the structure configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If the required structure_id field is missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-
-                String structureId = Codecs.STRING.decode(ops, map.get(ops.createString("structure_id")));
-
-                boolean randomRotation = false;
-                D randRotNode = map.get(ops.createString("random_rotation"));
-                if (randRotNode != null) {
-                    randomRotation = Codecs.BOOLEAN.decode(ops, randRotNode);
-                }
-
-                StructureRotation rotation = StructureRotation.NONE;
-                D rotNode = map.get(ops.createString("rotation"));
-                if (rotNode != null) {
-                    rotation = Codec.enumCodec(StructureRotation.class).decode(ops, rotNode);
-                }
-
-                boolean randomMirror = false;
-                D randMirrorNode = map.get(ops.createString("random_mirror"));
-                if (randMirrorNode != null) {
-                    randomMirror = Codecs.BOOLEAN.decode(ops, randMirrorNode);
-                }
-
-                Mirror mirror = Mirror.NONE;
-                D mirrorNode = map.get(ops.createString("mirror"));
-                if (mirrorNode != null) {
-                    mirror = Codec.enumCodec(Mirror.class).decode(ops, mirrorNode);
-                }
-
-                return new Config(structureId, randomRotation, rotation, randomMirror, mirror);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("structure_id"), Codecs.STRING.encode(ops, value.structureId));
-                map.put(ops.createString("random_rotation"), Codecs.BOOLEAN.encode(ops, value.randomRotation));
-                map.put(ops.createString("rotation"), Codec.enumCodec(StructureRotation.class).encode(ops, value.rotation));
-                map.put(ops.createString("random_mirror"), Codecs.BOOLEAN.encode(ops, value.randomMirror));
-                map.put(ops.createString("mirror"), Codec.enumCodec(Mirror.class).encode(ops, value.mirror));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            Codecs.STRING.fieldOf("structure_id").forGetter(Config.class, Config::structureId),
+            Codecs.BOOLEAN.optionalFieldOf("random_rotation", false).forGetter(Config.class, Config::randomRotation),
+            Codec.enumCodec(StructureRotation.class).optionalFieldOf("rotation", StructureRotation.NONE).forGetter(Config.class, Config::rotation),
+            Codecs.BOOLEAN.optionalFieldOf("random_mirror", false).forGetter(Config.class, Config::randomMirror),
+            Codec.enumCodec(Mirror.class).optionalFieldOf("mirror", Mirror.NONE).forGetter(Config.class, Config::mirror)
+        ).apply(instance, Config::new)).describe("StructureFeatureConfig");
     }
 }

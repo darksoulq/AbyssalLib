@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 
@@ -18,22 +15,30 @@ public class CreeperEntityAdapter extends EntityAdapter<Creeper> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Creeper value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("powered"), Codecs.BOOLEAN.encode(ops, value.isPowered()));
-        map.put(ops.createString("ignited"), Codecs.BOOLEAN.encode(ops, value.isIgnited()));
-        map.put(ops.createString("max_fuse_ticks"), Codecs.INT.encode(ops, value.getMaxFuseTicks()));
-        map.put(ops.createString("fuse_ticks"), Codecs.INT.encode(ops, value.getFuseTicks()));
-        map.put(ops.createString("explosion_radius"), Codecs.INT.encode(ops, value.getExplosionRadius()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Creeper value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("powered", Codecs.BOOLEAN, value.isPowered())
+            .write("ignited", Codecs.BOOLEAN, value.isIgnited())
+            .write("max_fuse_ticks", Codecs.INT, value.getMaxFuseTicks())
+            .write("fuse_ticks", Codecs.INT, value.getFuseTicks())
+            .write("explosion_radius", Codecs.INT, value.getExplosionRadius());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Creeper creeper)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Creeper creeper)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("powered")))).onSuccess(creeper::setPowered);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("ignited")))).onSuccess(creeper::setIgnited);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("max_fuse_ticks")))).onSuccess(creeper::setMaxFuseTicks);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("fuse_ticks")))).onSuccess(creeper::setFuseTicks);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("explosion_radius")))).onSuccess(creeper::setExplosionRadius);
+        ctx.readOptional("powered", Codecs.BOOLEAN, opt -> opt.ifPresent(creeper::setPowered))
+            .readOptional("ignited", Codecs.BOOLEAN, opt -> opt.ifPresent(creeper::setIgnited))
+            .readOptional("max_fuse_ticks", Codecs.INT, opt -> opt.ifPresent(creeper::setMaxFuseTicks))
+            .readOptional("fuse_ticks", Codecs.INT, opt -> opt.ifPresent(creeper::setFuseTicks))
+            .readOptional("explosion_radius", Codecs.INT, opt -> opt.ifPresent(creeper::setExplosionRadius));
+
+        return ctx.result();
     }
 }

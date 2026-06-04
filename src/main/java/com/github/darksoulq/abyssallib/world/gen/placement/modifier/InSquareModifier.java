@@ -1,7 +1,6 @@
 package com.github.darksoulq.abyssallib.world.gen.placement.modifier;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementContext;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
@@ -18,17 +17,7 @@ public class InSquareModifier extends PlacementModifier {
     /**
      * The codec used for serializing and deserializing the in-square modifier.
      */
-    public static final Codec<InSquareModifier> CODEC = new Codec<>() {
-        @Override
-        public <D> InSquareModifier decode(DynamicOps<D> ops, D input) {
-            return new InSquareModifier();
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, InSquareModifier value) {
-            return ops.createMap(new java.util.HashMap<>());
-        }
-    };
+    public static final Codec<InSquareModifier> CODEC = Codec.unit(InSquareModifier::new).describe("InSquareModifier");
 
     /**
      * The registered type definition for the in-square placement modifier.

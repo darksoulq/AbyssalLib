@@ -6,23 +6,29 @@ import net.minecraft.nbt.*;
 import java.util.*;
 
 /**
- * An implementation of {@link DynamicOps} for Minecraft's NBT {@link Tag} structure.
+ * A {@link DynamicOps} implementation for Minecraft's NBT {@link Tag} system.
  * <p>
- * This class facilitates the direct serialization of objects into native NBT tags
- * (CompoundTag, ListTag, IntTag, etc.) without intermediate JSON conversion.
+ * This implementation enables direct serialization and deserialization of values
+ * using native NBT structures (CompoundTag, ListTag, numeric tags, etc.) without
+ * intermediate conversion layers.
  */
 public class NbtOps extends DynamicOps<Tag> {
 
-    /** Singleton instance of NbtOps. */
+    /**
+     * Singleton instance of {@code NbtOps}.
+     */
     public static final NbtOps INSTANCE = new NbtOps();
 
+    /**
+     * Creates a new {@code NbtOps} instance.
+     */
     private NbtOps() {}
 
     /**
-     * Creates a {@link StringTag} from a string value.
+     * Creates a string tag.
      *
-     * @param value The string to wrap.
-     * @return The resulting StringTag.
+     * @param value string value
+     * @return StringTag wrapping the value
      */
     @Override
     public Tag createString(String value) {
@@ -30,10 +36,32 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates an {@link IntTag} from an integer value.
+     * Creates a byte tag.
      *
-     * @param value The integer to wrap.
-     * @return The resulting IntTag.
+     * @param value byte value
+     * @return ByteTag wrapping the value
+     */
+    @Override
+    public Tag createByte(byte value) {
+        return ByteTag.valueOf(value);
+    }
+
+    /**
+     * Creates a short tag.
+     *
+     * @param value short value
+     * @return ShortTag wrapping the value
+     */
+    @Override
+    public Tag createShort(short value) {
+        return ShortTag.valueOf(value);
+    }
+
+    /**
+     * Creates an int tag.
+     *
+     * @param value int value
+     * @return IntTag wrapping the value
      */
     @Override
     public Tag createInt(int value) {
@@ -41,10 +69,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates a {@link LongTag} from a long value.
+     * Creates a long tag.
      *
-     * @param value The long to wrap.
-     * @return The resulting LongTag.
+     * @param value long value
+     * @return LongTag wrapping the value
      */
     @Override
     public Tag createLong(long value) {
@@ -52,10 +80,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates a {@link FloatTag} from a float value.
+     * Creates a float tag.
      *
-     * @param value The float to wrap.
-     * @return The resulting FloatTag.
+     * @param value float value
+     * @return FloatTag wrapping the value
      */
     @Override
     public Tag createFloat(float value) {
@@ -63,10 +91,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates a {@link DoubleTag} from a double value.
+     * Creates a double tag.
      *
-     * @param value The double to wrap.
-     * @return The resulting DoubleTag.
+     * @param value double value
+     * @return DoubleTag wrapping the value
      */
     @Override
     public Tag createDouble(double value) {
@@ -74,10 +102,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates a {@link ByteTag} representing a boolean value.
+     * Creates a boolean tag (stored as a byte).
      *
-     * @param value The boolean to wrap (1 for true, 0 for false).
-     * @return The resulting ByteTag.
+     * @param value boolean value
+     * @return ByteTag representing true/false
      */
     @Override
     public Tag createBoolean(boolean value) {
@@ -85,10 +113,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates a {@link ListTag} from a list of tags.
+     * Creates a list tag.
      *
-     * @param elements The tags to include in the list.
-     * @return A ListTag containing the elements.
+     * @param elements list of tags
+     * @return ListTag containing elements
      */
     @Override
     public Tag createList(List<Tag> elements) {
@@ -98,12 +126,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Creates a {@link CompoundTag} from a map of tags.
-     * <p>
-     * Keys in the map must be convertible to strings.
+     * Creates a compound tag from key-value pairs.
      *
-     * @param map The map of key-value tags.
-     * @return A CompoundTag containing the map entries.
+     * @param map map of tags
+     * @return CompoundTag representing the map
      */
     @Override
     public Tag createMap(Map<Tag, Tag> map) {
@@ -115,10 +141,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a string value from a tag.
+     * Extracts a string value from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the string if present.
+     * @param input input tag
+     * @return optional string value
      */
     @Override
     public Optional<String> getStringValue(Tag input) {
@@ -126,10 +152,21 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves an integer value from a tag.
+     * Extracts a numeric value from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the integer if present.
+     * @param input input tag
+     * @return optional number value
+     */
+    @Override
+    public Optional<Number> getNumberValue(Tag input) {
+        return input instanceof NumericTag n ? n.asNumber() : Optional.empty();
+    }
+
+    /**
+     * Extracts an integer value from a tag.
+     *
+     * @param input input tag
+     * @return optional integer value
      */
     @Override
     public Optional<Integer> getIntValue(Tag input) {
@@ -137,10 +174,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a long value from a tag.
+     * Extracts a long value from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the long if present.
+     * @param input input tag
+     * @return optional long value
      */
     @Override
     public Optional<Long> getLongValue(Tag input) {
@@ -148,10 +185,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a float value from a tag.
+     * Extracts a float value from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the float if present.
+     * @param input input tag
+     * @return optional float value
      */
     @Override
     public Optional<Float> getFloatValue(Tag input) {
@@ -159,10 +196,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a double value from a tag.
+     * Extracts a double value from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the double if present.
+     * @param input input tag
+     * @return optional double value
      */
     @Override
     public Optional<Double> getDoubleValue(Tag input) {
@@ -170,12 +207,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a boolean value from a tag.
-     * <p>
-     * Typically parses a ByteTag where 0 is false and non-zero is true.
+     * Extracts a boolean value from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the boolean if present.
+     * @param input input tag
+     * @return optional boolean value
      */
     @Override
     public Optional<Boolean> getBooleanValue(Tag input) {
@@ -183,10 +218,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a list of tags from a tag.
+     * Extracts a list from a tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the list if the tag is a list type.
+     * @param input input tag
+     * @return optional list of tags
      */
     @Override
     public Optional<List<Tag>> getList(Tag input) {
@@ -194,10 +229,10 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Retrieves a map of tags from a tag.
+     * Extracts a map from a compound tag.
      *
-     * @param input The tag to inspect.
-     * @return An Optional containing the map if the tag is a compound type.
+     * @param input input tag
+     * @return optional map of tags
      */
     @Override
     public Optional<Map<Tag, Tag>> getMap(Tag input) {
@@ -211,9 +246,44 @@ public class NbtOps extends DynamicOps<Tag> {
     }
 
     /**
-     * Returns an empty tag representing no value (EndTag).
+     * Returns keys from a compound tag.
      *
-     * @return The singleton EndTag instance.
+     * @param input input tag
+     * @return iterable of keys
+     */
+    @Override
+    public Optional<Iterable<String>> getKeys(Tag input) {
+        return input instanceof CompoundTag c ? Optional.of(c.keySet()) : Optional.empty();
+    }
+
+    /**
+     * Returns the size of a list or compound tag.
+     *
+     * @param input input tag
+     * @return optional size
+     */
+    @Override
+    public OptionalInt size(Tag input) {
+        if (input instanceof CompoundTag c) return OptionalInt.of(c.size());
+        if (input instanceof CollectionTag c) return OptionalInt.of(c.size());
+        return OptionalInt.empty();
+    }
+
+    /**
+     * Creates a deep copy of a tag.
+     *
+     * @param input input tag
+     * @return copied tag
+     */
+    @Override
+    public Tag copy(Tag input) {
+        return input.copy();
+    }
+
+    /**
+     * Returns the empty NBT value.
+     *
+     * @return EndTag instance
      */
     @Override
     public Tag empty() {

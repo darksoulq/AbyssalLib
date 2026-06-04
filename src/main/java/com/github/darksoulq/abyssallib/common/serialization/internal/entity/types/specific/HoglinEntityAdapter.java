@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Hoglin;
 
@@ -18,25 +15,29 @@ public class HoglinEntityAdapter extends EntityAdapter<Hoglin> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Hoglin value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("immune_to_zombification"), Codecs.BOOLEAN.encode(ops, value.isImmuneToZombification()));
-        map.put(ops.createString("is_able_to_be_hunted"), Codecs.BOOLEAN.encode(ops, value.isAbleToBeHunted()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Hoglin value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("immune_to_zombification", Codecs.BOOLEAN, value.isImmuneToZombification())
+            .write("is_able_to_be_hunted", Codecs.BOOLEAN, value.isAbleToBeHunted());
 
         if (value.isConverting()) {
-            map.put(ops.createString("conversion_time"), Codecs.INT.encode(ops, value.getConversionTime()));
+            ctx.write("conversion_time", Codecs.INT, value.getConversionTime());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Hoglin hoglin)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Hoglin hoglin)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("immune_to_zombification")))).onSuccess(hoglin::setImmuneToZombification);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_able_to_be_hunted")))).onSuccess(hoglin::setIsAbleToBeHunted);
+        ctx.readOptional("immune_to_zombification", Codecs.BOOLEAN, opt -> opt.ifPresent(hoglin::setImmuneToZombification))
+            .readOptional("is_able_to_be_hunted", Codecs.BOOLEAN, opt -> opt.ifPresent(hoglin::setIsAbleToBeHunted))
+            .readOptional("conversion_time", Codecs.INT, opt -> opt.ifPresent(hoglin::setConversionTime));
 
-        D conversionData = map.get(ops.createString("conversion_time"));
-        if (conversionData != null) {
-            Try.of(() -> Codecs.INT.decode(ops, conversionData)).onSuccess(hoglin::setConversionTime);
-        }
+        return ctx.result();
     }
 }

@@ -6,7 +6,7 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import java.util.List;
 
 public class PluginConfig {
-    public Config cfg = new Config("abyssallib", "config");
+    public Config cfg = new Config("abyssallib", "config").schema(1).apply();
     public Config.Value<Boolean> metrics;
     public ResourcePack rp;
     public SpawnLimits spawnLimits;

@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.placeholder;
 
 import com.github.darksoulq.abyssallib.common.reflection.Result;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.Bukkit;
@@ -29,11 +30,11 @@ public class PlaceholderArgument {
     }
 
     public <V> Result<V> as(Codec<V> codec, DynamicOps<String> ops) {
-        try {
-            return Result.success(codec.decode(ops, asString()));
-        } catch (Codec.CodecException e) {
-            return Result.failure(e);
+        DataResult<V> res = codec.decode(ops, asString());
+        if (res.isError()) {
+            return Result.failure(new RuntimeException(res.error().get()));
         }
+        return Result.success(res.getOrThrow());
     }
 
     public Result<Integer> asInt() {
@@ -45,7 +46,7 @@ public class PlaceholderArgument {
                 PlaceholderResult<?> res = p.resolve(context);
                 if (!res.isEmpty() && !res.isError()) {
                     if (res.getValue() instanceof Number n) return Result.success(n.intValue());
-                    try { return Result.success(Integer.parseInt(String.valueOf(res.getValue()))); } 
+                    try { return Result.success(Integer.parseInt(String.valueOf(res.getValue()))); }
                     catch (NumberFormatException ignored) {}
                 }
             }
@@ -62,7 +63,7 @@ public class PlaceholderArgument {
                 PlaceholderResult<?> res = p.resolve(context);
                 if (!res.isEmpty() && !res.isError()) {
                     if (res.getValue() instanceof Number n) return Result.success(n.doubleValue());
-                    try { return Result.success(Double.parseDouble(String.valueOf(res.getValue()))); } 
+                    try { return Result.success(Double.parseDouble(String.valueOf(res.getValue()))); }
                     catch (NumberFormatException ignored) {}
                 }
             }
@@ -74,7 +75,7 @@ public class PlaceholderArgument {
         if (raw.equalsIgnoreCase("true") || raw.equalsIgnoreCase("false")) {
             return Result.success(Boolean.parseBoolean(raw));
         }
-        
+
         Placeholder<?> p = Registries.PLACEHOLDERS.get(raw);
         if (p != null) {
             PlaceholderResult<?> res = p.resolve(context);

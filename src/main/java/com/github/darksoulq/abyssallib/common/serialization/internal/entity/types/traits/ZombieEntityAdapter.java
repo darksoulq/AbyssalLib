@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Zombie;
 
@@ -18,23 +15,29 @@ public class ZombieEntityAdapter extends EntityAdapter<Zombie> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Zombie value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("can_break_doors"), Codecs.BOOLEAN.encode(ops, value.canBreakDoors()));
-        map.put(ops.createString("should_burn_in_day"), Codecs.BOOLEAN.encode(ops, value.shouldBurnInDay()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Zombie value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("can_break_doors", Codecs.BOOLEAN, value.canBreakDoors())
+            .write("should_burn_in_day", Codecs.BOOLEAN, value.shouldBurnInDay());
+
         if (value.isConverting()) {
-            map.put(ops.createString("conversion_time"), Codecs.INT.encode(ops, value.getConversionTime()));
+            ctx.write("conversion_time", Codecs.INT, value.getConversionTime());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Zombie zombie)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Zombie zombie)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_break_doors")))).onSuccess(zombie::setCanBreakDoors);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("should_burn_in_day")))).onSuccess(zombie::setShouldBurnInDay);
-        D conversionData = map.get(ops.createString("conversion_time"));
-        if (conversionData != null) {
-            Try.of(() -> Codecs.INT.decode(ops, conversionData)).onSuccess(zombie::setConversionTime);
-        }
+        ctx.readOptional("can_break_doors", Codecs.BOOLEAN, opt -> opt.ifPresent(zombie::setCanBreakDoors))
+            .readOptional("should_burn_in_day", Codecs.BOOLEAN, opt -> opt.ifPresent(zombie::setShouldBurnInDay))
+            .readOptional("conversion_time", Codecs.INT, opt -> opt.ifPresent(zombie::setConversionTime));
+
+        return ctx.result();
     }
 }

@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Raider;
 
@@ -18,22 +15,30 @@ public class RaiderEntityAdapter extends EntityAdapter<Raider> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Raider value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("wave"), Codecs.INT.encode(ops, value.getWave()));
-        map.put(ops.createString("is_patrol_leader"), Codecs.BOOLEAN.encode(ops, value.isPatrolLeader()));
-        map.put(ops.createString("can_join_raid"), Codecs.BOOLEAN.encode(ops, value.isCanJoinRaid()));
-        map.put(ops.createString("ticks_outside_raid"), Codecs.INT.encode(ops, value.getTicksOutsideRaid()));
-        map.put(ops.createString("is_celebrating"), Codecs.BOOLEAN.encode(ops, value.isCelebrating()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Raider value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("wave", Codecs.INT, value.getWave())
+            .write("is_patrol_leader", Codecs.BOOLEAN, value.isPatrolLeader())
+            .write("can_join_raid", Codecs.BOOLEAN, value.isCanJoinRaid())
+            .write("ticks_outside_raid", Codecs.INT, value.getTicksOutsideRaid())
+            .write("is_celebrating", Codecs.BOOLEAN, value.isCelebrating());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Raider raider)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Raider raider)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("wave")))).onSuccess(raider::setWave);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_patrol_leader")))).onSuccess(raider::setPatrolLeader);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_join_raid")))).onSuccess(raider::setCanJoinRaid);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("ticks_outside_raid")))).onSuccess(raider::setTicksOutsideRaid);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_celebrating")))).onSuccess(raider::setCelebrating);
+        ctx.readOptional("wave", Codecs.INT, opt -> opt.ifPresent(raider::setWave))
+            .readOptional("is_patrol_leader", Codecs.BOOLEAN, opt -> opt.ifPresent(raider::setPatrolLeader))
+            .readOptional("can_join_raid", Codecs.BOOLEAN, opt -> opt.ifPresent(raider::setCanJoinRaid))
+            .readOptional("ticks_outside_raid", Codecs.INT, opt -> opt.ifPresent(raider::setTicksOutsideRaid))
+            .readOptional("is_celebrating", Codecs.BOOLEAN, opt -> opt.ifPresent(raider::setCelebrating));
+
+        return ctx.result();
     }
 }

@@ -1,6 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
@@ -10,9 +14,8 @@ import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvid
 import org.bukkit.Location;
 import org.bukkit.util.noise.SimplexNoiseGenerator;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A world generation feature that generates a contiguous, noise-driven blob of blocks.
@@ -41,7 +44,7 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
         Location origin = context.origin();
         Config config = context.config();
         SimplexNoiseGenerator noiseGen = new SimplexNoiseGenerator(context.level().getWorld());
-        
+
         int placedCount = 0;
         int radius = config.radius();
         double radiusSq = radius * radius;
@@ -54,7 +57,7 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {
                 for (int z = -radius; z <= radius; z++) {
-                    
+
                     if (x * x + y * y + z * z > radiusSq) {
                         continue;
                     }
@@ -66,9 +69,9 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
                     }
 
                     double noise = noiseGen.noise(
-                            target.getBlockX() * frequency,
-                            target.getBlockY() * frequency,
-                            target.getBlockZ() * frequency
+                        target.getBlockX() * frequency,
+                        target.getBlockY() * frequency,
+                        target.getBlockZ() * frequency
                     );
 
                     if (noise > threshold) {
@@ -106,62 +109,17 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
      * @param noiseFrequency The multiplier applied to coordinates before sampling the noise field.
      * @param noiseThreshold The breakpoint value that the 3D noise must exceed to place a block.
      */
-    public record Config(
-            BlockStateProvider stateProvider,
-            List<BlockInfo> targets,
-            int radius,
-            double noiseFrequency,
-            double noiseThreshold
-    ) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, int radius, double noiseFrequency, double noiseThreshold) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                
-                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
-                List<BlockInfo> targets = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("targets")));
-                int radius = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
-                double noiseFrequency = Codecs.DOUBLE.decode(ops, map.get(ops.createString("noise_frequency")));
-                double noiseThreshold = Codecs.DOUBLE.decode(ops, map.get(ops.createString("noise_threshold")));
-                
-                return new Config(stateProvider, targets, radius, noiseFrequency, noiseThreshold);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                
-                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
-                map.put(ops.createString("targets"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.targets));
-                map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
-                map.put(ops.createString("noise_frequency"), Codecs.DOUBLE.encode(ops, value.noiseFrequency));
-                map.put(ops.createString("noise_threshold"), Codecs.DOUBLE.encode(ops, value.noiseThreshold));
-                
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Config.class, Config::stateProvider),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("targets", Collections.emptyList()).forGetter(Config.class, Config::targets),
+            Codecs.INT.optionalFieldOf("radius", 6).forGetter(Config.class, Config::radius),
+            Codecs.DOUBLE.optionalFieldOf("noise_frequency", 0.1).forGetter(Config.class, Config::noiseFrequency),
+            Codecs.DOUBLE.optionalFieldOf("noise_threshold", 0.5).forGetter(Config.class, Config::noiseThreshold)
+        ).apply(instance, Config::new)).describe("FossilConfig");
     }
 }

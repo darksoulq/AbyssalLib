@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 
@@ -18,50 +15,44 @@ public class DisplayEntityAdapter extends EntityAdapter<Display> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Display value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("transformation"), Codecs.TRANSFORMATION.encode(ops, value.getTransformation()));
-        map.put(ops.createString("interpolation_duration"), Codecs.INT.encode(ops, value.getInterpolationDuration()));
-        map.put(ops.createString("teleport_duration"), Codecs.INT.encode(ops, value.getTeleportDuration()));
-        map.put(ops.createString("view_range"), Codecs.FLOAT.encode(ops, value.getViewRange()));
-        map.put(ops.createString("shadow_radius"), Codecs.FLOAT.encode(ops, value.getShadowRadius()));
-        map.put(ops.createString("shadow_strength"), Codecs.FLOAT.encode(ops, value.getShadowStrength()));
-        map.put(ops.createString("display_width"), Codecs.FLOAT.encode(ops, value.getDisplayWidth()));
-        map.put(ops.createString("display_height"), Codecs.FLOAT.encode(ops, value.getDisplayHeight()));
-        map.put(ops.createString("interpolation_delay"), Codecs.INT.encode(ops, value.getInterpolationDelay()));
-        map.put(ops.createString("billboard"), Codecs.BILLBOARD.encode(ops, value.getBillboard()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Display value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getGlowColorOverride() != null) {
-            map.put(ops.createString("glow_color_override"), Codecs.COLOR.encode(ops, value.getGlowColorOverride()));
-        }
+        ctx.write("transformation", Codecs.TRANSFORMATION, value.getTransformation())
+            .write("interpolation_duration", Codecs.INT, value.getInterpolationDuration())
+            .write("teleport_duration", Codecs.INT, value.getTeleportDuration())
+            .write("view_range", Codecs.FLOAT, value.getViewRange())
+            .write("shadow_radius", Codecs.FLOAT, value.getShadowRadius())
+            .write("shadow_strength", Codecs.FLOAT, value.getShadowStrength())
+            .write("display_width", Codecs.FLOAT, value.getDisplayWidth())
+            .write("display_height", Codecs.FLOAT, value.getDisplayHeight())
+            .write("interpolation_delay", Codecs.INT, value.getInterpolationDelay())
+            .write("billboard", Codecs.BILLBOARD, value.getBillboard())
+            .writeNullable("glow_color_override", Codecs.COLOR, value.getGlowColorOverride())
+            .writeNullable("brightness", Codecs.DISPLAY_BRIGHTNESS, value.getBrightness());
 
-        if (value.getBrightness() != null) {
-            map.put(ops.createString("brightness"), Codecs.DISPLAY_BRIGHTNESS.encode(ops, value.getBrightness()));
-        }
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Display display)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Display display)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.TRANSFORMATION.decode(ops, map.get(ops.createString("transformation")))).onSuccess(display::setTransformation);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("interpolation_duration")))).onSuccess(display::setInterpolationDuration);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("teleport_duration")))).onSuccess(display::setTeleportDuration);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("view_range")))).onSuccess(display::setViewRange);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("shadow_radius")))).onSuccess(display::setShadowRadius);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("shadow_strength")))).onSuccess(display::setShadowStrength);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("display_width")))).onSuccess(display::setDisplayWidth);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("display_height")))).onSuccess(display::setDisplayHeight);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("interpolation_delay")))).onSuccess(display::setInterpolationDelay);
-        Try.of(() -> Codecs.BILLBOARD.decode(ops, map.get(ops.createString("billboard")))).onSuccess(display::setBillboard);
+        ctx.readOptional("transformation", Codecs.TRANSFORMATION, opt -> opt.ifPresent(display::setTransformation))
+            .readOptional("interpolation_duration", Codecs.INT, opt -> opt.ifPresent(display::setInterpolationDuration))
+            .readOptional("teleport_duration", Codecs.INT, opt -> opt.ifPresent(display::setTeleportDuration))
+            .readOptional("view_range", Codecs.FLOAT, opt -> opt.ifPresent(display::setViewRange))
+            .readOptional("shadow_radius", Codecs.FLOAT, opt -> opt.ifPresent(display::setShadowRadius))
+            .readOptional("shadow_strength", Codecs.FLOAT, opt -> opt.ifPresent(display::setShadowStrength))
+            .readOptional("display_width", Codecs.FLOAT, opt -> opt.ifPresent(display::setDisplayWidth))
+            .readOptional("display_height", Codecs.FLOAT, opt -> opt.ifPresent(display::setDisplayHeight))
+            .readOptional("interpolation_delay", Codecs.INT, opt -> opt.ifPresent(display::setInterpolationDelay))
+            .readOptional("billboard", Codecs.BILLBOARD, opt -> opt.ifPresent(display::setBillboard))
+            .readOptional("glow_color_override", Codecs.COLOR, opt -> opt.ifPresent(display::setGlowColorOverride))
+            .readOptional("brightness", Codecs.DISPLAY_BRIGHTNESS, opt -> opt.ifPresent(display::setBrightness));
 
-        D glowData = map.get(ops.createString("glow_color_override"));
-        if (glowData != null) {
-            Try.of(() -> Codecs.COLOR.decode(ops, glowData)).onSuccess(display::setGlowColorOverride);
-        }
-
-        D brightnessData = map.get(ops.createString("brightness"));
-        if (brightnessData != null) {
-            Try.of(() -> Codecs.DISPLAY_BRIGHTNESS.decode(ops, brightnessData)).onSuccess(display::setBrightness);
-        }
+        return ctx.result();
     }
 }

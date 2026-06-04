@@ -1,10 +1,9 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.block.SculkSensor;
 import org.bukkit.block.TileState;
 
@@ -16,13 +15,17 @@ public class SculkSensorTileAdapter extends TileAdapter<SculkSensor> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, SculkSensor value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, SculkSensor value) {
         return Codecs.INT.encode(ops, value.getLastVibrationFrequency());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof SculkSensor sensor)) return;
-        Try.of(() -> Codecs.INT.decode(ops, input)).onSuccess(sensor::setLastVibrationFrequency);
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof SculkSensor sensor)) return DataResult.success(null);
+
+        return Codecs.INT.decode(ops, input).flatMap(freq -> {
+            sensor.setLastVibrationFrequency(freq);
+            return DataResult.success(null);
+        });
     }
 }

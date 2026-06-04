@@ -6,10 +6,11 @@ import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.BlastingRecipe;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.recipe.CookingBookCategory;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 
@@ -37,7 +38,7 @@ public class CustomBlastingRecipe implements CustomRecipe, BukkitRecipeProvider 
     }
 
     @Override
-    public NamespacedKey getKey() {
+    public @NonNull NamespacedKey getKey() {
         return id;
     }
 

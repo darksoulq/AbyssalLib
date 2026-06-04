@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.EnderSignal;
 import org.bukkit.entity.Entity;
 
@@ -18,27 +15,28 @@ public class EnderSignalEntityAdapter extends EntityAdapter<EnderSignal> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, EnderSignal value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("drop_item"), Codecs.BOOLEAN.encode(ops, value.getDropItem()));
-        map.put(ops.createString("despawn_timer"), Codecs.INT.encode(ops, value.getDespawnTimer()));
-        map.put(ops.createString("item"), Codecs.ITEM_STACK.encode(ops, value.getItem()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, EnderSignal value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getTargetLocation() != null) {
-            map.put(ops.createString("target_location"), Codecs.LOCATION.encode(ops, value.getTargetLocation()));
-        }
+        ctx.write("drop_item", Codecs.BOOLEAN, value.getDropItem())
+            .write("despawn_timer", Codecs.INT, value.getDespawnTimer())
+            .write("item", Codecs.ITEM_STACK, value.getItem())
+            .writeNullable("target_location", Codecs.LOCATION, value.getTargetLocation());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof EnderSignal signal)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof EnderSignal signal)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("drop_item")))).onSuccess(signal::setDropItem);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("despawn_timer")))).onSuccess(signal::setDespawnTimer);
-        Try.of(() -> Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("item")))).onSuccess(signal::setItem);
+        ctx.readOptional("drop_item", Codecs.BOOLEAN, opt -> opt.ifPresent(signal::setDropItem))
+            .readOptional("despawn_timer", Codecs.INT, opt -> opt.ifPresent(signal::setDespawnTimer))
+            .readOptional("item", Codecs.ITEM_STACK, opt -> opt.ifPresent(signal::setItem))
+            .readOptional("target_location", Codecs.LOCATION, opt -> opt.ifPresent(loc -> signal.setTargetLocation(loc, false)));
 
-        D locData = map.get(ops.createString("target_location"));
-        if (locData != null) {
-            Try.of(() -> Codecs.LOCATION.decode(ops, locData)).onSuccess(loc -> signal.setTargetLocation(loc, false));
-        }
+        return ctx.result();
     }
 }

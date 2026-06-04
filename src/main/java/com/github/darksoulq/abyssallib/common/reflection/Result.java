@@ -70,8 +70,8 @@ public class Result<T> {
         if (isSuccess()) {
             try {
                 return Result.success(mapper.apply(value));
-            } catch (Throwable t) {
-                return Result.failure(t);
+            } catch (Exception e) {
+                return Result.failure(e);
             }
         }
         return Result.failure(error);
@@ -81,8 +81,8 @@ public class Result<T> {
         if (isSuccess()) {
             try {
                 return mapper.apply(value);
-            } catch (Throwable t) {
-                return Result.failure(t);
+            } catch (Exception e) {
+                return Result.failure(e);
             }
         }
         return Result.failure(error);

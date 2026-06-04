@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.BatchQuery;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.common.util.Try;
@@ -103,7 +104,12 @@ public class BlockManager {
                         BlockEntity entity = block.createBlockEntity(loc);
                         if (entity != null) {
                             Try.run(() -> {
-                                entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
+                                DataResult<Void> res = entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
+                                if (res.isError()) {
+                                    AbyssalLib.LOGGER.warning("Failed to deserialize block entity at " + loc + ": " + res.error().get());
+                                } else if (res.isPartial()) {
+                                    res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning deserializing block entity at " + loc + ": " + w.message()));
+                                }
                                 entity.onLoad();
                                 block.setEntity(entity);
                             }).onFailure(Throwable::printStackTrace);
@@ -165,7 +171,17 @@ public class BlockManager {
 
             if (entity != null) {
                 entity.onSave();
-                JsonNode node = Try.of(() -> entity.serialize(JsonOps.INSTANCE)).orElse(null);
+                JsonNode node = Try.of(() -> {
+                    DataResult<JsonNode> res = entity.serialize(JsonOps.INSTANCE);
+                    if (res.isError()) {
+                        AbyssalLib.LOGGER.warning("Failed to serialize block entity at " + loc + ": " + res.error().get());
+                        return null;
+                    }
+                    if (res.isPartial()) {
+                        res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning serializing block entity at " + loc + ": " + w.message()));
+                    }
+                    return res.getOrThrow();
+                }).orElse(null);
                 if (node == null) return;
                 json = node.toString();
             } else {
@@ -200,7 +216,17 @@ public class BlockManager {
 
                 if (entity != null) {
                     entity.onSave();
-                    JsonNode node = Try.of(() -> entity.serialize(JsonOps.INSTANCE)).orElse(null);
+                    JsonNode node = Try.of(() -> {
+                        DataResult<JsonNode> res = entity.serialize(JsonOps.INSTANCE);
+                        if (res.isError()) {
+                            AbyssalLib.LOGGER.warning("Failed to serialize block entity at " + loc + ": " + res.error().get());
+                            return null;
+                        }
+                        if (res.isPartial()) {
+                            res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning serializing block entity at " + loc + ": " + w.message()));
+                        }
+                        return res.getOrThrow();
+                    }).orElse(null);
                     if (node == null) continue;
                     json = node.toString();
                 } else {

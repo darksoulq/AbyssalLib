@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
@@ -22,26 +23,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ResistantDamage extends DataComponent<List<Key>> implements Vanilla {
-    public static final Codec<ResistantDamage> CODEC = Codec.oneOf(
-        Codecs.KEY.xmap(
-            ResistantDamage::new,
+
+    public static final Codec<ResistantDamage> CODEC = Codec.oneOf(ResistantDamage.class,
+        Codecs.KEY.flatXmap(
+            key -> DataResult.success(new ResistantDamage(key)),
             component -> {
                 if (component.value.size() != 1) {
-                    throw new Codec.CodecException("Expected exactly 1 key.");
+                    return DataResult.error("Expected exactly 1 key.");
                 }
-                return component.value.getFirst();
+                return DataResult.success(component.value.getFirst());
             }
         ),
         Codecs.KEY.list().xmap(
             ResistantDamage::new,
             ResistantDamage::getValue
         )
-    );
+    ).describe("ResistantDamage");
+
     public static final DataComponentType<ResistantDamage> TYPE = DataComponentType.valued(CODEC, v -> new ResistantDamage((DamageResistant) v));
 
     public ResistantDamage(DamageResistant resists) {
         super(resolveKeys(resists.types()));
     }
+
     public ResistantDamage(Key resists) {
         super(List.of(resists));
     }

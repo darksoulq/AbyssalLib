@@ -3,7 +3,7 @@ package com.github.darksoulq.abyssallib.world.gen.feature.tree.trunk;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
@@ -11,7 +11,9 @@ import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * A trunk placer that generates a main vertical stem and sprouts diagonal branches
@@ -33,42 +35,10 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
     /**
      * The codec used for serializing and deserializing the forking trunk placer.
      */
-    public static final Codec<ForkingTrunkPlacer> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the placer from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the forking trunk placer.
-         * @throws CodecException If the configuration fields are missing.
-         */
-        @Override
-        public <D> ForkingTrunkPlacer decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int branchCount = Codecs.INT.decode(ops, map.get(ops.createString("branch_count")));
-            int branchLength = Codecs.INT.decode(ops, map.get(ops.createString("branch_length")));
-            return new ForkingTrunkPlacer(branchCount, branchLength);
-        }
-
-        /**
-         * Encodes the placer into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The placer instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, ForkingTrunkPlacer value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("branch_count"), Codecs.INT.encode(ops, value.branchCount));
-            map.put(ops.createString("branch_length"), Codecs.INT.encode(ops, value.branchLength));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<ForkingTrunkPlacer> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("branch_count").forGetter(ForkingTrunkPlacer.class, p -> p.branchCount),
+        Codecs.INT.fieldOf("branch_length").forGetter(ForkingTrunkPlacer.class, p -> p.branchLength)
+    ).apply(instance, ForkingTrunkPlacer::new)).describe("ForkingTrunkPlacer");
 
     /**
      * The registered type definition for the forking trunk placer.
@@ -105,17 +75,17 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
     @Override
     public List<Vector> placeTrunk(WorldGenAccess level, Random random, Location origin, BlockStateProvider trunkProvider, int height) {
         List<Vector> attachmentPoints = new ArrayList<>();
-        
+
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, i, 0);
             if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
-            
+
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {
                 WorldGenUtils.placeBlock(level, target, stateToPlace);
             }
         }
-        
+
         attachmentPoints.add(new Vector(origin.getBlockX(), origin.getBlockY() + height, origin.getBlockZ()));
 
         int branchStartHeight = height / 2;
@@ -123,16 +93,16 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
         for (int i = 0; i < branchCount; i++) {
             int branchY = branchStartHeight + random.nextInt(Math.max(1, height - branchStartHeight));
             BlockFace direction = HORIZONTALS[random.nextInt(HORIZONTALS.length)];
-            
+
             int currentX = origin.getBlockX();
             int currentZ = origin.getBlockZ();
             int currentY = origin.getBlockY() + branchY;
-            
+
             for (int step = 0; step < branchLength; step++) {
                 currentX += direction.getModX();
                 currentZ += direction.getModZ();
                 currentY += 1;
-                
+
                 Location branchTarget = new Location(level.getWorld(), currentX, currentY, currentZ);
                 if (branchTarget.getBlockY() >= level.getWorld().getMaxHeight()) break;
 
@@ -141,7 +111,7 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
                     WorldGenUtils.placeBlock(level, branchTarget, stateToPlace);
                 }
             }
-            
+
             attachmentPoints.add(new Vector(currentX, currentY, currentZ));
         }
 

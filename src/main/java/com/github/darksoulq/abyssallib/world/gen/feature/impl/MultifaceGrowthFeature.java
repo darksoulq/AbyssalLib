@@ -2,8 +2,8 @@ package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
@@ -14,9 +14,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A world generation feature responsible for placing blocks that cling to solid surfaces.
@@ -59,7 +58,7 @@ public class MultifaceGrowthFeature extends Feature<MultifaceGrowthFeature.Confi
 
         for (BlockFace face : FACES) {
             Location neighbor = origin.clone().add(face.getModX(), face.getModY(), face.getModZ());
-            
+
             if (WorldGenUtils.isValidBlock(context.level(), neighbor, config.canPlaceOn())) {
                 validPlacement = true;
                 break;
@@ -98,45 +97,9 @@ public class MultifaceGrowthFeature extends Feature<MultifaceGrowthFeature.Confi
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                
-                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
-                List<BlockInfo> canPlaceOn = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("can_place_on")));
-                
-                return new Config(stateProvider, canPlaceOn);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                
-                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
-                map.put(ops.createString("can_place_on"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.canPlaceOn));
-                
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Config.class, Config::stateProvider),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("can_place_on", Collections.emptyList()).forGetter(Config.class, Config::canPlaceOn)
+        ).apply(instance, Config::new)).describe("MultifaceGrowthConfig");
     }
 }

@@ -1,8 +1,11 @@
 package com.github.darksoulq.abyssallib.common.util;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -105,26 +108,26 @@ public interface Condition<T> {
              * @param input The serialized input.
              * @param <D>   The serialized type.
              * @return A decoded condition tree.
-             * @throws CodecException If the format is invalid.
              */
             @Override
-            public <D> Condition<T> decode(DynamicOps<D> ops, D input) throws CodecException {
-                try {
-                    T value = codec.decode(ops, input);
-                    if (value != null) return new One<>(value);
-                } catch (Exception ignored) {}
-                Map<D, D> map = ops.getMap(input).orElse(null);
-                if (map != null) {
-                    if (map.containsKey(ops.createString("any_of"))) {
-                        List<Condition<T>> list = decodeList(ops, map.get(ops.createString("any_of")));
-                        return new AnyOf<>(list);
-                    }
-                    if (map.containsKey(ops.createString("all_of"))) {
-                        List<Condition<T>> list = decodeList(ops, map.get(ops.createString("all_of")));
-                        return new AllOf<>(list);
-                    }
+            public <D> DataResult<Condition<T>> decode(DynamicOps<D> ops, D input) {
+                DataResult<T> valRes = codec.decode(ops, input);
+                if (valRes.isSuccess()) {
+                    return DataResult.success(new One<>(valRes.getOrThrow()));
                 }
-                throw new CodecException("Invalid Logic format");
+
+                return ops.getMap(input)
+                    .map(DataResult::success)
+                    .orElseGet(() -> DataResult.error("Expected map or value for condition"))
+                    .flatMap(map -> {
+                        if (map.containsKey(ops.createString("any_of"))) {
+                            return decodeList(ops, map.get(ops.createString("any_of"))).map(AnyOf::new);
+                        }
+                        if (map.containsKey(ops.createString("all_of"))) {
+                            return decodeList(ops, map.get(ops.createString("all_of"))).map(AllOf::new);
+                        }
+                        return DataResult.error("Invalid Logic format: missing any_of or all_of");
+                    });
             }
 
             /**
@@ -135,12 +138,21 @@ public interface Condition<T> {
              * @param <D>   The serialized type.
              * @return A list of decoded conditions.
              */
-            private <D> List<Condition<T>> decodeList(DynamicOps<D> ops, D input) {
-                return ops.getList(input).orElseThrow(() -> new RuntimeException("Expected List"))
-                    .stream().map(e -> {
-                        try { return decode(ops, e); }
-                        catch (CodecException ex) { throw new RuntimeException(ex); }
-                    }).collect(Collectors.toList());
+            private <D> DataResult<List<Condition<T>>> decodeList(DynamicOps<D> ops, D input) {
+                return ops.getList(input)
+                    .map(DataResult::success)
+                    .orElseGet(() -> DataResult.error("Expected List for logic branch"))
+                    .flatMap(list -> {
+                        List<Condition<T>> conditions = new ArrayList<>();
+                        List<DataError> warnings = new ArrayList<>();
+                        for (D e : list) {
+                            DataResult<Condition<T>> res = decode(ops, e);
+                            if (res.isError()) return DataResult.error(res.error().get());
+                            conditions.add(res.getOrThrow());
+                            if (res.isPartial()) warnings.addAll(res.warnings());
+                        }
+                        return warnings.isEmpty() ? DataResult.success(conditions) : DataResult.partial(conditions, warnings);
+                    });
             }
 
             /**
@@ -149,18 +161,17 @@ public interface Condition<T> {
              * @param value The condition tree to encode.
              * @param <D>   The serialized type.
              * @return The serialized representation.
-             * @throws CodecException If an unknown condition type is encountered.
              */
             @Override
-            public <D> D encode(DynamicOps<D> ops, Condition<T> value) throws CodecException {
+            public <D> DataResult<D> encode(DynamicOps<D> ops, Condition<T> value) {
                 if (value instanceof One<T>(T value1)) {
                     return codec.encode(ops, value1);
                 } else if (value instanceof AnyOf<T>(List<Condition<T>> children)) {
-                    return ops.createMap(Map.of(ops.createString("any_of"), encodeList(ops, children)));
+                    return encodeList(ops, children).map(l -> ops.createMap(Map.of(ops.createString("any_of"), l)));
                 } else if (value instanceof AllOf<T>(List<Condition<T>> children)) {
-                    return ops.createMap(Map.of(ops.createString("all_of"), encodeList(ops, children)));
+                    return encodeList(ops, children).map(l -> ops.createMap(Map.of(ops.createString("all_of"), l)));
                 }
-                throw new CodecException("Unknown Logic type");
+                return DataResult.error("Unknown Logic type");
             }
 
             /**
@@ -171,11 +182,21 @@ public interface Condition<T> {
              * @param <D>  The serialized type.
              * @return The serialized list.
              */
-            private <D> D encodeList(DynamicOps<D> ops, List<Condition<T>> list) {
-                return ops.createList(list.stream().map(e -> {
-                    try { return encode(ops, e); }
-                    catch (CodecException ex) { throw new RuntimeException(ex); }
-                }).toList());
+            private <D> DataResult<D> encodeList(DynamicOps<D> ops, List<Condition<T>> list) {
+                List<D> encoded = new ArrayList<>();
+                List<DataError> warnings = new ArrayList<>();
+                for (Condition<T> e : list) {
+                    DataResult<D> res = encode(ops, e);
+                    if (res.isError()) return res;
+                    encoded.add(res.getOrThrow());
+                    if (res.isPartial()) warnings.addAll(res.warnings());
+                }
+                return warnings.isEmpty() ? DataResult.success(ops.createList(encoded)) : DataResult.partial(ops.createList(encoded), warnings);
+            }
+
+            @Override
+            public String describe() {
+                return "Condition[" + codec.describe() + "]";
             }
         };
     }

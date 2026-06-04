@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.server.registry;
 
 import com.github.darksoulq.abyssallib.common.energy.EnergyNodeType;
 import com.github.darksoulq.abyssallib.common.energy.EnergyUnit;
-import com.github.darksoulq.abyssallib.server.economy.Currency;
 import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
 import com.github.darksoulq.abyssallib.server.permission.PermissionNode;
 import com.github.darksoulq.abyssallib.server.placeholder.Placeholder;
@@ -81,7 +80,6 @@ public class Registries {
     public static final Registry<PermissionGroup> PERMISSION_GROUPS = new Registry<>();
 
     public static final Registry<Placeholder<?>> PLACEHOLDERS = new Registry<>();
-    public static final Registry<Currency> CURRENCIES = new Registry<>();
 
     public static final Registry<RecipeType<?>> RECIPE_TYPES = new Registry<>();
     public static final Registry<CustomRecipe> RECIPES = new Registry<>();

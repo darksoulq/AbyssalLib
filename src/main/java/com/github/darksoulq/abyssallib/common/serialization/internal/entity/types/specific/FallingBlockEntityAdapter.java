@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.FallingBlock;
@@ -19,30 +16,39 @@ public class FallingBlockEntityAdapter extends EntityAdapter<FallingBlock> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, FallingBlock value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("block_data"), Codecs.STRING.encode(ops, value.getBlockData().getAsString()));
-        map.put(ops.createString("drop_item"), Codecs.BOOLEAN.encode(ops, value.getDropItem()));
-        map.put(ops.createString("cancel_drop"), Codecs.BOOLEAN.encode(ops, value.getCancelDrop()));
-        map.put(ops.createString("hurt_entities"), Codecs.BOOLEAN.encode(ops, value.canHurtEntities()));
-        map.put(ops.createString("damage_per_block"), Codecs.FLOAT.encode(ops, value.getDamagePerBlock()));
-        map.put(ops.createString("max_damage"), Codecs.INT.encode(ops, value.getMaxDamage()));
-        map.put(ops.createString("auto_expire"), Codecs.BOOLEAN.encode(ops, value.doesAutoExpire()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, FallingBlock value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("block_data", Codecs.STRING, value.getBlockData().getAsString())
+            .write("drop_item", Codecs.BOOLEAN, value.getDropItem())
+            .write("cancel_drop", Codecs.BOOLEAN, value.getCancelDrop())
+            .write("hurt_entities", Codecs.BOOLEAN, value.canHurtEntities())
+            .write("damage_per_block", Codecs.FLOAT, value.getDamagePerBlock())
+            .write("max_damage", Codecs.INT, value.getMaxDamage())
+            .write("auto_expire", Codecs.BOOLEAN, value.doesAutoExpire());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof FallingBlock block)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof FallingBlock block)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D blockDataStr = map.get(ops.createString("block_data"));
-        if (blockDataStr != null) {
-            Try.of(() -> Codecs.STRING.decode(ops, blockDataStr)).onSuccess(s -> block.setBlockData(Bukkit.createBlockData(s)));
-        }
+        ctx.readOptional("block_data", Codecs.STRING, opt -> opt.ifPresent(dataStr -> {
+                try {
+                    block.setBlockData(Bukkit.createBlockData(dataStr));
+                } catch (Exception ignored) {
+                }
+            }))
+            .readOptional("drop_item", Codecs.BOOLEAN, opt -> opt.ifPresent(block::setDropItem))
+            .readOptional("cancel_drop", Codecs.BOOLEAN, opt -> opt.ifPresent(block::setCancelDrop))
+            .readOptional("hurt_entities", Codecs.BOOLEAN, opt -> opt.ifPresent(block::setHurtEntities))
+            .readOptional("damage_per_block", Codecs.FLOAT, opt -> opt.ifPresent(block::setDamagePerBlock))
+            .readOptional("max_damage", Codecs.INT, opt -> opt.ifPresent(block::setMaxDamage))
+            .readOptional("auto_expire", Codecs.BOOLEAN, opt -> opt.ifPresent(block::shouldAutoExpire));
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("drop_item")))).onSuccess(block::setDropItem);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("cancel_drop")))).onSuccess(block::setCancelDrop);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("hurt_entities")))).onSuccess(block::setHurtEntities);
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("damage_per_block")))).onSuccess(block::setDamagePerBlock);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("max_damage")))).onSuccess(block::setMaxDamage);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("auto_expire")))).onSuccess(block::shouldAutoExpire);
+        return ctx.result();
     }
 }

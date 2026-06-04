@@ -2,16 +2,14 @@ package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
 import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacedFeature;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A meta-feature that evaluates a list of potential sub-features sequentially,
@@ -77,24 +75,10 @@ public class RandomFeature extends Feature<RandomFeature.Config> {
         /**
          * The codec for serializing and deserializing a weighted feature.
          */
-        public static final Codec<WeightedFeature> CODEC = new Codec<>() {
-
-            @Override
-            public <D> WeightedFeature decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                PlacedFeature feature = PlacedFeature.CODEC.decode(ops, map.get(ops.createString("feature")));
-                float chance = Codecs.FLOAT.decode(ops, map.get(ops.createString("chance")));
-                return new WeightedFeature(feature, chance);
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, WeightedFeature value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("feature"), PlacedFeature.CODEC.encode(ops, value.feature));
-                map.put(ops.createString("chance"), Codecs.FLOAT.encode(ops, value.chance));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<WeightedFeature> CODEC = RecordBuilder.create(instance -> instance.group(
+            PlacedFeature.CODEC.fieldOf("feature").forGetter(WeightedFeature.class, WeightedFeature::feature),
+            Codecs.FLOAT.fieldOf("chance").forGetter(WeightedFeature.class, WeightedFeature::chance)
+        ).apply(instance, WeightedFeature::new)).describe("WeightedFeature");
     }
 
     /**
@@ -108,23 +92,9 @@ public class RandomFeature extends Feature<RandomFeature.Config> {
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                List<WeightedFeature> features = WeightedFeature.CODEC.list().decode(ops, map.get(ops.createString("features")));
-                PlacedFeature defaultFeature = PlacedFeature.CODEC.decode(ops, map.get(ops.createString("default_feature")));
-                return new Config(features, defaultFeature);
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("features"), WeightedFeature.CODEC.list().encode(ops, value.features));
-                map.put(ops.createString("default_feature"), PlacedFeature.CODEC.encode(ops, value.defaultFeature));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            WeightedFeature.CODEC.list().fieldOf("features").forGetter(Config.class, Config::features),
+            PlacedFeature.CODEC.fieldOf("default_feature").forGetter(Config.class, Config::defaultFeature)
+        ).apply(instance, Config::new)).describe("RandomFeatureConfig");
     }
 }

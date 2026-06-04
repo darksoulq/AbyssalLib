@@ -1,6 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
@@ -9,9 +13,8 @@ import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvid
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -121,82 +124,28 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
      * @param maxRadius                The absolute maximum radius of the geode's outermost shell.
      */
     public record Config(
-            BlockStateProvider outerWallProvider,
-            BlockStateProvider middleWallProvider,
-            BlockStateProvider innerWallProvider,
-            BlockStateProvider fillingProvider,
-            BlockStateProvider innerPlacementsProvider,
-            List<BlockInfo> invalidBlocks,
-            int minRadius,
-            int maxRadius
+        BlockStateProvider outerWallProvider,
+        BlockStateProvider middleWallProvider,
+        BlockStateProvider innerWallProvider,
+        BlockStateProvider fillingProvider,
+        BlockStateProvider innerPlacementsProvider,
+        List<BlockInfo> invalidBlocks,
+        int minRadius,
+        int maxRadius
     ) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-
-                BlockStateProvider outerWall = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("outer_wall_provider")));
-                BlockStateProvider middleWall = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("middle_wall_provider")));
-                BlockStateProvider innerWall = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("inner_wall_provider")));
-                BlockStateProvider filling = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("filling_provider")));
-                
-                BlockStateProvider innerPlacements = null;
-                D innerPlacementsNode = map.get(ops.createString("inner_placements_provider"));
-                if (innerPlacementsNode != null) {
-                    innerPlacements = BlockStateProvider.CODEC.decode(ops, innerPlacementsNode);
-                }
-
-                List<BlockInfo> invalidBlocks = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("invalid_blocks")));
-                
-                int minRadius = Codecs.INT.decode(ops, map.get(ops.createString("min_radius")));
-                int maxRadius = Codecs.INT.decode(ops, map.get(ops.createString("max_radius")));
-
-                return new Config(outerWall, middleWall, innerWall, filling, innerPlacements, invalidBlocks, minRadius, maxRadius);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-
-                map.put(ops.createString("outer_wall_provider"), BlockStateProvider.CODEC.encode(ops, value.outerWallProvider));
-                map.put(ops.createString("middle_wall_provider"), BlockStateProvider.CODEC.encode(ops, value.middleWallProvider));
-                map.put(ops.createString("inner_wall_provider"), BlockStateProvider.CODEC.encode(ops, value.innerWallProvider));
-                map.put(ops.createString("filling_provider"), BlockStateProvider.CODEC.encode(ops, value.fillingProvider));
-                
-                if (value.innerPlacementsProvider != null) {
-                    map.put(ops.createString("inner_placements_provider"), BlockStateProvider.CODEC.encode(ops, value.innerPlacementsProvider));
-                }
-
-                map.put(ops.createString("invalid_blocks"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.invalidBlocks));
-                
-                map.put(ops.createString("min_radius"), Codecs.INT.encode(ops, value.minRadius));
-                map.put(ops.createString("max_radius"), Codecs.INT.encode(ops, value.maxRadius));
-
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("outer_wall_provider").forGetter(Config.class, Config::outerWallProvider),
+            BlockStateProvider.CODEC.fieldOf("middle_wall_provider").forGetter(Config.class, Config::middleWallProvider),
+            BlockStateProvider.CODEC.fieldOf("inner_wall_provider").forGetter(Config.class, Config::innerWallProvider),
+            BlockStateProvider.CODEC.fieldOf("filling_provider").forGetter(Config.class, Config::fillingProvider),
+            BlockStateProvider.CODEC.nullable().optionalFieldOf("inner_placements_provider", null).forGetter(Config.class, Config::innerPlacementsProvider),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("invalid_blocks", Collections.emptyList()).forGetter(Config.class, Config::invalidBlocks),
+            Codecs.INT.optionalFieldOf("min_radius", 3).forGetter(Config.class, Config::minRadius),
+            Codecs.INT.optionalFieldOf("max_radius", 5).forGetter(Config.class, Config::maxRadius)
+        ).apply(instance, Config::new)).describe("GeodeConfig");
     }
 }

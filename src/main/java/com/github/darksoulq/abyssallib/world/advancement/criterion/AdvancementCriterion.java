@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
@@ -8,6 +11,29 @@ import org.bukkit.event.Event;
  * Criteria can be evaluated statically or triggered by specific server events.
  */
 public interface AdvancementCriterion {
+
+    /**
+     * Polymorphic codec governing precise evaluation boundaries mapped accurately.
+     */
+    Codec<AdvancementCriterion> CODEC = Codec.dispatch(
+        AdvancementCriterion.class,
+        "type",
+        Codecs.STRING,
+        criterion -> {
+            String typeId = Registries.CRITERION.getId(criterion.getType());
+            if (typeId == null) {
+                throw new IllegalStateException("Unregistered advancement criterion type");
+            }
+            return typeId;
+        },
+        typeId -> {
+            CriterionType<?> type = Registries.CRITERION.get(typeId);
+            if (type == null) {
+                return Codec.error("Unknown advancement criterion type: " + typeId);
+            }
+            return type.getCodec().unchecked();
+        }
+    ).describe("AdvancementCriterion");
 
     /**
      * Retrieves the type definition associated with this specific criterion instance.

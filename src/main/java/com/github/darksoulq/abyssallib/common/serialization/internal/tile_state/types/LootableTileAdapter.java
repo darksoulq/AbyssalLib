@@ -1,7 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
 import org.bukkit.Bukkit;
@@ -20,38 +21,54 @@ public class LootableTileAdapter extends TileAdapter<Lootable> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Lootable value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Lootable value) {
         if (!value.hasLootTable() && value.getSeed() == 0) {
-            throw new Codec.CodecException("No loot table or seed");
+            return DataResult.error(DataError.custom("No loot table or seed"));
         }
 
         Map<D, D> map = new HashMap<>();
+
         if (value.getLootTable() != null) {
-            map.put(ops.createString("loot_table"), Codecs.NAMESPACED_KEY.encode(ops, value.getLootTable().getKey()));
+            DataResult<D> lootRes = Codecs.NAMESPACED_KEY.encode(ops, value.getLootTable().getKey()).prependPath("loot_table");
+            if (lootRes.isError()) return DataResult.error(lootRes.error().get());
+            map.put(ops.createString("loot_table"), lootRes.getOrThrow());
+            if (lootRes.isPartial()) return DataResult.partial(ops.createMap(map), lootRes.warnings());
         }
-        map.put(ops.createString("seed"), Codecs.LONG.encode(ops, value.getSeed()));
-        return ops.createMap(map);
+
+        DataResult<D> seedRes = Codecs.LONG.encode(ops, value.getSeed()).prependPath("seed");
+        if (seedRes.isError()) return DataResult.error(seedRes.error().get());
+        map.put(ops.createString("seed"), seedRes.getOrThrow());
+
+        return seedRes.isPartial() ? DataResult.partial(ops.createMap(map), seedRes.warnings()) : DataResult.success(ops.createMap(map));
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Lootable lootable)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Lootable lootable)) return DataResult.success(null);
 
-        Map<D, D> map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected map for Lootable"));
+        return ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+            .flatMap(map -> {
+                D tableData = map.get(ops.createString("loot_table"));
+                if (tableData != null) {
+                    try {
+                        org.bukkit.NamespacedKey key = Codecs.NAMESPACED_KEY.decode(ops, tableData).getOrThrow();
+                        LootTable table = Bukkit.getLootTable(key);
+                        if (table != null) lootable.setLootTable(table);
+                    } catch (Exception ignored) {
+                    }
+                }
 
-        D tableData = map.get(ops.createString("loot_table"));
-        if (tableData != null) {
-            try {
-                LootTable table = Bukkit.getLootTable(Codecs.NAMESPACED_KEY.decode(ops, tableData));
-                if (table != null) lootable.setLootTable(table);
-            } catch (Exception ignored) {}
-        }
+                D seedData = map.get(ops.createString("seed"));
+                if (seedData != null) {
+                    try {
+                        lootable.setSeed(Codecs.LONG.decode(ops, seedData).getOrThrow());
+                    } catch (Exception ignored) {
+                    }
+                }
 
-        D seedData = map.get(ops.createString("seed"));
-        if (seedData != null) {
-            try {
-                lootable.setSeed(Codecs.LONG.decode(ops, seedData));
-            } catch (Exception ignored) {}
-        }
+                return DataResult.success(null);
+            });
     }
 }

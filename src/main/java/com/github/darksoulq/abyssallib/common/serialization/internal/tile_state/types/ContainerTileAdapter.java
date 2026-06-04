@@ -1,7 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
 import org.bukkit.block.Container;
@@ -21,43 +22,66 @@ public class ContainerTileAdapter extends TileAdapter<Container> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Container value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Container value) {
         List<D> items = new ArrayList<>();
+        List<DataError> warnings = new ArrayList<>();
 
         if (value instanceof Lootable lootable && lootable.hasLootTable()) {
-            return ops.createList(items);
+            return DataResult.success(ops.createList(items));
         }
 
         Inventory inventory = value.getSnapshotInventory();
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack item = inventory.getItem(i);
             if (item != null && !item.isEmpty()) {
-                items.add(Codecs.ITEM_STACK.encode(ops, item));
+                DataResult<D> res = Codecs.ITEM_STACK.encode(ops, item).prependPath("[" + i + "]");
+                if (res.isError()) {
+                    warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    items.add(ops.createString("empty"));
+                } else {
+                    items.add(res.getOrThrow());
+                    if (res.isPartial()) warnings.addAll(res.warnings());
+                }
             } else {
                 items.add(ops.createString("empty"));
             }
         }
 
-        return ops.createList(items);
+        return warnings.isEmpty() ? DataResult.success(ops.createList(items)) : DataResult.partial(ops.createList(items), warnings);
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Container container)) return;
-        Inventory inventory = container.getSnapshotInventory();
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Container container)) return DataResult.success(null);
 
-        List<D> list = ops.getList(input).orElseThrow(() -> new Codec.CodecException("Expected list for Container"));
+        return ops.getList(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
+            .flatMap(list -> {
+                List<DataError> warnings = new ArrayList<>();
+                Inventory inventory = container.getSnapshotInventory();
 
-        for (int i = 0; i < inventory.getSize() && i < list.size(); i++) {
-            D itemData = list.get(i);
+                for (int i = 0; i < inventory.getSize() && i < list.size(); i++) {
+                    D itemData = list.get(i);
+                    String strVal = ops.getStringValue(itemData).orElse("");
 
-            if (ops.getStringValue(itemData).orElse("").equals("empty")) {
-                inventory.setItem(i, null);
-            } else {
-                try {
-                    inventory.setItem(i, Codecs.ITEM_STACK.decode(ops, itemData));
-                } catch (Exception ignored) {}
-            }
-        }
+                    if ("empty".equals(strVal)) {
+                        inventory.setItem(i, null);
+                    } else {
+                        DataResult<ItemStack> res = Codecs.ITEM_STACK.decode(ops, itemData).prependPath("[" + i + "]");
+                        if (res.isError()) {
+                            warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                        } else {
+                            try {
+                                inventory.setItem(i, res.getOrThrow());
+                            } catch (Exception e) {
+                                warnings.add(DataError.custom("Failed to set item in container at index " + i + ": " + e.getMessage()));
+                            }
+                            if (res.isPartial()) warnings.addAll(res.warnings());
+                        }
+                    }
+                }
+                return warnings.isEmpty() ? DataResult.success(null) : DataResult.partial(null, warnings);
+            });
     }
 }

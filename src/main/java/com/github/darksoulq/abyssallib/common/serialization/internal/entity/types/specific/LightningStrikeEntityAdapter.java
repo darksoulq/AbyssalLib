@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LightningStrike;
@@ -20,30 +17,34 @@ public class LightningStrikeEntityAdapter extends EntityAdapter<LightningStrike>
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, LightningStrike value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("flash_count"), Codecs.INT.encode(ops, value.getFlashCount()));
-        map.put(ops.createString("life_ticks"), Codecs.INT.encode(ops, value.getLifeTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, LightningStrike value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("flash_count", Codecs.INT, value.getFlashCount())
+            .write("life_ticks", Codecs.INT, value.getLifeTicks());
 
         if (value.getCausingPlayer() != null) {
-            map.put(ops.createString("causing_player_uuid"), Codecs.UUID.encode(ops, value.getCausingPlayer().getUniqueId()));
+            ctx.write("causing_player_uuid", Codecs.UUID, value.getCausingPlayer().getUniqueId());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof LightningStrike lightning)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof LightningStrike lightning)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("flash_count")))).onSuccess(lightning::setFlashCount);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("life_ticks")))).onSuccess(lightning::setLifeTicks);
-
-        D playerData = map.get(ops.createString("causing_player_uuid"));
-        if (playerData != null) {
-            Try.of(() -> Codecs.UUID.decode(ops, playerData)).onSuccess(uuid -> {
+        ctx.readOptional("flash_count", Codecs.INT, opt -> opt.ifPresent(lightning::setFlashCount))
+            .readOptional("life_ticks", Codecs.INT, opt -> opt.ifPresent(lightning::setLifeTicks))
+            .readOptional("causing_player_uuid", Codecs.UUID, opt -> opt.ifPresent(uuid -> {
                 Player player = Bukkit.getPlayer(uuid);
                 if (player != null) {
                     lightning.setCausingPlayer(player);
                 }
-            });
-        }
+            }));
+
+        return ctx.result();
     }
 }

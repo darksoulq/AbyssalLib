@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Allay;
 import org.bukkit.entity.Entity;
 
@@ -18,27 +15,31 @@ public class AllayEntityAdapter extends EntityAdapter<Allay> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Allay value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("can_duplicate"), Codecs.BOOLEAN.encode(ops, value.canDuplicate()));
-        map.put(ops.createString("duplication_cooldown"), Codecs.LONG.encode(ops, value.getDuplicationCooldown()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Allay value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("can_duplicate", Codecs.BOOLEAN, value.canDuplicate())
+            .write("duplication_cooldown", Codecs.LONG, value.getDuplicationCooldown());
 
         if (value.isDancing()) {
-            map.put(ops.createString("is_dancing"), Codecs.BOOLEAN.encode(ops, true));
+            ctx.write("is_dancing", Codecs.BOOLEAN, true);
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Allay allay)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Allay allay)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_duplicate")))).onSuccess(allay::setCanDuplicate);
-        Try.of(() -> Codecs.LONG.decode(ops, map.get(ops.createString("duplication_cooldown")))).onSuccess(allay::setDuplicationCooldown);
+        ctx.readOptional("can_duplicate", Codecs.BOOLEAN, opt -> opt.ifPresent(allay::setCanDuplicate))
+            .readOptional("duplication_cooldown", Codecs.LONG, opt -> opt.ifPresent(allay::setDuplicationCooldown))
+            .readOptional("is_dancing", Codecs.BOOLEAN, opt -> opt.ifPresent(dancing -> {
+                if (dancing) allay.startDancing();
+            }));
 
-        D danceData = map.get(ops.createString("is_dancing"));
-        if (danceData != null) {
-            Try.of(() -> Codecs.BOOLEAN.decode(ops, danceData)).onSuccess(isDancing -> {
-                if (isDancing) allay.startDancing();
-            });
-        }
+        return ctx.result();
     }
 }

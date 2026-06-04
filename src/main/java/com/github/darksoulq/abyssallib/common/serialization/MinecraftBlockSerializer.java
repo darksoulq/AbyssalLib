@@ -1,11 +1,13 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,9 +18,9 @@ import java.util.Map;
  * <p>This class acts as a low-level bridge between Minecraft's internal block state
  * system and AbyssalLib's abstract serialization framework, enabling:
  * <ul>
- *     <li>Conversion of block states into generic map-based formats</li>
- *     <li>Reconstruction of block states from serialized data</li>
- *     <li>Extraction and restoration of tile entity (NBT-like) metadata</li>
+ * <li>Conversion of block states into generic map-based formats</li>
+ * <li>Reconstruction of block states from serialized data</li>
+ * <li>Extraction and restoration of tile entity (NBT-like) metadata</li>
  * </ul>
  *
  * <p>All operations are stateless and thread-safe provided the underlying
@@ -32,22 +34,30 @@ public class MinecraftBlockSerializer {
      *
      * <p>This includes all block state properties such as:
      * <ul>
-     *     <li>Facing direction</li>
-     *     <li>Power levels</li>
-     *     <li>Waterlogged state</li>
-     *     <li>Any other block-specific properties</li>
+     * <li>Facing direction</li>
+     * <li>Power levels</li>
+     * <li>Waterlogged state</li>
+     * <li>Any other block-specific properties</li>
      * </ul>
      *
      * @param data The {@link BlockData} instance to serialize. Must not be null.
      * @param ops  The {@link DynamicOps} implementation defining the output format
-     *             (e.g., JSON, NBT-like structures).
+     * (e.g., JSON, NBT-like structures).
      * @param <D>  The generic data type used by the {@link DynamicOps} instance.
      *
      * @return A map representing the serialized block state. Never null, but may be empty
-     *         if the block has no configurable properties.
+     * if the block has no configurable properties.
      */
     public static <D> Map<D, D> serialize(BlockData data, DynamicOps<D> ops) {
-        return Adapter.save(ops, data);
+        DataResult<Map<D, D>> res = Adapter.save(ops, data);
+        if (res.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to serialize BlockData: " + res.error().get());
+            return new HashMap<>();
+        }
+        if (res.isPartial()) {
+            res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("BlockData serialization warning: " + warning.message()));
+        }
+        return res.getOrThrow();
     }
 
     /**
@@ -58,13 +68,18 @@ public class MinecraftBlockSerializer {
      *
      * @param data The target {@link BlockData} instance to modify. Must not be null.
      * @param map  The serialized property map previously produced by {@link #serialize}.
-     *             May be null or empty, in which case no changes are applied.
+     * May be null or empty, in which case no changes are applied.
      * @param ops  The {@link DynamicOps} instance used to interpret the map values.
      * @param <D>  The generic data type used by the {@link DynamicOps} instance.
      */
     public static <D> void deserialize(BlockData data, Map<D, D> map, DynamicOps<D> ops) {
         if (map == null || map.isEmpty()) return;
-        Adapter.load(ops, map, data);
+        DataResult<Void> res = Adapter.load(ops, map, data);
+        if (res.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to deserialize BlockData: " + res.error().get());
+        } else if (res.isPartial()) {
+            res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("BlockData deserialization warning: " + warning.message()));
+        }
     }
 
     /**
@@ -75,10 +90,10 @@ public class MinecraftBlockSerializer {
      *
      * <p>Examples of supported tile states include:
      * <ul>
-     *     <li>Chests</li>
-     *     <li>Furnaces</li>
-     *     <li>Signs</li>
-     *     <li>Containers with persistent metadata</li>
+     * <li>Chests</li>
+     * <li>Furnaces</li>
+     * <li>Signs</li>
+     * <li>Containers with persistent metadata</li>
      * </ul>
      *
      * @param state The {@link BlockState} to extract tile data from.
@@ -86,15 +101,24 @@ public class MinecraftBlockSerializer {
      * @param <D>   The generic data type used by the {@link DynamicOps} instance.
      *
      * @return A map containing serialized tile data, or {@code null} if:
-     *         <ul>
-     *             <li>The state is not a {@link TileState}</li>
-     *             <li>The tile contains no serializable data</li>
-     *         </ul>
+     * <ul>
+     * <li>The state is not a {@link TileState}</li>
+     * <li>The tile contains no serializable data</li>
+     * </ul>
      */
     public static <D> Map<D, D> serializeTile(BlockState state, DynamicOps<D> ops) {
         if (!(state instanceof TileState tileState)) return null;
 
-        Map<D, D> mapped = TileAdapter.save(ops, tileState);
+        DataResult<Map<D, D>> res = TileAdapter.save(ops, tileState);
+        if (res.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to serialize TileState: " + res.error().get());
+            return null;
+        }
+        if (res.isPartial()) {
+            res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("TileState serialization warning: " + warning.message()));
+        }
+
+        Map<D, D> mapped = res.getOrThrow();
         return mapped.isEmpty() ? null : mapped;
     }
 
@@ -109,7 +133,7 @@ public class MinecraftBlockSerializer {
      *
      * @param state The target {@link BlockState} to apply tile data to.
      * @param data  The serialized tile data map. May be null or empty, in which case
-     *              no changes are applied.
+     * no changes are applied.
      * @param ops   The {@link DynamicOps} instance used to interpret the serialized values.
      * @param <D>   The generic data type used by the {@link DynamicOps} instance.
      */
@@ -117,7 +141,12 @@ public class MinecraftBlockSerializer {
         if (data == null || data.isEmpty()) return;
         if (!(state instanceof TileState tileState)) return;
 
-        TileAdapter.load(ops, data, tileState);
+        DataResult<Void> res = TileAdapter.load(ops, data, tileState);
+        if (res.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to deserialize TileState: " + res.error().get());
+        } else if (res.isPartial()) {
+            res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("TileState deserialization warning: " + warning.message()));
+        }
         tileState.update(true, false);
     }
 }

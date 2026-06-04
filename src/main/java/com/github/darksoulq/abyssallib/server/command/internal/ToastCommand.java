@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.NbtOps;
 import com.github.darksoulq.abyssallib.server.command.BaseCommand;
 import com.github.darksoulq.abyssallib.server.command.CommandResult;
@@ -60,12 +61,12 @@ public class ToastCommand extends BaseCommand {
             iconItem = player.getInventory().getItemInMainHand();
         } else {
             CompoundTag nbt = ctx.getArgument("nbt", CompoundTag.class);
-            try {
-                iconItem = Codecs.ITEM_STACK.decode(NbtOps.INSTANCE, nbt);
-            } catch (Exception e) {
+            DataResult<ItemStack> res = Codecs.ITEM_STACK.decode(NbtOps.INSTANCE, nbt);
+            if (res.isError()) {
                 CommandUtil.reply(ctx, "<red>Failed to parse custom NBT item</red>");
                 return CommandResult.failure();
             }
+            iconItem = res.getOrThrow();
         }
 
         AdvancementFrame advFrame = ctx.getArgument("frame", AdvancementFrame.class);

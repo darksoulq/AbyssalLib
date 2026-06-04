@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.entity;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -81,9 +82,17 @@ public class EntityPredicateLoader {
         return Try.of(() -> {
             try (InputStream in = Files.newInputStream(path)) {
                 Object root = YamlOps.INSTANCE.parse(in);
-                return EntityPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+                DataResult<EntityPredicate> res = EntityPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+                if (res.isError()) {
+                    AbyssalLib.LOGGER.warning("Failed to decode entity predicate from " + path + ": " + res.error().get());
+                    return null;
+                }
+                if (res.isPartial()) {
+                    res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning decoding entity predicate from " + path + ": " + w.message()));
+                }
+                return res.getOrThrow();
             }
-        }).onFailure(e -> e.printStackTrace()).orElse(null);
+        }).onFailure(Throwable::printStackTrace).orElse(null);
     }
 
     /**
@@ -103,9 +112,17 @@ public class EntityPredicateLoader {
                     return null;
                 }
                 Object root = YamlOps.INSTANCE.parse(in);
-                return EntityPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+                DataResult<EntityPredicate> res = EntityPredicate.CODEC.decode(YamlOps.INSTANCE, root);
+                if (res.isError()) {
+                    plugin.getLogger().warning("Failed to decode resource entity predicate from " + resourcePath + ": " + res.error().get());
+                    return null;
+                }
+                if (res.isPartial()) {
+                    res.warnings().forEach(w -> plugin.getLogger().warning("Warning decoding resource entity predicate from " + resourcePath + ": " + w.message()));
+                }
+                return res.getOrThrow();
             }
-        }).onFailure(e -> e.printStackTrace()).orElse(null);
+        }).onFailure(Throwable::printStackTrace).orElse(null);
     }
 
     /**

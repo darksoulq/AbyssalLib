@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.common.serialization.SavedEntity;
 import com.github.darksoulq.abyssallib.common.util.Condition;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -30,6 +32,7 @@ public class EntityPredicate implements Predicate<SavedEntity> {
      * used within the predicate's data conditions.
      */
     private static final Codec<Map.Entry<String, JsonNode>> JSON_ENTRY_CODEC = new Codec<>() {
+
         /**
          * Decodes a JSON map entry from a serialized format.
          *
@@ -41,21 +44,20 @@ public class EntityPredicate implements Predicate<SavedEntity> {
          * The raw serialized input data.
          * @return
          * The decoded map entry containing a String key and a {@link JsonNode} value.
-         * @throws CodecException
-         * If the map is malformed or empty.
          */
         @Override
-        public <D> Map.Entry<String, JsonNode> decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map for entry"));
-            if (map.isEmpty()) {
-                throw new CodecException("Empty map entry");
-            }
-
-            Map.Entry<D, D> entry = map.entrySet().iterator().next();
-            String key = Codecs.STRING.decode(ops, entry.getKey());
-            JsonNode valueNode = MAPPER.valueToTree(entry.getValue());
-
-            return Map.entry(key, valueNode);
+        public <D> DataResult<Map.Entry<String, JsonNode>> decode(DynamicOps<D> ops, D input) {
+            return ops.getMap(input)
+                .map(DataResult::success)
+                .orElseGet(() -> DataResult.error("Expected Map for entry"))
+                .flatMap(map -> {
+                    if (map.isEmpty()) return DataResult.error("Empty map entry");
+                    Map.Entry<D, D> entry = map.entrySet().iterator().next();
+                    return Codecs.STRING.decode(ops, entry.getKey()).map(key -> {
+                        JsonNode valueNode = MAPPER.valueToTree(entry.getValue());
+                        return Map.entry(key, valueNode);
+                    });
+                });
         }
 
         /**
@@ -69,15 +71,17 @@ public class EntityPredicate implements Predicate<SavedEntity> {
          * The map entry to serialize.
          * @return
          * The encoded data map.
-         * @throws CodecException
-         * If the inner JSON node fails to encode.
          */
         @Override
-        public <D> D encode(DynamicOps<D> ops, Map.Entry<String, JsonNode> value) throws CodecException {
-            return ops.createMap(Map.of(
-                ops.createString(value.getKey()),
-                encodeNode(ops, value.getValue())
-            ));
+        public <D> DataResult<D> encode(DynamicOps<D> ops, Map.Entry<String, JsonNode> value) {
+            try {
+                return DataResult.success(ops.createMap(Map.of(
+                    ops.createString(value.getKey()),
+                    encodeNode(ops, value.getValue())
+                )));
+            } catch (Exception e) {
+                return DataResult.error("Failed to encode JSON node: " + e.getMessage());
+            }
         }
 
         /**
@@ -91,127 +95,77 @@ public class EntityPredicate implements Predicate<SavedEntity> {
          * The {@link JsonNode} to encode.
          * @return
          * The encoded dynamic data object.
-         * @throws CodecException
+         * @throws Exception
          * If a nested node fails to serialize.
          */
         @SuppressWarnings("unchecked")
-        private <D> D encodeNode(DynamicOps<D> ops, JsonNode node) throws CodecException {
+        private <D> D encodeNode(DynamicOps<D> ops, JsonNode node) throws Exception {
             if (node.isObject()) {
                 Map<D, D> map = new HashMap<>();
-                node.fields().forEachRemaining(e -> {
-                    try {
-                        map.put(ops.createString(e.getKey()), encodeNode(ops, e.getValue()));
-                    } catch (CodecException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                });
+                for (Iterator<Map.Entry<String, JsonNode>> it = node.fields(); it.hasNext(); ) {
+                    Map.Entry<String, JsonNode> e = it.next();
+                    map.put(ops.createString(e.getKey()), encodeNode(ops, e.getValue()));
+                }
                 return ops.createMap(map);
             } else if (node.isArray()) {
                 List<D> list = new ArrayList<>();
-                node.elements().forEachRemaining(e -> {
-                    try {
-                        list.add(encodeNode(ops, e));
-                    } catch (CodecException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                });
+                for (JsonNode e : node) {
+                    list.add(encodeNode(ops, e));
+                }
                 return ops.createList(list);
             } else if (node.isNumber()) {
                 if (node.isFloatingPointNumber()) {
-                    return (D) Codecs.FLOAT.encode(ops, node.floatValue());
+                    return (D) Codecs.FLOAT.encode(ops, node.floatValue()).getOrThrow();
                 } else {
-                    return (D) Codecs.INT.encode(ops, node.intValue());
+                    return (D) Codecs.INT.encode(ops, node.intValue()).getOrThrow();
                 }
             } else if (node.isBoolean()) {
-                return (D) Codecs.BOOLEAN.encode(ops, node.booleanValue());
+                return (D) Codecs.BOOLEAN.encode(ops, node.booleanValue()).getOrThrow();
             } else {
                 return ops.createString(node.asText());
             }
         }
+
+        @Override
+        public String describe() {
+            return "JsonEntry";
+        }
     };
+
+    /**
+     * An inline record builder variant used directly within the fallback codec.
+     */
+    private static final Codec<EntityPredicate> INLINE_CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.KEY.nullable().optionalFieldOf("id", null).forGetter(EntityPredicate.class, p -> p.id),
+        Condition.codec(JSON_ENTRY_CODEC).list().optionalFieldOf("data", Collections.emptyList()).forGetter(EntityPredicate.class, p -> p.data),
+        Condition.codec(Codec.recursive(EntityPredicate.class, c -> EntityPredicate.CODEC)).list().optionalFieldOf("predicates", Collections.emptyList()).forGetter(EntityPredicate.class, p -> p.predicates)
+    ).apply(instance, EntityPredicate::new)).describe("InlineEntityPredicate");
+
+    /**
+     * A reference variant mapping single string names to registered predicates.
+     */
+    private static final Codec<EntityPredicate> REFERENCE_CODEC = Codecs.STRING.flatXmap(
+        idStr -> {
+            EntityPredicate registered = Registries.ENTITY_PREDICATES.get(idStr);
+            if (registered == null) {
+                return DataResult.error("Unknown entity predicate: " + idStr);
+            }
+            return DataResult.success(registered);
+        },
+        pred -> {
+            if (Registries.ENTITY_PREDICATES != null && Registries.ENTITY_PREDICATES.getAll().containsValue(pred)) {
+                String id = Registries.ENTITY_PREDICATES.getId(pred);
+                if (id != null) return DataResult.success(id);
+            }
+            return DataResult.error("Unregistered predicate identity mapping");
+        }
+    ).describe("ReferenceEntityPredicate");
 
     /**
      * The primary codec used to serialize and deserialize entire {@link EntityPredicate} instances.
      * Supports resolving registered predicates by their String ID or parsing full nested objects.
      */
-    public static final Codec<EntityPredicate> CODEC = new Codec<>() {
-        /**
-         * Decodes an EntityPredicate from a serialized format.
-         *
-         * @param <D>
-         * The dynamic data type.
-         * @param ops
-         * The dynamic operations logic provider.
-         * @param input
-         * The raw serialized input data.
-         * @return
-         * The decoded {@link EntityPredicate} instance.
-         * @throws CodecException
-         * If the payload is malformed or references an unknown registered predicate.
-         */
-        @Override
-        public <D> EntityPredicate decode(DynamicOps<D> ops, D input) throws CodecException {
-            if (ops.getStringValue(input).isPresent()) {
-                String idStr = ops.getStringValue(input).get();
-                EntityPredicate registered = Registries.ENTITY_PREDICATES.get(idStr);
-                if (registered == null) {
-                    throw new CodecException("Unknown entity predicate: " + idStr);
-                }
-                return registered;
-            }
-
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map"));
-
-            Key id = null;
-            List<Condition<Map.Entry<String, JsonNode>>> data = new ArrayList<>();
-            List<Condition<EntityPredicate>> predicates = new ArrayList<>();
-
-            if (map.containsKey(ops.createString("id"))) {
-                id = Codecs.KEY.decode(ops, map.get(ops.createString("id")));
-            }
-            if (map.containsKey(ops.createString("data"))) {
-                data = Condition.codec(JSON_ENTRY_CODEC).list().decode(ops, map.get(ops.createString("data")));
-            }
-            if (map.containsKey(ops.createString("predicates"))) {
-                predicates = Condition.codec(this).list().decode(ops, map.get(ops.createString("predicates")));
-            }
-
-            return new EntityPredicate(id, data, predicates);
-        }
-
-        /**
-         * Encodes an EntityPredicate into a serialized format.
-         *
-         * @param <D>
-         * The dynamic data type.
-         * @param ops
-         * The dynamic operations logic provider.
-         * @param value
-         * The {@link EntityPredicate} to serialize.
-         * @return
-         * The encoded data, either as a reference string or a complete definition map.
-         * @throws CodecException
-         * If internal encoding operations fail.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, EntityPredicate value) throws CodecException {
-            if (Registries.ENTITY_PREDICATES != null && Registries.ENTITY_PREDICATES.getAll().containsValue(value)) {
-                return ops.createString(Registries.ENTITY_PREDICATES.getId(value));
-            }
-
-            Map<D, D> map = new HashMap<>();
-            if (value.id != null) {
-                map.put(ops.createString("id"), Codecs.KEY.encode(ops, value.id));
-            }
-            if (!value.data.isEmpty()) {
-                map.put(ops.createString("data"), Condition.codec(JSON_ENTRY_CODEC).list().encode(ops, value.data));
-            }
-            if (!value.predicates.isEmpty()) {
-                map.put(ops.createString("predicates"), Condition.codec(this).list().encode(ops, value.predicates));
-            }
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<EntityPredicate> CODEC = Codec.fallback(REFERENCE_CODEC, INLINE_CODEC).describe("EntityPredicate");
 
     /** The specific identity Key the entity must match, if defined. */
     private final Key id;

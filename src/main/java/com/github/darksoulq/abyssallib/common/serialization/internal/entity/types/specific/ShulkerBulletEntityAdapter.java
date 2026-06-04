@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
@@ -20,37 +17,42 @@ public class ShulkerBulletEntityAdapter extends EntityAdapter<ShulkerBullet> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, ShulkerBullet value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("target_delta"), Codecs.VECTOR_F.encode(ops, value.getTargetDelta()));
-        map.put(ops.createString("flight_steps"), Codecs.INT.encode(ops, value.getFlightSteps()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, ShulkerBullet value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("target_delta", Codecs.VECTOR_F, value.getTargetDelta())
+            .write("flight_steps", Codecs.INT, value.getFlightSteps());
 
         if (value.getTarget() != null) {
-            map.put(ops.createString("target_uuid"), Codecs.UUID.encode(ops, value.getTarget().getUniqueId()));
+            ctx.write("target_uuid", Codecs.UUID, value.getTarget().getUniqueId());
         }
 
         if (value.getCurrentMovementDirection() != null) {
-            map.put(ops.createString("current_movement_direction"), Codecs.STRING.encode(ops, value.getCurrentMovementDirection().name()));
+            ctx.write("current_movement_direction", Codecs.STRING, value.getCurrentMovementDirection().name());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof ShulkerBullet bullet)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof ShulkerBullet bullet)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("target_delta")))).onSuccess(bullet::setTargetDelta);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("flight_steps")))).onSuccess(bullet::setFlightSteps);
-
-        D targetData = map.get(ops.createString("target_uuid"));
-        if (targetData != null) {
-            Try.of(() -> Codecs.UUID.decode(ops, targetData)).onSuccess(uuid -> {
+        ctx.readOptional("target_delta", Codecs.VECTOR_F, opt -> opt.ifPresent(bullet::setTargetDelta))
+            .readOptional("flight_steps", Codecs.INT, opt -> opt.ifPresent(bullet::setFlightSteps))
+            .readOptional("target_uuid", Codecs.UUID, opt -> opt.ifPresent(uuid -> {
                 Entity target = Bukkit.getEntity(uuid);
                 if (target != null) bullet.setTarget(target);
-            });
-        }
+            }))
+            .readOptional("current_movement_direction", Codecs.STRING, opt -> opt.ifPresent(dir -> {
+                try {
+                    bullet.setCurrentMovementDirection(BlockFace.valueOf(dir));
+                } catch (Exception ignored) {
+                }
+            }));
 
-        D directionData = map.get(ops.createString("current_movement_direction"));
-        if (directionData != null) {
-            Try.of(() -> Codecs.STRING.decode(ops, directionData)).onSuccess(s -> bullet.setCurrentMovementDirection(BlockFace.valueOf(s)));
-        }
+        return ctx.result();
     }
 }

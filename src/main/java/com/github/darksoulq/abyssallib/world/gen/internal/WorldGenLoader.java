@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacedFeature;
@@ -71,9 +72,13 @@ public class WorldGenLoader {
                 JsonNode root = RAW_NODES.get(id);
 
                 if (root.has("worlds")) {
-                    List<String> worlds = Codecs.STRING.list().decode(JsonOps.INSTANCE, root.get("worlds"));
-                    for (String worldName : worlds) {
-                        WorldGenManager.addFeature(worldName, feature);
+                    DataResult<List<String>> res = Codecs.STRING.list().decode(JsonOps.INSTANCE, root.get("worlds"));
+                    if(res.isSuccess()) {
+                        for (String worldName : res.getOrThrow()) {
+                            WorldGenManager.addFeature(worldName, feature);
+                        }
+                    } else {
+                        AbyssalLib.LOGGER.warning("Failed to decode worlds list for feature '" + id + "': " + res.error().get());
                     }
                 }
             } catch (Exception e) {
@@ -92,7 +97,12 @@ public class WorldGenLoader {
     public static PlacedFeature load(Path path) {
         return Try.of(() -> {
             JsonNode root = MAPPER.readTree(path.toFile());
-            return PlacedFeature.CODEC.decode(JsonOps.INSTANCE, root);
+            DataResult<PlacedFeature> res = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, root);
+            if(res.isError()) {
+                AbyssalLib.LOGGER.warning("Failed to decode feature from " + path + ": " + res.error().get());
+                return null;
+            }
+            return res.getOrThrow();
         }).onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load standalone feature from " + path + ": " + e.getMessage() + ". Skipping.")).orElse(null);
     }
 
@@ -111,7 +121,12 @@ public class WorldGenLoader {
                     return null;
                 }
                 JsonNode root = MAPPER.readTree(in);
-                return PlacedFeature.CODEC.decode(JsonOps.INSTANCE, root);
+                DataResult<PlacedFeature> res = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, root);
+                if(res.isError()) {
+                    AbyssalLib.LOGGER.warning("Failed to decode feature resource from " + resourcePath + ": " + res.error().get());
+                    return null;
+                }
+                return res.getOrThrow();
             }
         }).onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load feature resource from " + resourcePath + ": " + e.getMessage() + ". Skipping.")).orElse(null);
     }
@@ -155,7 +170,12 @@ public class WorldGenLoader {
         JsonNode node = RAW_NODES.get(id);
 
         try {
-            PlacedFeature feature = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, node);
+            DataResult<PlacedFeature> res = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, node);
+            if(res.isError()) {
+                AbyssalLib.LOGGER.warning("Failed to decode referenced feature '" + id + "': " + res.error().get() + ". Skipping.");
+                return null;
+            }
+            PlacedFeature feature = res.getOrThrow();
             RESOLVED_FEATURES.put(id, feature);
             return feature;
         } catch (Exception e) {

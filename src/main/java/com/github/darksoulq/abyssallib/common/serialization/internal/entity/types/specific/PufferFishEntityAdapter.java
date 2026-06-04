@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.PufferFish;
 
@@ -18,13 +15,20 @@ public class PufferFishEntityAdapter extends EntityAdapter<PufferFish> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, PufferFish value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("puff_state"), Codecs.INT.encode(ops, value.getPuffState()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, PufferFish value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+        ctx.write("puff_state", Codecs.INT, value.getPuffState());
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof PufferFish fish)) return;
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("puff_state")))).onSuccess(fish::setPuffState);
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof PufferFish fish)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
+
+        ctx.readOptional("puff_state", Codecs.INT, opt -> opt.ifPresent(fish::setPuffState));
+
+        return ctx.result();
     }
 }

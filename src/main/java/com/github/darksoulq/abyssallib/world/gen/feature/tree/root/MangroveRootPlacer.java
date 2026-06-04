@@ -1,13 +1,11 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.tree.root;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -21,17 +19,7 @@ public class MangroveRootPlacer extends RootPlacer {
     /**
      * The codec used for serializing and deserializing the mangrove root placer.
      */
-    public static final Codec<MangroveRootPlacer> CODEC = new Codec<>() {
-        @Override
-        public <D> MangroveRootPlacer decode(DynamicOps<D> ops, D input) {
-            return new MangroveRootPlacer();
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, MangroveRootPlacer value) {
-            return ops.createMap(new HashMap<>());
-        }
-    };
+    public static final Codec<MangroveRootPlacer> CODEC = Codec.unit(MangroveRootPlacer::new).describe("MangroveRootPlacer");
 
     /**
      * The registered type definition for the mangrove root placer.
@@ -61,7 +49,7 @@ public class MangroveRootPlacer extends RootPlacer {
         for (int i = 0; i < 4; i++) {
             int dx = random.nextInt(3) * (random.nextBoolean() ? 1 : -1);
             int dz = random.nextInt(3) * (random.nextBoolean() ? 1 : -1);
-            
+
             Location rootEnd = origin.clone().add(dx, 0, dz);
 
             int currentY = trunkOrigin.getBlockY();
@@ -70,7 +58,7 @@ public class MangroveRootPlacer extends RootPlacer {
 
             while (currentY >= rootEnd.getBlockY()) {
                 Location pos = new Location(level.getWorld(), currentX, currentY, currentZ);
-                
+
                 if (level.getType(currentX, currentY, currentZ).isAir()) {
                     WorldGenUtils.placeBlock(level, pos, rootProvider.getState(random, pos));
                 }
@@ -79,7 +67,7 @@ public class MangroveRootPlacer extends RootPlacer {
                 if (currentY > rootEnd.getBlockY() && random.nextBoolean()) {
                     if (currentX < rootEnd.getBlockX()) currentX++;
                     else if (currentX > rootEnd.getBlockX()) currentX--;
-                    
+
                     if (currentZ < rootEnd.getBlockZ()) currentZ++;
                     else if (currentZ > rootEnd.getBlockZ()) currentZ--;
                 }

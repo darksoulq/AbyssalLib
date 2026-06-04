@@ -2,14 +2,12 @@ package com.github.darksoulq.abyssallib.world.gen.placement.modifier;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementContext;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -24,40 +22,9 @@ public class ChanceModifier extends PlacementModifier {
     /**
      * The codec used for serializing and deserializing the chance modifier.
      */
-    public static final Codec<ChanceModifier> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the modifier from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the chance modifier.
-         * @throws CodecException If the chance field is missing.
-         */
-        @Override
-        public <D> ChanceModifier decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int chance = Codecs.INT.decode(ops, map.get(ops.createString("chance")));
-            return new ChanceModifier(chance);
-        }
-
-        /**
-         * Encodes the modifier into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The modifier instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, ChanceModifier value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("chance"), Codecs.INT.encode(ops, Math.max(1, value.chance)));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<ChanceModifier> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("chance").forGetter(ChanceModifier.class, p -> p.chance)
+    ).apply(instance, ChanceModifier::new)).describe("ChanceModifier");
 
     /**
      * The registered type definition for the chance placement modifier.

@@ -5,7 +5,6 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.data.tag.TagType;
-import com.github.darksoulq.abyssallib.world.data.tag.TagTypes;
 import net.kyori.adventure.key.Key;
 
 import java.util.HashSet;
@@ -15,7 +14,7 @@ import java.util.Set;
  * Implementation of a {@link Tag} for blocks, matching their ID strings against {@link BlockInfo}.
  */
 public class BlockTag extends Tag<String, BlockInfo> {
-    public static final TagType<String, BlockInfo> TYPE = new TagType<String, BlockInfo>() {
+    public static final TagType<String, BlockInfo> TYPE = new TagType<>() {
         @Override
         public Codec<String> codec() {
             return Codecs.STRING;
@@ -26,6 +25,7 @@ public class BlockTag extends Tag<String, BlockInfo> {
             return new BlockTag(id);
         }
     };
+
     /**
      * Constructs a new BlockTag.
      *
@@ -38,7 +38,7 @@ public class BlockTag extends Tag<String, BlockInfo> {
     /**
      * Retrieves the specific type of this tag.
      *
-     * @return The {@link TagTypes#BLOCK} type.
+     * @return The {@link TagType} representing a Block tag.
      */
     @Override
     public TagType<String, BlockInfo> getType() {

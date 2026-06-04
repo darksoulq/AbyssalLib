@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.entity.Bee;
 import org.bukkit.entity.Entity;
@@ -19,39 +16,45 @@ public class BeeEntityAdapter extends EntityAdapter<Bee> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Bee value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("has_nectar"), Codecs.BOOLEAN.encode(ops, value.hasNectar()));
-        map.put(ops.createString("has_stung"), Codecs.BOOLEAN.encode(ops, value.hasStung()));
-        map.put(ops.createString("anger"), Codecs.INT.encode(ops, value.getAnger()));
-        map.put(ops.createString("cannot_enter_hive_ticks"), Codecs.INT.encode(ops, value.getCannotEnterHiveTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Bee value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getFlower() != null) map.put(ops.createString("flower_pos"), Codecs.LOCATION.encode(ops, value.getFlower()));
-        if (value.getHive() != null) map.put(ops.createString("hive_pos"), Codecs.LOCATION.encode(ops, value.getHive()));
+        ctx.write("has_nectar", Codecs.BOOLEAN, value.hasNectar())
+            .write("has_stung", Codecs.BOOLEAN, value.hasStung())
+            .write("anger", Codecs.INT, value.getAnger())
+            .write("cannot_enter_hive_ticks", Codecs.INT, value.getCannotEnterHiveTicks())
+            .writeNullable("flower_pos", Codecs.LOCATION, value.getFlower())
+            .writeNullable("hive_pos", Codecs.LOCATION, value.getHive())
+            .write("rolling_override", Codecs.STRING, value.getRollingOverride().name())
+            .write("crops_grown_since_pollination", Codecs.INT, value.getCropsGrownSincePollination())
+            .write("ticks_since_pollination", Codecs.INT, value.getTicksSincePollination())
+            .write("time_since_sting", Codecs.INT, value.getTimeSinceSting());
 
-        map.put(ops.createString("rolling_override"), Codecs.STRING.encode(ops, value.getRollingOverride().name()));
-        map.put(ops.createString("crops_grown_since_pollination"), Codecs.INT.encode(ops, value.getCropsGrownSincePollination()));
-        map.put(ops.createString("ticks_since_pollination"), Codecs.INT.encode(ops, value.getTicksSincePollination()));
-        map.put(ops.createString("time_since_sting"), Codecs.INT.encode(ops, value.getTimeSinceSting()));
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Bee bee)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Bee bee)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_nectar")))).onSuccess(bee::setHasNectar);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_stung")))).onSuccess(bee::setHasStung);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("anger")))).onSuccess(bee::setAnger);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("cannot_enter_hive_ticks")))).onSuccess(bee::setCannotEnterHiveTicks);
+        ctx.readOptional("has_nectar", Codecs.BOOLEAN, opt -> opt.ifPresent(bee::setHasNectar))
+            .readOptional("has_stung", Codecs.BOOLEAN, opt -> opt.ifPresent(bee::setHasStung))
+            .readOptional("anger", Codecs.INT, opt -> opt.ifPresent(bee::setAnger))
+            .readOptional("cannot_enter_hive_ticks", Codecs.INT, opt -> opt.ifPresent(bee::setCannotEnterHiveTicks))
+            .readOptional("flower_pos", Codecs.LOCATION, opt -> opt.ifPresent(bee::setFlower))
+            .readOptional("hive_pos", Codecs.LOCATION, opt -> opt.ifPresent(bee::setHive))
+            .readOptional("rolling_override", Codecs.STRING, opt -> opt.ifPresent(state -> {
+                try {
+                    bee.setRollingOverride(TriState.valueOf(state));
+                } catch (Exception ignored) {
+                }
+            }))
+            .readOptional("crops_grown_since_pollination", Codecs.INT, opt -> opt.ifPresent(bee::setCropsGrownSincePollination))
+            .readOptional("ticks_since_pollination", Codecs.INT, opt -> opt.ifPresent(bee::setTicksSincePollination))
+            .readOptional("time_since_sting", Codecs.INT, opt -> opt.ifPresent(bee::setTimeSinceSting));
 
-        D flower = map.get(ops.createString("flower_pos"));
-        if (flower != null) Try.of(() -> Codecs.LOCATION.decode(ops, flower)).onSuccess(bee::setFlower);
-
-        D hive = map.get(ops.createString("hive_pos"));
-        if (hive != null) Try.of(() -> Codecs.LOCATION.decode(ops, hive)).onSuccess(bee::setHive);
-
-        Try.of(() -> Codecs.STRING.decode(ops, map.get(ops.createString("rolling_override")))).onSuccess(s -> bee.setRollingOverride(TriState.valueOf(s)));
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("crops_grown_since_pollination")))).onSuccess(bee::setCropsGrownSincePollination);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("ticks_since_pollination")))).onSuccess(bee::setTicksSincePollination);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("time_since_sting")))).onSuccess(bee::setTimeSinceSting);
+        return ctx.result();
     }
 }

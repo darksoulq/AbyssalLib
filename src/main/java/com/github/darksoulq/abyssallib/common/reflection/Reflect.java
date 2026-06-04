@@ -15,15 +15,18 @@ public final class Reflect {
 
     public static Result<ReflectClass<?>> of(String className) {
         try {
-            if (CLASS_CACHE.containsKey(className)) {
-                return Result.success(CLASS_CACHE.get(className));
+            return Result.success(CLASS_CACHE.computeIfAbsent(className, k -> {
+                try {
+                    return new ReflectClass<>(Class.forName(k));
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof ReflectiveOperationException) {
+                return Result.failure(e.getCause());
             }
-            Class<?> clazz = Class.forName(className);
-            ReflectClass<?> rc = new ReflectClass<>(clazz);
-            CLASS_CACHE.put(className, rc);
-            return Result.success(rc);
-        } catch (Throwable t) {
-            return Result.failure(t);
+            return Result.failure(e);
         }
     }
 }

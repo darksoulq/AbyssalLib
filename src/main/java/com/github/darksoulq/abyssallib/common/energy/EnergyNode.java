@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.energy;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.Location;
@@ -108,30 +109,23 @@ public interface EnergyNode {
     /**
      * Polymorphic codec for all energy node types.
      */
-    Codec<EnergyNode> CODEC = new Codec<>() {
-        @Override
-        public <D> EnergyNode decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            String typeId = ops.getStringValue(map.get(ops.createString("type")))
-                .orElseThrow(() -> new CodecException("Missing type"));
-
+    Codec<EnergyNode> CODEC = Codec.dispatch(
+        EnergyNode.class,
+        "type",
+        Codecs.STRING,
+        node -> {
+            String typeId = Registries.ENERGY_NODE_TYPES.getId(node.getType());
+            if (typeId == null) {
+                throw new IllegalStateException("Unregistered energy node type");
+            }
+            return typeId;
+        },
+        typeId -> {
             EnergyNodeType<?> type = Registries.ENERGY_NODE_TYPES.get(typeId);
-            if (type == null) throw new CodecException("Unknown energy node type: " + typeId);
-
-            return type.codec().decode(ops, input);
+            if (type == null) {
+                return Codec.error("Unknown energy node type: " + typeId);
+            }
+            return type.codec().unchecked();
         }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public <D> D encode(DynamicOps<D> ops, EnergyNode value) throws CodecException {
-            EnergyNodeType<EnergyNode> type = (EnergyNodeType<EnergyNode>) value.getType();
-            String id = Registries.ENERGY_NODE_TYPES.getId(type);
-            if (id == null) throw new CodecException("Unregistered energy node type");
-
-            D encoded = type.codec().encode(ops, value);
-            Map<D, D> map = ops.getMap(encoded).orElseThrow(() -> new CodecException("Codec must return map"));
-            map.put(ops.createString("type"), ops.createString(id));
-            return ops.createMap(map);
-        }
-    };
+    ).describe("EnergyNode");
 }

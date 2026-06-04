@@ -1,7 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
 import org.bukkit.Bukkit;
@@ -22,26 +23,41 @@ public class ConduitTileAdapter extends TileAdapter<Conduit> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Conduit value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Conduit value) {
         Map<D, D> map = new HashMap<>();
+
         if (value.getTarget() != null) {
-            map.put(ops.createString("target"), Codecs.UUID.encode(ops, value.getTarget().getUniqueId()));
+            DataResult<D> res = Codecs.UUID.encode(ops, value.getTarget().getUniqueId()).prependPath("target");
+            if (res.isError()) return DataResult.error(res.error().get());
+
+            map.put(ops.createString("target"), res.getOrThrow());
+            return res.isPartial() ? DataResult.partial(ops.createMap(map), res.warnings()) : DataResult.success(ops.createMap(map));
         }
-        return ops.createMap(map);
+
+        return DataResult.success(ops.createMap(map));
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Conduit conduit)) return;
-        Map<D, D> map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected map for Conduit"));
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Conduit conduit)) return DataResult.success(null);
 
-        D targetData = map.get(ops.createString("target"));
-        if (targetData != null) {
-            UUID uuid = Codecs.UUID.decode(ops, targetData);
-            Entity entity = Bukkit.getEntity(uuid);
-            if (entity instanceof LivingEntity living) {
-                conduit.setTarget(living);
-            }
-        }
+        return ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+            .flatMap(map -> {
+                D targetData = map.get(ops.createString("target"));
+                if (targetData != null) {
+                    DataResult<UUID> res = Codecs.UUID.decode(ops, targetData).prependPath("target");
+                    if (res.isError()) return DataResult.error(res.error().get());
+
+                    Entity entity = Bukkit.getEntity(res.getOrThrow());
+                    if (entity instanceof LivingEntity living) {
+                        conduit.setTarget(living);
+                    }
+
+                    return res.isPartial() ? DataResult.partial(null, res.warnings()) : DataResult.success(null);
+                }
+                return DataResult.success(null);
+            });
     }
 }

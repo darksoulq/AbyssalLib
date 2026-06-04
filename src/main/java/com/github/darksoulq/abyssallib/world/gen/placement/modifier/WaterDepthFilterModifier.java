@@ -2,15 +2,13 @@ package com.github.darksoulq.abyssallib.world.gen.placement.modifier;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementContext;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -25,40 +23,9 @@ public class WaterDepthFilterModifier extends PlacementModifier {
     /**
      * The codec used for serializing and deserializing the water depth filter modifier.
      */
-    public static final Codec<WaterDepthFilterModifier> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the modifier from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the water depth filter modifier.
-         * @throws CodecException If the max_depth field is missing.
-         */
-        @Override
-        public <D> WaterDepthFilterModifier decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int maxDepth = Codecs.INT.decode(ops, map.get(ops.createString("max_depth")));
-            return new WaterDepthFilterModifier(maxDepth);
-        }
-
-        /**
-         * Encodes the modifier into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The modifier instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, WaterDepthFilterModifier value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("max_depth"), Codecs.INT.encode(ops, value.maxDepth));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<WaterDepthFilterModifier> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("max_depth").forGetter(WaterDepthFilterModifier.class, p -> p.maxDepth)
+    ).apply(instance, WaterDepthFilterModifier::new)).describe("WaterDepthFilterModifier");
 
     /**
      * The registered type definition for the water depth filter placement modifier.
@@ -94,7 +61,7 @@ public class WaterDepthFilterModifier extends PlacementModifier {
 
             while (y + depth < context.getHeight()) {
                 Material mat = context.level().getType(x, y + depth, z);
-                
+
                 if (mat == Material.WATER) {
                     depth++;
                     if (depth > maxDepth) {

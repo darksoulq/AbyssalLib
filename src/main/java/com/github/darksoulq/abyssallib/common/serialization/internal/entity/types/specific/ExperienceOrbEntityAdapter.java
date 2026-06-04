@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ExperienceOrb;
 
@@ -18,16 +15,24 @@ public class ExperienceOrbEntityAdapter extends EntityAdapter<ExperienceOrb> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, ExperienceOrb value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("experience"), Codecs.INT.encode(ops, value.getExperience()));
-        map.put(ops.createString("count"), Codecs.INT.encode(ops, value.getCount()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, ExperienceOrb value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("experience", Codecs.INT, value.getExperience())
+            .write("count", Codecs.INT, value.getCount());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof ExperienceOrb orb)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof ExperienceOrb orb)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("experience")))).onSuccess(orb::setExperience);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("count")))).onSuccess(orb::setCount);
+        ctx.readOptional("experience", Codecs.INT, opt -> opt.ifPresent(orb::setExperience))
+            .readOptional("count", Codecs.INT, opt -> opt.ifPresent(orb::setCount));
+
+        return ctx.result();
     }
 }

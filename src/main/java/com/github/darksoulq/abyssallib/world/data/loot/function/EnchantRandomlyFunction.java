@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.data.loot.function;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
@@ -17,9 +17,8 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A loot function that applies a random enchantment to the generated item.
@@ -33,40 +32,9 @@ import java.util.Map;
 public class EnchantRandomlyFunction extends LootFunction {
 
     /** The codec used for serializing and deserializing this function's configuration. */
-    public static final Codec<EnchantRandomlyFunction> CODEC = new Codec<>() {
-        /**
-         * Decodes the function from a map structure.
-         * * @param ops   The {@link DynamicOps} logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of {@link EnchantRandomlyFunction}.
-         * @throws CodecException If the input is not a valid map.
-         */
-        @Override
-        public <D> EnchantRandomlyFunction decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            List<String> enchantments = new ArrayList<>();
-            if (map.containsKey(ops.createString("enchantments"))) {
-                enchantments = Codecs.STRING.list().decode(ops, map.get(ops.createString("enchantments")));
-            }
-            return new EnchantRandomlyFunction(enchantments);
-        }
-
-        /**
-         * Encodes the function into a map structure.
-         * * @param ops   The {@link DynamicOps} logic.
-         * @param value The function instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded map object.
-         * @throws CodecException If encoding fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, EnchantRandomlyFunction value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("enchantments"), Codecs.STRING.list().encode(ops, value.enchantments));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<EnchantRandomlyFunction> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.STRING.list().optionalFieldOf("enchantments", Collections.emptyList()).forGetter(EnchantRandomlyFunction.class, p -> p.enchantments)
+    ).apply(instance, EnchantRandomlyFunction::new)).describe("EnchantRandomlyFunction");
 
     /** The registered type definition for this loot function. */
     public static final LootFunctionType<EnchantRandomlyFunction> TYPE = () -> CODEC;

@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Entity;
 
@@ -18,21 +15,24 @@ public class AnimalsEntityAdapter extends EntityAdapter<Animals> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Animals value, Map<D, D> map) throws Codec.CodecException {
-        if (value.getBreedCause() != null) {
-            map.put(ops.createString("breed_cause"), Codecs.UUID.encode(ops, value.getBreedCause()));
-        }
-        map.put(ops.createString("love_mode_ticks"), Codecs.INT.encode(ops, value.getLoveModeTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Animals value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.writeNullable("breed_cause", Codecs.UUID, value.getBreedCause())
+            .write("love_mode_ticks", Codecs.INT, value.getLoveModeTicks());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Animals animals)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Animals animals)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D causeData = map.get(ops.createString("breed_cause"));
-        if (causeData != null) {
-            Try.of(() -> Codecs.UUID.decode(ops, causeData)).onSuccess(animals::setBreedCause);
-        }
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("love_mode_ticks")))).onSuccess(animals::setLoveModeTicks);
+        ctx.readOptional("breed_cause", Codecs.UUID, opt -> opt.ifPresent(animals::setBreedCause))
+            .readOptional("love_mode_ticks", Codecs.INT, opt -> opt.ifPresent(animals::setLoveModeTicks));
+
+        return ctx.result();
     }
 }

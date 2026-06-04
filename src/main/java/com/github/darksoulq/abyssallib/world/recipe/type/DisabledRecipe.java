@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.recipe.type;
 import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
 import org.bukkit.NamespacedKey;
+import org.jspecify.annotations.NonNull;
 
 public class DisabledRecipe implements CustomRecipe {
 
@@ -13,7 +14,7 @@ public class DisabledRecipe implements CustomRecipe {
     }
 
     @Override
-    public NamespacedKey getKey() {
+    public @NonNull NamespacedKey getKey() {
         return id;
     }
 

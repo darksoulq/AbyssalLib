@@ -9,16 +9,16 @@ public final class ReflectArray {
     public static Result<Object> newInstance(Class<?> componentType, int length) {
         try {
             return Result.success(Array.newInstance(componentType, length));
-        } catch (Throwable t) {
-            return Result.failure(t);
+        } catch (IllegalArgumentException | NegativeArraySizeException e) {
+            return Result.failure(e);
         }
     }
 
     public static Result<Object> get(Object array, int index) {
         try {
             return Result.success(Array.get(array, index));
-        } catch (Throwable t) {
-            return Result.failure(t);
+        } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+            return Result.failure(e);
         }
     }
 
@@ -26,16 +26,16 @@ public final class ReflectArray {
         try {
             Array.set(array, index, value);
             return Result.success(null);
-        } catch (Throwable t) {
-            return Result.failure(t);
+        } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+            return Result.failure(e);
         }
     }
 
     public static Result<Integer> getLength(Object array) {
         try {
             return Result.success(Array.getLength(array));
-        } catch (Throwable t) {
-            return Result.failure(t);
+        } catch (IllegalArgumentException e) {
+            return Result.failure(e);
         }
     }
 }

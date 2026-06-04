@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Explosive;
 
@@ -18,16 +15,24 @@ public class ExplosiveEntityAdapter extends EntityAdapter<Explosive> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Explosive value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("yield"), Codecs.FLOAT.encode(ops, value.getYield()));
-        map.put(ops.createString("is_incendiary"), Codecs.BOOLEAN.encode(ops, value.isIncendiary()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Explosive value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("yield", Codecs.FLOAT, value.getYield())
+            .write("is_incendiary", Codecs.BOOLEAN, value.isIncendiary());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Explosive explosive)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Explosive explosive)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("yield")))).onSuccess(explosive::setYield);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_incendiary")))).onSuccess(explosive::setIsIncendiary);
+        ctx.readOptional("yield", Codecs.FLOAT, opt -> opt.ifPresent(explosive::setYield))
+            .readOptional("is_incendiary", Codecs.BOOLEAN, opt -> opt.ifPresent(explosive::setIsIncendiary));
+
+        return ctx.result();
     }
 }

@@ -1,9 +1,9 @@
 package com.github.darksoulq.abyssallib.world.structure;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
+import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import net.kyori.adventure.key.Key;
@@ -27,13 +27,10 @@ import java.util.zip.GZIPOutputStream;
  */
 public class StructureLoader {
 
-    /** * The root directory where structure files are stored on the server file system.
+    /**
+     * The root directory where structure files are stored on the server file system.
      */
     private static final Path STRUCTURES_FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "structures").toPath();
-
-    /** * The shared Jackson ObjectMapper instance utilized for JSON processing and parsing.
-     */
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
      * Initializes the structure folder and performs a recursive scan for valid files.
@@ -62,8 +59,7 @@ public class StructureLoader {
     /**
      * Internal helper to derive an identifier from a file path and register the structure.
      *
-     * @param path
-     * The {@link Path} to the serialized structure file on the disk.
+     * @param path The {@link Path} to the serialized structure file on the disk.
      */
     private static void loadFileAndRegister(Path path) {
         Key id = getStructureId(path);
@@ -85,22 +81,30 @@ public class StructureLoader {
      * Loads and deserializes a structure from a specific file path on the disk.
      * Supports both raw JSON files and GZIP compressed {@code .struct} files.
      *
-     * @param path
-     * The {@link Path} pointing to the target file.
-     * @return
-     * The deserialized {@link Structure} instance, or null if parsing fails.
+     * @param path The {@link Path} pointing to the target file.
+     * @return The deserialized {@link Structure} instance, or null if parsing fails.
      */
     public static Structure load(Path path) {
         return Try.of(() -> {
             JsonNode root;
             if (path.toString().endsWith(".struct")) {
                 try (GZIPInputStream gis = new GZIPInputStream(Files.newInputStream(path))) {
-                    root = MAPPER.readTree(gis);
+                    root = JsonOps.INSTANCE.mapper.readTree(gis);
                 }
             } else {
-                root = MAPPER.readTree(path.toFile());
+                root = JsonOps.INSTANCE.mapper.readTree(path.toFile());
             }
-            return Structure.deserialize(root);
+
+            DataResult<Structure> res = Structure.CODEC.decode(JsonOps.INSTANCE, root);
+            if (res.isError()) {
+                AbyssalLib.LOGGER.severe("Failed to decode structure from " + path + ": " + res.error().get());
+                return null;
+            }
+            if (res.isPartial()) {
+                res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Structure decoding warning: " + warning.message()));
+            }
+            return res.getOrThrow();
+
         }).onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load structure from " + path + ": " + e.getMessage())).orElse(null);
     }
 
@@ -108,12 +112,9 @@ public class StructureLoader {
      * Loads a structure embedded within a plugin's internal JAR resources.
      * Supports both raw JSON files and GZIP compressed {@code .struct} files.
      *
-     * @param plugin
-     * The {@link Plugin} instance owning the internal resource.
-     * @param resourcePath
-     * The internal String path within the JAR (e.g., "assets/myplugin/structures/house.json").
-     * @return
-     * The deserialized {@link Structure} instance, or null if the resource is missing or invalid.
+     * @param plugin       The {@link Plugin} instance owning the internal resource.
+     * @param resourcePath The internal String path within the JAR (e.g., "assets/myplugin/structures/house.json").
+     * @return The deserialized {@link Structure} instance, or null if the resource is missing or invalid.
      */
     public static Structure loadResource(Plugin plugin, String resourcePath) {
         return Try.of(() -> {
@@ -124,12 +125,21 @@ public class StructureLoader {
                 JsonNode root;
                 if (resourcePath.endsWith(".struct")) {
                     try (GZIPInputStream gis = new GZIPInputStream(in)) {
-                        root = MAPPER.readTree(gis);
+                        root = JsonOps.INSTANCE.mapper.readTree(gis);
                     }
                 } else {
-                    root = MAPPER.readTree(in);
+                    root = JsonOps.INSTANCE.mapper.readTree(in);
                 }
-                return Structure.deserialize(root);
+
+                DataResult<Structure> res = Structure.CODEC.decode(JsonOps.INSTANCE, root);
+                if (res.isError()) {
+                    AbyssalLib.LOGGER.severe("Failed to decode structure from resource " + resourcePath + ": " + res.error().get());
+                    return null;
+                }
+                if (res.isPartial()) {
+                    res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Structure decoding warning: " + warning.message()));
+                }
+                return res.getOrThrow();
             }
         }).onFailure(Throwable::printStackTrace).orElse(null);
     }
@@ -139,12 +149,9 @@ public class StructureLoader {
      * The file is automatically saved at {@code structures/<namespace>/<path>.struct}
      * utilizing GZIP compression to minimize disk footprint.
      *
-     * @param id
-     * The {@link Key} defining the namespace and file name layout.
-     * @param structure
-     * The {@link Structure} instance to serialize and save.
-     * @return
-     * True if the I/O write operation was successful, false otherwise.
+     * @param id        The {@link Key} defining the namespace and file name layout.
+     * @param structure The {@link Structure} instance to serialize and save.
+     * @return True if the I/O write operation was successful, false otherwise.
      */
     public static boolean save(Key id, Structure structure) {
         Path namespaceFolder = STRUCTURES_FOLDER.resolve(id.namespace());
@@ -154,9 +161,18 @@ public class StructureLoader {
             }
 
             Path file = namespaceFolder.resolve(id.value() + ".struct");
-            ObjectNode root = structure.serialize();
+
+            DataResult<JsonNode> res = Structure.CODEC.encode(JsonOps.INSTANCE, structure);
+            if (res.isError()) {
+                AbyssalLib.LOGGER.severe("Failed to encode structure " + id + ": " + res.error().get());
+                return false;
+            }
+            if (res.isPartial()) {
+                res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Structure encoding warning: " + warning.message()));
+            }
+
             try (OutputStream os = new GZIPOutputStream(Files.newOutputStream(file))) {
-                MAPPER.writer().writeValue(os, root);
+                JsonOps.INSTANCE.mapper.writer().writeValue(os, res.getOrThrow());
             }
             return true;
         } catch (IOException e) {
@@ -170,10 +186,8 @@ public class StructureLoader {
      * within the root structures folder. For example, a file located at
      * {@code structures/abyssallib/dungeon/room1.json} yields the ID {@code abyssallib:dungeon/room1}.
      *
-     * @param file
-     * The absolute {@link Path} to the file being evaluated.
-     * @return
-     * The derived {@link Key}, or null if the file resides outside a valid namespace subfolder.
+     * @param file The absolute {@link Path} to the file being evaluated.
+     * @return The derived {@link Key}, or null if the file resides outside a valid namespace subfolder.
      */
     private static Key getStructureId(Path file) {
         Path relative = STRUCTURES_FOLDER.relativize(file);

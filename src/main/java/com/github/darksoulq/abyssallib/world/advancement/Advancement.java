@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.advancement;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.advancement.criterion.AdvancementCriterion;
 import com.github.darksoulq.abyssallib.world.advancement.reward.AdvancementReward;
@@ -32,107 +32,13 @@ public class Advancement {
      * The codec responsible for serializing and deserializing advancements.
      * Supports nested criteria, rewards, and display information.
      */
-    @SuppressWarnings("unchecked")
-    public static final Codec<Advancement> CODEC = new Codec<>() {
-        /**
-         * Decodes an Advancement from a serialized format.
-         *
-         * @param <D> The data format type.
-         * @param ops The provider for reading data.
-         * @param input The raw serialized data.
-         * @return The reconstructed Advancement instance.
-         * @throws CodecException If the data is malformed or types are unknown.
-         */
-        @Override
-        public <D> Advancement decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for Advancement"));
-            Key id = Codecs.KEY.decode(ops, map.get(ops.createString("id")));
-            Builder builder = builder(id);
-
-            D parentData = map.get(ops.createString("parent"));
-            if (parentData != null) {
-                builder.parent(Codecs.KEY.decode(ops, parentData));
-            }
-
-            D displayData = map.get(ops.createString("display"));
-            if (displayData != null) {
-                builder.display(AdvancementDisplay.CODEC.decode(ops, displayData));
-            }
-
-            D criteriaData = map.get(ops.createString("criteria"));
-            if (criteriaData != null) {
-                Map<D, D> criteriaMap = ops.getMap(criteriaData).orElseThrow();
-                for (Map.Entry<D, D> entry : criteriaMap.entrySet()) {
-                    String name = Codecs.STRING.decode(ops, entry.getKey());
-                    Map<D, D> critNode = ops.getMap(entry.getValue()).orElseThrow();
-                    String typeId = Codecs.STRING.decode(ops, critNode.get(ops.createString("type")));
-                    Codec<AdvancementCriterion> codec = (Codec<AdvancementCriterion>) Registries.CRITERION.get(typeId).getCodec();
-                    builder.criterion(name, codec.decode(ops, entry.getValue()));
-                }
-            }
-
-            D rewardsData = map.get(ops.createString("rewards"));
-            if (rewardsData != null) {
-                for (D rewardNode : ops.getList(rewardsData).orElseThrow()) {
-                    Map<D, D> rewardMap = ops.getMap(rewardNode).orElseThrow();
-                    String typeId = Codecs.STRING.decode(ops, rewardMap.get(ops.createString("type")));
-                    Codec<AdvancementReward> codec = (Codec<AdvancementReward>) Registries.REWARDS.get(typeId).getCodec();
-                    builder.reward(codec.decode(ops, rewardNode));
-                }
-            }
-
-            return builder.build();
-        }
-
-        /**
-         * Encodes an Advancement into a serialized format.
-         *
-         * @param <D> The data format type.
-         * @param ops The provider for creating data.
-         * @param value The Advancement instance to serialize.
-         * @return The serialized representation.
-         * @throws CodecException If inner codecs fail or registries are missing IDs.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, Advancement value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("id"), Codecs.KEY.encode(ops, value.id));
-            if (value.parent != null) {
-                map.put(ops.createString("parent"), Codecs.KEY.encode(ops, value.parent));
-            }
-            if (value.display != null) {
-                map.put(ops.createString("display"), AdvancementDisplay.CODEC.encode(ops, value.display));
-            }
-
-            if (!value.criteria.isEmpty()) {
-                Map<D, D> criteriaMap = new HashMap<>();
-                for (Map.Entry<String, AdvancementCriterion> entry : value.criteria.entrySet()) {
-                    String typeId = Registries.CRITERION.getId(entry.getValue().getType());
-                    Codec<AdvancementCriterion> codec = (Codec<AdvancementCriterion>) entry.getValue().getType().getCodec();
-                    D encoded = codec.encode(ops, entry.getValue());
-                    Map<D, D> encodedMap = new HashMap<>(ops.getMap(encoded).orElseThrow());
-                    encodedMap.put(ops.createString("type"), Codecs.STRING.encode(ops, typeId));
-                    criteriaMap.put(Codecs.STRING.encode(ops, entry.getKey()), ops.createMap(encodedMap));
-                }
-                map.put(ops.createString("criteria"), ops.createMap(criteriaMap));
-            }
-
-            if (!value.rewards.isEmpty()) {
-                List<D> rewardsList = new ArrayList<>();
-                for (AdvancementReward reward : value.rewards) {
-                    String typeId = Registries.REWARDS.getId(reward.getType());
-                    Codec<AdvancementReward> codec = (Codec<AdvancementReward>) reward.getType().getCodec();
-                    D encoded = codec.encode(ops, reward);
-                    Map<D, D> encodedMap = new HashMap<>(ops.getMap(encoded).orElseThrow());
-                    encodedMap.put(ops.createString("type"), Codecs.STRING.encode(ops, typeId));
-                    rewardsList.add(ops.createMap(encodedMap));
-                }
-                map.put(ops.createString("rewards"), ops.createList(rewardsList));
-            }
-
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<Advancement> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.KEY.fieldOf("id").forGetter(Advancement.class, Advancement::getId),
+        Codecs.KEY.nullable().optionalFieldOf("parent", null).forGetter(Advancement.class, Advancement::getParent),
+        AdvancementDisplay.CODEC.nullable().optionalFieldOf("display", null).forGetter(Advancement.class, Advancement::getDisplay),
+        Codec.map(Codecs.STRING, AdvancementCriterion.CODEC).optionalFieldOf("criteria", Collections.emptyMap()).forGetter(Advancement.class, Advancement::getCriteria),
+        AdvancementReward.CODEC.list().optionalFieldOf("rewards", Collections.emptyList()).forGetter(Advancement.class, Advancement::getRewards)
+    ).apply(instance, Advancement::new)).describe("Advancement");
 
     /** The unique key for this advancement. */
     private final Key id;

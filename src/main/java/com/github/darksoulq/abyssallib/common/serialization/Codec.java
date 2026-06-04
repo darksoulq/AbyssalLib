@@ -1,15 +1,19 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.common.serialization.codecs.*;
+import com.github.darksoulq.abyssallib.common.serialization.fixer.DataFixerRegistry;
+import com.github.darksoulq.abyssallib.common.serialization.schema.CodecVisitor;
+import com.github.darksoulq.abyssallib.common.serialization.schema.SchemaGenerator;
+import com.github.darksoulq.abyssallib.common.serialization.schema.SchemaNode;
+import com.github.darksoulq.abyssallib.common.serialization.schema.SchemaValidator;
 import com.github.darksoulq.abyssallib.common.util.Either;
+import net.kyori.adventure.key.Key;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -23,13 +27,12 @@ public interface Codec<T> {
     /**
      * Decodes a serialized input of a specific data format into a Java object.
      *
-     * @param <D>   The type of the serialized data (e.g., JsonElement, NBTCompound, ByteBuf).
+     * @param <D>   The type of the serialized data.
      * @param ops   The provider defining how to navigate and read data of type D.
      * @param input The raw serialized input to be processed.
-     * @return The resulting Java object of type T.
-     * @throws CodecException If the input data is malformed, missing fields, or type-mismatched.
+     * @return A DataResult containing the decoded object or an error state.
      */
-    <D> T decode(DynamicOps<D> ops, D input);
+    <D> DataResult<T> decode(DynamicOps<D> ops, D input);
 
     /**
      * Encodes a Java object into its serialized representation.
@@ -37,158 +40,336 @@ public interface Codec<T> {
      * @param <D>   The target type of the serialized data.
      * @param ops   The provider defining how to construct data of type D.
      * @param value The Java object instance to be serialized.
-     * @return The serialized data representing the object.
-     * @throws CodecException If the object contains non-serializable states or illegal values.
+     * @return A DataResult containing the serialized data or an error state.
      */
-    <D> D encode(DynamicOps<D> ops, T value);
+    <D> DataResult<D> encode(DynamicOps<D> ops, T value);
 
     /**
-     * An unchecked exception utilized for failures occurring during the serialization
-     * or deserialization process.
+     * Routes this instance into the visitor API to construct contextual schema layouts.
+     *
+     * @param visitor The evaluation logic instance.
+     * @param <R>     The layout target natively returning explicitly mapped variants.
+     * @return Evaluated variant functionally extracting outputs.
      */
-    class CodecException extends RuntimeException {
-        /**
-         * Constructs a new exception with a specific detail message.
-         *
-         * @param message The error description.
-         */
-        public CodecException(String message) {
-            super(message);
-        }
-
-        /**
-         * Constructs a new exception with a detail message and an underlying cause.
-         *
-         * @param message The error description.
-         * @param cause   The throwable that triggered this exception.
-         */
-        public CodecException(String message, Throwable cause) {
-            super(message, cause);
-        }
+    default <R> R accept(CodecVisitor<R> visitor) {
+        return visitor.visitUnknown(describe());
     }
 
     /**
-     * Represents the definition of a single field within a structured object.
+     * Constructs a hierarchical structured object graph defining serialization limits explicitly gracefully completely safely resolving configurations.
      *
-     * @param <P>    The parent object type containing the field.
-     * @param <T>    The type of the field itself.
-     * @param name   The key identifier for this field in the serialized format.
-     * @param codec  The codec used to process the field data.
-     * @param getter A function used to extract the field value from a parent object instance.
+     * @return Evaluated schema tree structurally identical properly parsing limits safely.
      */
-    record Field<P, T>(String name, Codec<T> codec, Function<P, T> getter) {}
-
-    /**
-     * Internal implementation for handling the {@link Either} type, allowing for
-     * bifurcated data structures.
-     *
-     * @param <A>   The type of the Left branch.
-     * @param <B>   The type of the Right branch.
-     * @param left  Codec for the Left branch.
-     * @param right Codec for the Right branch.
-     */
-    record EitherCodec<A, B>(Codec<A> left, Codec<B> right) implements Codec<Either<A, B>> {
-        /**
-         * Decodes data into an Either container.
-         *
-         * @param <D>   The data format type.
-         * @param ops   The operation provider.
-         * @param input The input data.
-         * @return An Either instance.
-         */
-        @Override
-        public <D> Either<A, B> decode(DynamicOps<D> ops, D input) {
-            try {
-                return new Either.Left<>(left.decode(ops, input));
-            } catch (CodecException ignore) {
-                return new Either.Right<>(right.decode(ops, input));
-            }
-        }
-
-        /**
-         * Encodes an Either container into serialized data.
-         *
-         * @param <D>    The data format type.
-         * @param ops    The operation provider.
-         * @param either The Either container.
-         * @return The serialized data.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, Either<A, B> either) {
-            if (either instanceof Either.Left<A, B> l) {
-                return left.encode(ops, l.value());
-            } else {
-                return right.encode(ops, ((Either.Right<A, B>) either).value());
-            }
-        }
+    default SchemaNode schema() {
+        return accept(new SchemaGenerator());
     }
 
     /**
-     * Internal implementation that iterates through a list of codecs until one
-     * successfully processes the data.
+     * Asynchronously decodes serialized data without blocking the primary thread execution context.
      *
-     * @param <T>    The common type returned by all provided codecs.
-     * @param codecs The list of candidate codecs.
+     * @param <D>   The type of the serialized data format.
+     * @param ops   The provider defining operations layout boundaries.
+     * @param input The target structured format representing object mapping targets.
+     * @return A CompletableFuture housing the localized data result.
      */
-    record OneOfCodec<T>(List<Codec<T>> codecs) implements Codec<T> {
-        /**
-         * Constructs a oneOf codec with an immutable copy of the provided list.
-         *
-         * @param codecs The codecs to attempt in order.
-         */
-        public OneOfCodec(List<Codec<T>> codecs) {
-            this.codecs = List.copyOf(codecs);
-        }
-
-        /**
-         * Decodes the input using the first codec in the list that succeeds.
-         *
-         * @param <D>   The data format type.
-         * @param ops   The operation provider.
-         * @param input The input data.
-         * @return The decoded value.
-         */
-        @Override
-        public <D> T decode(DynamicOps<D> ops, D input) {
-            List<Throwable> errors = new ArrayList<>();
-            for (Codec<T> c : codecs) {
-                try {
-                    return c.decode(ops, input);
-                } catch (CodecException e) {
-                    errors.add(e);
-                }
-            }
-            throw new CodecException("No codec in OneOf matched. Errors: " + errors);
-        }
-
-        /**
-         * Encodes the value using the first codec in the list that succeeds.
-         *
-         * @param <D>   The data format type.
-         * @param ops   The operation provider.
-         * @param value The value to encode.
-         * @return The encoded data.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, T value) {
-            List<Throwable> errors = new ArrayList<>();
-            for (Codec<T> c : codecs) {
-                try {
-                    return c.encode(ops, value);
-                } catch (CodecException e) {
-                    errors.add(e);
-                }
-            }
-            throw new CodecException("No codec in OneOf could encode. Errors: " + errors);
-        }
+    default <D> CompletableFuture<DataResult<T>> decodeAsync(DynamicOps<D> ops, D input) {
+        return CompletableFuture.supplyAsync(() -> decode(ops, input));
     }
 
+    /**
+     * Asynchronously encodes runtime objects into mapped format bounds.
+     *
+     * @param <D>   The target format mapping representation type.
+     * @param ops   The operational binding interface interpreting physical output rules.
+     * @param value The physical target structure mapping variables.
+     * @return A CompletableFuture housing the target data layout.
+     */
+    default <D> CompletableFuture<DataResult<D>> encodeAsync(DynamicOps<D> ops, T value) {
+        return CompletableFuture.supplyAsync(() -> encode(ops, value));
+    }
+
+    /**
+     * Outputs a structural description of the expected format for this codec.
+     * Useful for schema generation and validation debugging.
+     *
+     * @return The schema definition representing the target type.
+     */
+    default String describe() {
+        return "Unknown";
+    }
+
+    /**
+     * Attaches a custom description overriding the default schema output.
+     *
+     * @param description The new schema description.
+     * @return A structurally identical Codec containing the customized description.
+     */
+    default Codec<T> describe(String description) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) { return self.decode(ops, input); }
+            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) { return self.encode(ops, value); }
+            @Override public String describe() { return description; }
+            @Override public <R> R accept(CodecVisitor<R> visitor) { return self.accept(visitor); }
+        };
+    }
+
+    /**
+     * Computes structural equality between two decoded values by encoding and comparing their serialized variants.
+     * Useful when the target object lacks a proper {@link Object#equals(Object)} definition.
+     *
+     * @param <D> The dynamic operations context.
+     * @param ops The target serialization provider.
+     * @param a   The primary value to compare.
+     * @param b   The secondary value to compare against.
+     * @return True if both values yield the same serialized form.
+     */
+    default <D> boolean structuralEquals(DynamicOps<D> ops, T a, T b) {
+        DataResult<D> resA = encode(ops, a);
+        DataResult<D> resB = encode(ops, b);
+        if (resA.isError() || resB.isError()) return false;
+        return Objects.equals(resA.getOrThrow(), resB.getOrThrow());
+    }
+
+    /**
+     * Initiates the definition of a required field for a RecordBuilder.
+     *
+     * @param name The key identifier for this field in the serialized format.
+     * @return A builder to bind the field to a getter function.
+     */
+    default FieldBuilder<T> fieldOf(String name) {
+        return new FieldBuilder<>(name, this, false, null);
+    }
+
+    /**
+     * Initiates the definition of an optional field for a RecordBuilder.
+     * If the field is missing during decoding, the codec resolves to Optional.empty().
+     *
+     * @param name The key identifier for this field in the serialized format.
+     * @return A builder to bind the field to a getter function.
+     */
+    default FieldBuilder<Optional<T>> optionalFieldOf(String name) {
+        return new FieldBuilder<>(name, this.optional(), true, null);
+    }
+
+    /**
+     * Initiates the definition of an optional field with a default fallback value.
+     *
+     * @param name         The key identifier for this field in the serialized format.
+     * @param defaultValue The value to yield if the key is missing.
+     * @return A builder to bind the field to a getter function.
+     */
+    default FieldBuilder<T> optionalFieldOf(String name, T defaultValue) {
+        return new FieldBuilder<>(name, this.orElse(defaultValue), true, defaultValue);
+    }
+
+    /**
+     * Translates mapping layouts matching structurally explicit tagged unions.
+     * Utilized identically to dispatch formats but enforces static identifier locations targeting enum discriminators.
+     *
+     * @param <K>          Discriminating enum marker instance mapping variants.
+     * @param <V>          Supertype encompassing targeted variants.
+     * @param typeKey      The node storing variant context variables.
+     * @param keyCodec     The codec mapping marker key variants.
+     * @param typeGetter   The lambda identifying the variant enum context node attached to the layout.
+     * @param codecGetter  Function defining codec mappings linked directly to matched enum discriminators.
+     * @return A Codec mapping statically structured variant hierarchies correctly natively executing tag identification.
+     */
+    static <K extends Enum<K>, V> Codec<V> taggedUnion(String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
+        Codec<V> base = dispatch(typeKey, keyCodec, typeGetter, codecGetter);
+        return new Codec<>() {
+            @Override public <D> DataResult<V> decode(DynamicOps<D> ops, D input) { return base.decode(ops, input); }
+            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, V value) { return base.encode(ops, value); }
+            @Override public String describe() { return "TaggedUnion[" + typeKey + "]"; }
+            @Override public <R> R accept(CodecVisitor<R> visitor) { return visitor.visitDispatch(typeKey); }
+        };
+    }
+
+    /**
+     * Translates mapping layouts matching structurally explicit tagged unions, explicitly anchoring the type.
+     *
+     * @param type         The class literal representing the base type hierarchy boundary.
+     * @param <K>          Discriminating enum marker instance mapping variants.
+     * @param <V>          Supertype encompassing targeted variants.
+     * @param typeKey      The node storing variant context variables.
+     * @param keyCodec     The codec mapping marker key variants.
+     * @param typeGetter   The lambda identifying the variant enum context node attached to the layout.
+     * @param codecGetter  Function defining codec mappings linked directly to matched enum discriminators.
+     * @return A Codec mapping statically structured variant hierarchies correctly natively executing tag identification.
+     */
+    static <K extends Enum<K>, V> Codec<V> taggedUnion(Class<V> type, String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
+        return taggedUnion(typeKey, keyCodec, typeGetter, codecGetter);
+    }
+
+    /**
+     * Internal definition for an immutable pair of values.
+     *
+     * @param <A> The type of the first element.
+     * @param <B> The type of the second element.
+     */
+    record Pair<A, B>(A first, B second) {}
+
+    /**
+     * Internal definition for an immutable sequence of three values.
+     *
+     * @param <A> Type of the first element.
+     * @param <B> Type of the second element.
+     * @param <C> Type of the third element.
+     */
+    record Tuple3<A, B, C>(A first, B second, C third) {}
+
+    /**
+     * Internal definition for an immutable sequence of four values.
+     *
+     * @param <A> Type of the first element.
+     * @param <B> Type of the second element.
+     * @param <C> Type of the third element.
+     * @param <D> Type of the fourth element.
+     */
+    record Tuple4<A, B, C, D>(A first, B second, C third, D fourth) {}
+
+    /**
+     * Creates a codec capable of handling a two-element ordered sequence.
+     *
+     * @param <A>    The type of the first value.
+     * @param <B>    The type of the second value.
+     * @param first  Codec for the first branch.
+     * @param second Codec for the second branch.
+     * @return A codec for a paired structure.
+     */
+    static <A, B> Codec<Pair<A, B>> pair(Codec<A> first, Codec<B> second) {
+        return new TupleCodecs.PairCodec<>(first, second);
+    }
+
+    /**
+     * Creates a codec handling a three-element ordered sequence.
+     *
+     * @param <A>    The type of the first value.
+     * @param <B>    The type of the second value.
+     * @param <C>    The type of the third value.
+     * @param first  Codec for the first branch.
+     * @param second Codec for the second branch.
+     * @param third  Codec for the third branch.
+     * @return A codec for a Tuple3 structure.
+     */
+    static <A, B, C> Codec<Tuple3<A, B, C>> tuple(Codec<A> first, Codec<B> second, Codec<C> third) {
+        return new TupleCodecs.Tuple3Codec<>(first, second, third);
+    }
+
+    /**
+     * Creates a codec handling a four-element ordered sequence.
+     *
+     * @param <A>    The type of the first value.
+     * @param <B>    The type of the second value.
+     * @param <C>    The type of the third value.
+     * @param <D_TYPE>    The type of the fourth value.
+     * @param first  Codec for the first branch.
+     * @param second Codec for the second branch.
+     * @param third  Codec for the third branch.
+     * @param fourth Codec for the fourth branch.
+     * @return A codec for a Tuple4 structure.
+     */
+    static <A, B, C, D_TYPE> Codec<Tuple4<A, B, C, D_TYPE>> tuple(Codec<A> first, Codec<B> second, Codec<C> third, Codec<D_TYPE> fourth) {
+        return new TupleCodecs.Tuple4Codec<>(first, second, third, fourth);
+    }
+
+    /**
+     * Creates a codec that reliably yields the same predefined value during decoding,
+     * and maps to an empty representation during encoding.
+     *
+     * @param <T>   The type of the value.
+     * @param value The supplier yielding the constant value.
+     * @return A unit codec.
+     */
+    static <T> Codec<T> unit(Supplier<T> value) {
+        return new UnitCodec<>(value);
+    }
+
+    /**
+     * Creates a codec that reliably yields the same predefined value during decoding.
+     *
+     * @param <T>   The type of the value.
+     * @param value The constant value.
+     * @return A unit codec.
+     */
+    static <T> Codec<T> unit(T value) {
+        return unit(() -> value);
+    }
+
+    /**
+     * Isolates operations onto a specific query path directly inside the current object structure.
+     *
+     * @param <T>   The target type matching the child node.
+     * @param codec The codec responsible for interpreting the resolved query data.
+     * @param path  The literal target nested segment.
+     * @return A constrained reading codec targeting an explicit structure.
+     */
+    static <T> Codec<T> query(Codec<T> codec, String path) {
+        return new QueryCodec<>(codec, path);
+    }
+
+    /**
+     * Evaluates a structural condition on a target object to select an underlying codec sequence.
+     * Allows dependent serialization behaviors that hinge on preceding state context.
+     *
+     * @param <T>        Target resolution type.
+     * @param condition  The predicate deciding execution flow.
+     * @param trueCodec  Executing codec when condition evaluates positively.
+     * @param falseCodec Executing codec when condition evaluates negatively.
+     * @return A context-sensitive conditional executing codec.
+     */
+    static <T> Codec<T> conditional(Predicate<T> condition, Codec<T> trueCodec, Codec<T> falseCodec) {
+        return new ConditionalCodec<>(condition, trueCodec, falseCodec);
+    }
+
+    /**
+     * Functional interface defining the decoding logic of a codec.
+     *
+     * @param <T> The target Java type.
+     */
     interface Decoder<T> {
-        <D> T decode(DynamicOps<D> ops, D input);
+        /**
+         * Decodes the input data.
+         *
+         * @param <D>   The serialized data type.
+         * @param ops   The dynamic operations instance.
+         * @param input The raw serialized input.
+         * @return The decoded result.
+         */
+        <D> DataResult<T> decode(DynamicOps<D> ops, D input);
     }
 
+    /**
+     * Functional interface defining the encoding logic of a codec.
+     *
+     * @param <T> The target Java type.
+     */
     interface Encoder<T> {
-        <D> D encode(DynamicOps<D> ops, T value);
+        /**
+         * Encodes the Java object.
+         *
+         * @param <D>   The serialized data type.
+         * @param ops   The dynamic operations instance.
+         * @param value The value to encode.
+         * @return The encoded result.
+         */
+        <D> DataResult<D> encode(DynamicOps<D> ops, T value);
+    }
+
+    /**
+     * Creates a codec that immediately returns an error state upon any encoding or decoding operation.
+     *
+     * @param <T>     The target Java type.
+     * @param message The specific error reason.
+     * @return A failing Codec implementation.
+     */
+    static <T> Codec<T> error(String message) {
+        return new Codec<>() {
+            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) { return DataResult.error(message); }
+            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) { return DataResult.error(message); }
+            @Override public String describe() { return "Error[" + message + "]"; }
+            @Override public <R> R accept(CodecVisitor<R> visitor) { return visitor.visitPrimitive("Error"); }
+        };
     }
 
     /**
@@ -202,13 +383,18 @@ public interface Codec<T> {
     static <T> Codec<T> of(Decoder<T> decoder, Encoder<T> encoder) {
         return new Codec<>() {
             @Override
-            public <D> T decode(DynamicOps<D> ops, D input) {
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 return decoder.decode(ops, input);
             }
 
             @Override
-            public <D> D encode(DynamicOps<D> ops, T value) {
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
                 return encoder.encode(ops, value);
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return visitor.visitPrimitive("Object");
             }
         };
     }
@@ -223,44 +409,53 @@ public interface Codec<T> {
      */
     static <T> Codec<T> of(Function<Object, T> decoder, Function<T, Object> encoder) {
         return new Codec<>() {
-            @Override public <D> T decode(DynamicOps<D> ops, D input) {
-                try { return decoder.apply(input); } catch (Exception e) { throw new CodecException("Failed to decode", e); }
+            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                try {
+                    return DataResult.success(decoder.apply(input));
+                } catch (Exception e) {
+                    return DataResult.error(DataError.custom("Failed to decode: " + e.getMessage()));
+                }
             }
             @Override @SuppressWarnings("unchecked")
-            public <D> D encode(DynamicOps<D> ops, T value) {
-                try { return (D) encoder.apply(value); } catch (Exception e) { throw new CodecException("Failed to encode", e); }
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                try {
+                    return DataResult.success((D) encoder.apply(value));
+                } catch (Exception e) {
+                    return DataResult.error(DataError.custom("Failed to encode: " + e.getMessage()));
+                }
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return visitor.visitPrimitive("Object");
             }
         };
     }
 
     /**
-     * Creates a codec for a Map structure.
+     * Creates a mutable map codec structure mapping identical type variants.
      *
      * @param <K>        Key type.
      * @param <V>        Value type.
      * @param keyCodec   Codec for keys.
      * @param valueCodec Codec for values.
-     * @return A codec handling Map types.
+     * @return A codec handling map derivations natively.
      */
     static <K, V> Codec<Map<K, V>> map(Codec<K> keyCodec, Codec<V> valueCodec) {
-        return new Codec<>() {
-            @Override public <D> Map<K, V> decode(DynamicOps<D> ops, D input) {
-                Map<D, D> raw = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                Map<K, V> result = new LinkedHashMap<>(raw.size());
-                for (var e : raw.entrySet()) {
-                    result.put(keyCodec.decode(ops, e.getKey()), valueCodec.decode(ops, e.getValue()));
-                }
-                return result;
-            }
+        return new MapCodec<>(keyCodec, valueCodec, LinkedHashMap::new, Function.identity());
+    }
 
-            @Override public <D> D encode(DynamicOps<D> ops, Map<K, V> value) {
-                Map<D, D> result = new LinkedHashMap<>(value.size());
-                for (var e : value.entrySet()) {
-                    result.put(keyCodec.encode(ops, e.getKey()), valueCodec.encode(ops, e.getValue()));
-                }
-                return ops.createMap(result);
-            }
-        };
+    /**
+     * Creates an immutable map codec structure mapping rigid configuration values safely.
+     *
+     * @param <K>        Key type.
+     * @param <V>        Value type.
+     * @param keyCodec   Codec for keys.
+     * @param valueCodec Codec for values.
+     * @return An immutable codec handling map derivations natively.
+     */
+    static <K, V> Codec<Map<K, V>> immutableMap(Codec<K> keyCodec, Codec<V> valueCodec) {
+        return new MapCodec<>(keyCodec, valueCodec, LinkedHashMap::new, Map::copyOf);
     }
 
     /**
@@ -271,18 +466,11 @@ public interface Codec<T> {
      * @return A codec for the specified enum.
      */
     static <E extends Enum<E>> Codec<E> enumCodec(Class<E> enumClass) {
-        return new Codec<>() {
-            @Override public <D> E decode(DynamicOps<D> ops, D input) {
-                String name = ops.getStringValue(input).orElseThrow(() -> new CodecException("Expected enum string"));
-                try { return Enum.valueOf(enumClass, name); } catch (IllegalArgumentException e) { throw new CodecException("Invalid enum value: " + name); }
-            }
-            @Override public <D> D encode(DynamicOps<D> ops, E value) { return ops.createString(value.name()); }
-        };
+        return new EnumCodec<>(enumClass);
     }
 
     /**
      * Combines two codecs such that the secondary is used if the primary fails.
-     * Internally implemented as a OneOfCodec wrapper.
      *
      * @param <T>   Target type.
      * @param left  Primary codec.
@@ -321,32 +509,70 @@ public interface Codec<T> {
     }
 
     /**
+     * Combines multiple codecs to be tried in sequence, explicitly anchoring the type.
+     *
+     * @param type   The class literal representing the target type.
+     * @param <T>    Target type.
+     * @param codecs Array of codecs to attempt.
+     * @return A multi-branch codec.
+     */
+    @SafeVarargs
+    static <T> Codec<T> oneOf(Class<T> type, Codec<? extends T>... codecs) {
+        return oneOf(codecs);
+    }
+
+    /**
      * Constructs a codec capable of resolving cyclic dependencies correctly.
-     * @param <T>    The target Java type.
+     *
+     * @param <T>     The target Java type.
      * @param builder A function yielding the codec upon execution.
      * @return A proper recursive Codec utilizing lazy evaluation.
      */
     static <T> Codec<T> recursive(Function<Codec<T>, Codec<T>> builder) {
-        return new Codec<>() {
-            private Codec<T> lazy;
+        return new RecursiveCodec<>(builder);
+    }
 
-            private Codec<T> getCodec() {
-                if (lazy == null) {
-                    lazy = builder.apply(this);
-                }
-                return lazy;
-            }
+    /**
+     * Constructs a codec capable of resolving cyclic dependencies correctly, explicitly anchoring the type.
+     *
+     * @param type    The class literal representing the target type.
+     * @param <T>     The target Java type.
+     * @param builder A function yielding the codec upon execution.
+     * @return A proper recursive Codec utilizing lazy evaluation explicitly bound.
+     */
+    static <T> Codec<T> recursive(Class<T> type, Function<Codec<T>, Codec<T>> builder) {
+        return new RecursiveCodec<>(builder);
+    }
 
-            @Override
-            public <D> T decode(DynamicOps<D> ops, D input) {
-                return getCodec().decode(ops, input);
-            }
+    /**
+     * Generates a polymorphic codec mapping diverse implementations via an explicit identifier field.
+     *
+     * @param <K>          The type of the key used to distinguish implementations.
+     * @param <V>          The base type shared by all implementations.
+     * @param typeKey      The structural field name representing the target implementation identifier.
+     * @param keyCodec     The codec governing the identifier key.
+     * @param typeGetter   Function isolating the key from a functional instance.
+     * @param codecGetter  Function yielding the specific target codec associated with the key.
+     * @return A functional dispatch codec dynamically managing implementation variants.
+     */
+    static <K, V> Codec<V> dispatch(String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
+        return new DispatchCodec<>(typeKey, keyCodec, typeGetter, codecGetter);
+    }
 
-            @Override
-            public <D> D encode(DynamicOps<D> ops, T value) {
-                return getCodec().encode(ops, value);
-            }
-        };
+    /**
+     * Generates a polymorphic codec mapping diverse implementations, explicitly anchoring the base type context.
+     *
+     * @param type         The class literal representing the base type hierarchy boundary.
+     * @param <K>          The type of the key used to distinguish implementations.
+     * @param <V>          The base type shared by all implementations.
+     * @param typeKey      The structural field name representing the target implementation identifier.
+     * @param keyCodec     The codec governing the identifier key.
+     * @param typeGetter   Function isolating the key from a functional instance.
+     * @param codecGetter  Function yielding the specific target codec associated with the key.
+     * @return A functional dispatch codec dynamically managing implementation variants explicitly bound.
+     */
+    static <K, V> Codec<V> dispatch(Class<V> type, String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
+        return new DispatchCodec<>(typeKey, keyCodec, typeGetter, codecGetter);
     }
 
     /**
@@ -361,40 +587,295 @@ public interface Codec<T> {
         Codec<T> self = this;
         return new Codec<>() {
             @Override
-            public <D> R decode(DynamicOps<D> ops, D input) {
-                return forward.apply(self.decode(ops, input));
+            public <D> DataResult<R> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input).map(forward);
             }
 
             @Override
-            public <D> D encode(DynamicOps<D> ops, R value) {
-                return self.encode(ops, backward.apply(value));
+            public <D> DataResult<D> encode(DynamicOps<D> ops, R value) {
+                try {
+                    return self.encode(ops, backward.apply(value));
+                } catch (Exception e) {
+                    return DataResult.error(DataError.custom("xmap encoding mapping failed: " + e.getMessage()));
+                }
+            }
+
+            @Override
+            public String describe() {
+                return self.describe();
+            }
+
+            @Override
+            public <V> V accept(CodecVisitor<V> visitor) {
+                return self.accept(visitor);
             }
         };
     }
 
     /**
-     * Transforms this codec to handle a new type R, supporting failures mapped to Optional.empty().
+     * Transforms this codec to handle a new type R, where both decoding and encoding can fail.
      *
      * @param <R>  The new target Java type.
-     * @param to   Conversion function from T to Optional R.
-     * @param from Conversion function from R to Optional T.
-     * @return A natively flat-mapped Codec.
+     * @param to   Conversion function from T to DataResult R.
+     * @param from Conversion function from R to DataResult T.
+     * @return A flat-mapped codec returning contextual results.
      */
-    default <R> Codec<R> flatXmap(Function<? super T, Optional<? extends R>> to, Function<? super R, Optional<? extends T>> from) {
+    default <R> Codec<R> flatXmap(Function<? super T, ? extends DataResult<? extends R>> to, Function<? super R, ? extends DataResult<? extends T>> from) {
         Codec<T> self = this;
         return new Codec<>() {
             @Override
-            public <D> R decode(DynamicOps<D> ops, D input) {
-                T decoded = self.decode(ops, input);
-                return to.apply(decoded).orElseThrow(() -> new CodecException("flatXmap to function returned empty for " + decoded));
+            public <D> DataResult<R> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input).flatMap(to);
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, R value) {
+                return ((DataResult<T>) from.apply(value)).flatMap(t -> self.encode(ops, t));
             }
 
             @Override
-            public <D> D encode(DynamicOps<D> ops, R value) {
-                T encoded = from.apply(value).orElseThrow(() -> new CodecException("flatXmap from function returned empty for " + value));
-                return self.encode(ops, encoded);
+            public String describe() {
+                return self.describe();
+            }
+
+            @Override
+            public <V> V accept(CodecVisitor<V> visitor) {
+                return self.accept(visitor);
             }
         };
+    }
+
+    /**
+     * Transforms this codec to handle a new type R, where decoding can fail but encoding cannot.
+     *
+     * @param <R>  The new target Java type.
+     * @param to   Conversion function from T to DataResult R.
+     * @param from Conversion function from R to T.
+     * @return A codec for type R validated during decoding.
+     */
+    default <R> Codec<R> comapFlatMap(Function<? super T, ? extends DataResult<? extends R>> to, Function<? super R, ? extends T> from) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> DataResult<R> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input).flatMap(to);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, R value) {
+                try {
+                    return self.encode(ops, from.apply(value));
+                } catch (Exception e) {
+                    return DataResult.error(DataError.custom("comapFlatMap encoding mapping failed: " + e.getMessage()));
+                }
+            }
+
+            @Override
+            public String describe() {
+                return self.describe();
+            }
+
+            @Override
+            public <V> V accept(CodecVisitor<V> visitor) {
+                return self.accept(visitor);
+            }
+        };
+    }
+
+    /**
+     * Transforms this codec to handle a new type R, where decoding cannot fail but encoding can.
+     *
+     * @param <R>  The new target Java type.
+     * @param to   Conversion function from T to R.
+     * @param from Conversion function from R to DataResult T.
+     * @return A codec for type R validated during encoding.
+     */
+    default <R> Codec<R> flatComapMap(Function<? super T, ? extends R> to, Function<? super R, ? extends DataResult<? extends T>> from) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> DataResult<R> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input).map(to);
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, R value) {
+                return ((DataResult<T>) from.apply(value)).flatMap(t -> self.encode(ops, t));
+            }
+
+            @Override
+            public String describe() {
+                return self.describe();
+            }
+
+            @Override
+            public <V> V accept(CodecVisitor<V> visitor) {
+                return self.accept(visitor);
+            }
+        };
+    }
+
+    /**
+     * Simplifies mapping the value via an identical forward and backward translation.
+     *
+     * @param mapper The mapping function ensuring type isolation.
+     * @return A transformed codec reflecting isomorphic states.
+     */
+    default Codec<T> transform(Function<T, T> mapper) {
+        return xmap(mapper, mapper);
+    }
+
+    /**
+     * Validates decoded and encoded objects structurally via explicit schema construction limits.
+     *
+     * @param configurator The consumer formulating schema boundaries targeting implicit paths.
+     * @return A validating codec evaluating against map hierarchies directly.
+     */
+    default Codec<T> restrict(Consumer<SchemaValidator> configurator) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                DataResult<D> schemaRes = applySchema(ops, input);
+                if (schemaRes.isError()) return DataResult.<T>error(schemaRes.dataError().get()).prependPath(schemaRes.error().map(s -> s.split(":")[0].trim()).orElse(""));
+                return self.decode(ops, input);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                DataResult<D> encodedRes = self.encode(ops, value);
+                if (encodedRes.isError()) return encodedRes;
+                DataResult<D> schemaRes = applySchema(ops, encodedRes.getOrThrow());
+                if (schemaRes.isError()) return DataResult.<D>error(schemaRes.dataError().get()).prependPath(schemaRes.error().map(s -> s.split(":")[0].trim()).orElse(""));
+                return encodedRes;
+            }
+
+            private <D> DataResult<D> applySchema(DynamicOps<D> ops, D input) {
+                SchemaValidator validator = new SchemaValidator();
+                configurator.accept(validator);
+                for (SchemaValidator.Rule rule : validator.getRules()) {
+                    DataResult<D> r = rule.check(ops, input);
+                    if (r.isError()) return r;
+                }
+                return DataResult.success(input);
+            }
+
+            @Override
+            public String describe() {
+                return self.describe() + "[schema_validated]";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return self.accept(visitor);
+            }
+        };
+    }
+
+    /**
+     * Validates decoded and encoded objects using a singular validation block.
+     *
+     * @param validator The validation logic yielding a DataResult.
+     * @return A validated codec preventing illegal structural states.
+     */
+    default Codec<T> validate(Function<? super T, ? extends DataResult<T>> validator) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input).flatMap(validator);
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                return ((DataResult<T>) validator.apply(value)).flatMap(v -> self.encode(ops, v));
+            }
+
+            @Override
+            public String describe() {
+                return self.describe() + "[validated]";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return self.accept(visitor);
+            }
+        };
+    }
+
+    /**
+     * Conditionally validates inputs ensuring they fulfill programmatic rules.
+     *
+     * @param condition    The required constraint.
+     * @param errorMessage The contextual reason for constraint failures.
+     * @return A validating codec enforcing behavioral restrictions.
+     */
+    default Codec<T> validate(Predicate<T> condition, Function<T, String> errorMessage) {
+        return validate(value -> condition.test(value) ? DataResult.success(value) : DataResult.error(DataError.custom(errorMessage.apply(value))));
+    }
+
+    /**
+     * Shorthand restricting a string or collection codec to a minimum elemental length.
+     *
+     * @param length The lower limit element bounds.
+     * @return A restricted schema variant.
+     */
+    default Codec<T> minLength(int length) {
+        return restrict(c -> c.field("").minLength(length));
+    }
+
+    /**
+     * Shorthand restricting a string or collection codec to a maximum elemental length.
+     *
+     * @param length The upper limit element bounds.
+     * @return A restricted schema variant.
+     */
+    default Codec<T> maxLength(int length) {
+        return restrict(c -> c.field("").maxLength(length));
+    }
+
+    /**
+     * Shorthand checking string codecs against arbitrary explicit formatting configurations.
+     *
+     * @param pattern The required mapping sequence matching strings precisely.
+     * @return A restricted schema variant.
+     */
+    default Codec<T> regex(String pattern) {
+        return restrict(c -> c.field("").regex(pattern));
+    }
+
+    /**
+     * Shorthand trapping generic numerical values inside deterministic operational ranges structurally.
+     *
+     * @param min The explicit minimum value configuration limit.
+     * @param max The explicit maximum value configuration limit.
+     * @return A restricted schema variant.
+     */
+    default Codec<T> range(double min, double max) {
+        return restrict(c -> c.field("").range(min, max));
+    }
+
+    /**
+     * Shorthand requiring numerical mapping bounds to be universally structured above zero.
+     *
+     * @return A restricted schema variant.
+     */
+    default Codec<T> positive() {
+        return restrict(c -> c.field("").positive());
+    }
+
+    /**
+     * Shorthand confining valid interpretation explicitly to arbitrary hardcoded structural objects.
+     *
+     * @param values The deterministic array defining possible resolutions.
+     * @return A restricted schema variant.
+     */
+    @SuppressWarnings("unchecked")
+    default Codec<T> oneOf(T... values) {
+        return restrict(c -> c.field("").oneOf((Object[]) values));
     }
 
     /**
@@ -406,30 +887,59 @@ public interface Codec<T> {
     default Codec<T> orElse(T defaultValue) {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> T decode(DynamicOps<D> ops, D input) {
+            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 if (input == null || input.equals(ops.empty())) {
-                    return defaultValue;
+                    return DataResult.success(defaultValue);
                 }
-                try {
-                    T result = self.decode(ops, input);
-                    return result != null ? result : defaultValue;
-                } catch (CodecException e) {
-                    return defaultValue;
-                }
+                DataResult<T> res = self.decode(ops, input);
+                return res.isSuccess() ? res : DataResult.success(defaultValue);
             }
-            @Override public <D> D encode(DynamicOps<D> ops, T value) {
+            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
                 return self.encode(ops, value != null ? value : defaultValue);
+            }
+            @Override public String describe() {
+                return self.describe() + "[defaulted]";
+            }
+            @Override public <R> R accept(CodecVisitor<R> visitor) {
+                return self.accept(visitor);
             }
         };
     }
 
     /**
-     * Creates a codec for a {@link List} of elements of type T.
+     * Creates a codec for a mutable {@link List} of elements of type T.
      *
      * @return A codec for a List of T.
      */
     default Codec<List<T>> list() {
-        return collection(ArrayList::new);
+        return new CollectionCodec<>(ArrayList::new, this, Function.identity());
+    }
+
+    /**
+     * Creates a codec for an immutable {@link List} of elements of type T.
+     *
+     * @return An immutable List codec.
+     */
+    default Codec<List<T>> immutableList() {
+        return new CollectionCodec<>(ArrayList::new, this, List::copyOf);
+    }
+
+    /**
+     * Creates a codec for a mutable {@link Set} of elements of type T.
+     *
+     * @return A codec for a Set of T.
+     */
+    default Codec<Set<T>> set() {
+        return new CollectionCodec<>(HashSet::new, this, Function.identity());
+    }
+
+    /**
+     * Creates a codec for an immutable {@link Set} of elements of type T.
+     *
+     * @return An immutable Set codec.
+     */
+    default Codec<Set<T>> immutableSet() {
+        return new CollectionCodec<>(HashSet::new, this, Set::copyOf);
     }
 
     /**
@@ -445,42 +955,13 @@ public interface Codec<T> {
 
     /**
      * Creates a codec for a specific collection implementation.
-     * Handles complex logic to propagate list serialization through OneOf codecs.
      *
-     * @param <C>     The specific collection type (e.g., Set, Queue).
+     * @param <C>     The specific collection type.
      * @param factory Supplier to create a new collection instance.
      * @return A collection-specific codec.
      */
     default <C extends Collection<T>> Codec<C> collection(Supplier<C> factory) {
-        Codec<T> self = this;
-
-        if (self instanceof OneOfCodec<T> oneOf) {
-            List<Codec<List<T>>> listCodecs = new ArrayList<>();
-            for (Codec<T> c : oneOf.codecs()) listCodecs.add(c.list().unchecked());
-            return Codec.oneOf(listCodecs.toArray(new Codec[0])).unchecked();
-        }
-
-        return new Codec<>() {
-            @Override
-            public <D> C decode(DynamicOps<D> ops, D input) {
-                List<D> rawList = ops.getList(input)
-                    .orElseThrow(() -> new CodecException("Expected list for collection"));
-                C result = factory.get();
-                for (D elem : rawList) {
-                    result.add(self.decode(ops, elem));
-                }
-                return result;
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, C value) {
-                List<D> result = new ArrayList<>(value.size());
-                for (T elem : value) {
-                    result.add(self.encode(ops, elem));
-                }
-                return ops.createList(result);
-            }
-        };
+        return new CollectionCodec<>(factory, this, Function.identity());
     }
 
     /**
@@ -492,16 +973,27 @@ public interface Codec<T> {
         Codec<T> self = this;
         return new Codec<>() {
             @Override
-            public <D> Optional<T> decode(DynamicOps<D> ops, D input) {
+            public <D> DataResult<Optional<T>> decode(DynamicOps<D> ops, D input) {
                 if (input == null || Objects.equals(input, ops.empty()))
-                    return Optional.empty();
-                return Optional.ofNullable(self.decode(ops, input));
+                    return DataResult.success(Optional.empty());
+
+                return self.decode(ops, input).map(Optional::ofNullable);
             }
 
             @Override
-            public <D> D encode(DynamicOps<D> ops, Optional<T> value) {
-                if (value == null || value.isEmpty()) return ops.empty();
+            public <D> DataResult<D> encode(DynamicOps<D> ops, Optional<T> value) {
+                if (value.isEmpty()) return DataResult.success(ops.empty());
                 return self.encode(ops, value.get());
+            }
+
+            @Override
+            public String describe() {
+                return "Optional[" + self.describe() + "]";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return visitor.visitOptional(self);
             }
         };
     }
@@ -514,27 +1006,93 @@ public interface Codec<T> {
     default Codec<T> nullable() {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> T decode(DynamicOps<D> ops, D input) {
+            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 D empty = ops.empty();
-                if (input == null || Objects.equals(input, empty)) return null;
+                if (input == null || Objects.equals(input, empty)) return DataResult.success(null);
                 return self.decode(ops, input);
             }
 
-            @Override public <D> D encode(DynamicOps<D> ops, T value) {
-                return value == null ? ops.empty() : self.encode(ops, value);
+            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                return value == null ? DataResult.success(ops.empty()) : self.encode(ops, value);
+            }
+
+            @Override
+            public String describe() {
+                return self.describe() + "?";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return self.accept(visitor);
             }
         };
     }
 
     /**
-     * Defines this codec as a field within a larger object structure.
+     * Wraps this codec in a versioned container format.
+     * Automatically applies migrations via the DataFixerRegistry before decoding.
      *
-     * @param <P>    The parent object type.
-     * @param name   The name of the field.
-     * @param getter The function to get the field value from the parent.
-     * @return A Field definition object.
+     * @param id       The unique identifier for the data fixer.
+     * @param registry The orchestrator that handles the migration logic.
+     * @return A version-aware codec.
      */
-    default <P> Field<P, T> fieldOf(String name, Function<P, T> getter) {
-        return new Field<>(name, this, getter);
+    default Codec<T> versioned(Key id, DataFixerRegistry registry) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                int version = 0;
+                D payload = input;
+
+                Optional<Map<D, D>> optionalMap = ops.getMap(input);
+                if (optionalMap.isPresent()) {
+                    Map<D, D> map = new HashMap<>(optionalMap.get());
+                    D versionKey = ops.createString("data_version");
+                    D versionNode = map.get(versionKey);
+
+                    if (versionNode != null) {
+                        version = ops.getIntValue(versionNode).orElse(0);
+                        map.remove(versionKey);
+
+                        if (map.size() == 1 && map.containsKey(ops.createString("value"))) {
+                            payload = map.get(ops.createString("value"));
+                        } else {
+                            payload = ops.createMap(map);
+                        }
+                    }
+                }
+
+                D upgradedPayload = registry.update(ops, id, version, payload);
+                return self.decode(ops, upgradedPayload);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                return self.encode(ops, value).map(encoded -> {
+                    Optional<Map<D, D>> optionalMap = ops.getMap(encoded);
+                    Map<D, D> targetMap;
+
+                    if (optionalMap.isPresent()) {
+                        targetMap = new LinkedHashMap<>(optionalMap.get());
+                    } else {
+                        targetMap = new LinkedHashMap<>();
+                        targetMap.put(ops.createString("value"), encoded);
+                    }
+
+                    targetMap.put(ops.createString("data_version"), ops.createInt(registry.getTargetVersion()));
+                    return ops.createMap(targetMap);
+                });
+            }
+
+            @Override
+            public String describe() {
+                return "Versioned[" + self.describe() + "]";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return self.accept(visitor);
+            }
+        };
     }
 }

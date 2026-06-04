@@ -6,8 +6,9 @@ import com.github.darksoulq.abyssallib.world.recipe.PotionMixProvider;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
 import io.papermc.paper.potion.PotionMix;
 import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.RecipeChoice;
+import org.jspecify.annotations.NonNull;
 
 public class CustomPotionMix implements CustomRecipe, PotionMixProvider {
     public static final RecipeType<CustomPotionMix> TYPE = () -> Codecs.POTION_MIX;
@@ -27,7 +28,7 @@ public class CustomPotionMix implements CustomRecipe, PotionMixProvider {
     }
 
     @Override
-    public NamespacedKey getKey() {
+    public @NonNull NamespacedKey getKey() {
         return id;
     }
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.BatchQuery;
 import com.github.darksoulq.abyssallib.common.database.relational.sql.Database;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.energy.EnergyNetworkTransferEvent;
@@ -23,9 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * This includes:
  * <ul>
- *     <li>Registration and lifecycle management of nodes</li>
- *     <li>Energy distribution across connected graphs</li>
- *     <li>Persistence and restoration of node state</li>
+ * <li>Registration and lifecycle management of nodes</li>
+ * <li>Energy distribution across connected graphs</li>
+ * <li>Persistence and restoration of node state</li>
  * </ul>
  *
  * <p>
@@ -245,8 +246,18 @@ public final class EnergyNetwork {
         for (EnergyNode node : NODES) {
             try {
                 String id = node.getClass().getName() + "@" + node.hashCode();
-                JsonNode json = EnergyNode.CODEC.encode(JsonOps.INSTANCE, node);
-                batch.add(id, json.toString());
+                DataResult<JsonNode> res = EnergyNode.CODEC.encode(JsonOps.INSTANCE, node);
+
+                if (res.isError()) {
+                    AbyssalLib.getInstance().getLogger().warning("Failed to save energy node " + id + ": " + res.error().get());
+                    continue;
+                }
+
+                if (res.isPartial()) {
+                    res.warnings().forEach(w -> AbyssalLib.getInstance().getLogger().warning("Warning saving energy node " + id + ": " + w.message()));
+                }
+
+                batch.add(id, res.getOrThrow().toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -267,7 +278,19 @@ public final class EnergyNetwork {
             try {
                 String jsonStr = rs.getString("json");
                 JsonNode nodeJson = JSON_MAPPER.readTree(jsonStr);
-                return EnergyNode.CODEC.decode(JsonOps.INSTANCE, nodeJson);
+
+                DataResult<EnergyNode> res = EnergyNode.CODEC.decode(JsonOps.INSTANCE, nodeJson);
+
+                if (res.isError()) {
+                    AbyssalLib.getInstance().getLogger().warning("Failed to load energy node: " + res.error().get());
+                    return null;
+                }
+
+                if (res.isPartial()) {
+                    res.warnings().forEach(w -> AbyssalLib.getInstance().getLogger().warning("Warning loading energy node: " + w.message()));
+                }
+
+                return res.getOrThrow();
             } catch (Exception e) {
                 return null;
             }

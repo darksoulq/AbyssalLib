@@ -2,14 +2,10 @@ package com.github.darksoulq.abyssallib.world.advancement;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.util.Try;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Defines the visual representation of an advancement in the client menu.
@@ -24,85 +20,18 @@ public class AdvancementDisplay {
      * This allows the display information to be easily saved to or loaded from
      * various data formats like JSON or NBT.
      */
-    public static final Codec<AdvancementDisplay> CODEC = new Codec<>() {
-        /**
-         * Decodes an AdvancementDisplay from a serialized format.
-         *
-         * @param <D>
-         * The type of the serialized data.
-         * @param ops
-         * The dynamic operations logic provider.
-         * @param input
-         * The raw serialized input data.
-         * @return
-         * The reconstructed AdvancementDisplay instance.
-         * @throws CodecException
-         * If the data is missing required fields or is malformed.
-         */
-        @Override
-        public <D> AdvancementDisplay decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for AdvancementDisplay"));
-            Builder builder = builder();
-
-            Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, map.get(ops.createString("title"))))
-                .onSuccess(builder::title);
-            Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, map.get(ops.createString("description"))))
-                .onSuccess(builder::description);
-            Try.of(() -> Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("icon"))))
-                .onSuccess(builder::icon);
-            Try.of(() -> Codecs.KEY.decode(ops, map.get(ops.createString("background"))))
-                .onSuccess(builder::background);
-            Try.of(() -> AdvancementFrame.CODEC.decode(ops, map.get(ops.createString("frame"))))
-                .onSuccess(builder::frame);
-            Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("show_toast"))))
-                .onSuccess(builder::showToast);
-            Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("announce_to_chat"))))
-                .onSuccess(builder::announceToChat);
-            Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("hidden"))))
-                .onSuccess(builder::hidden);
-            Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("x"))))
-                .onSuccess(builder::x);
-            Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("y"))))
-                .onSuccess(builder::y);
-
-            return builder.build();
-        }
-
-        /**
-         * Encodes an AdvancementDisplay into a serialized format.
-         *
-         * @param <D>
-         * The target type for the serialized data.
-         * @param ops
-         * The dynamic operations logic provider.
-         * @param value
-         * The AdvancementDisplay instance to serialize.
-         * @return
-         * The serialized data representation.
-         * @throws CodecException
-         * If the internal components fail to encode.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, AdvancementDisplay value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("title"), Codecs.TEXT_COMPONENT.encode(ops, value.title));
-            map.put(ops.createString("description"), Codecs.TEXT_COMPONENT.encode(ops, value.description));
-            map.put(ops.createString("icon"), Codecs.ITEM_STACK.encode(ops, value.icon));
-
-            if (value.background != null) {
-                map.put(ops.createString("background"), Codecs.KEY.encode(ops, value.background));
-            }
-
-            map.put(ops.createString("frame"), AdvancementFrame.CODEC.encode(ops, value.frame));
-            map.put(ops.createString("show_toast"), Codecs.BOOLEAN.encode(ops, value.showToast));
-            map.put(ops.createString("announce_to_chat"), Codecs.BOOLEAN.encode(ops, value.announceToChat));
-            map.put(ops.createString("hidden"), Codecs.BOOLEAN.encode(ops, value.hidden));
-            map.put(ops.createString("x"), Codecs.FLOAT.encode(ops, value.x));
-            map.put(ops.createString("y"), Codecs.FLOAT.encode(ops, value.y));
-
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<AdvancementDisplay> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.TEXT_COMPONENT.nullable().optionalFieldOf("title", null).forGetter(AdvancementDisplay.class, AdvancementDisplay::getTitle),
+        Codecs.TEXT_COMPONENT.nullable().optionalFieldOf("description", null).forGetter(AdvancementDisplay.class, AdvancementDisplay::getDescription),
+        Codecs.ITEM_STACK.nullable().optionalFieldOf("icon", null).forGetter(AdvancementDisplay.class, AdvancementDisplay::getIcon),
+        Codecs.KEY.nullable().optionalFieldOf("background", null).forGetter(AdvancementDisplay.class, AdvancementDisplay::getBackground),
+        AdvancementFrame.CODEC.optionalFieldOf("frame", AdvancementFrame.TASK).forGetter(AdvancementDisplay.class, AdvancementDisplay::getFrame),
+        Codecs.BOOLEAN.optionalFieldOf("show_toast", true).forGetter(AdvancementDisplay.class, AdvancementDisplay::isShowToast),
+        Codecs.BOOLEAN.optionalFieldOf("announce_to_chat", true).forGetter(AdvancementDisplay.class, AdvancementDisplay::isAnnounceToChat),
+        Codecs.BOOLEAN.optionalFieldOf("hidden", false).forGetter(AdvancementDisplay.class, AdvancementDisplay::isHidden),
+        Codecs.FLOAT.optionalFieldOf("x", Float.NaN).forGetter(AdvancementDisplay.class, AdvancementDisplay::getX),
+        Codecs.FLOAT.optionalFieldOf("y", Float.NaN).forGetter(AdvancementDisplay.class, AdvancementDisplay::getY)
+    ).apply(instance, AdvancementDisplay::new)).describe("AdvancementDisplay");
 
     /** The display title component. */
     private final Component title;
@@ -137,26 +66,16 @@ public class AdvancementDisplay {
     /**
      * Constructs a new AdvancementDisplay with full visual and positional data.
      *
-     * @param title
-     * The Adventure {@link Component} for the title.
-     * @param description
-     * The Adventure {@link Component} for the description.
-     * @param icon
-     * The {@link ItemStack} icon.
-     * @param background
-     * The resource {@link Key} for the background (nullable).
-     * @param frame
-     * The {@link AdvancementFrame} border style.
-     * @param showToast
-     * Whether to show a popup toast.
-     * @param announceToChat
-     * Whether to broadcast completion to chat.
-     * @param hidden
-     * Whether the advancement is hidden until earned.
-     * @param x
-     * The horizontal position in the GUI tree.
-     * @param y
-     * The vertical position in the GUI tree.
+     * @param title          The Adventure {@link Component} for the title.
+     * @param description    The Adventure {@link Component} for the description.
+     * @param icon           The {@link ItemStack} icon.
+     * @param background     The resource {@link Key} for the background (nullable).
+     * @param frame          The {@link AdvancementFrame} border style.
+     * @param showToast      Whether to show a popup toast.
+     * @param announceToChat Whether to broadcast completion to chat.
+     * @param hidden         Whether the advancement is hidden until earned.
+     * @param x              The horizontal position in the GUI tree.
+     * @param y              The vertical position in the GUI tree.
      */
     public AdvancementDisplay(Component title, Component description, ItemStack icon, Key background, AdvancementFrame frame, boolean showToast, boolean announceToChat, boolean hidden, float x, float y) {
         this.title = title;
@@ -174,8 +93,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the display title of the advancement.
      *
-     * @return
-     * The title {@link Component}.
+     * @return The title {@link Component}.
      */
     public Component getTitle() {
         return title;
@@ -184,8 +102,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the description component providing details about the advancement task.
      *
-     * @return
-     * The description {@link Component}.
+     * @return The description {@link Component}.
      */
     public Component getDescription() {
         return description;
@@ -194,8 +111,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the item stack assigned as the icon for this advancement.
      *
-     * @return
-     * The {@link ItemStack} icon.
+     * @return The {@link ItemStack} icon.
      */
     public ItemStack getIcon() {
         return icon;
@@ -204,8 +120,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the resource key for the background texture, used primarily for root nodes.
      *
-     * @return
-     * The background texture {@link Key}, or null if not applicable.
+     * @return The background texture {@link Key}, or null if not applicable.
      */
     public Key getBackground() {
         return background;
@@ -214,8 +129,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the border frame style used to categorize the advancement difficulty or type.
      *
-     * @return
-     * The {@link AdvancementFrame} style.
+     * @return The {@link AdvancementFrame} style.
      */
     public AdvancementFrame getFrame() {
         return frame;
@@ -224,8 +138,7 @@ public class AdvancementDisplay {
     /**
      * Checks if the completion of this advancement triggers a toast notification.
      *
-     * @return
-     * True if a toast should be displayed.
+     * @return True if a toast should be displayed.
      */
     public boolean isShowToast() {
         return showToast;
@@ -234,8 +147,7 @@ public class AdvancementDisplay {
     /**
      * Checks if the completion of this advancement should be announced to the global chat.
      *
-     * @return
-     * True if the advancement should be announced.
+     * @return True if the advancement should be announced.
      */
     public boolean isAnnounceToChat() {
         return announceToChat;
@@ -244,8 +156,7 @@ public class AdvancementDisplay {
     /**
      * Checks if the advancement is hidden from the advancement tree until it is achieved.
      *
-     * @return
-     * True if the advancement is currently hidden.
+     * @return True if the advancement is currently hidden.
      */
     public boolean isHidden() {
         return hidden;
@@ -254,8 +165,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the horizontal position of the advancement node within the GUI.
      *
-     * @return
-     * The X coordinate as a float.
+     * @return The X coordinate as a float.
      */
     public float getX() {
         return x;
@@ -264,8 +174,7 @@ public class AdvancementDisplay {
     /**
      * Retrieves the vertical position of the advancement node within the GUI.
      *
-     * @return
-     * The Y coordinate as a float.
+     * @return The Y coordinate as a float.
      */
     public float getY() {
         return y;
@@ -274,10 +183,8 @@ public class AdvancementDisplay {
     /**
      * Sets the visual coordinates for this advancement within the client tree GUI.
      *
-     * @param x
-     * The new horizontal position.
-     * @param y
-     * The new vertical position.
+     * @param x The new horizontal position.
+     * @param y The new vertical position.
      */
     public void setPosition(float x, float y) {
         this.x = x;
@@ -287,8 +194,7 @@ public class AdvancementDisplay {
     /**
      * Creates a new builder instance for constructing AdvancementDisplay objects.
      *
-     * @return
-     * A new {@link Builder} instance.
+     * @return A new {@link Builder} instance.
      */
     public static Builder builder() {
         return new Builder();
@@ -422,8 +328,7 @@ public class AdvancementDisplay {
         /**
          * Finalizes the creation of the AdvancementDisplay instance.
          *
-         * @return
-         * A new {@link AdvancementDisplay} instance.
+         * @return A new {@link AdvancementDisplay} instance.
          */
         public AdvancementDisplay build() {
             return new AdvancementDisplay(title, description, icon, background, frame, showToast, announceToChat, hidden, x, y);

@@ -2,14 +2,11 @@ package com.github.darksoulq.abyssallib.world.data.loot.function;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A loot function that modifies the stack size of a generated item to a random value within a specified range.
@@ -27,41 +24,10 @@ public class SetCountFunction extends LootFunction {
      * for the random generation.
      * </p>
      */
-    public static final Codec<SetCountFunction> CODEC = new Codec<>() {
-        /**
-         * Decodes a SetCountFunction instance from the provided serialized data.
-         *
-         * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param input The serialized input data.
-         * @param <D>   The type of the data being processed.
-         * @return A new instance of {@link SetCountFunction}.
-         * @throws CodecException If "min" or "max" fields are missing or invalid.
-         */
-        @Override
-        public <D> SetCountFunction decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            int min = Codecs.INT.decode(ops, map.get(ops.createString("min")));
-            int max = Codecs.INT.decode(ops, map.get(ops.createString("max")));
-            return new SetCountFunction(min, max);
-        }
-
-        /**
-         * Encodes the SetCountFunction instance into a serialized format.
-         *
-         * @param ops   The {@link DynamicOps} instance defining the data format.
-         * @param value The function instance to encode.
-         * @param <D>   The type of the data being processed.
-         * @return A map representing the encoded min and max values.
-         * @throws CodecException If the encoding process fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, SetCountFunction value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("min"), Codecs.INT.encode(ops, value.min));
-            map.put(ops.createString("max"), Codecs.INT.encode(ops, value.max));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<SetCountFunction> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("min").forGetter(SetCountFunction.class, p -> p.min),
+        Codecs.INT.fieldOf("max").forGetter(SetCountFunction.class, p -> p.max)
+    ).apply(instance, SetCountFunction::new)).describe("SetCountFunction");
 
     /**
      * The registered type definition for the set count loot function.

@@ -1,6 +1,10 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
@@ -10,9 +14,8 @@ import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvid
 import org.bukkit.Location;
 import org.bukkit.Material;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -60,7 +63,7 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
 
                 for (int yOffset = 0; yOffset >= -config.depth(); yOffset--) {
                     Location target = currentColumn.clone().add(0, yOffset, 0);
-                    
+
                     if (WorldGenUtils.isValidBlock(context.level(), target, config.replaceableGround())) {
                         BlockInfo groundState = config.groundProvider().getState(random, target);
                         if (groundState != null) {
@@ -79,7 +82,7 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
                 if (highestReplaced != null && random.nextInt(config.vegetationChance()) == 0) {
                     Location plantLoc = highestReplaced.clone().add(0, 1, 0);
                     Material currentMat = context.level().getType(plantLoc.getBlockX(), plantLoc.getBlockY(), plantLoc.getBlockZ());
-                    
+
                     if (currentMat == Material.AIR || currentMat == Material.CAVE_AIR) {
                         BlockInfo vegState = config.vegetationProvider().getState(random, plantLoc);
                         if (vegState != null) {
@@ -114,64 +117,24 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
      * @param replaceableGround   The list of blocks that are allowed to be converted into the new ground.
      */
     public record Config(
-            BlockStateProvider groundProvider,
-            BlockStateProvider vegetationProvider,
-            int radius,
-            int depth,
-            int vegetationChance,
-            List<BlockInfo> replaceableGround
+        BlockStateProvider groundProvider,
+        BlockStateProvider vegetationProvider,
+        int radius,
+        int depth,
+        int vegetationChance,
+        List<BlockInfo> replaceableGround
     ) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                
-                BlockStateProvider groundProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("ground_provider")));
-                BlockStateProvider vegetationProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("vegetation_provider")));
-                int radius = Codecs.INT.decode(ops, map.get(ops.createString("radius")));
-                int depth = Codecs.INT.decode(ops, map.get(ops.createString("depth")));
-                int vegetationChance = Codecs.INT.decode(ops, map.get(ops.createString("vegetation_chance")));
-                List<BlockInfo> replaceableGround = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("replaceable_ground")));
-
-                return new Config(groundProvider, vegetationProvider, radius, depth, vegetationChance, replaceableGround);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                
-                map.put(ops.createString("ground_provider"), BlockStateProvider.CODEC.encode(ops, value.groundProvider));
-                map.put(ops.createString("vegetation_provider"), BlockStateProvider.CODEC.encode(ops, value.vegetationProvider));
-                map.put(ops.createString("radius"), Codecs.INT.encode(ops, value.radius));
-                map.put(ops.createString("depth"), Codecs.INT.encode(ops, value.depth));
-                map.put(ops.createString("vegetation_chance"), Codecs.INT.encode(ops, value.vegetationChance));
-                map.put(ops.createString("replaceable_ground"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.replaceableGround));
-
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("ground_provider").forGetter(Config.class, Config::groundProvider),
+            BlockStateProvider.CODEC.fieldOf("vegetation_provider").forGetter(Config.class, Config::vegetationProvider),
+            Codecs.INT.optionalFieldOf("radius", 5).forGetter(Config.class, Config::radius),
+            Codecs.INT.optionalFieldOf("depth", 1).forGetter(Config.class, Config::depth),
+            Codecs.INT.optionalFieldOf("vegetation_chance", 10).forGetter(Config.class, Config::vegetationChance),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("replaceable_ground", Collections.emptyList()).forGetter(Config.class, Config::replaceableGround)
+        ).apply(instance, Config::new)).describe("VegetationPatchConfig");
     }
 }

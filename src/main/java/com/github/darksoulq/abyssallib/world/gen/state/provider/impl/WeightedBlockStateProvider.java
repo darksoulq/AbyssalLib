@@ -1,13 +1,16 @@
 package com.github.darksoulq.abyssallib.world.gen.state.provider.impl;
 
-import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviderType;
 import org.bukkit.Location;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -18,40 +21,9 @@ public class WeightedBlockStateProvider extends BlockStateProvider {
     /**
      * The codec used for serializing and deserializing the weighted provider.
      */
-    public static final Codec<WeightedBlockStateProvider> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the provider from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the weighted block state provider.
-         * @throws CodecException If the entries field is missing.
-         */
-        @Override
-        public <D> WeightedBlockStateProvider decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            List<Entry> entries = Entry.CODEC.list().decode(ops, map.get(ops.createString("entries")));
-            return new WeightedBlockStateProvider(entries);
-        }
-
-        /**
-         * Encodes the provider into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The provider instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, WeightedBlockStateProvider value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("entries"), Entry.CODEC.list().encode(ops, value.entries));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<WeightedBlockStateProvider> CODEC = RecordBuilder.create(instance -> instance.group(
+        Entry.CODEC.list().optionalFieldOf("entries", Collections.emptyList()).forGetter(WeightedBlockStateProvider.class, p -> p.entries)
+    ).apply(instance, WeightedBlockStateProvider::new)).describe("WeightedBlockStateProvider");
 
     /**
      * The registered type definition for the weighted block state provider.
@@ -60,7 +32,7 @@ public class WeightedBlockStateProvider extends BlockStateProvider {
 
     /** The pool of weighted block states. */
     private final List<Entry> entries;
-    
+
     /** The cached sum of all entry weights. */
     private final int totalWeight;
 
@@ -119,41 +91,9 @@ public class WeightedBlockStateProvider extends BlockStateProvider {
         /**
          * The codec for serializing and deserializing a weighted entry.
          */
-        public static final Codec<Entry> CODEC = new Codec<>() {
-
-            /**
-             * Decodes an entry from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new entry instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Entry decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockInfo state = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("state")));
-                int weight = Codecs.INT.decode(ops, map.get(ops.createString("weight")));
-                return new Entry(state, weight);
-            }
-
-            /**
-             * Encodes an entry into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The entry instance to encode.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Entry value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.state));
-                map.put(ops.createString("weight"), Codecs.INT.encode(ops, value.weight));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Entry> CODEC = RecordBuilder.create(instance -> instance.group(
+            ExtraCodecs.BLOCK_INFO.fieldOf("state").forGetter(Entry::state),
+            Codecs.INT.optionalFieldOf("weight", 1).forGetter(Entry::weight)
+        ).apply(instance, Entry::new)).describe("WeightedEntry");
     }
 }

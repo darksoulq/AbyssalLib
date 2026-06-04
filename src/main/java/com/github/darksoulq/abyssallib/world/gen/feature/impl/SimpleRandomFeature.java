@@ -1,16 +1,14 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
 import com.github.darksoulq.abyssallib.world.gen.feature.GenerationPhase;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacedFeature;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A meta-feature that randomly selects exactly one sub-feature from a provided
@@ -66,21 +64,8 @@ public class SimpleRandomFeature extends Feature<SimpleRandomFeature.Config> {
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                List<PlacedFeature> features = PlacedFeature.CODEC.list().decode(ops, map.get(ops.createString("features")));
-                return new Config(features);
-            }
-
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("features"), PlacedFeature.CODEC.list().encode(ops, value.features));
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            PlacedFeature.CODEC.list().fieldOf("features").forGetter(Config.class, Config::features)
+        ).apply(instance, Config::new)).describe("SimpleRandomConfig");
     }
 }

@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.OminousItemSpawner;
 
@@ -18,20 +15,24 @@ public class OminousItemSpawnerEntityAdapter extends EntityAdapter<OminousItemSp
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, OminousItemSpawner value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("spawn_item_after_ticks"), Codecs.LONG.encode(ops, value.getSpawnItemAfterTicks()));
-        map.put(ops.createString("item"), Codecs.ITEM_STACK.encode(ops, value.getItem()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, OminousItemSpawner value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("spawn_item_after_ticks", Codecs.LONG, value.getSpawnItemAfterTicks())
+            .write("item", Codecs.ITEM_STACK, value.getItem());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof OminousItemSpawner spawner)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof OminousItemSpawner spawner)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.LONG.decode(ops, map.get(ops.createString("spawn_item_after_ticks")))).onSuccess(spawner::setSpawnItemAfterTicks);
-        
-        D itemData = map.get(ops.createString("item"));
-        if (itemData != null) {
-            Try.of(() -> Codecs.ITEM_STACK.decode(ops, itemData)).onSuccess(spawner::setItem);
-        }
+        ctx.readOptional("spawn_item_after_ticks", Codecs.LONG, opt -> opt.ifPresent(spawner::setSpawnItemAfterTicks))
+            .readOptional("item", Codecs.ITEM_STACK, opt -> opt.ifPresent(spawner::setItem));
+
+        return ctx.result();
     }
 }

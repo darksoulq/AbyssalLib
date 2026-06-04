@@ -1,12 +1,13 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.block.BrushableBlock;
 import org.bukkit.block.TileState;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,22 +20,39 @@ public class BrushableBlockTileAdapter extends TileAdapter<BrushableBlock> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, BrushableBlock value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, BrushableBlock value) {
         Map<D, D> map = new HashMap<>();
+
         if (!value.getItem().isEmpty()) {
-            map.put(ops.createString("item"), Codecs.ITEM_STACK.encode(ops, value.getItem()));
+            DataResult<D> res = Codecs.ITEM_STACK.encode(ops, value.getItem()).prependPath("item");
+            if (res.isError()) return DataResult.error(res.error().get());
+            map.put(ops.createString("item"), res.getOrThrow());
+            if (res.isPartial()) return DataResult.partial(ops.createMap(map), res.warnings());
         }
-        return ops.createMap(map);
+
+        return DataResult.success(ops.createMap(map));
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof BrushableBlock brushable)) return;
-        Map<D, D> map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected map for BrushableBlock"));
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof BrushableBlock brushable)) return DataResult.success(null);
 
-        D itemData = map.get(ops.createString("item"));
-        if (itemData != null) {
-            Try.of(() -> Codecs.ITEM_STACK.decode(ops, itemData)).onSuccess(brushable::setItem);
-        }
+        return ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+            .flatMap(map -> {
+                D itemData = map.get(ops.createString("item"));
+                if (itemData != null) {
+                    DataResult<ItemStack> res = Codecs.ITEM_STACK.decode(ops, itemData).prependPath("item");
+                    if (res.isError()) return DataResult.error(res.error().get());
+                    try {
+                        brushable.setItem(res.getOrThrow());
+                    } catch (Exception e) {
+                        return DataResult.error(DataError.custom("Failed to set brushable block item: " + e.getMessage()));
+                    }
+                    return res.isPartial() ? DataResult.partial(null, res.warnings()) : DataResult.success(null);
+                }
+                return DataResult.success(null);
+            });
     }
 }

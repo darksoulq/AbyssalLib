@@ -5,9 +5,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.RecordComponent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class ReflectClass<T> {
 
@@ -15,9 +20,11 @@ public class ReflectClass<T> {
     private final int modifiers;
 
     private final Map<String, ReflectField<?>> fieldCache = new ConcurrentHashMap<>();
-    private final Map<Class<?>, ReflectField<?>> fieldByTypeCache = new ConcurrentHashMap<>();
-    private final Map<String, ReflectMethod<?>> methodCache = new ConcurrentHashMap<>();
-    private final Map<Integer, ReflectConstructor<T>> constructorCache = new ConcurrentHashMap<>();
+    private final Map<MethodKey, ReflectMethod<?>> methodCache = new ConcurrentHashMap<>();
+    private final Map<ConstructorKey, ReflectConstructor<T>> constructorCache = new ConcurrentHashMap<>();
+
+    private record MethodKey(String name, List<Class<?>> paramTypes) {}
+    private record ConstructorKey(List<Class<?>> paramTypes) {}
 
     protected ReflectClass(Class<T> clazz) {
         this.clazz = clazz;
@@ -66,18 +73,51 @@ public class ReflectClass<T> {
         return Result.failure(new IllegalStateException(clazz.getName() + " is not an enum"));
     }
 
-    public ReflectClass<?>[] getInterfaces() {
-        Class<?>[] interfaces = clazz.getInterfaces();
-        ReflectClass<?>[] reflectInterfaces = new ReflectClass<?>[interfaces.length];
-        for (int i = 0; i < interfaces.length; i++) {
-            reflectInterfaces[i] = Reflect.of(interfaces[i]);
-        }
-        return reflectInterfaces;
+    public List<ReflectClass<?>> getInterfaces() {
+        return Arrays.stream(clazz.getInterfaces())
+            .map(Reflect::of)
+            .collect(Collectors.toList());
+    }
+
+    public List<ReflectField<?>> fields() {
+        return Arrays.stream(clazz.getDeclaredFields())
+            .map(ReflectField::new)
+            .collect(Collectors.toList());
+    }
+
+    public List<ReflectMethod<?>> methods() {
+        return Arrays.stream(clazz.getDeclaredMethods())
+            .map(ReflectMethod::new)
+            .collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ReflectConstructor<T>> constructors() {
+        return Arrays.stream(clazz.getDeclaredConstructors())
+            .map(c -> new ReflectConstructor<>((Constructor<T>) c))
+            .collect(Collectors.toList());
+    }
+
+    public List<ReflectAnnotation<?>> annotations() {
+        return Arrays.stream(clazz.getAnnotations())
+            .map(ReflectAnnotation::new)
+            .collect(Collectors.toList());
+    }
+
+    public List<ReflectMethod<?>> recordComponents() {
+        if (!isRecord()) return new ArrayList<>();
+        return Arrays.stream(clazz.getRecordComponents())
+            .map(RecordComponent::getAccessor)
+            .map(ReflectMethod::new)
+            .collect(Collectors.toList());
     }
 
     public <A extends Annotation> Result<A> getAnnotation(Class<A> annotationClass) {
         A annotation = clazz.getAnnotation(annotationClass);
-        return annotation != null ? Result.success(annotation) : Result.failure(new NullPointerException("Annotation not found"));
+        if (annotation == null) {
+            return Result.failure(new NoSuchElementException("Annotation not found: " + annotationClass.getName()));
+        }
+        return Result.success(annotation);
     }
 
     public <A extends Annotation> Result<ReflectAnnotation<A>> getReflectAnnotation(Class<A> annotationClass) {
@@ -99,89 +139,89 @@ public class ReflectClass<T> {
     @SuppressWarnings("unchecked")
     public <V> Result<ReflectField<V>> field(String name) {
         try {
-            if (fieldCache.containsKey(name)) {
-                return Result.success((ReflectField<V>) fieldCache.get(name));
-            }
-            Field f = findField(clazz, name);
-            ReflectField<V> rf = new ReflectField<>(f);
-            fieldCache.put(name, rf);
-            return Result.success(rf);
-        } catch (Throwable t) {
-            return Result.failure(t);
+            return Result.success((ReflectField<V>) fieldCache.computeIfAbsent(name, k -> {
+                try {
+                    return new ReflectField<>(findField(clazz, k));
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        } catch (RuntimeException e) {
+            return Result.failure(e.getCause() != null ? e.getCause() : e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public <V> Result<ReflectField<V>> field(String name, Class<V> expectedType) {
-        return field(name);
+        return this.<V>field(name).flatMap(f -> {
+            if (!expectedType.isAssignableFrom(f.getType())) {
+                return Result.failure(new ClassCastException("Field " + name + " type " + f.getType().getName() + " is not assignable to " + expectedType.getName()));
+            }
+            return Result.success(f);
+        });
     }
 
-    @SuppressWarnings("unchecked")
-    public <V> Result<ReflectField<V>> fieldByType(Class<V> type) {
-        try {
-            if (fieldByTypeCache.containsKey(type)) {
-                return Result.success((ReflectField<V>) fieldByTypeCache.get(type));
-            }
-
-            for (Field f : clazz.getDeclaredFields()) {
-                if (f.getType() == type) {
-                    ReflectField<V> rf = new ReflectField<>(f);
-                    fieldByTypeCache.put(type, rf);
-                    return Result.success(rf);
+    public <V> List<ReflectField<V>> fieldsByType(Class<V> type) {
+        List<ReflectField<V>> found = new ArrayList<>();
+        Class<?> current = clazz;
+        while (current != null && current != Object.class) {
+            for (Field f : current.getDeclaredFields()) {
+                if (type.isAssignableFrom(f.getType())) {
+                    found.add(new ReflectField<>(f).unchecked());
                 }
             }
-
-            Class<?> current = clazz.getSuperclass();
-            while (current != null && current != Object.class) {
-                for (Field f : current.getDeclaredFields()) {
-                    if (f.getType() == type) {
-                        ReflectField<V> rf = new ReflectField<>(f);
-                        fieldByTypeCache.put(type, rf);
-                        return Result.success(rf);
-                    }
-                }
-                current = current.getSuperclass();
-            }
-
-            return Result.failure(new NoSuchFieldException("Field of type " + type.getName() + " not found in " + clazz.getName()));
-        } catch (Throwable t) {
-            return Result.failure(t);
+            current = current.getSuperclass();
         }
+        return found;
+    }
+
+    public <V> Result<ReflectField<V>> fieldByType(Class<V> type) {
+        List<ReflectField<V>> found = fieldsByType(type);
+        if (found.isEmpty()) {
+            return Result.failure(new NoSuchFieldException("No field of type " + type.getName() + " found in " + clazz.getName()));
+        }
+        if (found.size() > 1) {
+            return Result.failure(new IllegalStateException("Ambiguous field resolution: found " + found.size() + " fields assignable to " + type.getName()));
+        }
+        return Result.success(found.getFirst());
     }
 
     @SuppressWarnings("unchecked")
     public <R> Result<ReflectMethod<R>> method(String name, Class<?>... paramTypes) {
+        MethodKey key = new MethodKey(name, Arrays.asList(paramTypes));
         try {
-            String key = name + Arrays.hashCode(paramTypes);
-            if (methodCache.containsKey(key)) {
-                return Result.success((ReflectMethod<R>) methodCache.get(key));
-            }
-            Method m = findMethod(clazz, name, paramTypes);
-            ReflectMethod<R> rm = new ReflectMethod<>(m);
-            methodCache.put(key, rm);
-            return Result.success(rm);
-        } catch (Throwable t) {
-            return Result.failure(t);
+            return Result.success((ReflectMethod<R>) methodCache.computeIfAbsent(key, k -> {
+                try {
+                    return new ReflectMethod<>(findMethod(clazz, k.name(), k.paramTypes().toArray(new Class<?>[0])));
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        } catch (RuntimeException e) {
+            return Result.failure(e.getCause() != null ? e.getCause() : e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public <R> Result<ReflectMethod<R>> method(String name, Class<R> expectedReturnType, Class<?>... paramTypes) {
-        return method(name, paramTypes);
+        return this.<R>method(name, paramTypes).flatMap(m -> {
+            if (!expectedReturnType.isAssignableFrom(m.getReturnType())) {
+                return Result.failure(new ClassCastException("Method " + name + " return type " + m.getReturnType().getName() + " is not assignable to " + expectedReturnType.getName()));
+            }
+            return Result.success(m);
+        });
     }
 
     public Result<ReflectConstructor<T>> constructor(Class<?>... paramTypes) {
+        ConstructorKey key = new ConstructorKey(Arrays.asList(paramTypes));
         try {
-            int key = Arrays.hashCode(paramTypes);
-            if (constructorCache.containsKey(key)) {
-                return Result.success(constructorCache.get(key));
-            }
-            Constructor<T> c = findConstructor(clazz, paramTypes);
-            ReflectConstructor<T> rc = new ReflectConstructor<>(c);
-            constructorCache.put(key, rc);
-            return Result.success(rc);
-        } catch (Throwable t) {
-            return Result.failure(t);
+            return Result.success(constructorCache.computeIfAbsent(key, k -> {
+                try {
+                    return new ReflectConstructor<>(findConstructor(clazz, k.paramTypes().toArray(new Class<?>[0])));
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        } catch (RuntimeException e) {
+            return Result.failure(e.getCause() != null ? e.getCause() : e);
         }
     }
 
@@ -209,5 +249,23 @@ public class ReflectClass<T> {
 
     private Constructor<T> findConstructor(Class<T> current, Class<?>... paramTypes) throws NoSuchMethodException {
         return current.getDeclaredConstructor(paramTypes);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReflectClass<?> that = (ReflectClass<?>) o;
+        return clazz.equals(that.clazz);
+    }
+
+    @Override
+    public int hashCode() {
+        return clazz.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return clazz.getName();
     }
 }

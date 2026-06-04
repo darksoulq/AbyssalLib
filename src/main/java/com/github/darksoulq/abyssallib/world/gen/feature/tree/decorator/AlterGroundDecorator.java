@@ -1,14 +1,12 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.tree.decorator;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -20,40 +18,9 @@ public class AlterGroundDecorator extends TreeDecorator {
     /**
      * The codec used for serializing and deserializing the alter ground decorator.
      */
-    public static final Codec<AlterGroundDecorator> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the decorator from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the alter ground decorator.
-         * @throws CodecException If the provider field is missing.
-         */
-        @Override
-        public <D> AlterGroundDecorator decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            BlockStateProvider provider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("provider")));
-            return new AlterGroundDecorator(provider);
-        }
-
-        /**
-         * Encodes the decorator into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The decorator instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, AlterGroundDecorator value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("provider"), BlockStateProvider.CODEC.encode(ops, value.provider));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<AlterGroundDecorator> CODEC = RecordBuilder.create(instance -> instance.group(
+        BlockStateProvider.CODEC.fieldOf("provider").forGetter(AlterGroundDecorator.class, p -> p.provider)
+    ).apply(instance, AlterGroundDecorator::new)).describe("AlterGroundDecorator");
 
     /**
      * The registered type definition for the alter ground tree decorator.

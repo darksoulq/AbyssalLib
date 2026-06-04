@@ -3,11 +3,17 @@ package com.github.darksoulq.abyssallib.world.entity;
 import com.github.darksoulq.abyssallib.common.reflection.Reflect;
 import com.github.darksoulq.abyssallib.common.reflection.ReflectClass;
 import com.github.darksoulq.abyssallib.common.reflection.ReflectField;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.block.property.Property;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A base class for entities that utilize the property-based serialization system.
@@ -62,15 +68,15 @@ public abstract class AbstractPropertyEntity<T> {
      *
      * @param ops the dynamic operations logic
      * @param <D> the data format type
-     * @return a serialized map of property names to values
-     * @throws Exception if reflection or encoding fails
+     * @return a DataResult containing the serialized map of property names to values
      */
-    public <D> D serialize(DynamicOps<D> ops) throws Exception {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops) {
         Map<D, D> map = new LinkedHashMap<>();
+        List<DataError> warnings = new ArrayList<>();
         ReflectClass<?> rc = Reflect.of(getClass());
 
         while (rc != null && rc.getUnderlyingClass() != AbstractPropertyEntity.class && rc.getUnderlyingClass() != Object.class) {
-            for (java.lang.reflect.Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
+            for (Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
                 ReflectField<Object> field = rc.field(rawField.getName()).getOrNull();
 
                 if (field == null || field.isStatic()) continue;
@@ -78,13 +84,22 @@ public abstract class AbstractPropertyEntity<T> {
                 Object obj = field.get(this).getOrNull();
 
                 if (obj instanceof Property<?> prop) {
-                    D encoded = prop.encode(ops);
-                    map.put(ops.createString(field.getName()), encoded);
+                    DataResult<D> encodedRes = prop.encode(ops);
+                    if (encodedRes.isSuccess()) {
+                        map.put(ops.createString(field.getName()), encodedRes.getOrThrow());
+                        if (encodedRes.isPartial()) {
+                            warnings.addAll(encodedRes.warnings());
+                        }
+                    } else {
+                        warnings.add(encodedRes.dataError().orElseGet(() -> DataError.custom(encodedRes.error().get())));
+                    }
                 }
             }
             rc = rc.getSuperclass().getOrNull();
         }
-        return ops.createMap(map);
+
+        D resultMap = ops.createMap(map);
+        return warnings.isEmpty() ? DataResult.success(resultMap) : DataResult.partial(resultMap, warnings);
     }
 
     /**
@@ -96,14 +111,20 @@ public abstract class AbstractPropertyEntity<T> {
      * @param ops   the dynamic operations logic
      * @param input the serialized map data
      * @param <D>   the data format type
-     * @throws Exception if reflection or decoding fails
+     * @return a DataResult representing the success or partial failure of the decoding process
      */
-    public <D> void deserialize(DynamicOps<D> ops, D input) throws Exception {
-        Map<D, D> map = ops.getMap(input).orElse(Map.of());
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input) {
+        Optional<Map<D, D>> mapOpt = ops.getMap(input);
+        if (mapOpt.isEmpty()) {
+            return DataResult.error(DataError.custom("Input is not a valid map format."));
+        }
+
+        Map<D, D> map = mapOpt.get();
+        List<DataError> warnings = new ArrayList<>();
         ReflectClass<?> rc = Reflect.of(getClass());
 
         while (rc != null && rc.getUnderlyingClass() != AbstractPropertyEntity.class && rc.getUnderlyingClass() != Object.class) {
-            for (java.lang.reflect.Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
+            for (Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
                 ReflectField<Object> field = rc.field(rawField.getName()).getOrNull();
 
                 if (field == null || field.isStatic()) continue;
@@ -114,10 +135,17 @@ public abstract class AbstractPropertyEntity<T> {
 
                 D encoded = map.get(ops.createString(field.getName()));
                 if (encoded != null) {
-                    prop.decode(ops, encoded);
+                    DataResult<Void> decodedRes = prop.decode(ops, encoded);
+                    if (decodedRes.isError()) {
+                        warnings.add(decodedRes.dataError().orElseGet(() -> DataError.custom(decodedRes.error().get())));
+                    } else if (decodedRes.isPartial()) {
+                        warnings.addAll(decodedRes.warnings());
+                    }
                 }
             }
             rc = rc.getSuperclass().getOrNull();
         }
+
+        return warnings.isEmpty() ? DataResult.success(null) : DataResult.partial(null, warnings);
     }
 }

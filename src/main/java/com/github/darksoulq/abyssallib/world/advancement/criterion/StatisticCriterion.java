@@ -2,37 +2,37 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-
+/**
+ * An advancement criterion evaluating a standard vanilla Minecraft statistic.
+ */
 public class StatisticCriterion implements AdvancementCriterion {
 
-    public static final Codec<StatisticCriterion> CODEC = new Codec<>() {
-        @Override
-        public <D> StatisticCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow();
-            Statistic statistic = Codec.enumCodec(Statistic.class).decode(ops, map.get(ops.createString("statistic")));
-            int threshold = Codecs.INT.decode(ops, map.get(ops.createString("threshold")));
-            return new StatisticCriterion(statistic, threshold);
-        }
+    /**
+     * The codec used for serializing and deserializing the vanilla statistic criterion.
+     */
+    public static final Codec<StatisticCriterion> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codec.enumCodec(Statistic.class).fieldOf("statistic").forGetter(StatisticCriterion.class, p -> p.statistic),
+        Codecs.INT.fieldOf("threshold").forGetter(StatisticCriterion.class, p -> p.threshold)
+    ).apply(instance, StatisticCriterion::new)).describe("StatisticCriterion");
 
-        @Override
-        public <D> D encode(DynamicOps<D> ops, StatisticCriterion value) throws CodecException {
-            return ops.createMap(Map.of(
-                ops.createString("statistic"), Codec.enumCodec(Statistic.class).encode(ops, value.statistic),
-                ops.createString("threshold"), Codecs.INT.encode(ops, value.threshold)
-            ));
-        }
-    };
-
+    /**
+     * The registered type definition for the vanilla statistic criterion.
+     */
     public static final CriterionType<StatisticCriterion> TYPE = () -> CODEC;
 
     private final Statistic statistic;
     private final int threshold;
 
+    /**
+     * Constructs a new StatisticCriterion.
+     *
+     * @param statistic The vanilla statistic to track.
+     * @param threshold The required value threshold.
+     */
     public StatisticCriterion(Statistic statistic, int threshold) {
         this.statistic = statistic;
         this.threshold = threshold;
@@ -43,6 +43,12 @@ public class StatisticCriterion implements AdvancementCriterion {
         return TYPE;
     }
 
+    /**
+     * Checks if the player's vanilla statistic value meets or exceeds the required threshold.
+     *
+     * @param player The player to evaluate.
+     * @return True if the condition is met.
+     */
     @Override
     public boolean isMet(Player player) {
         return player.getStatistic(statistic) >= threshold;

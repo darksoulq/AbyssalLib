@@ -7,24 +7,41 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * An implementation of {@link DynamicOps} that serializes data into raw byte arrays.
+ * A {@link DynamicOps} implementation that stores serialized values as raw
+ * byte arrays.
  * <p>
- * This format uses a binary protocol where variable-length data (Strings, Lists, Maps)
- * is prefixed with a 4-byte integer indicating the length or size, followed by the raw data.
- * Fixed-size primitives use their standard IEEE 754 or two's complement binary representations.
+ * Values are encoded using a simple binary format. Variable-length structures
+ * such as strings, lists, and maps are prefixed with their length or entry
+ * count, while primitive numeric values are stored using their standard binary
+ * representation.
  */
 public class ByteOps extends DynamicOps<byte[]> {
 
-    /** The singleton instance of ByteOps. */
+    /**
+     * Shared singleton instance.
+     */
     public static final ByteOps INSTANCE = new ByteOps();
 
-    /** Private constructor to enforce the singleton pattern. */
+    /**
+     * Creates a new {@code ByteOps} instance.
+     */
     private ByteOps() {}
 
     /**
-     * Serializes a string as UTF-8 bytes with a 4-byte length prefix.
-     * @param value The string to serialize.
-     * @return A byte array containing [length(4 bytes)][data(n bytes)].
+     * Indicates that this format benefits from compressed map encoding.
+     *
+     * @return {@code true}
+     */
+    @Override
+    public boolean compressMaps() {
+        return true;
+    }
+
+    /**
+     * Encodes a string as UTF-8 bytes prefixed by its length.
+     *
+     * @param value the string to encode
+     * @return the encoded byte array
      */
     @Override
     public byte[] createString(String value) {
@@ -33,9 +50,34 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes an integer into a 4-byte array (Big-Endian).
-     * @param value The integer value.
-     * @return A 4-byte array.
+     * Encodes a byte value.
+     *
+     * @param value the value to encode
+     * @return the encoded byte array
+     */
+    @Override
+    public byte[] createByte(byte value) {
+        return new byte[]{ value };
+    }
+
+    /**
+     * Encodes a short value using big-endian byte order.
+     *
+     * @param value the value to encode
+     * @return the encoded byte array
+     */
+    @Override
+    public byte[] createShort(short value) {
+        ByteBuffer buf = ByteBuffer.allocate(2);
+        buf.putShort(value);
+        return buf.array();
+    }
+
+    /**
+     * Encodes an integer value using big-endian byte order.
+     *
+     * @param value the value to encode
+     * @return the encoded byte array
      */
     @Override
     public byte[] createInt(int value) {
@@ -45,9 +87,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes a long into an 8-byte array (Big-Endian).
-     * @param value The long value.
-     * @return An 8-byte array.
+     * Encodes a long value using big-endian byte order.
+     *
+     * @param value the value to encode
+     * @return the encoded byte array
      */
     @Override
     public byte[] createLong(long value) {
@@ -57,9 +100,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes a float into a 4-byte array.
-     * @param value The float value.
-     * @return A 4-byte array.
+     * Encodes a float value.
+     *
+     * @param value the value to encode
+     * @return the encoded byte array
      */
     @Override
     public byte[] createFloat(float value) {
@@ -69,9 +113,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes a double into an 8-byte array.
-     * @param value The double value.
-     * @return An 8-byte array.
+     * Encodes a double value.
+     *
+     * @param value the value to encode
+     * @return the encoded byte array
      */
     @Override
     public byte[] createDouble(double value) {
@@ -81,9 +126,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes a boolean into a 1-byte array.
-     * @param value The boolean value.
-     * @return An array containing {@code 1} for true or {@code 0} for false.
+     * Encodes a boolean value.
+     *
+     * @param value the value to encode
+     * @return a single-byte representation of the boolean
      */
     @Override
     public byte[] createBoolean(boolean value) {
@@ -91,10 +137,13 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes a list of byte arrays into a single contiguous byte array.
-     * Format: [List Size(4)][Elem1 Length(4)][Elem1 Data...][Elem2 Length(4)][Elem2 Data...]
-     * @param elements The list of serialized byte arrays.
-     * @return The combined byte array.
+     * Encodes a list of serialized values.
+     * <p>
+     * The resulting format stores the element count followed by each element
+     * prefixed with its length.
+     *
+     * @param elements the serialized list elements
+     * @return the encoded list
      */
     @Override
     public byte[] createList(List<byte[]> elements) {
@@ -110,10 +159,13 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Serializes a map of byte arrays into a single contiguous byte array.
-     * Format: [Map Size(4)][Key1 Len(4)][Key1 Data...][Val1 Len(4)][Val1 Data...]
-     * @param map The map of serialized key-value pairs.
-     * @return The combined byte array.
+     * Encodes a map of serialized key-value pairs.
+     * <p>
+     * The resulting format stores the entry count followed by each key and
+     * value prefixed with its length.
+     *
+     * @param map the serialized map entries
+     * @return the encoded map
      */
     @Override
     public byte[] createMap(Map<byte[], byte[]> map) {
@@ -130,11 +182,11 @@ public class ByteOps extends DynamicOps<byte[]> {
         }
         return buf.array();
     }
-
     /**
-     * Decodes a length-prefixed byte array into a String.
-     * @param input The raw byte data.
-     * @return An Optional containing the decoded String, or empty if decoding fails.
+     * Attempts to decode a UTF-8 string from a length-prefixed byte array.
+     *
+     * @param input the encoded byte array
+     * @return the decoded string, if the input is valid
      */
     @Override
     public Optional<String> getStringValue(byte[] input) {
@@ -150,9 +202,25 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes a 4-byte array into an Integer.
-     * @param input The raw byte data.
-     * @return An Optional containing the Integer.
+     * Attempts to decode a numeric value based on the size of the byte array.
+     *
+     * @param input the encoded byte array
+     * @return the decoded number, if the input matches a supported numeric size
+     */
+    @Override
+    public Optional<Number> getNumberValue(byte[] input) {
+        if (input.length == 1) return Optional.of(input[0]);
+        if (input.length == 2) return Optional.of(ByteBuffer.wrap(input).getShort());
+        if (input.length == 4) return Optional.of(ByteBuffer.wrap(input).getInt());
+        if (input.length == 8) return Optional.of(ByteBuffer.wrap(input).getLong());
+        return Optional.empty();
+    }
+
+    /**
+     * Attempts to decode an integer value.
+     *
+     * @param input the encoded byte array
+     * @return the decoded integer, if the input contains a valid integer
      */
     @Override
     public Optional<Integer> getIntValue(byte[] input) {
@@ -161,9 +229,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes an 8-byte array into a Long.
-     * @param input The raw byte data.
-     * @return An Optional containing the Long.
+     * Attempts to decode a long value.
+     *
+     * @param input the encoded byte array
+     * @return the decoded long, if the input contains a valid long
      */
     @Override
     public Optional<Long> getLongValue(byte[] input) {
@@ -172,9 +241,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes a 4-byte array into a Float.
-     * @param input The raw byte data.
-     * @return An Optional containing the Float.
+     * Attempts to decode a float value.
+     *
+     * @param input the encoded byte array
+     * @return the decoded float, if the input contains a valid float
      */
     @Override
     public Optional<Float> getFloatValue(byte[] input) {
@@ -183,9 +253,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes an 8-byte array into a Double.
-     * @param input The raw byte data.
-     * @return An Optional containing the Double.
+     * Attempts to decode a double value.
+     *
+     * @param input the encoded byte array
+     * @return the decoded double, if the input contains a valid double
      */
     @Override
     public Optional<Double> getDoubleValue(byte[] input) {
@@ -194,9 +265,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes a 1-byte array into a Boolean.
-     * @param input The raw byte data.
-     * @return An Optional containing true if the byte is non-zero.
+     * Attempts to decode a boolean value.
+     *
+     * @param input the encoded byte array
+     * @return the decoded boolean, if the input contains a valid boolean
      */
     @Override
     public Optional<Boolean> getBooleanValue(byte[] input) {
@@ -205,9 +277,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes a combined byte array into a list of its constituent byte array elements.
-     * @param input The raw binary list data.
-     * @return An Optional containing the list of byte arrays.
+     * Attempts to decode a serialized list.
+     *
+     * @param input the encoded byte array
+     * @return the decoded list, if the input contains a valid list
      */
     @Override
     public Optional<List<byte[]>> getList(byte[] input) {
@@ -228,9 +301,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Decodes a combined byte array into a map of its constituent key-value byte arrays.
-     * @param input The raw binary map data.
-     * @return An Optional containing the map.
+     * Attempts to decode a serialized map.
+     *
+     * @param input the encoded byte array
+     * @return the decoded map, if the input contains a valid map
      */
     @Override
     public Optional<Map<byte[], byte[]>> getMap(byte[] input) {
@@ -252,9 +326,54 @@ public class ByteOps extends DynamicOps<byte[]> {
             return Optional.empty();
         }
     }
+    /**
+     * Returns the decoded string keys contained in a serialized map.
+     *
+     * @param input the encoded map value
+     * @return the decoded keys, if the input contains a valid map
+     */
+    @Override
+    public Optional<Iterable<String>> getKeys(byte[] input) {
+        return getMap(input).map(map -> {
+            List<String> keys = new ArrayList<>();
+            for (byte[] k : map.keySet()) {
+                getStringValue(k).ifPresent(keys::add);
+            }
+            return keys;
+        });
+    }
 
     /**
-     * @return An empty 0-length byte array.
+     * Returns the number of entries contained in a serialized list or map.
+     *
+     * @param input the encoded value
+     * @return the collection size, if the value is a valid list or map
+     */
+    @Override
+    public OptionalInt size(byte[] input) {
+        Optional<List<byte[]>> listOpt = getList(input);
+        if (listOpt.isPresent()) return OptionalInt.of(listOpt.get().size());
+
+        Optional<Map<byte[], byte[]>> mapOpt = getMap(input);
+        return mapOpt.map(map -> OptionalInt.of(map.size())).orElseGet(OptionalInt::empty);
+
+    }
+
+    /**
+     * Creates a copy of the provided byte array.
+     *
+     * @param input the array to copy
+     * @return a new array containing the same bytes
+     */
+    @Override
+    public byte[] copy(byte[] input) {
+        return Arrays.copyOf(input, input.length);
+    }
+
+    /**
+     * Returns the empty value representation for this format.
+     *
+     * @return an empty byte array
      */
     @Override
     public byte[] empty() {
@@ -262,9 +381,10 @@ public class ByteOps extends DynamicOps<byte[]> {
     }
 
     /**
-     * Helper method to wrap data with a 4-byte length header.
-     * @param data The payload.
-     * @return A new array containing [length][payload].
+     * Prefixes a byte array with its length.
+     *
+     * @param data the payload to wrap
+     * @return a new array containing the payload length followed by the payload
      */
     private byte[] withLengthPrefix(byte[] data) {
         ByteBuffer buf = ByteBuffer.allocate(4 + data.length);

@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import com.github.darksoulq.abyssallib.world.block.BlockEntity;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
@@ -7,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,8 +17,8 @@ import java.util.Map;
  *
  * <p>This serializer handles two distinct layers:</p>
  * <ul>
- *     <li><b>Block states</b> — the visual {@link BlockData}</li>
- *     <li><b>Block entity data</b> — custom persistent logic</li>
+ * <li><b>Block states</b> — the visual {@link BlockData}</li>
+ * <li><b>Block entity data</b> — custom persistent logic</li>
  * </ul>
  *
  * <p>All operations are performed using {@link DynamicOps} to remain format-agnostic.</p>
@@ -47,7 +49,16 @@ public final class AbyssalLibBlockSerializer {
             }
         }
 
-        return Adapter.save(ops, bd);
+        DataResult<Map<D, D>> res = Adapter.save(ops, bd);
+        if (res.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to serialize CustomBlock states: " + res.error().get());
+            return new HashMap<>();
+        }
+        if (res.isPartial()) {
+            res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("CustomBlock states serialization warning: " + warning.message()));
+        }
+
+        return res.getOrThrow();
     }
 
     /**
@@ -58,15 +69,11 @@ public final class AbyssalLibBlockSerializer {
      * @param block the custom block instance
      * @param ops   the dynamic operations instance used for encoding
      * @param <D>   the encoded data type
-     * @return the serialized entity data, or {@code null} if no entity is present
+     * @return a DataResult containing the serialized entity data, or {@code null} if no entity is present
      */
-    public static <D> D serializeProperties(CustomBlock block, DynamicOps<D> ops) {
+    public static <D> DataResult<D> serializeProperties(CustomBlock block, DynamicOps<D> ops) {
         if (block.getEntity() != null) {
-            try {
-                return block.getEntity().serialize(ops);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            return block.getEntity().serialize(ops);
         }
         return null;
     }
@@ -83,7 +90,12 @@ public final class AbyssalLibBlockSerializer {
      */
     public static <D> void deserializeBlockData(Map<D, D> data, DynamicOps<D> ops, BlockData targetData) {
         if (data == null) return;
-        Adapter.load(ops, data, targetData);
+        DataResult<Void> res = Adapter.load(ops, data, targetData);
+        if (res.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to deserialize CustomBlock states: " + res.error().get());
+        } else if (res.isPartial()) {
+            res.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("CustomBlock states deserialization warning: " + warning.message()));
+        }
     }
 
     /**
@@ -98,23 +110,22 @@ public final class AbyssalLibBlockSerializer {
      * @param props the serialized entity data
      * @param ops   the dynamic operations instance used for decoding
      * @param <D>   the encoded data type
+     * @return a DataResult representing the deserialization status
      */
-    public static <D> void deserializeEntity(CustomBlock block, D props, DynamicOps<D> ops) {
-        if (props == null) return;
+    public static <D> DataResult<Void> deserializeEntity(CustomBlock block, D props, DynamicOps<D> ops) {
+        if (props == null) return DataResult.success(null);
 
-        try {
-            BlockEntity entity = block.getEntity();
+        BlockEntity entity = block.getEntity();
 
-            if (entity == null) {
-                entity = block.createBlockEntity(null);
-                block.setEntity(entity);
-            }
-
-            if (entity != null) {
-                entity.deserialize(ops, props);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (entity == null) {
+            entity = block.createBlockEntity(null);
+            block.setEntity(entity);
         }
+
+        if (entity != null) {
+            return entity.deserialize(ops, props);
+        }
+
+        return DataResult.success(null);
     }
 }

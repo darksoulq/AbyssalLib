@@ -6,31 +6,36 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * An implementation of {@link DynamicOps} that serializes data into a custom string-based format.
+ * A {@link DynamicOps} implementation that serializes values into a compact
+ * string-based format.
  * <p>
- * This format utilizes Java-style literal suffixes for numeric types and specialized
- * brackets for collections:
+ * The format encodes primitives using type suffixes and structures using
+ * bracketed notation:
  * <ul>
- * <li><b>Strings:</b> Quoted with backslash escaping ({@code "text"})</li>
- * <li><b>Longs:</b> Suffix {@code L} ({@code 100L})</li>
- * <li><b>Floats:</b> Suffix {@code f} ({@code 1.5f})</li>
- * <li><b>Doubles:</b> Suffix {@code d} ({@code 2.0d})</li>
- * <li><b>Lists:</b> Wrapped in {@code []} and comma-separated</li>
- * <li><b>Maps:</b> Wrapped in {@code {}} with {@code key:value} pairs</li>
+ * <li>Strings: {@code "text"} with escaping</li>
+ * <li>Bytes: {@code 1b}</li>
+ * <li>Shorts: {@code 1s}</li>
+ * <li>Integers: {@code 1}</li>
+ * <li>Longs: {@code 1L}</li>
+ * <li>Floats: {@code 1.0f}</li>
+ * <li>Doubles: {@code 1.0d}</li>
+ * <li>Lists: {@code [a,b,c]}</li>
+ * <li>Maps: {@code {k:v,k2:v2}}</li>
  * </ul>
  */
 public final class StringOps extends DynamicOps<String> {
 
-    /** The singleton instance of StringOps. */
+    /** Singleton instance. */
     public static final StringOps INSTANCE = new StringOps();
 
-    /** Private constructor to enforce the singleton pattern. */
+    /** Private constructor for singleton usage. */
     private StringOps() {}
 
     /**
-     * Creates a quoted string with escaped backslashes and quotes.
-     * @param value The raw string.
-     * @return The escaped and quoted string.
+     * Serializes a string with escaping and quotes.
+     *
+     * @param value input string
+     * @return quoted and escaped string
      */
     @Override
     public String createString(String value) {
@@ -40,9 +45,32 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Converts an integer to its string representation.
-     * @param value The integer value.
-     * @return The string form of the integer.
+     * Serializes a byte with {@code b} suffix.
+     *
+     * @param value byte value
+     * @return encoded string
+     */
+    @Override
+    public String createByte(byte value) {
+        return value + "b";
+    }
+
+    /**
+     * Serializes a short with {@code s} suffix.
+     *
+     * @param value short value
+     * @return encoded string
+     */
+    @Override
+    public String createShort(short value) {
+        return value + "s";
+    }
+
+    /**
+     * Serializes an integer as a plain numeric string.
+     *
+     * @param value integer value
+     * @return encoded string
      */
     @Override
     public String createInt(int value) {
@@ -50,9 +78,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Converts a long to a string with an 'L' suffix.
-     * @param value The long value.
-     * @return The suffixed string.
+     * Serializes a long with {@code L} suffix.
+     *
+     * @param value long value
+     * @return encoded string
      */
     @Override
     public String createLong(long value) {
@@ -60,9 +89,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Converts a float to a string with an 'f' suffix.
-     * @param value The float value.
-     * @return The suffixed string.
+     * Serializes a float with {@code f} suffix.
+     *
+     * @param value float value
+     * @return encoded string
      */
     @Override
     public String createFloat(float value) {
@@ -70,9 +100,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Converts a double to a string with a 'd' suffix.
-     * @param value The double value.
-     * @return The suffixed string.
+     * Serializes a double with {@code d} suffix.
+     *
+     * @param value double value
+     * @return encoded string
      */
     @Override
     public String createDouble(double value) {
@@ -80,9 +111,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Converts a boolean to its string representation.
-     * @param value The boolean value.
-     * @return "true" or "false".
+     * Serializes a boolean value.
+     *
+     * @param value boolean value
+     * @return {@code true} or {@code false}
      */
     @Override
     public String createBoolean(boolean value) {
@@ -90,9 +122,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Joins a list of strings into a bracketed, comma-separated string.
-     * @param elements The list of serialized elements.
-     * @return A string formatted as {@code [elem1,elem2]}.
+     * Serializes a list into a comma-separated bracketed structure.
+     *
+     * @param elements encoded elements
+     * @return list string
      */
     @Override
     public String createList(List<String> elements) {
@@ -101,9 +134,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Formats a map into a curly-bracketed string of key-value pairs.
-     * @param map The map of serialized keys and values.
-     * @return A string formatted as {@code {key1:val1,key2:val2}}.
+     * Serializes a map into a comma-separated key-value structure.
+     *
+     * @param map encoded map entries
+     * @return map string
      */
     @Override
     public String createMap(Map<String, String> map) {
@@ -116,9 +150,7 @@ public final class StringOps extends DynamicOps<String> {
                 .append(":")
                 .append(e.getValue());
 
-            if (it.hasNext()) {
-                sb.append(",");
-            }
+            if (it.hasNext()) sb.append(",");
         }
 
         sb.append("}");
@@ -126,9 +158,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Attempts to unquote and unescape a string.
-     * @param input The serialized string.
-     * @return Optional containing the raw string if correctly quoted.
+     * Parses a quoted string and unescapes characters.
+     *
+     * @param input encoded string
+     * @return decoded value if valid
      */
     @Override
     public Optional<String> getStringValue(String input) {
@@ -142,15 +175,38 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Parses an integer if no type suffixes are present.
-     * @param input The serialized input.
-     * @return Optional containing the integer if parsing succeeds.
+     * Parses a numeric value using optional type suffixes.
+     *
+     * @param input encoded input
+     * @return parsed number if valid
+     */
+    @Override
+    public Optional<Number> getNumberValue(String input) {
+        if (isQuoted(input)) return Optional.empty();
+        try {
+            if (input.endsWith("b")) return Optional.of(Byte.parseByte(input.substring(0, input.length() - 1)));
+            if (input.endsWith("s")) return Optional.of(Short.parseShort(input.substring(0, input.length() - 1)));
+            if (input.endsWith("L")) return Optional.of(Long.parseLong(input.substring(0, input.length() - 1)));
+            if (input.endsWith("f")) return Optional.of(Float.parseFloat(input.substring(0, input.length() - 1)));
+            if (input.endsWith("d")) return Optional.of(Double.parseDouble(input.substring(0, input.length() - 1)));
+            return Optional.of(Integer.parseInt(input));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Parses an integer value if no type suffix is present.
+     *
+     * @param input encoded input
+     * @return integer value if valid
      */
     @Override
     public Optional<Integer> getIntValue(String input) {
         if (isQuoted(input)) return Optional.empty();
         try {
-            if (input.endsWith("L") || input.endsWith("f") || input.endsWith("d")) {
+            if (input.endsWith("L") || input.endsWith("f") || input.endsWith("d")
+                || input.endsWith("b") || input.endsWith("s")) {
                 return Optional.empty();
             }
             return Optional.of(Integer.parseInt(input));
@@ -160,9 +216,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Parses a long by checking for the 'L' suffix.
-     * @param input The serialized input.
-     * @return Optional containing the long.
+     * Parses a long value with {@code L} suffix.
+     *
+     * @param input encoded input
+     * @return long value if valid
      */
     @Override
     public Optional<Long> getLongValue(String input) {
@@ -178,9 +235,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Parses a float by checking for the 'f' suffix.
-     * @param input The serialized input.
-     * @return Optional containing the float.
+     * Parses a float value with {@code f} suffix.
+     *
+     * @param input encoded input
+     * @return float value if valid
      */
     @Override
     public Optional<Float> getFloatValue(String input) {
@@ -196,9 +254,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Parses a double by checking for the 'd' suffix.
-     * @param input The serialized input.
-     * @return Optional containing the double.
+     * Parses a double value with {@code d} suffix.
+     *
+     * @param input encoded input
+     * @return double value if valid
      */
     @Override
     public Optional<Double> getDoubleValue(String input) {
@@ -215,8 +274,9 @@ public final class StringOps extends DynamicOps<String> {
 
     /**
      * Parses a boolean value.
-     * @param input The string to check.
-     * @return Optional containing true/false if valid.
+     *
+     * @param input encoded input
+     * @return boolean if valid
      */
     @Override
     public Optional<Boolean> getBooleanValue(String input) {
@@ -226,9 +286,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Parses a list by stripping brackets and splitting content at the top level.
-     * @param input The serialized list string.
-     * @return Optional list of serialized element strings.
+     * Parses a list from bracketed comma-separated format.
+     *
+     * @param input encoded list
+     * @return parsed list if valid
      */
     @Override
     public Optional<List<String>> getList(String input) {
@@ -237,9 +298,10 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Parses a map by stripping brackets and splitting entries at the top level.
-     * @param input The serialized map string.
-     * @return Optional map of serialized key-value strings.
+     * Parses a map from bracketed key-value format.
+     *
+     * @param input encoded map
+     * @return parsed map if valid
      */
     @Override
     public Optional<Map<String, String>> getMap(String input) {
@@ -258,7 +320,46 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * @return An empty string representation.
+     * Returns all keys from a serialized map.
+     *
+     * @param input encoded map
+     * @return keys if valid map
+     */
+    @Override
+    public Optional<Iterable<String>> getKeys(String input) {
+        return getMap(input).map(Map::keySet);
+    }
+
+    /**
+     * Returns the size of a list or map.
+     *
+     * @param input encoded value
+     * @return size if valid structure
+     */
+    @Override
+    public OptionalInt size(String input) {
+        Optional<List<String>> listOpt = getList(input);
+        if (listOpt.isPresent()) return OptionalInt.of(listOpt.get().size());
+
+        Optional<Map<String, String>> mapOpt = getMap(input);
+        return mapOpt.map(m -> OptionalInt.of(m.size())).orElseGet(OptionalInt::empty);
+    }
+
+    /**
+     * Returns the input unchanged.
+     *
+     * @param input value
+     * @return identical value
+     */
+    @Override
+    public String copy(String input) {
+        return input;
+    }
+
+    /**
+     * Returns an empty string representation.
+     *
+     * @return empty string
      */
     @Override
     public String empty() {
@@ -266,20 +367,17 @@ public final class StringOps extends DynamicOps<String> {
     }
 
     /**
-     * Helper to determine if a string is wrapped in quotes.
-     * @param s The string to test.
-     * @return True if quoted.
+     * Checks whether a string is quoted.
      */
     private static boolean isQuoted(String s) {
         return s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"");
     }
 
     /**
-     * Utility to split a string by commas, but only at the current nesting depth.
-     * It ignores commas inside quotes or nested brackets/braces.
+     * Splits a top-level comma-separated structure while respecting nesting.
      *
-     * @param input The inner content of a list or map.
-     * @return A list of split segments.
+     * @param input inner content
+     * @return split segments
      */
     private static List<String> splitTopLevel(String input) {
         List<String> result = new ArrayList<>();
@@ -291,6 +389,7 @@ public final class StringOps extends DynamicOps<String> {
 
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
+
             if (c == '"' && (i == 0 || input.charAt(i - 1) != '\\')) {
                 quoted = !quoted;
             }

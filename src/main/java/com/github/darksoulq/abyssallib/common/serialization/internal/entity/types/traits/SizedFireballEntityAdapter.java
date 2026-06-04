@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.SizedFireball;
 
@@ -18,14 +15,20 @@ public class SizedFireballEntityAdapter extends EntityAdapter<SizedFireball> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, SizedFireball value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("display_item"), Codecs.ITEM_STACK.encode(ops, value.getDisplayItem()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, SizedFireball value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+        ctx.write("display_item", Codecs.ITEM_STACK, value.getDisplayItem());
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof SizedFireball fireball)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof SizedFireball fireball)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("display_item")))).onSuccess(fireball::setDisplayItem);
+        ctx.readOptional("display_item", Codecs.ITEM_STACK, opt -> opt.ifPresent(fireball::setDisplayItem));
+
+        return ctx.result();
     }
 }

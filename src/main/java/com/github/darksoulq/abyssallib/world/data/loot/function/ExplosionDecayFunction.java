@@ -1,13 +1,11 @@
 package com.github.darksoulq.abyssallib.world.data.loot.function;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunction;
 import com.github.darksoulq.abyssallib.world.data.loot.LootFunctionType;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -26,31 +24,7 @@ public class ExplosionDecayFunction extends LootFunction {
      * from and encodes to an empty map structure.
      * </p>
      */
-    public static final Codec<ExplosionDecayFunction> CODEC = new Codec<>() {
-        /**
-         * Decodes an ExplosionDecayFunction instance.
-         * * @param ops   The {@link DynamicOps} logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of {@link ExplosionDecayFunction}.
-         */
-        @Override
-        public <D> ExplosionDecayFunction decode(DynamicOps<D> ops, D input) {
-            return new ExplosionDecayFunction();
-        }
-
-        /**
-         * Encodes an ExplosionDecayFunction instance into an empty map.
-         * * @param ops   The {@link DynamicOps} logic.
-         * @param value The function instance to encode.
-         * @param <D>   The data format type.
-         * @return An empty map representation.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, ExplosionDecayFunction value) {
-            return ops.createMap(Collections.emptyMap());
-        }
-    };
+    public static final Codec<ExplosionDecayFunction> CODEC = Codec.unit(ExplosionDecayFunction::new).describe("ExplosionDecayFunction");
 
     /**
      * The registered type definition for this loot function.

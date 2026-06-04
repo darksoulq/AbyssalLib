@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Phantom;
 
@@ -18,25 +15,26 @@ public class PhantomEntityAdapter extends EntityAdapter<Phantom> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Phantom value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("size"), Codecs.INT.encode(ops, value.getSize()));
-        map.put(ops.createString("should_burn_in_day"), Codecs.BOOLEAN.encode(ops, value.shouldBurnInDay()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Phantom value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getAnchorLocation() != null) {
-            map.put(ops.createString("anchor_location"), Codecs.LOCATION.encode(ops, value.getAnchorLocation()));
-        }
+        ctx.write("size", Codecs.INT, value.getSize())
+            .write("should_burn_in_day", Codecs.BOOLEAN, value.shouldBurnInDay())
+            .writeNullable("anchor_location", Codecs.LOCATION, value.getAnchorLocation());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Phantom phantom)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Phantom phantom)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("size")))).onSuccess(phantom::setSize);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("should_burn_in_day")))).onSuccess(phantom::setShouldBurnInDay);
+        ctx.readOptional("size", Codecs.INT, opt -> opt.ifPresent(phantom::setSize))
+            .readOptional("should_burn_in_day", Codecs.BOOLEAN, opt -> opt.ifPresent(phantom::setShouldBurnInDay))
+            .readOptional("anchor_location", Codecs.LOCATION, opt -> opt.ifPresent(phantom::setAnchorLocation));
 
-        D anchorData = map.get(ops.createString("anchor_location"));
-        if (anchorData != null) {
-            Try.of(() -> Codecs.LOCATION.decode(ops, anchorData)).onSuccess(phantom::setAnchorLocation);
-        }
+        return ctx.result();
     }
 }

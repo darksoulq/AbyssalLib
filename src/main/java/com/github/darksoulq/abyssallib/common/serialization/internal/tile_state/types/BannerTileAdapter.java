@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
@@ -19,25 +20,48 @@ public class BannerTileAdapter extends TileAdapter<Banner> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Banner value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Banner value) {
+        List<DataError> warnings = new ArrayList<>();
         List<D> patterns = new ArrayList<>();
-        for (Pattern p : value.getPatterns()) {
-            patterns.add(ExtraCodecs.BANNER_PATTERN.encode(ops, p));
+
+        for (int i = 0; i < value.getPatterns().size(); i++) {
+            Pattern p = value.getPatterns().get(i);
+            DataResult<D> res = ExtraCodecs.BANNER_PATTERN.encode(ops, p).prependPath("[" + i + "]");
+
+            if (res.isError()) {
+                warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+            } else {
+                patterns.add(res.getOrThrow());
+                if (res.isPartial()) warnings.addAll(res.warnings());
+            }
         }
-        return ops.createList(patterns);
+
+        return warnings.isEmpty() ? DataResult.success(ops.createList(patterns)) : DataResult.partial(ops.createList(patterns), warnings);
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Banner banner)) return;
-        ops.getList(input).ifPresent(list -> {
-            List<Pattern> patterns = new ArrayList<>();
-            for (D pData : list) {
-                try {
-                    patterns.add(ExtraCodecs.BANNER_PATTERN.decode(ops, pData));
-                } catch (Exception ignored) {}
-            }
-            banner.setPatterns(patterns);
-        });
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Banner banner)) return DataResult.success(null);
+
+        return ops.getList(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
+            .flatMap(list -> {
+                List<DataError> warnings = new ArrayList<>();
+                List<Pattern> patterns = new ArrayList<>();
+
+                for (int i = 0; i < list.size(); i++) {
+                    DataResult<Pattern> res = ExtraCodecs.BANNER_PATTERN.decode(ops, list.get(i)).prependPath("[" + i + "]");
+                    if (res.isError()) {
+                        warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    } else {
+                        patterns.add(res.getOrThrow());
+                        if (res.isPartial()) warnings.addAll(res.warnings());
+                    }
+                }
+
+                banner.setPatterns(patterns);
+                return warnings.isEmpty() ? DataResult.success(null) : DataResult.partial(null, warnings);
+            });
     }
 }

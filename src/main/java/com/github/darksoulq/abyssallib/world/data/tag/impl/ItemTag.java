@@ -3,7 +3,6 @@ package com.github.darksoulq.abyssallib.world.data.tag.impl;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.world.data.tag.Tag;
 import com.github.darksoulq.abyssallib.world.data.tag.TagType;
-import com.github.darksoulq.abyssallib.world.data.tag.TagTypes;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
@@ -26,7 +25,7 @@ public class ItemTag extends Tag<ItemPredicate, ItemStack> {
             return new ItemTag(id);
         }
     };
-    
+
     /**
      * Constructs a new ItemTag.
      *
@@ -39,7 +38,7 @@ public class ItemTag extends Tag<ItemPredicate, ItemStack> {
     /**
      * Retrieves the specific type of this tag.
      *
-     * @return The {@link TagTypes#ITEM} type.
+     * @return The {@link TagType} representing an Item tag.
      */
     @Override
     public TagType<ItemPredicate, ItemStack> getType() {

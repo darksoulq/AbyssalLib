@@ -2,14 +2,12 @@ package com.github.darksoulq.abyssallib.world.gen.state.provider.impl;
 
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviderType;
 import org.bukkit.Location;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -20,40 +18,9 @@ public class SimpleBlockStateProvider extends BlockStateProvider {
     /**
      * The codec used for serializing and deserializing the simple provider.
      */
-    public static final Codec<SimpleBlockStateProvider> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the provider from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the simple block state provider.
-         * @throws CodecException If the state field is missing.
-         */
-        @Override
-        public <D> SimpleBlockStateProvider decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            BlockInfo state = ExtraCodecs.BLOCK_INFO.decode(ops, map.get(ops.createString("state")));
-            return new SimpleBlockStateProvider(state);
-        }
-
-        /**
-         * Encodes the provider into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The provider instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, SimpleBlockStateProvider value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("state"), ExtraCodecs.BLOCK_INFO.encode(ops, value.state));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<SimpleBlockStateProvider> CODEC = RecordBuilder.create(instance -> instance.group(
+        ExtraCodecs.BLOCK_INFO.fieldOf("state").forGetter(SimpleBlockStateProvider.class, p -> p.state)
+    ).apply(instance, SimpleBlockStateProvider::new)).describe("SimpleBlockStateProvider");
 
     /**
      * The registered type definition for the simple block state provider.

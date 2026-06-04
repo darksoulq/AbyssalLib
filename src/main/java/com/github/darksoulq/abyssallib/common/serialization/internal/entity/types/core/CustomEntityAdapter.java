@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.core;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import org.bukkit.attribute.Attribute;
@@ -23,9 +20,11 @@ public class CustomEntityAdapter extends EntityAdapter<Entity> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Entity value, Map<D, D> map) throws Codec.CodecException {
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Entity value, Map<D, D> map) {
         CustomEntity<?> custom = CustomEntity.resolve(value);
-        if (custom == null) return;
+        if (custom == null) return DataResult.success(null);
+
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
         Map<Attribute, Double> attributes = custom.getAttributes();
         Map<Attribute, List<AttributeModifier>> modifiers = custom.getModifiers();
 
@@ -36,34 +35,38 @@ public class CustomEntityAdapter extends EntityAdapter<Entity> {
         });
 
         if (!customAttrs.isEmpty()) {
-            map.put(ops.createString("attributes"), LivingEntityAdapter.ATTRIBUTE_STATE.list().encode(ops, customAttrs));
+            ctx.write("attributes", LivingEntityAdapter.ATTRIBUTE_STATE.list(), customAttrs);
         }
 
         List<DataComponent<?>> components = custom.getComponentMap().getAllComponents();
         if (!components.isEmpty()) {
-            map.put(ops.createString("custom_components"), Codecs.DATA_COMPONENT_MAP.encode(ops, components));
+            ctx.write("custom_components", Codecs.DATA_COMPONENT_MAP, components);
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
         CustomEntity<?> custom = CustomEntity.resolve(base);
-        if (custom == null) return;
+        if (custom == null) return DataResult.success(null);
 
-        D componentsData = map.get(ops.createString("custom_components"));
-        D customAttrs = map.get(ops.createString("attributes"));
-        if (componentsData != null) {
-            Try.of(() -> Codecs.DATA_COMPONENT_MAP.decode(ops, componentsData)).onSuccess(list -> {
-                for (DataComponent<?> component : list) custom.setData(component);
-            });
-        }
-        if (customAttrs != null) {
-            Try.of(() -> LivingEntityAdapter.ATTRIBUTE_STATE.list().decode(ops, customAttrs)).onSuccess(list -> {
-                for (LivingEntityAdapter.AttributeState state : list) {
-                    custom.getAttributes().put(state.attribute(), state.baseValue());
-                    custom.getModifiers().compute(state.attribute(), (k, v) -> new ArrayList<>()).addAll(state.modifiers());
-                }
-            });
-        }
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
+
+        ctx.readOptional("custom_components", Codecs.DATA_COMPONENT_MAP, opt -> opt.ifPresent(components -> {
+            for (DataComponent<?> component : components) {
+                custom.setData(component);
+            }
+        }));
+
+        ctx.readOptional("attributes", LivingEntityAdapter.ATTRIBUTE_STATE.list(), opt -> opt.ifPresent(states -> {
+            for (LivingEntityAdapter.AttributeState state : states) {
+                custom.getAttributes().put(state.attribute(), state.baseValue());
+                custom.getModifiers().compute(state.attribute(), (k, v) -> new ArrayList<>()).addAll(state.modifiers());
+            }
+        }));
+
+        return ctx.result();
     }
 }

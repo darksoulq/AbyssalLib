@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Bat;
 import org.bukkit.entity.Entity;
 
@@ -18,22 +15,24 @@ public class BatEntityAdapter extends EntityAdapter<Bat> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Bat value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("is_awake"), Codecs.BOOLEAN.encode(ops, value.isAwake()));
-        if (value.getTargetLocation() != null) {
-            map.put(ops.createString("target_location"), Codecs.LOCATION.encode(ops, value.getTargetLocation()));
-        }
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Bat value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("is_awake", Codecs.BOOLEAN, value.isAwake())
+            .writeNullable("target_location", Codecs.LOCATION, value.getTargetLocation());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Bat bat)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Bat bat)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_awake")))).onSuccess(bat::setAwake);
+        ctx.readOptional("is_awake", Codecs.BOOLEAN, opt -> opt.ifPresent(bat::setAwake))
+            .readOptional("target_location", Codecs.LOCATION, opt -> opt.ifPresent(bat::setTargetLocation));
 
-        D targetLoc = map.get(ops.createString("target_location"));
-        if (targetLoc != null) {
-            Try.of(() -> Codecs.LOCATION.decode(ops, targetLoc)).onSuccess(bat::setTargetLocation);
-        }
+        return ctx.result();
     }
 }

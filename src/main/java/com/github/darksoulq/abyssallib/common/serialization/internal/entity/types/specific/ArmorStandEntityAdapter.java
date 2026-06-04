@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import io.papermc.paper.math.Rotations;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -24,25 +21,26 @@ public class ArmorStandEntityAdapter extends EntityAdapter<ArmorStand> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, ArmorStand value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("has_base_plate"), Codecs.BOOLEAN.encode(ops, value.hasBasePlate()));
-        map.put(ops.createString("is_visible"), Codecs.BOOLEAN.encode(ops, value.isVisible()));
-        map.put(ops.createString("has_arms"), Codecs.BOOLEAN.encode(ops, value.hasArms()));
-        map.put(ops.createString("is_small"), Codecs.BOOLEAN.encode(ops, value.isSmall()));
-        map.put(ops.createString("is_marker"), Codecs.BOOLEAN.encode(ops, value.isMarker()));
-        map.put(ops.createString("can_move"), Codecs.BOOLEAN.encode(ops, value.canMove()));
-        map.put(ops.createString("can_tick"), Codecs.BOOLEAN.encode(ops, value.canTick()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, ArmorStand value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        map.put(ops.createString("head_rotations"), Codecs.VECTOR_F.encode(ops, toVector(value.getHeadRotations())));
-        map.put(ops.createString("body_rotations"), Codecs.VECTOR_F.encode(ops, toVector(value.getBodyRotations())));
-        map.put(ops.createString("left_arm_rotations"), Codecs.VECTOR_F.encode(ops, toVector(value.getLeftArmRotations())));
-        map.put(ops.createString("right_arm_rotations"), Codecs.VECTOR_F.encode(ops, toVector(value.getRightArmRotations())));
-        map.put(ops.createString("left_leg_rotations"), Codecs.VECTOR_F.encode(ops, toVector(value.getLeftLegRotations())));
-        map.put(ops.createString("right_leg_rotations"), Codecs.VECTOR_F.encode(ops, toVector(value.getRightLegRotations())));
+        ctx.write("has_base_plate", Codecs.BOOLEAN, value.hasBasePlate())
+            .write("is_visible", Codecs.BOOLEAN, value.isVisible())
+            .write("has_arms", Codecs.BOOLEAN, value.hasArms())
+            .write("is_small", Codecs.BOOLEAN, value.isSmall())
+            .write("is_marker", Codecs.BOOLEAN, value.isMarker())
+            .write("can_move", Codecs.BOOLEAN, value.canMove())
+            .write("can_tick", Codecs.BOOLEAN, value.canTick())
+            .write("head_rotations", Codecs.VECTOR_F, toVector(value.getHeadRotations()))
+            .write("body_rotations", Codecs.VECTOR_F, toVector(value.getBodyRotations()))
+            .write("left_arm_rotations", Codecs.VECTOR_F, toVector(value.getLeftArmRotations()))
+            .write("right_arm_rotations", Codecs.VECTOR_F, toVector(value.getRightArmRotations()))
+            .write("left_leg_rotations", Codecs.VECTOR_F, toVector(value.getLeftLegRotations()))
+            .write("right_leg_rotations", Codecs.VECTOR_F, toVector(value.getRightLegRotations()));
 
         List<String> disabledSlots = new ArrayList<>();
         value.getDisabledSlots().forEach(slot -> disabledSlots.add(slot.name()));
-        map.put(ops.createString("disabled_slots"), Codecs.STRING.list().encode(ops, disabledSlots));
+        ctx.write("disabled_slots", Codecs.STRING.list(), disabledSlots);
 
         Map<D, D> locksMap = new HashMap<>();
         for (EquipmentSlot slot : EquipmentSlot.values()) {
@@ -51,56 +49,68 @@ public class ArmorStandEntityAdapter extends EntityAdapter<ArmorStand> {
                 if (value.hasEquipmentLock(slot, lockType)) activeLocks.add(lockType.name());
             }
             if (!activeLocks.isEmpty()) {
-                locksMap.put(ops.createString(slot.name()), Codecs.STRING.list().encode(ops, activeLocks));
+                DataResult<D> lockRes = Codecs.STRING.list().encode(ops, activeLocks);
+                if (lockRes.isSuccess()) locksMap.put(ops.createString(slot.name()), lockRes.getOrThrow());
             }
         }
         if (!locksMap.isEmpty()) {
             map.put(ops.createString("equipment_locks"), ops.createMap(locksMap));
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof ArmorStand stand)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof ArmorStand stand)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_base_plate")))).onSuccess(stand::setBasePlate);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_visible")))).onSuccess(stand::setVisible);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_arms")))).onSuccess(stand::setArms);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_small")))).onSuccess(stand::setSmall);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_marker")))).onSuccess(stand::setMarker);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_move")))).onSuccess(stand::setCanMove);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_tick")))).onSuccess(stand::setCanTick);
-
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("head_rotations")))).onSuccess(v -> stand.setHeadRotations(toRotations(v)));
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("body_rotations")))).onSuccess(v -> stand.setBodyRotations(toRotations(v)));
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("left_arm_rotations")))).onSuccess(v -> stand.setLeftArmRotations(toRotations(v)));
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("right_arm_rotations")))).onSuccess(v -> stand.setRightArmRotations(toRotations(v)));
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("left_leg_rotations")))).onSuccess(v -> stand.setLeftLegRotations(toRotations(v)));
-        Try.of(() -> Codecs.VECTOR_F.decode(ops, map.get(ops.createString("right_leg_rotations")))).onSuccess(v -> stand.setRightLegRotations(toRotations(v)));
-
-        D disabledSlotsData = map.get(ops.createString("disabled_slots"));
-        if (disabledSlotsData != null) {
-            Try.of(() -> Codecs.STRING.list().decode(ops, disabledSlotsData)).onSuccess(list -> {
-                for (String slotName : list) {
-                    Try.run(() -> stand.addDisabledSlots(EquipmentSlot.valueOf(slotName)));
+        ctx.readOptional("has_base_plate", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setBasePlate))
+            .readOptional("is_visible", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setVisible))
+            .readOptional("has_arms", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setArms))
+            .readOptional("is_small", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setSmall))
+            .readOptional("is_marker", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setMarker))
+            .readOptional("can_move", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setCanMove))
+            .readOptional("can_tick", Codecs.BOOLEAN, opt -> opt.ifPresent(stand::setCanTick))
+            .readOptional("head_rotations", Codecs.VECTOR_F, opt -> opt.ifPresent(vec -> stand.setHeadRotations(toRotations(vec))))
+            .readOptional("body_rotations", Codecs.VECTOR_F, opt -> opt.ifPresent(vec -> stand.setBodyRotations(toRotations(vec))))
+            .readOptional("left_arm_rotations", Codecs.VECTOR_F, opt -> opt.ifPresent(vec -> stand.setLeftArmRotations(toRotations(vec))))
+            .readOptional("right_arm_rotations", Codecs.VECTOR_F, opt -> opt.ifPresent(vec -> stand.setRightArmRotations(toRotations(vec))))
+            .readOptional("left_leg_rotations", Codecs.VECTOR_F, opt -> opt.ifPresent(vec -> stand.setLeftLegRotations(toRotations(vec))))
+            .readOptional("right_leg_rotations", Codecs.VECTOR_F, opt -> opt.ifPresent(vec -> stand.setRightLegRotations(toRotations(vec))))
+            .readOptional("disabled_slots", Codecs.STRING.list(), opt -> opt.ifPresent(slots -> {
+                for (String slotName : slots) {
+                    try {
+                        stand.addDisabledSlots(EquipmentSlot.valueOf(slotName));
+                    } catch (Exception ignored) {
+                    }
                 }
-            });
-        }
+            }));
 
         D locksData = map.get(ops.createString("equipment_locks"));
         if (locksData != null) {
-            Try.of(() -> ops.getMap(locksData).orElse(new HashMap<>())).onSuccess(locksMap -> {
+            ops.getMap(locksData).ifPresent(locksMap -> {
                 for (Map.Entry<D, D> entry : locksMap.entrySet()) {
-                    Try.run(() -> {
-                        EquipmentSlot slot = EquipmentSlot.valueOf(ops.getStringValue(entry.getKey()).orElseThrow());
-                        List<String> activeLocks = Codecs.STRING.list().decode(ops, entry.getValue());
-                        for (String lockName : activeLocks) {
-                            stand.addEquipmentLock(slot, ArmorStand.LockType.valueOf(lockName));
+                    String slotStr = ops.getStringValue(entry.getKey()).orElse("");
+                    try {
+                        EquipmentSlot slot = EquipmentSlot.valueOf(slotStr);
+                        DataResult<List<String>> res = Codecs.STRING.list().decode(ops, entry.getValue());
+                        if (res.isSuccess()) {
+                            for (String lockName : res.getOrThrow()) {
+                                try {
+                                    stand.addEquipmentLock(slot, ArmorStand.LockType.valueOf(lockName));
+                                } catch (Exception ignored) {
+                                }
+                            }
                         }
-                    });
+                    } catch (Exception ignored) {
+                    }
                 }
             });
         }
+
+        return ctx.result();
     }
 
     private Vector toVector(Rotations rot) {

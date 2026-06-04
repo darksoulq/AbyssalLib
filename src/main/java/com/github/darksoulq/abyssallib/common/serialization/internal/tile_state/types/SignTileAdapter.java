@@ -1,10 +1,10 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import net.kyori.adventure.text.Component;
 import org.bukkit.DyeColor;
 import org.bukkit.block.Sign;
@@ -25,53 +25,146 @@ public class SignTileAdapter extends TileAdapter<Sign> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Sign value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Sign value) {
         Map<D, D> signMap = new HashMap<>();
+        List<DataError> warnings = new ArrayList<>();
 
-        List<D> frontLines = new ArrayList<>();
         SignSide front = value.getSide(Side.FRONT);
-        for (Component c : front.lines()) frontLines.add(Codecs.TEXT_COMPONENT.encode(ops, c));
+        List<D> frontLines = new ArrayList<>();
+        List<Component> fLines = front.lines();
+        for (int i = 0; i < fLines.size(); i++) {
+            DataResult<D> res = Codecs.TEXT_COMPONENT.encode(ops, fLines.get(i)).prependPath("front_lines[" + i + "]");
+            if (res.isError()) warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+            else {
+                frontLines.add(res.getOrThrow());
+                if (res.isPartial()) warnings.addAll(res.warnings());
+            }
+        }
         signMap.put(ops.createString("front_lines"), ops.createList(frontLines));
-        signMap.put(ops.createString("front_glowing"), Codecs.BOOLEAN.encode(ops, front.isGlowingText()));
-        if (front.getColor() != null) signMap.put(ops.createString("front_color"), ops.createString(front.getColor().name()));
 
-        List<D> backLines = new ArrayList<>();
+        DataResult<D> fGlowingRes = Codecs.BOOLEAN.encode(ops, front.isGlowingText()).prependPath("front_glowing");
+        if (fGlowingRes.isError())
+            warnings.add(fGlowingRes.dataError().orElseGet(() -> DataError.custom(fGlowingRes.error().get())));
+        else {
+            signMap.put(ops.createString("front_glowing"), fGlowingRes.getOrThrow());
+            if (fGlowingRes.isPartial()) warnings.addAll(fGlowingRes.warnings());
+        }
+
+        if (front.getColor() != null)
+            signMap.put(ops.createString("front_color"), ops.createString(front.getColor().name()));
+
         SignSide back = value.getSide(Side.BACK);
-        for (Component c : back.lines()) backLines.add(Codecs.TEXT_COMPONENT.encode(ops, c));
+        List<D> backLines = new ArrayList<>();
+        List<Component> bLines = back.lines();
+        for (int i = 0; i < bLines.size(); i++) {
+            DataResult<D> res = Codecs.TEXT_COMPONENT.encode(ops, bLines.get(i)).prependPath("back_lines[" + i + "]");
+            if (res.isError()) warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+            else {
+                backLines.add(res.getOrThrow());
+                if (res.isPartial()) warnings.addAll(res.warnings());
+            }
+        }
         signMap.put(ops.createString("back_lines"), ops.createList(backLines));
-        signMap.put(ops.createString("back_glowing"), Codecs.BOOLEAN.encode(ops, back.isGlowingText()));
-        if (back.getColor() != null) signMap.put(ops.createString("back_color"), ops.createString(back.getColor().name()));
 
-        return ops.createMap(signMap);
+        DataResult<D> bGlowingRes = Codecs.BOOLEAN.encode(ops, back.isGlowingText()).prependPath("back_glowing");
+        if (bGlowingRes.isError())
+            warnings.add(bGlowingRes.dataError().orElseGet(() -> DataError.custom(bGlowingRes.error().get())));
+        else {
+            signMap.put(ops.createString("back_glowing"), bGlowingRes.getOrThrow());
+            if (bGlowingRes.isPartial()) warnings.addAll(bGlowingRes.warnings());
+        }
+
+        if (back.getColor() != null)
+            signMap.put(ops.createString("back_color"), ops.createString(back.getColor().name()));
+
+        return warnings.isEmpty() ? DataResult.success(ops.createMap(signMap)) : DataResult.partial(ops.createMap(signMap), warnings);
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Sign sign)) return;
-        Map<D, D> signMap = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected map for Sign"));
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Sign sign)) return DataResult.success(null);
 
-        ops.getList(signMap.get(ops.createString("front_lines"))).ifPresent(list -> {
-            SignSide side = sign.getSide(Side.FRONT);
-            for (int i = 0; i < 4 && i < list.size(); i++) {
-                int finalI = i;
-                Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, list.get(finalI))).onSuccess(line -> side.line(finalI, line));
-            }
-        });
-        D fColor = signMap.get(ops.createString("front_color"));
-        if (fColor != null) ops.getStringValue(fColor).ifPresent(c -> Try.run(() -> sign.getSide(Side.FRONT).setColor(DyeColor.valueOf(c))));
-        D fGlow = signMap.get(ops.createString("front_glowing"));
-        if (fGlow != null) sign.getSide(Side.FRONT).setGlowingText(Try.of(() -> Codecs.BOOLEAN.decode(ops, fGlow)).orElse(false));
+        return ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+            .flatMap(signMap -> {
+                List<DataError> warnings = new ArrayList<>();
 
-        ops.getList(signMap.get(ops.createString("back_lines"))).ifPresent(list -> {
-            SignSide side = sign.getSide(Side.BACK);
-            for (int i = 0; i < 4 && i < list.size(); i++) {
-                int finalI = i;
-                Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, list.get(finalI))).onSuccess(line -> side.line(finalI, line));
-            }
-        });
-        D bColor = signMap.get(ops.createString("back_color"));
-        if (bColor != null) ops.getStringValue(bColor).ifPresent(c -> Try.run(() -> sign.getSide(Side.BACK).setColor(DyeColor.valueOf(c))));
-        D bGlow = signMap.get(ops.createString("back_glowing"));
-        if (bGlow != null) sign.getSide(Side.BACK).setGlowingText(Try.of(() -> Codecs.BOOLEAN.decode(ops, bGlow)).orElse(false));
+                D fLinesData = signMap.get(ops.createString("front_lines"));
+                if (fLinesData != null) {
+                    ops.getList(fLinesData).ifPresent(list -> {
+                        SignSide side = sign.getSide(Side.FRONT);
+                        for (int i = 0; i < 4 && i < list.size(); i++) {
+                            DataResult<Component> res = Codecs.TEXT_COMPONENT.decode(ops, list.get(i)).prependPath("front_lines[" + i + "]");
+                            if (res.isError())
+                                warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                            else {
+                                side.line(i, res.getOrThrow());
+                                if (res.isPartial()) warnings.addAll(res.warnings());
+                            }
+                        }
+                    });
+                }
+
+                D fColor = signMap.get(ops.createString("front_color"));
+                if (fColor != null) {
+                    ops.getStringValue(fColor).ifPresent(c -> {
+                        try {
+                            sign.getSide(Side.FRONT).setColor(DyeColor.valueOf(c));
+                        } catch (Exception ignored) {
+                        }
+                    });
+                }
+
+                D fGlow = signMap.get(ops.createString("front_glowing"));
+                if (fGlow != null) {
+                    DataResult<Boolean> res = Codecs.BOOLEAN.decode(ops, fGlow).prependPath("front_glowing");
+                    if (res.isError())
+                        warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    else {
+                        sign.getSide(Side.FRONT).setGlowingText(res.getOrThrow());
+                        if (res.isPartial()) warnings.addAll(res.warnings());
+                    }
+                }
+
+                D bLinesData = signMap.get(ops.createString("back_lines"));
+                if (bLinesData != null) {
+                    ops.getList(bLinesData).ifPresent(list -> {
+                        SignSide side = sign.getSide(Side.BACK);
+                        for (int i = 0; i < 4 && i < list.size(); i++) {
+                            DataResult<Component> res = Codecs.TEXT_COMPONENT.decode(ops, list.get(i)).prependPath("back_lines[" + i + "]");
+                            if (res.isError())
+                                warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                            else {
+                                side.line(i, res.getOrThrow());
+                                if (res.isPartial()) warnings.addAll(res.warnings());
+                            }
+                        }
+                    });
+                }
+
+                D bColor = signMap.get(ops.createString("back_color"));
+                if (bColor != null) {
+                    ops.getStringValue(bColor).ifPresent(c -> {
+                        try {
+                            sign.getSide(Side.BACK).setColor(DyeColor.valueOf(c));
+                        } catch (Exception ignored) {
+                        }
+                    });
+                }
+
+                D bGlow = signMap.get(ops.createString("back_glowing"));
+                if (bGlow != null) {
+                    DataResult<Boolean> res = Codecs.BOOLEAN.decode(ops, bGlow).prependPath("back_glowing");
+                    if (res.isError())
+                        warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    else {
+                        sign.getSide(Side.BACK).setGlowingText(res.getOrThrow());
+                        if (res.isPartial()) warnings.addAll(res.warnings());
+                    }
+                }
+
+                return warnings.isEmpty() ? DataResult.success(null) : DataResult.partial(null, warnings);
+            });
     }
 }

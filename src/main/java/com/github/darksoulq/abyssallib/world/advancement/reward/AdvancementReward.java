@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.advancement.reward;
 
+import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.entity.Player;
 
 /**
@@ -8,6 +11,29 @@ import org.bukkit.entity.Player;
  * custom command executions.
  */
 public interface AdvancementReward {
+
+    /**
+     * Polymorphic codec managing seamless mapping execution mapping configurations.
+     */
+    Codec<AdvancementReward> CODEC = Codec.dispatch(
+        AdvancementReward.class,
+        "type",
+        Codecs.STRING,
+        reward -> {
+            String typeId = Registries.REWARDS.getId(reward.getType());
+            if (typeId == null) {
+                throw new IllegalStateException("Unregistered advancement reward type");
+            }
+            return typeId;
+        },
+        typeId -> {
+            RewardType<?> type = Registries.REWARDS.get(typeId);
+            if (type == null) {
+                return Codec.error("Unknown advancement reward type: " + typeId);
+            }
+            return type.getCodec().unchecked();
+        }
+    ).describe("AdvancementReward");
 
     /**
      * Retrieves the reward type definition associated with this instance.

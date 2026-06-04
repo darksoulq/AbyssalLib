@@ -2,38 +2,38 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-
+/**
+ * An advancement criterion evaluating a custom statistic tracked in the AbyssalLib database.
+ */
 public class CustomStatisticCriterion implements AdvancementCriterion {
 
-    public static final Codec<CustomStatisticCriterion> CODEC = new Codec<>() {
-        @Override
-        public <D> CustomStatisticCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow();
-            Statistic stat = Statistic.CODEC.decode(ops, map.get(ops.createString("statistic")));
-            int threshold = Codecs.INT.decode(ops, map.get(ops.createString("threshold")));
-            return new CustomStatisticCriterion(stat, threshold);
-        }
+    /**
+     * The codec used for serializing and deserializing the custom statistic criterion.
+     */
+    public static final Codec<CustomStatisticCriterion> CODEC = RecordBuilder.create(instance -> instance.group(
+        Statistic.CODEC.fieldOf("statistic").forGetter(CustomStatisticCriterion.class, p -> p.stat),
+        Codecs.INT.fieldOf("threshold").forGetter(CustomStatisticCriterion.class, p -> p.threshold)
+    ).apply(instance, CustomStatisticCriterion::new)).describe("CustomStatisticCriterion");
 
-        @Override
-        public <D> D encode(DynamicOps<D> ops, CustomStatisticCriterion value) throws CodecException {
-            return ops.createMap(Map.of(
-                ops.createString("statistic"), Statistic.CODEC.encode(ops, value.stat),
-                ops.createString("threshold"), Codecs.INT.encode(ops, value.threshold)
-            ));
-        }
-    };
-
+    /**
+     * The registered type definition for the custom statistic criterion.
+     */
     public static final CriterionType<CustomStatisticCriterion> TYPE = () -> CODEC;
 
     private final Statistic stat;
     private final int threshold;
 
+    /**
+     * Constructs a new CustomStatisticCriterion.
+     *
+     * @param stat      The statistic to track.
+     * @param threshold The required value.
+     */
     public CustomStatisticCriterion(Statistic stat, int threshold) {
         this.stat = stat;
         this.threshold = threshold;
@@ -44,6 +44,12 @@ public class CustomStatisticCriterion implements AdvancementCriterion {
         return TYPE;
     }
 
+    /**
+     * Checks if the player has accumulated the required statistic amount.
+     *
+     * @param player The player to evaluate.
+     * @return True if the condition is met.
+     */
     @Override
     public boolean isMet(Player player) {
         return PlayerStatistics.of(player).get(stat) >= threshold;

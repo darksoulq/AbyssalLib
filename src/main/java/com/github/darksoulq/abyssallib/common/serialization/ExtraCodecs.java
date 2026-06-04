@@ -20,6 +20,8 @@ import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
 import io.papermc.paper.text.Filtered;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -51,519 +53,616 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-
 @SuppressWarnings("UnstableApiUsage")
 public class ExtraCodecs {
-    public static final Codec<DamageType> DAMAGE_TYPE = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)::getOrThrow,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)::getKeyOrThrow
-    );
+
+    public static final Codec<DamageType> DAMAGE_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            DamageType t = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).get(key);
+            return t != null ? DataResult.success(t) : DataResult.error(DataError.custom("Unknown DamageType registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered DamageType execution"));
+        }
+    ).describe("DamageType");
+
     public static final Codec<RegistryKeySet<@NotNull DamageType>> DAMAGE_TYPE_KEYS = DAMAGE_TYPE.list().xmap(
-            l -> RegistrySet.keySetFromValues(RegistryKey.DAMAGE_TYPE, l),
-            k -> k.resolve(RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)).stream().toList()
-    );
-    public static final Codec<BlockType> BLOCK_TYPE = Codecs.KEY.xmap(Registry.BLOCK::getOrThrow, BlockType::getKey);
+        l -> RegistrySet.keySetFromValues(RegistryKey.DAMAGE_TYPE, l),
+        k -> k.resolve(RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE)).stream().toList()
+    ).describe("DamageTypeKeySet");
+
+    public static final Codec<BlockType> BLOCK_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            BlockType b = Registry.BLOCK.get(key);
+            return b != null ? DataResult.success(b) : DataResult.error(DataError.custom("Unknown BlockType registry key: " + key));
+        },
+        type -> {
+            Key k = type.getKey();
+            return DataResult.success(k);
+        }
+    ).describe("BlockType");
+
     public static final Codec<RegistryKeySet<@NotNull BlockType>> BLOCK_TYPE_KEYS = BLOCK_TYPE.list().xmap(
-            l -> RegistrySet.keySetFromValues(RegistryKey.BLOCK, l),
-            k -> k.resolve(Registry.BLOCK).stream().toList()
-    );
+        l -> RegistrySet.keySetFromValues(RegistryKey.BLOCK, l),
+        k -> k.resolve(Registry.BLOCK).stream().toList()
+    ).describe("BlockTypeKeySet");
+
     public static final Codec<BlockPredicate> BLOCK_PREDICATE = BLOCK_TYPE_KEYS.xmap(
-            k -> BlockPredicate.predicate().blocks(k).build(),
-            BlockPredicate::blocks
-    );
+        k -> BlockPredicate.predicate().blocks(k).build(),
+        BlockPredicate::blocks
+    ).describe("BlockPredicate");
+
     public static final Codec<ItemAdventurePredicate> ITEM_ADV_PREDICATE = BLOCK_PREDICATE.list().xmap(
-            ItemAdventurePredicate::itemAdventurePredicate,
-            ItemAdventurePredicate::predicates
-    );
-    public static final Codec<ItemType> ITEM_TYPE = Codecs.KEY.xmap(Registry.ITEM::getOrThrow, ItemType::getKey);
-    public static final Codec<EntityType> ENTITY_TYPE = Codecs.KEY.xmap(Registry.ENTITY_TYPE::getOrThrow, EntityType::getKey);
-    public static final Codec<net.minecraft.world.entity.EntityType<?>> NMS_ENTITY_TYPE = Codecs.STRING.xmap(
-        s -> BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.parse(s)),
-        e -> BuiltInRegistries.ENTITY_TYPE.getKey(e).toString());
-    // Banner
-    public static final Codec<PatternType> BANNER_PATTERN_TYPE = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN)::get,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN)::getKey
-    );
-    public static final Codec<Pattern> BANNER_PATTERN = RecordCodecBuilder.create(
-            Codec.enumCodec(DyeColor.class).fieldOf("color", Pattern::getColor),
-            BANNER_PATTERN_TYPE.fieldOf("pattern", Pattern::getPattern),
-            Pattern::new
-    );
+        ItemAdventurePredicate::itemAdventurePredicate,
+        ItemAdventurePredicate::predicates
+    ).describe("ItemAdventurePredicate");
+
+    public static final Codec<ItemType> ITEM_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            ItemType t = Registry.ITEM.get(key);
+            return t != null ? DataResult.success(t) : DataResult.error(DataError.custom("Unknown ItemType registry key: " + key));
+        },
+        type -> {
+            Key k = type.getKey();
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered ItemType execution"));
+        }
+    ).describe("ItemType");
+
+    public static final Codec<EntityType> ENTITY_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            EntityType t = Registry.ENTITY_TYPE.get(key);
+            return t != null ? DataResult.success(t) : DataResult.error(DataError.custom("Unknown EntityType registry key: " + key));
+        },
+        type -> {
+            Key k = type.getKey();
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered EntityType execution"));
+        }
+    ).describe("EntityType");
+
+    public static final Codec<net.minecraft.world.entity.EntityType<?>> NMS_ENTITY_TYPE = Codecs.STRING.<net.minecraft.world.entity.EntityType<?>>flatXmap(
+        s -> {
+            try {
+                return DataResult.success(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.parse(s)));
+            } catch (Exception e) {
+                return DataResult.error(DataError.invalidFormat(s, "NMS EntityType Identifier"));
+            }
+        },
+        e -> {
+            try {
+                return DataResult.success(BuiltInRegistries.ENTITY_TYPE.getKey(e).toString());
+            } catch (Exception ex) {
+                return DataResult.error(DataError.custom("Failed to map NMS EntityType identifier"));
+            }
+        }
+    ).describe("NMSEntityType");
+
+    public static final Codec<PatternType> BANNER_PATTERN_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            PatternType t = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).get(key);
+            return t != null ? DataResult.success(t) : DataResult.error(DataError.custom("Unknown PatternType registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered PatternType execution"));
+        }
+    ).describe("PatternType");
+
+    public static final Codec<Pattern> BANNER_PATTERN = RecordBuilder.create(instance -> instance.group(
+        Codec.enumCodec(DyeColor.class).fieldOf("color").forGetter(Pattern::getColor),
+        BANNER_PATTERN_TYPE.fieldOf("pattern").forGetter(Pattern::getPattern)
+    ).apply(instance, Pattern::new)).describe("BannerPattern");
+
     public static final Codec<BannerPatternLayers> BANNER_PATTERN_LAYERS = BANNER_PATTERN.list().xmap(
-            BannerPatternLayers::bannerPatternLayers,
-            BannerPatternLayers::patterns
-    );
+        BannerPatternLayers::bannerPatternLayers,
+        BannerPatternLayers::patterns
+    ).describe("BannerPatternLayers");
 
-    public static final Codec<Color> COLOR = RecordCodecBuilder.create(
-            Codecs.INT.fieldOf("alpha", Color::getAlpha),
-            Codecs.INT.fieldOf("red", Color::getRed),
-            Codecs.INT.fieldOf("green", Color::getGreen),
-            Codecs.INT.fieldOf("blue", Color::getBlue),
-            Color::fromARGB
-    );
+    public static final Codec<Color> COLOR = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("alpha").forGetter(Color::getAlpha),
+        Codecs.INT.fieldOf("red").forGetter(Color::getRed),
+        Codecs.INT.fieldOf("green").forGetter(Color::getGreen),
+        Codecs.INT.fieldOf("blue").forGetter(Color::getBlue)
+    ).apply(instance, Color::fromARGB)).describe("Color");
 
-    public static final Codec<UseCooldown> USE_COOLDOWN = RecordCodecBuilder.create(
-            Codecs.FLOAT.fieldOf("cooldown", UseCooldown::seconds),
-            Codecs.KEY.optional().fieldOf("group", c -> Optional.ofNullable(c.cooldownGroup())),
-            (cd, group) ->
-                    group.map(key -> UseCooldown.useCooldown(cd).cooldownGroup(key).build()).orElseGet(() -> UseCooldown.useCooldown(cd).build())
-    );
+    public static final Codec<UseCooldown> USE_COOLDOWN = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.fieldOf("cooldown").forGetter(UseCooldown::seconds),
+        Codecs.KEY.optionalFieldOf("group", null).forGetter(UseCooldown::cooldownGroup)
+    ).apply(instance, (cd, group) ->
+        group != null ? UseCooldown.useCooldown(cd).cooldownGroup(group).build() : UseCooldown.useCooldown(cd).build()
+    )).describe("UseCooldown");
 
-    // Components
-    public static final Codec<MapCursor.Type> MAP_CURSOR_TYPE = Codecs.KEY.xmap(
-            Registry.MAP_DECORATION_TYPE::get,
-            MapCursor.Type::getKey
-    );
+    public static final Codec<MapCursor.Type> MAP_CURSOR_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            MapCursor.Type t = Registry.MAP_DECORATION_TYPE.get(key);
+            return t != null ? DataResult.success(t) : DataResult.error(DataError.custom("Unknown MapCursorType: " + key));
+        },
+        type -> {
+            Key k = type.getKey();
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered MapCursorType execution"));
+        }
+    ).describe("MapCursorType");
 
-    public static final Codec<MapDecorations.DecorationEntry> MAP_DECO_ENTRY = RecordCodecBuilder.create(
-            MAP_CURSOR_TYPE.fieldOf("type", MapDecorations.DecorationEntry::type),
-            Codecs.DOUBLE.fieldOf("x", MapDecorations.DecorationEntry::x),
-            Codecs.DOUBLE.fieldOf("z", MapDecorations.DecorationEntry::z),
-            Codecs.FLOAT.fieldOf("rotation", MapDecorations.DecorationEntry::rotation),
-            MapDecorations::decorationEntry
-    );
+    public static final Codec<MapDecorations.DecorationEntry> MAP_DECO_ENTRY = RecordBuilder.create(instance -> instance.group(
+        MAP_CURSOR_TYPE.fieldOf("type").forGetter(MapDecorations.DecorationEntry::type),
+        Codecs.DOUBLE.fieldOf("x").forGetter(MapDecorations.DecorationEntry::x),
+        Codecs.DOUBLE.fieldOf("z").forGetter(MapDecorations.DecorationEntry::z),
+        Codecs.FLOAT.fieldOf("rotation").forGetter(MapDecorations.DecorationEntry::rotation)
+    ).apply(instance, MapDecorations::decorationEntry)).describe("MapDecorationEntry");
 
-    public static final Codec<CustomModelData> CUSTOM_MODEL_DATA = RecordCodecBuilder.create(
-            Codecs.FLOAT.list().fieldOf("floats", CustomModelData::floats),
-            Codecs.BOOLEAN.list().fieldOf("flags", CustomModelData::flags),
-            Codecs.STRING.list().fieldOf("strings", CustomModelData::strings),
-            ExtraCodecs.COLOR.list().fieldOf("colors", CustomModelData::colors),
-            (floats, flags, strings, colors) ->
-                    CustomModelData.customModelData().addFloats(floats).addFlags(flags).addStrings(strings).addColors(colors).build()
-    );
+    public static final Codec<CustomModelData> CUSTOM_MODEL_DATA = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.list().fieldOf("floats").forGetter(CustomModelData::floats),
+        Codecs.BOOLEAN.list().fieldOf("flags").forGetter(CustomModelData::flags),
+        Codecs.STRING.list().fieldOf("strings").forGetter(CustomModelData::strings),
+        ExtraCodecs.COLOR.list().fieldOf("colors").forGetter(CustomModelData::colors)
+    ).apply(instance, (floats, flags, strings, colors) ->
+        CustomModelData.customModelData().addFloats(floats).addFlags(flags).addStrings(strings).addColors(colors).build()
+    )).describe("CustomModelData");
 
     public static final Codec<Repairable> REPAIRABLE_COMPONENT = ITEM_TYPE.list().xmap(
-            l -> Repairable.repairable(RegistrySet.keySetFromValues(RegistryKey.ITEM, l)),
-            r -> r.types().resolve(Registry.ITEM).stream().toList()
-    );
+        l -> Repairable.repairable(RegistrySet.keySetFromValues(RegistryKey.ITEM, l)),
+        r -> r.types().resolve(Registry.ITEM).stream().toList()
+    ).describe("RepairableComponent");
 
-    public static final Codec<LodestoneTracker> LODESTONE_TRACKER = RecordCodecBuilder.create(
-            Codecs.LOCATION.fieldOf("location", LodestoneTracker::location),
-            Codecs.BOOLEAN.fieldOf("tracked", LodestoneTracker::tracked),
-            LodestoneTracker::lodestoneTracker
-    );
+    public static final Codec<LodestoneTracker> LODESTONE_TRACKER = RecordBuilder.create(instance -> instance.group(
+        Codecs.LOCATION.fieldOf("location").forGetter(LodestoneTracker::location),
+        Codecs.BOOLEAN.fieldOf("tracked").forGetter(LodestoneTracker::tracked)
+    ).apply(instance, LodestoneTracker::lodestoneTracker)).describe("LodestoneTracker");
 
-    public static final Codec<Weapon> WEAPON = RecordCodecBuilder.create(
-            Codecs.INT.fieldOf("item_damage_per_attack", Weapon::itemDamagePerAttack),
-            Codecs.FLOAT.fieldOf("disable_blocking_for_seconds", Weapon::disableBlockingForSeconds),
-            (itemDamagePerAttack, disableBlockingForSeconds) -> Weapon.weapon()
-                    .itemDamagePerAttack(itemDamagePerAttack)
-                    .disableBlockingForSeconds(disableBlockingForSeconds).build()
-    );
+    public static final Codec<Weapon> WEAPON = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("item_damage_per_attack").forGetter(Weapon::itemDamagePerAttack),
+        Codecs.FLOAT.fieldOf("disable_blocking_for_seconds").forGetter(Weapon::disableBlockingForSeconds)
+    ).apply(instance, (itemDamagePerAttack, disableBlockingForSeconds) -> Weapon.weapon()
+        .itemDamagePerAttack(itemDamagePerAttack)
+        .disableBlockingForSeconds(disableBlockingForSeconds).build()
+    )).describe("Weapon");
 
-    // Firework
-    public static final Codec<FireworkEffect> FIREWORK_EFFECT = RecordCodecBuilder.create(
-            Codecs.BOOLEAN.fieldOf("flicker", FireworkEffect::hasFlicker),
-            Codecs.BOOLEAN.fieldOf("trail", FireworkEffect::hasTrail),
-            COLOR.list().fieldOf("colors", FireworkEffect::getColors),
-            COLOR.list().fieldOf("fade_colors", FireworkEffect::getFadeColors),
-            Codec.enumCodec(FireworkEffect.Type.class).fieldOf("type", FireworkEffect::getType),
-            (flicker, trail, colors, fadeColors, type) -> FireworkEffect.builder()
-                    .flicker(flicker).trail(trail).with(type).withColor(colors).withFade(colors).build()
-    );
+    public static final Codec<FireworkEffect> FIREWORK_EFFECT = RecordBuilder.create(instance -> instance.group(
+        Codecs.BOOLEAN.fieldOf("flicker").forGetter(FireworkEffect::hasFlicker),
+        Codecs.BOOLEAN.fieldOf("trail").forGetter(FireworkEffect::hasTrail),
+        COLOR.list().fieldOf("colors").forGetter(FireworkEffect::getColors),
+        COLOR.list().fieldOf("fade_colors").forGetter(FireworkEffect::getFadeColors),
+        Codec.enumCodec(FireworkEffect.Type.class).fieldOf("type").forGetter(FireworkEffect::getType)
+    ).apply(instance, (flicker, trail, colors, fadeColors, type) -> FireworkEffect.builder()
+        .flicker(flicker).trail(trail).with(type).withColor(colors).withFade(fadeColors).build()
+    )).describe("FireworkEffect");
 
-    public static final Codec<Fireworks> FIREWORKS = RecordCodecBuilder.create(
-            FIREWORK_EFFECT.list().fieldOf("effects", Fireworks::effects),
-            Codecs.INT.fieldOf("flight_duration", Fireworks::flightDuration),
-            Fireworks::fireworks
-    );
+    public static final Codec<Fireworks> FIREWORKS = RecordBuilder.create(instance -> instance.group(
+        FIREWORK_EFFECT.list().fieldOf("effects").forGetter(Fireworks::effects),
+        Codecs.INT.fieldOf("flight_duration").forGetter(Fireworks::flightDuration)
+    ).apply(instance, Fireworks::fireworks)).describe("Fireworks");
 
-    public static final Codec<SeededContainerLoot> SEEDED_CONTAINER_LOOT = RecordCodecBuilder.create(
-            Codecs.KEY.fieldOf("loot_table", SeededContainerLoot::lootTable),
-            Codecs.LONG.fieldOf("seed", SeededContainerLoot::seed),
-            SeededContainerLoot::seededContainerLoot
-    );
+    public static final Codec<SeededContainerLoot> SEEDED_CONTAINER_LOOT = RecordBuilder.create(instance -> instance.group(
+        Codecs.KEY.fieldOf("loot_table").forGetter(SeededContainerLoot::lootTable),
+        Codecs.LONG.fieldOf("seed").forGetter(SeededContainerLoot::seed)
+    ).apply(instance, SeededContainerLoot::seededContainerLoot)).describe("SeededContainerLoot");
 
-    public static final Codec<PotDecorations> POT_DECORATIONS = RecordCodecBuilder.create(
-            ITEM_TYPE.fieldOf("front", PotDecorations::front),
-            ITEM_TYPE.fieldOf("back", PotDecorations::back),
-            ITEM_TYPE.fieldOf("left", PotDecorations::left),
-            ITEM_TYPE.fieldOf("right", PotDecorations::right),
-            PotDecorations::potDecorations
-    );
+    public static final Codec<PotDecorations> POT_DECORATIONS = RecordBuilder.create(instance -> instance.group(
+        ITEM_TYPE.fieldOf("front").forGetter(PotDecorations::front),
+        ITEM_TYPE.fieldOf("back").forGetter(PotDecorations::back),
+        ITEM_TYPE.fieldOf("left").forGetter(PotDecorations::left),
+        ITEM_TYPE.fieldOf("right").forGetter(PotDecorations::right)
+    ).apply(instance, PotDecorations::potDecorations)).describe("PotDecorations");
 
-    public static final Codec<FoodProperties> FOOD_PROPERTIES = RecordCodecBuilder.create(
-            Codecs.INT.fieldOf("nutrition", FoodProperties::nutrition),
-            Codecs.FLOAT.fieldOf("saturation", FoodProperties::saturation),
-            Codecs.BOOLEAN.fieldOf("can_always_eat", FoodProperties::canAlwaysEat),
-            (nutrition, saturation, canAlwaysEat) -> FoodProperties.food().nutrition(nutrition).saturation(saturation)
-                    .canAlwaysEat(canAlwaysEat).build()
-    );
+    public static final Codec<FoodProperties> FOOD_PROPERTIES = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.fieldOf("nutrition").forGetter(FoodProperties::nutrition),
+        Codecs.FLOAT.fieldOf("saturation").forGetter(FoodProperties::saturation),
+        Codecs.BOOLEAN.fieldOf("can_always_eat").forGetter(FoodProperties::canAlwaysEat)
+    ).apply(instance, (nutrition, saturation, canAlwaysEat) -> FoodProperties.food()
+        .nutrition(nutrition).saturation(saturation).canAlwaysEat(canAlwaysEat).build()
+    )).describe("FoodProperties");
 
-    public static final Codec<Equippable> EQUIPPABLE = RecordCodecBuilder.create(
-            Codec.enumCodec(EquipmentSlot.class).fieldOf("slot", Equippable::slot),
-            Codecs.KEY.fieldOf("equip_sound", Equippable::equipSound),
-            Codecs.KEY.nullable().fieldOf("asset_id", Equippable::assetId),
-            Codecs.KEY.nullable().fieldOf("camera_overlay", Equippable::cameraOverlay),
-            ENTITY_TYPE.list().nullable().fieldOf("allowed_entities", e -> {
-                if (e.allowedEntities() == null) return null;
-                return e.allowedEntities().resolve(Registry.ENTITY_TYPE).stream().toList();
-            }),
-            Codecs.BOOLEAN.fieldOf("dispensable", Equippable::dispensable),
-            Codecs.BOOLEAN.fieldOf("swappable", Equippable::swappable),
-            Codecs.BOOLEAN.fieldOf("damage_on_hurt", Equippable::damageOnHurt),
-            Codecs.BOOLEAN.fieldOf("can_be_sheared", Equippable::canBeSheared),
-            Codecs.KEY.nullable().fieldOf("shear_sound", Equippable::shearSound),
-            (slot, equipSound, assetId, cameraOverlay, allowedEntities, dispensable,
-             swappable, damageOnHurt, canBeSheared, shearSound) -> {
-                Equippable.Builder builder = Equippable.equippable(slot).equipSound(equipSound).assetId(assetId).cameraOverlay(cameraOverlay);
-                if (allowedEntities != null) builder.allowedEntities(RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, allowedEntities));
-                return builder.dispensable(dispensable).swappable(swappable).damageOnHurt(damageOnHurt).canBeSheared(canBeSheared).shearSound(shearSound).build();
-            }
-    );
+    public static final Codec<Equippable> EQUIPPABLE = RecordBuilder.create(instance -> instance.group(
+        Codec.enumCodec(EquipmentSlot.class).fieldOf("slot").forGetter(Equippable::slot),
+        Codecs.KEY.fieldOf("equip_sound").forGetter(Equippable::equipSound),
+        Codecs.KEY.optionalFieldOf("asset_id", null).forGetter(Equippable::assetId),
+        Codecs.KEY.optionalFieldOf("camera_overlay", null).forGetter(Equippable::cameraOverlay),
+        ENTITY_TYPE.list().optionalFieldOf("allowed_entities", null).forGetter(e -> e.allowedEntities() != null ? e.allowedEntities().resolve(Registry.ENTITY_TYPE).stream().toList() : null),
+        Codecs.BOOLEAN.fieldOf("dispensable").forGetter(Equippable::dispensable),
+        Codecs.BOOLEAN.fieldOf("swappable").forGetter(Equippable::swappable),
+        Codecs.BOOLEAN.fieldOf("damage_on_hurt").forGetter(Equippable::damageOnHurt),
+        Codecs.BOOLEAN.fieldOf("can_be_sheared").forGetter(Equippable::canBeSheared),
+        Codecs.KEY.optionalFieldOf("shear_sound", null).forGetter(Equippable::shearSound)
+    ).apply(instance, (slot, equipSound, assetId, cameraOverlay, allowedEntities, dispensable, swappable, damageOnHurt, canBeSheared, shearSound) -> {
+        Equippable.Builder builder = Equippable.equippable(slot).equipSound(equipSound).assetId(assetId).cameraOverlay(cameraOverlay);
+        if (allowedEntities != null) builder.allowedEntities(RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, allowedEntities));
+        return builder.dispensable(dispensable).swappable(swappable).damageOnHurt(damageOnHurt).canBeSheared(canBeSheared).shearSound(shearSound).build();
+    })).describe("Equippable");
 
-    // Enchantments
-    public static final Codec<Enchantment> ENCHANTMENT = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)::getOrThrow,
-            Enchantment::getKey
-    );
+    public static final Codec<Enchantment> ENCHANTMENT = Codecs.KEY.flatXmap(
+        key -> {
+            Enchantment e = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).get(key);
+            return e != null ? DataResult.success(e) : DataResult.error(DataError.custom("Unknown Enchantment registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered Enchantment execution"));
+        }
+    ).describe("Enchantment");
+
     public static final Codec<ItemEnchantments> ITEM_ENCHANTMENTS = Codec.map(ENCHANTMENT, Codecs.INT).xmap(
-            ItemEnchantments::itemEnchantments,
-            ItemEnchantments::enchantments
-    );
+        ItemEnchantments::itemEnchantments,
+        ItemEnchantments::enchantments
+    ).describe("ItemEnchantments");
 
-    public static final Codec<TooltipDisplay> TOOLTIP_DISPLAY = RecordCodecBuilder.create(
-            Codecs.BOOLEAN.fieldOf("hide_tooltips", TooltipDisplay::hideTooltip),
-            Codecs.DATA_COMPONENT_TYPE.list().fieldOf("hidden_components", t -> t.hiddenComponents().stream().toList()),
-            (hide, hiddenComponents) -> TooltipDisplay.tooltipDisplay().hideTooltip(hide)
-                    .hiddenComponents(new HashSet<>(hiddenComponents)).build()
-    );
+    public static final Codec<TooltipDisplay> TOOLTIP_DISPLAY = RecordBuilder.create(instance -> instance.group(
+        Codecs.BOOLEAN.fieldOf("hide_tooltips").forGetter(TooltipDisplay::hideTooltip),
+        Codecs.DATA_COMPONENT_TYPE.list().fieldOf("hidden_components").forGetter(t -> t.hiddenComponents().stream().toList())
+    ).apply(instance, (hide, hiddenComponents) -> TooltipDisplay.tooltipDisplay()
+        .hideTooltip(hide).hiddenComponents(new HashSet<>(hiddenComponents)).build()
+    )).describe("TooltipDisplay");
 
-    //Trims
-    public static final Codec<TrimMaterial> TRIM_MATERIAL = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL)::getOrThrow,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL)::getKeyOrThrow
-    );
-    public static final Codec<TrimPattern> TRIM_PATTERN = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN)::getOrThrow,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN)::getKeyOrThrow
-    );
-    public static final Codec<ArmorTrim> ARMOR_TRIM = RecordCodecBuilder.create(
-            TRIM_MATERIAL.fieldOf("material", ArmorTrim::getMaterial),
-            TRIM_PATTERN.fieldOf("pattern", ArmorTrim::getPattern),
-            ArmorTrim::new
-    );
+    public static final Codec<TrimMaterial> TRIM_MATERIAL = Codecs.KEY.flatXmap(
+        key -> {
+            TrimMaterial t = RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).get(key);
+            return t != null ? DataResult.success(t) : DataResult.error(DataError.custom("Unknown TrimMaterial registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered TrimMaterial execution"));
+        }
+    ).describe("TrimMaterial");
 
-    // Book
+    public static final Codec<TrimPattern> TRIM_PATTERN = Codecs.KEY.flatXmap(
+        key -> {
+            TrimPattern p = RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).get(key);
+            return p != null ? DataResult.success(p) : DataResult.error(DataError.custom("Unknown TrimPattern registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered TrimPattern execution"));
+        }
+    ).describe("TrimPattern");
+
+    public static final Codec<ArmorTrim> ARMOR_TRIM = RecordBuilder.create(instance -> instance.group(
+        TRIM_MATERIAL.fieldOf("material").forGetter(ArmorTrim::getMaterial),
+        TRIM_PATTERN.fieldOf("pattern").forGetter(ArmorTrim::getPattern)
+    ).apply(instance, ArmorTrim::new)).describe("ArmorTrim");
+
     public static final Codec<Filtered<String>> FILTERED_STRING = Codecs.STRING.xmap(
-            s -> Filtered.of(s, null),
-            Filtered::raw
-    );
+        s -> Filtered.of(s, null),
+        Filtered::raw
+    ).describe("FilteredString");
+
     public static final Codec<Filtered<ComponentLike>> FILTERED_COMPONENT = Codecs.TEXT_COMPONENT.xmap(
-            c -> Filtered.of(c, null),
-            f -> f.raw().asComponent()
-    );
-    public static final Codec<WrittenBookContent> WRITTEN_BOOK_CONTENT = RecordCodecBuilder.create(
-            FILTERED_STRING.fieldOf("title", WrittenBookContent::title),
-            Codecs.STRING.fieldOf("author", WrittenBookContent::author),
-            Codecs.INT.fieldOf("generation", WrittenBookContent::generation),
-            FILTERED_COMPONENT.list().fieldOf("pages", w -> {
-                List<Filtered<ComponentLike>> comps = new ArrayList<>();
-                w.pages().forEach(fc -> comps.add(Filtered.of(fc.raw(), null)));
-                return comps;
-            }),
-            Codecs.BOOLEAN.fieldOf("resolved", WrittenBookContent::resolved),
-            (title, author, gen, pages, resolved) -> {
-                WrittenBookContent.Builder builder = WrittenBookContent.writtenBookContent(title, author).resolved(resolved);
-                pages.forEach(p -> builder.addPage(p.raw()));
-                return builder.build();
-            }
-    );
+        c -> Filtered.of((ComponentLike) c, null),
+        f -> f.raw().asComponent()
+    ).describe("FilteredComponent");
 
-    public static Codec<PotionEffectType> POTION_EFFECT_TYPE = Codecs.KEY.xmap(
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)::getOrThrow,
-            RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)::getKeyOrThrow
-    );
+    public static final Codec<WrittenBookContent> WRITTEN_BOOK_CONTENT = RecordBuilder.create(instance -> instance.group(
+        FILTERED_STRING.fieldOf("title").forGetter(WrittenBookContent::title),
+        Codecs.STRING.fieldOf("author").forGetter(WrittenBookContent::author),
+        Codecs.INT.fieldOf("generation").forGetter(WrittenBookContent::generation),
+        FILTERED_COMPONENT.list().fieldOf("pages").forGetter(w -> {
+            List<Filtered<ComponentLike>> comps = new ArrayList<>();
+            w.pages().forEach(fc -> comps.add(Filtered.of(fc.raw(), null)));
+            return comps;
+        }),
+        Codecs.BOOLEAN.fieldOf("resolved").forGetter(WrittenBookContent::resolved)
+    ).apply(instance, (title, author, gen, pages, resolved) -> {
+        WrittenBookContent.Builder builder = WrittenBookContent.writtenBookContent(title, author).resolved(resolved);
+        pages.forEach(p -> builder.addPage(p.raw()));
+        return builder.build();
+    })).describe("WrittenBookContent");
+
+    public static Codec<PotionEffectType> POTION_EFFECT_TYPE = Codecs.KEY.flatXmap(
+        key -> {
+            PotionEffectType e = RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT).get(key);
+            return e != null ? DataResult.success(e) : DataResult.error(DataError.custom("Unknown PotionEffectType registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered PotionEffectType execution"));
+        }
+    ).describe("PotionEffectType");
+
     public static Codec<RegistryKeySet<@NotNull PotionEffectType>> POTION_EFFECT_TYPES = POTION_EFFECT_TYPE.list().xmap(
-            k -> RegistrySet.keySetFromValues(RegistryKey.MOB_EFFECT, k),
-            s -> s.resolve(Registry.POTION_EFFECT_TYPE).stream().toList()
-    );
+        k -> RegistrySet.keySetFromValues(RegistryKey.MOB_EFFECT, k),
+        s -> s.resolve(Registry.POTION_EFFECT_TYPE).stream().toList()
+    ).describe("PotionEffectTypes");
 
-    public static Codec<PotionEffect> POTION_EFFECT = RecordCodecBuilder.create(
-            Codecs.INT.fieldOf("amplifier", PotionEffect::getAmplifier),
-            Codecs.INT.fieldOf("duration", PotionEffect::getDuration),
-            POTION_EFFECT_TYPE.fieldOf("type", PotionEffect::getType),
-            Codecs.BOOLEAN.fieldOf("ambient", PotionEffect::isAmbient),
-            Codecs.BOOLEAN.fieldOf("particles", PotionEffect::hasParticles),
-            Codecs.BOOLEAN.fieldOf("icon", PotionEffect::hasIcon),
-            (amplifier, duration, type, ambient, particles, icon) ->
-                    new PotionEffect(type, duration, amplifier, ambient, particles, icon)
-    );
+    public static Codec<PotionEffect> POTION_EFFECT = RecordBuilder.<PotionEffect>create(instance -> instance.group(
+        Codecs.INT.fieldOf("amplifier").forGetter(PotionEffect::getAmplifier),
+        Codecs.INT.fieldOf("duration").forGetter(PotionEffect::getDuration),
+        POTION_EFFECT_TYPE.fieldOf("type").forGetter(PotionEffect::getType),
+        Codecs.BOOLEAN.fieldOf("ambient").forGetter(PotionEffect::isAmbient),
+        Codecs.BOOLEAN.fieldOf("particles").forGetter(PotionEffect::hasParticles),
+        Codecs.BOOLEAN.fieldOf("icon").forGetter(PotionEffect::hasIcon)
+    ).apply(instance, (amplifier, duration, type, ambient, particles, icon) ->
+        new PotionEffect(type, duration, amplifier, ambient, particles, icon)
+    )).describe("PotionEffect");
+
     public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codecs.DOUBLE.xmap(
         d -> ConsumeEffect.teleportRandomlyEffect(d.floatValue()),
         e -> (double) e.diameter()
-    );
+    ).describe("ConsumeEffect.TeleportRandomly");
 
     public static final Codec<ConsumeEffect.PlaySound> CONSUME_PLAY_SOUND = Codecs.KEY.xmap(
         ConsumeEffect::playSoundConsumeEffect,
         ConsumeEffect.PlaySound::sound
-    );
+    ).describe("ConsumeEffect.PlaySound");
 
     public static final Codec<ConsumeEffect.RemoveStatusEffects> CONSUME_REMOVE_STATUS_EFFECTS = POTION_EFFECT_TYPES.xmap(
         ConsumeEffect::removeEffects,
         ConsumeEffect.RemoveStatusEffects::removeEffects
-    );
+    ).describe("ConsumeEffect.RemoveStatusEffects");
 
-    public static final Codec<ConsumeEffect.ApplyStatusEffects> CONSUME_APPLY_STATUS_EFFECTS = RecordCodecBuilder.create(
-        POTION_EFFECT.list().fieldOf("effects", ConsumeEffect.ApplyStatusEffects::effects),
-        Codecs.DOUBLE.xmap(Double::floatValue, Float::doubleValue).fieldOf("probability", ConsumeEffect.ApplyStatusEffects::probability),
-        ConsumeEffect::applyStatusEffects
-    );
+    public static final Codec<ConsumeEffect.ApplyStatusEffects> CONSUME_APPLY_STATUS_EFFECTS = RecordBuilder.create(instance -> instance.group(
+        POTION_EFFECT.list().fieldOf("effects").forGetter(ConsumeEffect.ApplyStatusEffects::effects),
+        Codecs.DOUBLE.<Float>xmap(Double::floatValue, Float::doubleValue).fieldOf("probability").forGetter(ConsumeEffect.ApplyStatusEffects::probability)
+    ).apply(instance, ConsumeEffect::applyStatusEffects)).describe("ConsumeEffect.ApplyStatusEffects");
 
     public static final Codec<ConsumeEffect> CONSUME_EFFECT = new Codec<>() {
         @Override
-        public <D> ConsumeEffect decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for ConsumeEffect"));
-            D typeNode = map.get(ops.createString("type"));
-            if (typeNode == null) throw new CodecException("Missing type for ConsumeEffect");
-            String type = Codecs.STRING.decode(ops, typeNode).replace("minecraft:", "");
+        public <D> DataResult<ConsumeEffect> decode(DynamicOps<D> ops, D input) {
+            return ops.getMap(input)
+                .map(DataResult::success)
+                .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+                .flatMap(map -> {
+                    D typeNode = map.get(ops.createString("type"));
+                    if (typeNode == null) return DataResult.error(DataError.missingField("type"));
 
-            return switch (type) {
-                case "apply_effects" -> CONSUME_APPLY_STATUS_EFFECTS.decode(ops, input);
-                case "remove_effects" -> {
-                    D node = map.get(ops.createString("effects"));
-                    if (node == null) throw new CodecException("Missing 'effects'");
-                    yield CONSUME_REMOVE_STATUS_EFFECTS.decode(ops, node);
-                }
-                case "clear_all_effects" -> ConsumeEffect.clearAllStatusEffects();
-                case "teleport_randomly" -> {
-                    D node = map.get(ops.createString("diameter"));
-                    if (node == null) throw new CodecException("Missing 'diameter'");
-                    yield CONSUME_TELEPORT_RANDOMLY.decode(ops, node);
-                }
-                case "play_sound" -> {
-                    D node = map.get(ops.createString("sound"));
-                    if (node == null) throw new CodecException("Missing 'sound'");
-                    yield CONSUME_PLAY_SOUND.decode(ops, node);
-                }
-                default -> throw new CodecException("Unknown consume effect type: " + type);
-            };
+                    return Codecs.STRING.decode(ops, typeNode).prependPath("type").flatMap(typeStr -> {
+                        String type = typeStr.replace("minecraft:", "");
+                        return switch (type) {
+                            case "apply_effects" ->
+                                CONSUME_APPLY_STATUS_EFFECTS.decode(ops, input).map(e -> (ConsumeEffect) e);
+                            case "remove_effects" -> {
+                                D node = map.get(ops.createString("effects"));
+                                if (node == null) yield DataResult.error(DataError.missingField("effects"));
+                                yield CONSUME_REMOVE_STATUS_EFFECTS.decode(ops, node).prependPath("effects").map(e -> (ConsumeEffect) e);
+                            }
+                            case "clear_all_effects" ->
+                                DataResult.success((ConsumeEffect) ConsumeEffect.clearAllStatusEffects());
+                            case "teleport_randomly" -> {
+                                D node = map.get(ops.createString("diameter"));
+                                if (node == null) yield DataResult.error(DataError.missingField("diameter"));
+                                yield CONSUME_TELEPORT_RANDOMLY.decode(ops, node).prependPath("diameter").map(e -> (ConsumeEffect) e);
+                            }
+                            case "play_sound" -> {
+                                D node = map.get(ops.createString("sound"));
+                                if (node == null) yield DataResult.error(DataError.missingField("sound"));
+                                yield CONSUME_PLAY_SOUND.decode(ops, node).prependPath("sound").map(e -> (ConsumeEffect) e);
+                            }
+                            default -> DataResult.error(DataError.custom("Unknown consume effect type: " + type));
+                        };
+                    });
+                });
         }
 
         @Override
-        public <D> D encode(DynamicOps<D> ops, ConsumeEffect value) throws CodecException {
+        public <D> DataResult<D> encode(DynamicOps<D> ops, ConsumeEffect value) {
             Map<D, D> map = new HashMap<>();
 
-            switch (value) {
-                case ConsumeEffect.ApplyStatusEffects ase -> {
-                    ops.getMap(CONSUME_APPLY_STATUS_EFFECTS.encode(ops, ase)).ifPresent(map::putAll);
-                    map.put(ops.createString("type"), ops.createString("minecraft:apply_effects"));
-                }
-                case ConsumeEffect.RemoveStatusEffects rse -> {
-                    map.put(ops.createString("effects"), CONSUME_REMOVE_STATUS_EFFECTS.encode(ops, rse));
-                    map.put(ops.createString("type"), ops.createString("minecraft:remove_effects"));
-                }
-                case ConsumeEffect.ClearAllStatusEffects clearAllStatusEffects ->
-                    map.put(ops.createString("type"), ops.createString("minecraft:clear_all_effects"));
-                case ConsumeEffect.TeleportRandomly tr -> {
-                    map.put(ops.createString("diameter"), CONSUME_TELEPORT_RANDOMLY.encode(ops, tr));
-                    map.put(ops.createString("type"), ops.createString("minecraft:teleport_randomly"));
-                }
-                case ConsumeEffect.PlaySound ps -> {
-                    map.put(ops.createString("sound"), CONSUME_PLAY_SOUND.encode(ops, ps));
-                    map.put(ops.createString("type"), ops.createString("minecraft:play_sound"));
-                }
-                default -> throw new CodecException("Unknown consume effect type: " + value.getClass().getName());
+            if (value instanceof ConsumeEffect.ApplyStatusEffects ase) {
+                DataResult<D> res = CONSUME_APPLY_STATUS_EFFECTS.encode(ops, ase);
+                if (res.isError()) return res;
+                ops.getMap(res.getOrThrow()).ifPresent(map::putAll);
+                map.put(ops.createString("type"), ops.createString("minecraft:apply_effects"));
+            } else if (value instanceof ConsumeEffect.RemoveStatusEffects rse) {
+                DataResult<D> res = CONSUME_REMOVE_STATUS_EFFECTS.encode(ops, rse).prependPath("effects");
+                if (res.isError()) return res;
+                map.put(ops.createString("effects"), res.getOrThrow());
+                map.put(ops.createString("type"), ops.createString("minecraft:remove_effects"));
+            } else if (value instanceof ConsumeEffect.ClearAllStatusEffects) {
+                map.put(ops.createString("type"), ops.createString("minecraft:clear_all_effects"));
+            } else if (value instanceof ConsumeEffect.TeleportRandomly tr) {
+                DataResult<D> res = CONSUME_TELEPORT_RANDOMLY.encode(ops, tr).prependPath("diameter");
+                if (res.isError()) return res;
+                map.put(ops.createString("diameter"), res.getOrThrow());
+                map.put(ops.createString("type"), ops.createString("minecraft:teleport_randomly"));
+            } else if (value instanceof ConsumeEffect.PlaySound ps) {
+                DataResult<D> res = CONSUME_PLAY_SOUND.encode(ops, ps).prependPath("sound");
+                if (res.isError()) return res;
+                map.put(ops.createString("sound"), res.getOrThrow());
+                map.put(ops.createString("type"), ops.createString("minecraft:play_sound"));
+            } else {
+                return DataResult.error(DataError.custom("Unknown consume effect type: " + value.getClass().getName()));
             }
 
-            return ops.createMap(map);
+            return DataResult.success(ops.createMap(map));
+        }
+
+        @Override
+        public String describe() {
+            return "ConsumeEffect";
         }
     };
 
-    public static Codec<SuspiciousEffectEntry> SUSPICIOUS_EFFECT_ENTRY = RecordCodecBuilder.create(
-            POTION_EFFECT_TYPE.fieldOf("effect_type", SuspiciousEffectEntry::effect),
-            Codecs.INT.fieldOf("duration", SuspiciousEffectEntry::duration),
-            SuspiciousEffectEntry::create
-    );
+    public static Codec<SuspiciousEffectEntry> SUSPICIOUS_EFFECT_ENTRY = RecordBuilder.create(instance -> instance.group(
+        POTION_EFFECT_TYPE.fieldOf("effect_type").forGetter(SuspiciousEffectEntry::effect),
+        Codecs.INT.fieldOf("duration").forGetter(SuspiciousEffectEntry::duration)
+    ).apply(instance, SuspiciousEffectEntry::create)).describe("SuspiciousEffectEntry");
 
-    public static Codec<ProfileProperty> PROFILE_PROPERTY = RecordCodecBuilder.create(
-            Codecs.STRING.fieldOf("name", ProfileProperty::getName),
-            Codecs.STRING.fieldOf("value", ProfileProperty::getValue),
-            Codecs.STRING.nullable().fieldOf("signature", ProfileProperty::getSignature),
-            ProfileProperty::new
-    );
-    public static Codec<ResolvableProfile> RESOLVABLE_PROFILE = RecordCodecBuilder.create(
-            Codecs.STRING.nullable().fieldOf("name", ResolvableProfile::name),
-            Codecs.UUID.nullable().fieldOf("uuid", ResolvableProfile::uuid),
-            PROFILE_PROPERTY.list().fieldOf("properties", p -> p.properties().stream().toList()),
-            (name, uuid, properties) -> ResolvableProfile.resolvableProfile()
-                    .name(name)
-                    .uuid(uuid)
-                    .addProperties(properties)
-                    .build()
-    );
+    public static Codec<ProfileProperty> PROFILE_PROPERTY = RecordBuilder.create(instance -> instance.group(
+        Codecs.STRING.fieldOf("name").forGetter(ProfileProperty::getName),
+        Codecs.STRING.fieldOf("value").forGetter(ProfileProperty::getValue),
+        Codecs.STRING.optionalFieldOf("signature", null).forGetter(ProfileProperty::getSignature)
+    ).apply(instance, ProfileProperty::new)).describe("ProfileProperty");
 
-    public static Codec<Tool.Rule> TOOL_RULE = RecordCodecBuilder.create(
-            BLOCK_TYPE_KEYS.fieldOf("blocks", Tool.Rule::blocks),
-            Codecs.FLOAT.fieldOf("speed", Tool.Rule::speed),
-            Codec.enumCodec(TriState.class).fieldOf("correct_for_drops", Tool.Rule::correctForDrops),
-            Tool::rule
-    );
-    public static Codec<Tool> TOOL = RecordCodecBuilder.create(
-            Codecs.FLOAT.fieldOf("default_mining_speed", Tool::defaultMiningSpeed),
-            Codecs.INT.fieldOf("damage_per_block", Tool::damagePerBlock),
-            TOOL_RULE.list().fieldOf("rules", Tool::rules),
-            Codecs.BOOLEAN.fieldOf("can_destroy_blocks_in_creative", Tool::canDestroyBlocksInCreative),
-            (defaultMiningSpeed, damagePerBlock, rules, canDestroyBlocksInCreative) -> Tool.tool()
-                    .defaultMiningSpeed(defaultMiningSpeed)
-                    .damagePerBlock(damagePerBlock)
-                    .addRules(rules)
-                    .canDestroyBlocksInCreative(canDestroyBlocksInCreative)
-                    .build()
-    );
+    public static Codec<ResolvableProfile> RESOLVABLE_PROFILE = RecordBuilder.create(instance -> instance.group(
+        Codecs.STRING.optionalFieldOf("name", null).forGetter(ResolvableProfile::name),
+        Codecs.UUID.optionalFieldOf("uuid", null).forGetter(ResolvableProfile::uuid),
+        PROFILE_PROPERTY.list().fieldOf("properties").forGetter(p -> p.properties().stream().toList())
+    ).apply(instance, (name, uuid, properties) -> ResolvableProfile.resolvableProfile()
+        .name(name).uuid(uuid).addProperties(properties).build()
+    )).describe("ResolvableProfile");
 
-    public static Codec<Consumable> CONSUMABLE = RecordCodecBuilder.create(
-            Codecs.FLOAT.fieldOf("consume_seconds", Consumable::consumeSeconds),
-            Codec.enumCodec(ItemUseAnimation.class).fieldOf("animation", Consumable::animation),
-            Codecs.KEY.fieldOf("sound", Consumable::sound),
-            Codecs.BOOLEAN.fieldOf("has_consume_particles", Consumable::hasConsumeParticles),
-            CONSUME_EFFECT.list().fieldOf("consume_effects", Consumable::consumeEffects),
-            (consumeSeconds, animation, sound, hasConsumeParticles, consumeEffects) -> Consumable.consumable()
-                    .consumeSeconds(consumeSeconds)
-                    .animation(animation)
-                    .sound(sound)
-                    .hasConsumeParticles(hasConsumeParticles)
-                    .addEffects(consumeEffects)
-                    .build()
-    );
+    public static Codec<Tool.Rule> TOOL_RULE = RecordBuilder.create(instance -> instance.group(
+        BLOCK_TYPE_KEYS.fieldOf("blocks").forGetter(Tool.Rule::blocks),
+        Codecs.FLOAT.fieldOf("speed").forGetter(Tool.Rule::speed),
+        Codec.enumCodec(TriState.class).fieldOf("correct_for_drops").forGetter(Tool.Rule::correctForDrops)
+    ).apply(instance, Tool::rule)).describe("Tool.Rule");
 
-    public static Codec<ItemDamageFunction> ITEM_DAMAGE_FUNCTION = RecordCodecBuilder.create(
-            Codecs.FLOAT.fieldOf("threshold", ItemDamageFunction::threshold),
-            Codecs.FLOAT.fieldOf("base", ItemDamageFunction::base),
-            Codecs.FLOAT.fieldOf("factor", ItemDamageFunction::factor),
-            (threshold, base, factor) -> ItemDamageFunction.itemDamageFunction()
-                    .threshold(threshold)
-                    .base(base)
-                    .factor(factor)
-                    .build()
-    );
-    public static Codec<DamageReduction> DAMAGE_REDUCTION = RecordCodecBuilder.create(
-            DAMAGE_TYPE_KEYS.fieldOf("type", DamageReduction::type),
-            Codecs.FLOAT.fieldOf("horizontal_blocking_angle", DamageReduction::horizontalBlockingAngle),
-            Codecs.FLOAT.fieldOf("base", DamageReduction::base),
-            Codecs.FLOAT.fieldOf("factor", DamageReduction::factor),
-            (type, horizontalBlockingAngle, base, factor) -> DamageReduction.damageReduction()
-                    .type(type)
-                    .horizontalBlockingAngle(horizontalBlockingAngle)
-                    .base(base)
-                    .factor(factor)
-                    .build()
-    );
-    public static Codec<BlocksAttacks> BLOCKS_ATTACKS = RecordCodecBuilder.create(
-            Codecs.FLOAT.fieldOf("block_delay_seconds", BlocksAttacks::blockDelaySeconds),
-            Codecs.FLOAT.fieldOf("disable_cooldown_scale", BlocksAttacks::disableCooldownScale),
-            DAMAGE_REDUCTION.list().fieldOf("damage_reductions", BlocksAttacks::damageReductions),
-            ITEM_DAMAGE_FUNCTION.fieldOf("item_damage", BlocksAttacks::itemDamage),
-            DAMAGE_TYPE_KEYS.nullable().fieldOf("bypassed_by", BlocksAttacks::bypassedBy),
-            Codecs.KEY.nullable().fieldOf("block_sound", BlocksAttacks::blockSound),
-            Codecs.KEY.nullable().fieldOf("disable_sound", BlocksAttacks::disableSound),
-            (blockDelaySeconds, disableCooldownScale, damageReductions, itemDamage, bypassedBy,
-             blockSound, disableSound) -> {
-                BlocksAttacks.Builder builder = BlocksAttacks.blocksAttacks()
-                        .blockDelaySeconds(blockDelaySeconds)
-                        .disableCooldownScale(disableCooldownScale)
-                        .damageReductions(damageReductions)
-                        .itemDamage(itemDamage)
-                        .blockSound(blockSound)
-                        .disableSound(disableSound);
-                if (bypassedBy != null) builder.bypassedBy(bypassedBy);
-                return builder.build();
-            }
-    );
+    public static Codec<Tool> TOOL = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.fieldOf("default_mining_speed").forGetter(Tool::defaultMiningSpeed),
+        Codecs.INT.fieldOf("damage_per_block").forGetter(Tool::damagePerBlock),
+        TOOL_RULE.list().fieldOf("rules").forGetter(Tool::rules),
+        Codecs.BOOLEAN.fieldOf("can_destroy_blocks_in_creative").forGetter(Tool::canDestroyBlocksInCreative)
+    ).apply(instance, (defaultMiningSpeed, damagePerBlock, rules, canDestroyBlocksInCreative) -> Tool.tool()
+        .defaultMiningSpeed(defaultMiningSpeed).damagePerBlock(damagePerBlock)
+        .addRules(rules).canDestroyBlocksInCreative(canDestroyBlocksInCreative).build()
+    )).describe("Tool");
 
-    public static Codec<EquipmentSlotGroup> EQUIPMENT_SLOT_GROUP = Codecs.STRING.xmap(
-        EquipmentSlotGroup::getByName,
-        equipmentSlotGroup -> equipmentSlotGroup != null ? equipmentSlotGroup.toString() : EquipmentSlotGroup.ANY.toString()
-    );
-    public static Codec<Attribute> ATTRIBUTE = Codecs.KEY.xmap(
-        RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getOrThrow,
-        RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)::getKeyOrThrow
-    );
-    public static Codec<AttributeModifier> ATTRIBUTE_MODIFIER = RecordCodecBuilder.create(
-        Codecs.NAMESPACED_KEY.fieldOf("key", AttributeModifier::getKey),
-        Codecs.DOUBLE.fieldOf("amount", AttributeModifier::getAmount),
-        Codec.enumCodec(AttributeModifier.Operation.class).fieldOf("operation", AttributeModifier::getOperation),
-        EQUIPMENT_SLOT_GROUP.fieldOf("slot", AttributeModifier::getSlotGroup),
-        AttributeModifier::new
-    );
+    public static Codec<Consumable> CONSUMABLE = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.fieldOf("consume_seconds").forGetter(Consumable::consumeSeconds),
+        Codec.enumCodec(ItemUseAnimation.class).fieldOf("animation").forGetter(Consumable::animation),
+        Codecs.KEY.fieldOf("sound").forGetter(Consumable::sound),
+        Codecs.BOOLEAN.fieldOf("has_consume_particles").forGetter(Consumable::hasConsumeParticles),
+        CONSUME_EFFECT.list().fieldOf("consume_effects").forGetter(Consumable::consumeEffects)
+    ).apply(instance, (consumeSeconds, animation, sound, hasConsumeParticles, consumeEffects) -> Consumable.consumable()
+        .consumeSeconds(consumeSeconds).animation(animation).sound(sound)
+        .hasConsumeParticles(hasConsumeParticles).addEffects(consumeEffects).build()
+    )).describe("Consumable");
+
+    public static Codec<ItemDamageFunction> ITEM_DAMAGE_FUNCTION = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.fieldOf("threshold").forGetter(ItemDamageFunction::threshold),
+        Codecs.FLOAT.fieldOf("base").forGetter(ItemDamageFunction::base),
+        Codecs.FLOAT.fieldOf("factor").forGetter(ItemDamageFunction::factor)
+    ).apply(instance, (threshold, base, factor) -> ItemDamageFunction.itemDamageFunction()
+        .threshold(threshold).base(base).factor(factor).build()
+    )).describe("ItemDamageFunction");
+
+    public static Codec<DamageReduction> DAMAGE_REDUCTION = RecordBuilder.create(instance -> instance.group(
+        DAMAGE_TYPE_KEYS.fieldOf("type").forGetter(DamageReduction::type),
+        Codecs.FLOAT.fieldOf("horizontal_blocking_angle").forGetter(DamageReduction::horizontalBlockingAngle),
+        Codecs.FLOAT.fieldOf("base").forGetter(DamageReduction::base),
+        Codecs.FLOAT.fieldOf("factor").forGetter(DamageReduction::factor)
+    ).apply(instance, (type, horizontalBlockingAngle, base, factor) -> DamageReduction.damageReduction()
+        .type(type).horizontalBlockingAngle(horizontalBlockingAngle).base(base).factor(factor).build()
+    )).describe("DamageReduction");
+
+    public static Codec<BlocksAttacks> BLOCKS_ATTACKS = RecordBuilder.create(instance -> instance.group(
+        Codecs.FLOAT.fieldOf("block_delay_seconds").forGetter(BlocksAttacks::blockDelaySeconds),
+        Codecs.FLOAT.fieldOf("disable_cooldown_scale").forGetter(BlocksAttacks::disableCooldownScale),
+        DAMAGE_REDUCTION.list().fieldOf("damage_reductions").forGetter(BlocksAttacks::damageReductions),
+        ITEM_DAMAGE_FUNCTION.fieldOf("item_damage").forGetter(BlocksAttacks::itemDamage),
+        DAMAGE_TYPE_KEYS.optionalFieldOf("bypassed_by", null).forGetter(BlocksAttacks::bypassedBy),
+        Codecs.KEY.optionalFieldOf("block_sound", null).forGetter(BlocksAttacks::blockSound),
+        Codecs.KEY.optionalFieldOf("disable_sound", null).forGetter(BlocksAttacks::disableSound)
+    ).apply(instance, (blockDelaySeconds, disableCooldownScale, damageReductions, itemDamage, bypassedBy, blockSound, disableSound) -> {
+        BlocksAttacks.Builder builder = BlocksAttacks.blocksAttacks()
+            .blockDelaySeconds(blockDelaySeconds).disableCooldownScale(disableCooldownScale)
+            .damageReductions(damageReductions).itemDamage(itemDamage)
+            .blockSound(blockSound).disableSound(disableSound);
+        if (bypassedBy != null) builder.bypassedBy(bypassedBy);
+        return builder.build();
+    })).describe("BlocksAttacks");
+
+    public static Codec<EquipmentSlotGroup> EQUIPMENT_SLOT_GROUP = Codecs.STRING.flatXmap(
+        str -> {
+            try {
+                EquipmentSlotGroup group = EquipmentSlotGroup.getByName(str);
+                return group != null ? DataResult.success(group) : DataResult.error(DataError.custom("Unknown EquipmentSlotGroup target: " + str));
+            } catch (Exception e) { return DataResult.error(DataError.custom(e.getMessage())); }
+        },
+        group -> DataResult.success(group != null ? group.toString() : EquipmentSlotGroup.ANY.toString())
+    ).describe("EquipmentSlotGroup");
+
+    public static Codec<Attribute> ATTRIBUTE = Codecs.KEY.flatXmap(
+        key -> {
+            Attribute a = RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE).get(key);
+            return a != null ? DataResult.success(a) : DataResult.error(DataError.custom("Unknown Attribute registry key: " + key));
+        },
+        type -> {
+            Key k = RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE).getKey(type);
+            return k != null ? DataResult.success(k) : DataResult.error(DataError.custom("Unregistered Attribute execution"));
+        }
+    ).describe("Attribute");
+
+    public static Codec<AttributeModifier> ATTRIBUTE_MODIFIER = RecordBuilder.create(instance -> instance.group(
+        Codecs.NAMESPACED_KEY.fieldOf("key").forGetter(AttributeModifier::getKey),
+        Codecs.DOUBLE.fieldOf("amount").forGetter(AttributeModifier::getAmount),
+        Codec.enumCodec(AttributeModifier.Operation.class).fieldOf("operation").forGetter(AttributeModifier::getOperation),
+        EQUIPMENT_SLOT_GROUP.fieldOf("slot").forGetter(AttributeModifier::getSlotGroup)
+    ).apply(instance, AttributeModifier::new)).describe("AttributeModifier");
+
     public static final Codec<ItemAttributeModifiers> ITEM_ATTRIBUTE_MODIFIERS = Codec.map(ATTRIBUTE, Codec.map(EQUIPMENT_SLOT_GROUP, ATTRIBUTE_MODIFIER)).xmap(
         map -> {
             ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.itemAttributes();
             map.forEach((attribute, inner) ->
-                inner.forEach((group, modifier) ->
-                    builder.addModifier(attribute, modifier, group)
-                )
+                inner.forEach((group, modifier) -> builder.addModifier(attribute, modifier, group))
             );
             return builder.build();
         },
         modifiers -> {
             Map<Attribute, Map<EquipmentSlotGroup, AttributeModifier>> map = new LinkedHashMap<>();
             for (ItemAttributeModifiers.Entry e : modifiers.modifiers()) {
-                map.computeIfAbsent(e.attribute(), k -> new LinkedHashMap<>())
-                    .put(e.getGroup(), e.modifier());
+                map.computeIfAbsent(e.attribute(), k -> new LinkedHashMap<>()).put(e.getGroup(), e.modifier());
             }
             return map;
         }
-    );
+    ).describe("ItemAttributeModifiers");
 
     public static final Codec<BlockInfo> BLOCK_INFO = new Codec<>() {
-
         @Override
-        public <D> BlockInfo decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
+        public <D> DataResult<BlockInfo> decode(DynamicOps<D> ops, D input) {
+            return ops.getMap(input)
+                .map(DataResult::success)
+                .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+                .flatMap(map -> {
+                    D idNode = map.get(ops.createString("id"));
+                    if (idNode == null) return DataResult.error(DataError.missingField("id"));
 
-            String id = Codecs.STRING.decode(ops, map.get(ops.createString("id")));
+                    return Codecs.STRING.decode(ops, idNode).prependPath("id").flatMap(id -> {
+                        Vector pos = null;
+                        D posObj = map.get(ops.createString("pos"));
+                        if (posObj != null) {
+                            DataResult<Vector> posRes = Codecs.VECTOR_I.decode(ops, posObj).prependPath("pos");
+                            if (posRes.isError()) return DataResult.error(posRes.error().get());
+                            pos = posRes.getOrThrow();
+                        }
 
-            Vector pos = null;
-            D posObj = map.get(ops.createString("pos"));
-            if (posObj != null) {
-                pos = Codecs.VECTOR_I.decode(ops, posObj);
-            }
+                        Object blockObject;
+                        if (id.startsWith("minecraft:")) {
+                            Material mat = Material.matchMaterial(id.substring(10));
+                            if (mat == null || !mat.isBlock())
+                                return DataResult.error(DataError.custom("Invalid vanilla material mapping: " + id));
+                            blockObject = mat.createBlockData();
+                        } else {
+                            CustomBlock base = Registries.BLOCKS.get(id);
+                            if (base == null) return DataResult.error(DataError.custom("Unknown custom block identity: " + id));
+                            blockObject = base.clone();
+                        }
 
-            Object blockObject;
-            if (id.startsWith("minecraft:")) {
-                Material mat = Material.matchMaterial(id.substring(10));
-                if (mat == null || !mat.isBlock()) throw new CodecException("Invalid vanilla material: " + id);
-                blockObject = mat.createBlockData();
-            } else {
-                CustomBlock base = Registries.BLOCKS.get(id);
-                if (base == null) throw new CodecException("Unknown custom block: " + id);
-                blockObject = base.clone();
-            }
+                        ObjectNode states = null;
+                        ObjectNode properties = null;
+                        ObjectNode nbt = null;
 
-            ObjectNode states = null;
-            ObjectNode properties = null;
-            ObjectNode nbt = null;
+                        if (ops instanceof JsonOps && input instanceof JsonNode jsonInput) {
+                            if (jsonInput.has("states")) states = (ObjectNode) jsonInput.get("states");
+                            if (jsonInput.has("properties")) properties = (ObjectNode) jsonInput.get("properties");
+                            if (jsonInput.has("nbt")) nbt = (ObjectNode) jsonInput.get("nbt");
+                        }
 
-            if (ops instanceof JsonOps && input instanceof JsonNode jsonInput) {
-                if (jsonInput.has("states")) states = (ObjectNode) jsonInput.get("states");
-                if (jsonInput.has("properties")) properties = (ObjectNode) jsonInput.get("properties");
-                if (jsonInput.has("nbt")) nbt = (ObjectNode) jsonInput.get("nbt");
-            }
+                        if (states != null) {
+                            Map<D, D> statesMap = ops.getMap((D) states).orElse(Collections.emptyMap());
+                            if (blockObject instanceof BlockData bd) {
+                                MinecraftBlockSerializer.deserialize(bd, statesMap, ops);
+                            } else if (blockObject instanceof CustomBlock cb) {
+                                BlockData tempData = cb.getMaterial().createBlockData();
+                                MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
+                            }
+                        }
 
-            if (states != null) {
-                Map<D, D> statesMap = ops.getMap((D) states).orElse(Collections.emptyMap());
-                if (blockObject instanceof BlockData bd) {
-                    MinecraftBlockSerializer.deserialize(bd, statesMap, ops);
-                } else if (blockObject instanceof CustomBlock cb) {
-                    BlockData tempData = cb.getMaterial().createBlockData();
-                    MinecraftBlockSerializer.deserialize(tempData, statesMap, ops);
-                }
-            }
-
-            return new BlockInfo(pos, blockObject, states, properties, nbt);
+                        return DataResult.success(new BlockInfo(pos, blockObject, states, properties, nbt));
+                    });
+                });
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public <D> D encode(DynamicOps<D> ops, BlockInfo value) throws CodecException {
+        public <D> DataResult<D> encode(DynamicOps<D> ops, BlockInfo value) {
             Map<D, D> map = new HashMap<>();
 
-            map.put(ops.createString("id"), Codecs.STRING.encode(ops, value.getAsString()));
+            DataResult<D> idRes = Codecs.STRING.encode(ops, value.getAsString()).prependPath("id");
+            if (idRes.isError()) return idRes;
+            map.put(ops.createString("id"), idRes.getOrThrow());
 
             if (value.pos() != null) {
-                map.put(ops.createString("pos"), Codecs.VECTOR_I.encode(ops, value.pos()));
+                DataResult<D> posRes = Codecs.VECTOR_I.encode(ops, value.pos()).prependPath("pos");
+                if (posRes.isError()) return posRes;
+                map.put(ops.createString("pos"), posRes.getOrThrow());
             }
 
             if (value.states() != null && !value.states().isEmpty()) {
@@ -578,23 +677,33 @@ public class ExtraCodecs {
                 map.put(ops.createString("nbt"), (D) value.nbt());
             }
 
-            return ops.createMap(map);
+            return DataResult.success(ops.createMap(map));
+        }
+
+        @Override
+        public String describe() {
+            return "BlockInfo";
         }
     };
 
     public static final Codec<CompoundTag> COMPOUND_TAG = new Codec<>() {
         @Override
-        public <D> CompoundTag decode(DynamicOps<D> ops, D input) throws CodecException {
+        public <D> DataResult<CompoundTag> decode(DynamicOps<D> ops, D input) {
             Tag tag = decodeTag(ops, input);
             if (tag instanceof CompoundTag ct) {
-                return ct;
+                return DataResult.success(ct);
             }
-            throw new CodecException("Input is not a CompoundTag structure");
+            return DataResult.error(DataError.typeMismatch("CompoundTag", "Unknown"));
         }
 
         @Override
-        public <D> D encode(DynamicOps<D> ops, CompoundTag value) throws CodecException {
-            return encodeTag(ops, value);
+        public <D> DataResult<D> encode(DynamicOps<D> ops, CompoundTag value) {
+            return DataResult.success(encodeTag(ops, value));
+        }
+
+        @Override
+        public String describe() {
+            return "CompoundTag";
         }
     };
 
@@ -690,26 +799,42 @@ public class ExtraCodecs {
 
     public static final Codec<SavedEntity> SAVED_ENTITY = new Codec<>() {
         @Override
-        public <D>SavedEntity decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map for SavedEntity"));
-            String idStr = Codecs.STRING.decode(ops, map.get(ops.createString("id")));
+        public <D> DataResult<SavedEntity> decode(DynamicOps<D> ops, D input) {
+            return ops.getMap(input)
+                .map(DataResult::success)
+                .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+                .flatMap(map -> {
+                    D idNode = map.get(ops.createString("id"));
+                    if (idNode == null) return DataResult.error(DataError.missingField("id"));
 
-            Either<EntityType, CustomEntity<? extends LivingEntity>> type;
-            if (idStr.startsWith("minecraft:")) {
-                type = Either.left(EntityType.valueOf(idStr.substring(10).toUpperCase()));
-            } else {
-                CustomEntity<?> custom = Registries.ENTITIES.get(idStr);
-                if (custom == null) throw new CodecException("Unknown custom entity: " + idStr);
-                type = Either.right(custom);
-            }
-
-            return new SavedEntity(type, input, ops);
+                    return Codecs.STRING.decode(ops, idNode).prependPath("id").flatMap(idStr -> {
+                        Either<EntityType, CustomEntity<? extends LivingEntity>> type;
+                        if (idStr.startsWith("minecraft:")) {
+                            try {
+                                type = Either.left(EntityType.valueOf(idStr.substring(10).toUpperCase()));
+                            } catch (IllegalArgumentException e) {
+                                return DataResult.error(DataError.custom("Unknown vanilla entity type context: " + idStr));
+                            }
+                        } else {
+                            CustomEntity<?> custom = Registries.ENTITIES.get(idStr);
+                            if (custom == null)
+                                return DataResult.error(DataError.custom("Unknown custom entity identity string: " + idStr));
+                            type = Either.right(custom);
+                        }
+                        return DataResult.success(new SavedEntity(type, input, ops));
+                    });
+                });
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public <D> D encode(DynamicOps<D> ops, SavedEntity value) throws CodecException {
-            return (D) value.getRawData();
+        public <D> DataResult<D> encode(DynamicOps<D> ops, SavedEntity value) {
+            return DataResult.success((D) value.getRawData());
+        }
+
+        @Override
+        public String describe() {
+            return "SavedEntity";
         }
     };
 }

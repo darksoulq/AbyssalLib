@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mob;
@@ -20,38 +17,36 @@ public class VexEntityAdapter extends EntityAdapter<Vex> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Vex value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("is_charging"), Codecs.BOOLEAN.encode(ops, value.isCharging()));
-        map.put(ops.createString("has_limited_lifetime"), Codecs.BOOLEAN.encode(ops, value.hasLimitedLifetime()));
-        map.put(ops.createString("limited_lifetime_ticks"), Codecs.INT.encode(ops, value.getLimitedLifetimeTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Vex value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getBound() != null) {
-            map.put(ops.createString("bound_location"), Codecs.LOCATION.encode(ops, value.getBound()));
-        }
+        ctx.write("is_charging", Codecs.BOOLEAN, value.isCharging())
+            .write("has_limited_lifetime", Codecs.BOOLEAN, value.hasLimitedLifetime())
+            .write("limited_lifetime_ticks", Codecs.INT, value.getLimitedLifetimeTicks())
+            .writeNullable("bound_location", Codecs.LOCATION, value.getBound());
+
         if (value.getSummoner() != null) {
-            map.put(ops.createString("summoner_uuid"), Codecs.UUID.encode(ops, value.getSummoner().getUniqueId()));
+            ctx.write("summoner_uuid", Codecs.UUID, value.getSummoner().getUniqueId());
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Vex vex)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Vex vex)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_charging")))).onSuccess(vex::setCharging);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("has_limited_lifetime")))).onSuccess(vex::setLimitedLifetime);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("limited_lifetime_ticks")))).onSuccess(vex::setLimitedLifetimeTicks);
-
-        D boundData = map.get(ops.createString("bound_location"));
-        if (boundData != null) {
-            Try.of(() -> Codecs.LOCATION.decode(ops, boundData)).onSuccess(vex::setBound);
-        }
-
-        D summonerData = map.get(ops.createString("summoner_uuid"));
-        if (summonerData != null) {
-            Try.of(() -> Codecs.UUID.decode(ops, summonerData)).onSuccess(uuid -> {
+        ctx.readOptional("is_charging", Codecs.BOOLEAN, opt -> opt.ifPresent(vex::setCharging))
+            .readOptional("has_limited_lifetime", Codecs.BOOLEAN, opt -> opt.ifPresent(vex::setLimitedLifetime))
+            .readOptional("limited_lifetime_ticks", Codecs.INT, opt -> opt.ifPresent(vex::setLimitedLifetimeTicks))
+            .readOptional("bound_location", Codecs.LOCATION, opt -> opt.ifPresent(vex::setBound))
+            .readOptional("summoner_uuid", Codecs.UUID, opt -> opt.ifPresent(uuid -> {
                 Entity summoner = Bukkit.getEntity(uuid);
                 if (summoner instanceof Mob mob) vex.setSummoner(mob);
-            });
-        }
+            }));
+
+        return ctx.result();
     }
 }

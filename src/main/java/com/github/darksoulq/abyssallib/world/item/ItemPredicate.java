@@ -2,7 +2,9 @@ package com.github.darksoulq.abyssallib.world.item;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.common.util.Condition;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
@@ -42,24 +44,28 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * The raw serialized input data.
          * @return
          * The decoded {@link DataComponent} instance.
-         * @throws CodecException
-         * If the map is malformed, empty, or the component type is unregistered.
          */
         @Override
-        public <D> DataComponent<?> decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map for component entry"));
-            if (map.isEmpty()) {
-                throw new CodecException("Empty component map");
-            }
-            Map.Entry<D, D> entry = map.entrySet().iterator().next();
-            String key = ops.getStringValue(entry.getKey()).orElseThrow(() -> new CodecException("Key must be string"));
-
-            DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(key);
-            if (type == null) {
-                throw new CodecException("Unknown component type: " + key);
-            }
-
-            return type.codec().decode(ops, entry.getValue());
+        public <D> DataResult<DataComponent<?>> decode(DynamicOps<D> ops, D input) {
+            return ops.getMap(input)
+                .map(DataResult::success)
+                .orElseGet(() -> DataResult.error("Expected Map for component entry"))
+                .flatMap(map -> {
+                    if (map.isEmpty()) {
+                        return DataResult.error("Empty component map");
+                    }
+                    Map.Entry<D, D> entry = map.entrySet().iterator().next();
+                    return ops.getStringValue(entry.getKey())
+                        .map(DataResult::success)
+                        .orElseGet(() -> DataResult.error("Key must be string"))
+                        .flatMap(key -> {
+                            DataComponentType<?> type = Registries.DATA_COMPONENT_TYPES.get(key);
+                            if (type == null) {
+                                return DataResult.error("Unknown component type: " + key);
+                            }
+                            return type.codec().decode(ops, entry.getValue());
+                        });
+                });
         }
 
         /**
@@ -73,119 +79,67 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * The {@link DataComponent} to serialize.
          * @return
          * The encoded data map.
-         * @throws CodecException
-         * If the component type is not registered.
          */
         @Override
-        public <D> D encode(DynamicOps<D> ops, DataComponent<?> value) throws CodecException {
+        @SuppressWarnings("unchecked")
+        public <D> DataResult<D> encode(DynamicOps<D> ops, DataComponent<?> value) {
             String id = Registries.DATA_COMPONENT_TYPES.getId(value.getType());
             if (id == null) {
-                throw new CodecException("Unregistered component type: " + value.getType());
+                return DataResult.error("Unregistered component type: " + value.getType());
             }
 
-            return ops.createMap(Map.of(
-                ops.createString(id),
-                ComponentMap.encodeComponent(value, ops)
-            ));
+            try {
+                return DataResult.success(ops.createMap(Map.of(
+                    ops.createString(id),
+                    (D) ComponentMap.encodeComponent(value, ops)
+                )));
+            } catch (Exception e) {
+                return DataResult.error("Failed to encode component: " + e.getMessage());
+            }
+        }
+
+        @Override
+        public String describe() {
+            return "ComponentEntry";
         }
     };
+
+    /**
+     * An inline record builder variant used directly within the fallback codec.
+     */
+    private static final Codec<ItemPredicate> INLINE_CODEC = RecordBuilder.create(instance -> instance.group(
+        Condition.codec(Codecs.KEY).list().optionalFieldOf("without", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.without),
+        Condition.codec(Codecs.KEY).list().optionalFieldOf("with", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.with),
+        Condition.codec(COMPONENT_ENTRY_CODEC).list().optionalFieldOf("components", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.valued),
+        Condition.codec(Codec.<ItemPredicate>recursive(_ -> ItemPredicate.CODEC)).list().optionalFieldOf("predicates", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.predicates),
+        Codecs.KEY.nullable().optionalFieldOf("id", null).forGetter(ItemPredicate.class, p -> p.id)
+    ).apply(instance, ItemPredicate::new)).describe("InlineItemPredicate");
+
+    /**
+     * A reference variant mapping single string names to registered predicates.
+     */
+    private static final Codec<ItemPredicate> REFERENCE_CODEC = Codecs.STRING.flatXmap(
+        idStr -> {
+            ItemPredicate registered = Registries.ITEM_PREDICATES.get(idStr);
+            if (registered == null) {
+                return DataResult.error("Unknown predicate reference: " + idStr);
+            }
+            return DataResult.success(registered);
+        },
+        pred -> {
+            String id = Registries.ITEM_PREDICATES.getId(pred);
+            if (id == null) {
+                return DataResult.error("Unregistered predicate identity mapping");
+            }
+            return DataResult.success(id);
+        }
+    ).describe("ReferenceItemPredicate");
 
     /**
      * The primary codec used to serialize and deserialize entire {@link ItemPredicate} instances.
      * Supports resolving registered predicates by their String ID or parsing full nested objects.
      */
-    public static final Codec<ItemPredicate> CODEC = new Codec<>() {
-        /**
-         * Decodes an ItemPredicate from a serialized format.
-         *
-         * @param <D>
-         * The dynamic data type.
-         * @param ops
-         * The dynamic operations logic provider.
-         * @param input
-         * The raw serialized input data.
-         * @return
-         * The decoded {@link ItemPredicate} instance.
-         * @throws CodecException
-         * If the payload is malformed or references unknown registered predicates.
-         */
-        @Override
-        public <D> ItemPredicate decode(DynamicOps<D> ops, D input) throws CodecException {
-            if (ops.getStringValue(input).isPresent()) {
-                String idStr = ops.getStringValue(input).get();
-                ItemPredicate registered = Registries.ITEM_PREDICATES.get(idStr);
-                if (registered == null) {
-                    throw new CodecException("Unknown predicate: " + idStr);
-                }
-                return registered;
-            }
-
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected Map"));
-
-            List<Condition<Key>> without = new ArrayList<>();
-            List<Condition<Key>> with = new ArrayList<>();
-            List<Condition<DataComponent<?>>> valued = new ArrayList<>();
-            List<Condition<ItemPredicate>> predicates = new ArrayList<>();
-            Key id = null;
-
-            if (map.containsKey(ops.createString("id"))) {
-                id = Codecs.KEY.decode(ops, map.get(ops.createString("id")));
-            }
-            if (map.containsKey(ops.createString("without"))) {
-                without = Condition.codec(Codecs.KEY).list().decode(ops, map.get(ops.createString("without")));
-            }
-            if (map.containsKey(ops.createString("with"))) {
-                with = Condition.codec(Codecs.KEY).list().decode(ops, map.get(ops.createString("with")));
-            }
-            if (map.containsKey(ops.createString("components"))) {
-                valued = Condition.codec(COMPONENT_ENTRY_CODEC).list().decode(ops, map.get(ops.createString("components")));
-            }
-            if (map.containsKey(ops.createString("predicates"))) {
-                predicates = Condition.codec(this).list().decode(ops, map.get(ops.createString("predicates")));
-            }
-
-            return new ItemPredicate(without, with, valued, predicates, id);
-        }
-
-        /**
-         * Encodes an ItemPredicate into a serialized format.
-         *
-         * @param <D>
-         * The dynamic data type.
-         * @param ops
-         * The dynamic operations logic provider.
-         * @param value
-         * The {@link ItemPredicate} to serialize.
-         * @return
-         * The encoded data, either as a reference string or a complete definition map.
-         * @throws CodecException
-         * If internal encoding operations fail.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, ItemPredicate value) throws CodecException {
-            if (Registries.ITEM_PREDICATES.getAll().containsValue(value)) {
-                return ops.createString(Registries.ITEM_PREDICATES.getId(value));
-            }
-
-            Map<D, D> map = new HashMap<>();
-            if (value.id != null) {
-                map.put(ops.createString("id"), Codecs.KEY.encode(ops, value.id));
-            }
-            if (!value.without.isEmpty()) {
-                map.put(ops.createString("without"), Condition.codec(Codecs.KEY).list().encode(ops, value.without));
-            }
-            if (!value.with.isEmpty()) {
-                map.put(ops.createString("with"), Condition.codec(Codecs.KEY).list().encode(ops, value.with));
-            }
-            if (!value.valued.isEmpty()) {
-                map.put(ops.createString("components"), Condition.codec(COMPONENT_ENTRY_CODEC).list().encode(ops, value.valued));
-            }
-            if (!value.predicates.isEmpty()) {
-                map.put(ops.createString("predicates"), Condition.codec(this).list().encode(ops, value.predicates));
-            }
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<ItemPredicate> CODEC = Codec.fallback(REFERENCE_CODEC, INLINE_CODEC).describe("ItemPredicate");
 
     /** A list of conditions checking for the strict absence of specific component Keys. */
     private final List<Condition<Key>> without;

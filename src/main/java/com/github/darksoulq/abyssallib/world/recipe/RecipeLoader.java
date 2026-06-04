@@ -4,13 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RecipeReloadEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.world.recipe.type.*;
+import com.github.darksoulq.abyssallib.world.recipe.type.DisabledRecipe;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
@@ -20,13 +22,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * A utility class for loading, parsing, and registering Minecraft recipes from external files.
  * <p>
  * This class supports standard Minecraft recipe types (Shaped, Shapeless, Furnace, etc.) as well
- * as custom types. It uses a RecipeType system to decode JSON and YAML data into recipe objects.
+ * as custom types.
  */
 public class RecipeLoader {
 
@@ -36,6 +38,7 @@ public class RecipeLoader {
      * Recursively scans a folder and loads all JSON and YAML files found as recipes.
      *
      * @param folder The {@link File} directory to scan.
+     * @return The amount of successfully parsed and executed configuration paths.
      */
     public static int loadFolder(File folder) {
         int loaded = 0;
@@ -58,6 +61,7 @@ public class RecipeLoader {
      *
      * @param plugin       The {@link Plugin} instance.
      * @param resourcePath The internal path (e.g., "recipes/").
+     * @return The amount of successfully parsed and executed configuration paths.
      */
     public static int loadFolder(Plugin plugin, String resourcePath) {
         int loaded = 0;
@@ -142,47 +146,49 @@ public class RecipeLoader {
     }
 
     private static <D> void decode(DynamicOps<D> ops, D input, String source) {
-        try {
-            Map<D, D> map = ops.getMap(input).orElse(null);
-            if (map == null) return;
+        DataResult<Void> result = ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error("Expected structured map input for recipe."))
+            .flatMap(map -> {
+                D idObj = map.get(ops.createString("id"));
+                if (idObj == null) {
+                    return DataResult.error("Recipe missing required 'id' key.");
+                }
 
-            D idObj = map.get(ops.createString("id"));
-            if (idObj == null) {
-                AbyssalLib.LOGGER.warning("Recipe missing required 'id' key in " + source);
-                return;
-            }
-            NamespacedKey id = Codecs.NAMESPACED_KEY.decode(ops, idObj);
+                return Codecs.KEY.decode(ops, idObj).flatMap(id -> {
+                    D disabledObj = map.get(ops.createString("disabled"));
+                    boolean disabled = disabledObj != null && Codecs.BOOLEAN.decode(ops, disabledObj).result().or(() -> {
+                        AbyssalLib.LOGGER.severe("Invalid boolean value on disabled in " + source);
+                        return Optional.of(false);
+                    }).get();
 
-            D disabledObj = map.get(ops.createString("disabled"));
-            boolean disabled = disabledObj != null && Codecs.BOOLEAN.decode(ops, disabledObj);
+                    if (disabled) {
+                        if (Registries.RECIPES.contains(id.asString())) {
+                            Registries.RECIPES.remove(id.asString());
+                        }
+                        Registries.RECIPES.register(id.asString(), new DisabledRecipe(NamespacedKey.fromString(id.asString())));
+                        return DataResult.success(null);
+                    }
 
-            if (disabled) {
-                if (Registries.RECIPES.contains(id.toString())) Registries.RECIPES.remove(id.toString());
-                Registries.RECIPES.register(id.toString(), new DisabledRecipe(id));
-                return;
-            }
+                    D typeObj = map.get(ops.createString("type"));
+                    if (typeObj == null) {
+                        return DataResult.error("Recipe missing required 'type' discriminator key.");
+                    }
 
-            D typeObj = map.get(ops.createString("type"));
-            if (typeObj == null) {
-                AbyssalLib.LOGGER.warning("Recipe missing required 'type' key in " + source);
-                return;
-            }
+                    return CustomRecipe.CODEC.decode(ops, input).flatMap(recipe -> {
+                        if (Registries.RECIPES.contains(recipe.getKey().asString())) {
+                            Registries.RECIPES.remove(recipe.getKey().asString());
+                        }
+                        Registries.RECIPES.register(recipe.getKey().asString(), recipe);
+                        return DataResult.success(null);
+                    });
+                });
+            });
 
-            String typeStr = Codecs.STRING.decode(ops, typeObj);
-            RecipeType<?> type = Registries.RECIPE_TYPES.get(typeStr);
-            if (type == null) {
-                AbyssalLib.LOGGER.warning("Unknown recipe type '" + typeStr + "' referenced in " + source);
-                return;
-            }
-
-            CustomRecipe recipe = type.codec().decode(ops, input);
-            if (Registries.RECIPES.contains(recipe.getKey().toString())) {
-                Registries.RECIPES.remove(recipe.getKey().toString());
-            }
-            Registries.RECIPES.register(recipe.getKey().toString(), recipe);
-        } catch (Exception e) {
-            AbyssalLib.LOGGER.warning("Encountered failure while decoding recipe data in " + source);
-            e.printStackTrace();
+        if (result.isError()) {
+            AbyssalLib.LOGGER.warning("Encountered failure while decoding recipe data in " + source + " -> " + result.error().orElse("Unknown error"));
+        } else if (result.isPartial()) {
+            result.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning mapping recipe in " + source + ": " + w.message()));
         }
     }
 
@@ -202,11 +208,16 @@ public class RecipeLoader {
         }
     }
 
+    /**
+     * Evaluates and routes a loaded custom recipe instance into the vanilla server recipe manager.
+     *
+     * @param recipe The recipe to append to the active Bukkit state map.
+     */
     public static void registerToBukkit(CustomRecipe recipe) {
         if (recipe instanceof DisabledRecipe || recipe.replace()) {
-            Bukkit.removeRecipe((NamespacedKey) recipe.getKey());
+            Bukkit.removeRecipe(NamespacedKey.fromString(recipe.getKey().asString()));
             try {
-                Bukkit.getPotionBrewer().removePotionMix((NamespacedKey) recipe.getKey());
+                Bukkit.getPotionBrewer().removePotionMix(NamespacedKey.fromString(recipe.getKey().asString()));
             } catch (Exception ignored) {}
         }
 
@@ -215,6 +226,5 @@ public class RecipeLoader {
             case PotionMixProvider provider -> Bukkit.getPotionBrewer().addPotionMix(provider.toPotionMix());
             default -> {}
         }
-
     }
 }

@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.common.serialization.internal.entity.typ
 
 import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.attribute.Attribute;
@@ -29,63 +28,70 @@ public class LivingEntityAdapter extends EntityAdapter<LivingEntity> {
         }
     }
 
-    public static final Codec<AttributeState> ATTRIBUTE_STATE = RecordCodecBuilder.create(
-            ExtraCodecs.ATTRIBUTE.fieldOf("attribute", AttributeState::attribute),
-            Codecs.DOUBLE.fieldOf("base_value", AttributeState::baseValue),
-            ExtraCodecs.ATTRIBUTE_MODIFIER.list().fieldOf("modifiers", AttributeState::modifiers),
-            AttributeState::new
-    );
+    public static final Codec<AttributeState> ATTRIBUTE_STATE = RecordBuilder.create(instance -> instance.group(
+        ExtraCodecs.ATTRIBUTE.fieldOf("attribute").forGetter(AttributeState::attribute),
+        Codecs.DOUBLE.fieldOf("base_value").forGetter(AttributeState::baseValue),
+        ExtraCodecs.ATTRIBUTE_MODIFIER.list().fieldOf("modifiers").forGetter(AttributeState::modifiers)
+    ).apply(instance, AttributeState::new)).describe("AttributeState");
 
     @Override
-    public boolean doesApply(Entity entity) { return entity instanceof LivingEntity; }
+    public boolean doesApply(Entity entity) {
+        return entity instanceof LivingEntity;
+    }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, LivingEntity value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("health"), Codecs.DOUBLE.encode(ops, value.getHealth()));
-        map.put(ops.createString("absorption"), Codecs.DOUBLE.encode(ops, value.getAbsorptionAmount()));
-        map.put(ops.createString("ai"), Codecs.BOOLEAN.encode(ops, value.hasAI()));
-        map.put(ops.createString("collidable"), Codecs.BOOLEAN.encode(ops, value.isCollidable()));
-        map.put(ops.createString("gliding"), Codecs.BOOLEAN.encode(ops, value.isGliding()));
-        map.put(ops.createString("swimming"), Codecs.BOOLEAN.encode(ops, value.isSwimming()));
-        map.put(ops.createString("max_no_damage_ticks"), Codecs.INT.encode(ops, value.getMaximumNoDamageTicks()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, LivingEntity value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("health", Codecs.DOUBLE, value.getHealth())
+            .write("absorption", Codecs.DOUBLE, value.getAbsorptionAmount())
+            .write("ai", Codecs.BOOLEAN, value.hasAI())
+            .write("collidable", Codecs.BOOLEAN, value.isCollidable())
+            .write("gliding", Codecs.BOOLEAN, value.isGliding())
+            .write("swimming", Codecs.BOOLEAN, value.isSwimming())
+            .write("max_no_damage_ticks", Codecs.INT, value.getMaximumNoDamageTicks());
 
         List<AttributeState> attrs = new ArrayList<>();
         for (Attribute attr : RegistryAccess.registryAccess().getRegistry(RegistryKey.ATTRIBUTE)) {
             AttributeInstance inst = value.getAttribute(attr);
-            if (inst != null) attrs.add(new AttributeState(inst.getAttribute(), inst.getBaseValue(), new ArrayList<>(inst.getModifiers())));
+            if (inst != null) {
+                attrs.add(new AttributeState(inst.getAttribute(), inst.getBaseValue(), new ArrayList<>(inst.getModifiers())));
+            }
         }
-        map.put(ops.createString("attributes"), ATTRIBUTE_STATE.list().encode(ops, attrs));
-        map.put(ops.createString("potion_effects"), ExtraCodecs.POTION_EFFECT.list().encode(ops, new ArrayList<>(value.getActivePotionEffects())));
+        ctx.write("attributes", ATTRIBUTE_STATE.list(), attrs);
+
+        ctx.write("potion_effects", ExtraCodecs.POTION_EFFECT.list(), new ArrayList<>(value.getActivePotionEffects()));
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof LivingEntity living)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof LivingEntity living)) return DataResult.success(null);
 
-        D attrs = map.get(ops.createString("attributes"));
-        if (attrs != null) {
-            Try.of(() -> ATTRIBUTE_STATE.list().decode(ops, attrs)).onSuccess(list -> list.forEach(a -> a.apply(living)));
-        }
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.DOUBLE.decode(ops, map.get(ops.createString("health")))).onSuccess(h -> {
+        ctx.readOptional("attributes", ATTRIBUTE_STATE.list(), opt -> opt.ifPresent(states -> states.forEach(a -> a.apply(living))));
+
+        ctx.readOptional("health", Codecs.DOUBLE, opt -> opt.ifPresent(health -> {
             AttributeInstance maxHealthAttr = living.getAttribute(Attribute.MAX_HEALTH);
-            double maxHealth = maxHealthAttr != null ? maxHealthAttr.getValue() : h;
-            living.setHealth(Math.min(h, maxHealth));
-        });
+            double maxHealth = maxHealthAttr != null ? maxHealthAttr.getValue() : health;
+            living.setHealth(Math.min(health, maxHealth));
+        }));
 
-        Try.of(() -> Codecs.DOUBLE.decode(ops, map.get(ops.createString("absorption")))).onSuccess(living::setAbsorptionAmount);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("ai")))).onSuccess(living::setAI);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("collidable")))).onSuccess(living::setCollidable);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("gliding")))).onSuccess(living::setGliding);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("swimming")))).onSuccess(living::setSwimming);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("max_no_damage_ticks")))).onSuccess(living::setMaximumNoDamageTicks);
+        ctx.readOptional("absorption", Codecs.DOUBLE, opt -> opt.ifPresent(living::setAbsorptionAmount))
+            .readOptional("ai", Codecs.BOOLEAN, opt -> opt.ifPresent(living::setAI))
+            .readOptional("collidable", Codecs.BOOLEAN, opt -> opt.ifPresent(living::setCollidable))
+            .readOptional("gliding", Codecs.BOOLEAN, opt -> opt.ifPresent(living::setGliding))
+            .readOptional("swimming", Codecs.BOOLEAN, opt -> opt.ifPresent(living::setSwimming))
+            .readOptional("max_no_damage_ticks", Codecs.INT, opt -> opt.ifPresent(living::setMaximumNoDamageTicks));
 
-        D potions = map.get(ops.createString("potion_effects"));
-        if (potions != null) {
-            Try.of(() -> ExtraCodecs.POTION_EFFECT.list().decode(ops, potions)).onSuccess(list -> {
-                for (PotionEffect effect : living.getActivePotionEffects()) living.removePotionEffect(effect.getType());
-                living.addPotionEffects(list);
-            });
-        }
+        ctx.readOptional("potion_effects", ExtraCodecs.POTION_EFFECT.list(), opt -> opt.ifPresent(effects -> {
+            for (PotionEffect effect : living.getActivePotionEffects()) living.removePotionEffect(effect.getType());
+            living.addPotionEffects(effects);
+        }));
+
+        return ctx.result();
     }
 }

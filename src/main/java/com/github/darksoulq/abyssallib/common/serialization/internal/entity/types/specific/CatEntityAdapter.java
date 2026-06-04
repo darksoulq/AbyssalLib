@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.entity.Cat;
@@ -20,20 +17,23 @@ public class CatEntityAdapter extends EntityAdapter<Cat> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Cat value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("cat_variant"), Codecs.NAMESPACED_KEY.encode(ops, value.getCatType().getKey()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Cat value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+        ctx.write("cat_variant", Codecs.NAMESPACED_KEY, value.getCatType().getKey());
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Cat cat)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Cat cat)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D typeData = map.get(ops.createString("cat_variant"));
-        if (typeData != null) {
-            Try.of(() -> Codecs.NAMESPACED_KEY.decode(ops, typeData)).onSuccess(key -> {
-                Cat.Type type = RegistryAccess.registryAccess().getRegistry(RegistryKey.CAT_VARIANT).get(key);
-                if (type != null) cat.setCatType(type);
-            });
-        }
+        ctx.readOptional("cat_variant", Codecs.NAMESPACED_KEY, opt -> opt.ifPresent(key -> {
+            Cat.Type type = RegistryAccess.registryAccess().getRegistry(RegistryKey.CAT_VARIANT).get(key);
+            if (type != null) cat.setCatType(type);
+        }));
+
+        return ctx.result();
     }
 }

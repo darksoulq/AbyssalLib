@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.TextDisplay;
 
@@ -18,35 +15,36 @@ public class TextDisplayEntityAdapter extends EntityAdapter<TextDisplay> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, TextDisplay value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("text_component"), Codecs.TEXT_COMPONENT.encode(ops, value.text()));
-        map.put(ops.createString("line_width"), Codecs.INT.encode(ops, value.getLineWidth()));
-        map.put(ops.createString("text_opacity"), Codecs.BYTE.encode(ops, value.getTextOpacity()));
-        map.put(ops.createString("is_shadowed"), Codecs.BOOLEAN.encode(ops, value.isShadowed()));
-        map.put(ops.createString("is_see_through"), Codecs.BOOLEAN.encode(ops, value.isSeeThrough()));
-        map.put(ops.createString("is_default_background"), Codecs.BOOLEAN.encode(ops, value.isDefaultBackground()));
-        map.put(ops.createString("alignment"), Codecs.TEXT_ALIGNMENT.encode(ops, value.getAlignment()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, TextDisplay value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getBackgroundColor() != null) {
-            map.put(ops.createString("background_color"), Codecs.COLOR.encode(ops, value.getBackgroundColor()));
-        }
+        ctx.write("text_component", Codecs.TEXT_COMPONENT, value.text())
+            .write("line_width", Codecs.INT, value.getLineWidth())
+            .write("text_opacity", Codecs.BYTE, value.getTextOpacity())
+            .write("is_shadowed", Codecs.BOOLEAN, value.isShadowed())
+            .write("is_see_through", Codecs.BOOLEAN, value.isSeeThrough())
+            .write("is_default_background", Codecs.BOOLEAN, value.isDefaultBackground())
+            .write("alignment", Codecs.TEXT_ALIGNMENT, value.getAlignment())
+            .writeNullable("background_color", Codecs.COLOR, value.getBackgroundColor());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof TextDisplay display)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof TextDisplay display)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, map.get(ops.createString("text_component")))).onSuccess(display::text);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("line_width")))).onSuccess(display::setLineWidth);
-        Try.of(() -> Codecs.BYTE.decode(ops, map.get(ops.createString("text_opacity")))).onSuccess(display::setTextOpacity);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_shadowed")))).onSuccess(display::setShadowed);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_see_through")))).onSuccess(display::setSeeThrough);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_default_background")))).onSuccess(display::setDefaultBackground);
-        Try.of(() -> Codecs.TEXT_ALIGNMENT.decode(ops, map.get(ops.createString("alignment")))).onSuccess(display::setAlignment);
+        ctx.readOptional("text_component", Codecs.TEXT_COMPONENT, opt -> opt.ifPresent(display::text))
+            .readOptional("line_width", Codecs.INT, opt -> opt.ifPresent(display::setLineWidth))
+            .readOptional("text_opacity", Codecs.BYTE, opt -> opt.ifPresent(display::setTextOpacity))
+            .readOptional("is_shadowed", Codecs.BOOLEAN, opt -> opt.ifPresent(display::setShadowed))
+            .readOptional("is_see_through", Codecs.BOOLEAN, opt -> opt.ifPresent(display::setSeeThrough))
+            .readOptional("is_default_background", Codecs.BOOLEAN, opt -> opt.ifPresent(display::setDefaultBackground))
+            .readOptional("alignment", Codecs.TEXT_ALIGNMENT, opt -> opt.ifPresent(display::setAlignment))
+            .readOptional("background_color", Codecs.COLOR, opt -> opt.ifPresent(display::setBackgroundColor));
 
-        D bgColorData = map.get(ops.createString("background_color"));
-        if (bgColorData != null) {
-            Try.of(() -> Codecs.COLOR.decode(ops, bgColorData)).onSuccess(display::setBackgroundColor);
-        }
+        return ctx.result();
     }
 }

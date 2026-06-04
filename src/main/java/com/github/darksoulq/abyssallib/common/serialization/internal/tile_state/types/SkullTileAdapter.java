@@ -1,15 +1,16 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
-import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
+import io.papermc.paper.datacomponent.item.ResolvableProfile;
+import net.kyori.adventure.text.Component;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Skull;
 import org.bukkit.block.TileState;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SkullTileAdapter extends TileAdapter<Skull> {
@@ -20,42 +21,84 @@ public class SkullTileAdapter extends TileAdapter<Skull> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, Skull value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, Skull value) {
         Map<D, D> map = new HashMap<>();
+        List<DataError> warnings = new ArrayList<>();
 
         if (value.getProfile() != null) {
-            map.put(ops.createString("profile"), ExtraCodecs.RESOLVABLE_PROFILE.encode(ops, value.getProfile()));
+            DataResult<D> res = ExtraCodecs.RESOLVABLE_PROFILE.encode(ops, value.getProfile()).prependPath("profile");
+            if (res.isError()) warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+            else {
+                map.put(ops.createString("profile"), res.getOrThrow());
+                if (res.isPartial()) warnings.addAll(res.warnings());
+            }
         }
 
         if (value.getNoteBlockSound() != null) {
-            map.put(ops.createString("note_block_sound"), Codecs.NAMESPACED_KEY.encode(ops, value.getNoteBlockSound()));
+            DataResult<D> res = Codecs.NAMESPACED_KEY.encode(ops, value.getNoteBlockSound()).prependPath("note_block_sound");
+            if (res.isError()) warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+            else {
+                map.put(ops.createString("note_block_sound"), res.getOrThrow());
+                if (res.isPartial()) warnings.addAll(res.warnings());
+            }
         }
 
         if (value.customName() != null) {
-            map.put(ops.createString("custom_name"), Codecs.TEXT_COMPONENT.encode(ops, value.customName()));
+            DataResult<D> res = Codecs.TEXT_COMPONENT.encode(ops, value.customName()).prependPath("custom_name");
+            if (res.isError()) warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+            else {
+                map.put(ops.createString("custom_name"), res.getOrThrow());
+                if (res.isPartial()) warnings.addAll(res.warnings());
+            }
         }
 
-        return ops.createMap(map);
+        return warnings.isEmpty() ? DataResult.success(ops.createMap(map)) : DataResult.partial(ops.createMap(map), warnings);
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof Skull skull)) return;
-        Map<D, D> map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected map for Skull"));
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof Skull skull)) return DataResult.success(null);
 
-        D profileData = map.get(ops.createString("profile"));
-        if (profileData != null) {
-            Try.of(() -> ExtraCodecs.RESOLVABLE_PROFILE.decode(ops, profileData)).onSuccess(skull::setProfile);
-        }
+        return ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+            .flatMap(map -> {
+                List<DataError> warnings = new ArrayList<>();
 
-        D soundData = map.get(ops.createString("note_block_sound"));
-        if (soundData != null) {
-            Try.of(() -> Codecs.NAMESPACED_KEY.decode(ops, soundData)).onSuccess(skull::setNoteBlockSound);
-        }
+                D profileData = map.get(ops.createString("profile"));
+                if (profileData != null) {
+                    DataResult<ResolvableProfile> res = ExtraCodecs.RESOLVABLE_PROFILE.decode(ops, profileData).prependPath("profile");
+                    if (res.isError())
+                        warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    else {
+                        skull.setProfile(res.getOrThrow());
+                        if (res.isPartial()) warnings.addAll(res.warnings());
+                    }
+                }
 
-        D nameData = map.get(ops.createString("custom_name"));
-        if (nameData != null) {
-            Try.of(() -> Codecs.TEXT_COMPONENT.decode(ops, nameData)).onSuccess(skull::customName);
-        }
+                D soundData = map.get(ops.createString("note_block_sound"));
+                if (soundData != null) {
+                    DataResult<NamespacedKey> res = Codecs.NAMESPACED_KEY.decode(ops, soundData).prependPath("note_block_sound");
+                    if (res.isError())
+                        warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    else {
+                        skull.setNoteBlockSound(res.getOrThrow());
+                        if (res.isPartial()) warnings.addAll(res.warnings());
+                    }
+                }
+
+                D nameData = map.get(ops.createString("custom_name"));
+                if (nameData != null) {
+                    DataResult<Component> res = Codecs.TEXT_COMPONENT.decode(ops, nameData).prependPath("custom_name");
+                    if (res.isError())
+                        warnings.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
+                    else {
+                        skull.customName(res.getOrThrow());
+                        if (res.isPartial()) warnings.addAll(res.warnings());
+                    }
+                }
+
+                return warnings.isEmpty() ? DataResult.success(null) : DataResult.partial(null, warnings);
+            });
     }
 }

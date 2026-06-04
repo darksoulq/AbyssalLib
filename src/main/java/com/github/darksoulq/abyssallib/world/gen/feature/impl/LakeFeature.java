@@ -2,7 +2,7 @@ package com.github.darksoulq.abyssallib.world.gen.feature.impl;
 
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.feature.Feature;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeatureConfig;
 import com.github.darksoulq.abyssallib.world.gen.feature.FeaturePlaceContext;
@@ -12,8 +12,6 @@ import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvid
 import org.bukkit.Location;
 import org.bukkit.Material;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -76,7 +74,7 @@ public class LakeFeature extends Feature<LakeFeature.Config> {
                 for (int gridY = 0; gridY < 8; ++gridY) {
                     if (isLakeCavity[(gridX * 16 + gridZ) * 8 + gridY]) {
                         Location targetLoc = origin.clone().add(gridX, gridY - 4, gridZ);
-                        
+
                         if (gridY < 4) {
                             BlockInfo fluidState = config.fluidProvider().getState(random, targetLoc);
                             if (fluidState != null) {
@@ -88,11 +86,11 @@ public class LakeFeature extends Feature<LakeFeature.Config> {
 
                         if (config.barrierProvider() != null) {
                             boolean isBoundary = !isLakeCavity[((gridX - 1) * 16 + gridZ) * 8 + gridY] ||
-                                                 !isLakeCavity[((gridX + 1) * 16 + gridZ) * 8 + gridY] ||
-                                                 !isLakeCavity[(gridX * 16 + (gridZ - 1)) * 8 + gridY] ||
-                                                 !isLakeCavity[(gridX * 16 + (gridZ + 1)) * 8 + gridY] ||
-                                                 !isLakeCavity[(gridX * 16 + gridZ) * 8 + (gridY - 1)] ||
-                                                 !isLakeCavity[(gridX * 16 + gridZ) * 8 + (gridY + 1)];
+                                !isLakeCavity[((gridX + 1) * 16 + gridZ) * 8 + gridY] ||
+                                !isLakeCavity[(gridX * 16 + (gridZ - 1)) * 8 + gridY] ||
+                                !isLakeCavity[(gridX * 16 + (gridZ + 1)) * 8 + gridY] ||
+                                !isLakeCavity[(gridX * 16 + gridZ) * 8 + (gridY - 1)] ||
+                                !isLakeCavity[(gridX * 16 + gridZ) * 8 + (gridY + 1)];
 
                             if (isBoundary && gridY < 4) {
                                 BlockInfo barrierState = config.barrierProvider().getState(random, targetLoc);
@@ -130,51 +128,9 @@ public class LakeFeature extends Feature<LakeFeature.Config> {
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If the fluid provider field is missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                BlockStateProvider fluid = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("fluid_provider")));
-                
-                BlockStateProvider barrier = null;
-                D barrierNode = map.get(ops.createString("barrier_provider"));
-                if (barrierNode != null) {
-                    barrier = BlockStateProvider.CODEC.decode(ops, barrierNode);
-                }
-                
-                return new Config(fluid, barrier);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                map.put(ops.createString("fluid_provider"), BlockStateProvider.CODEC.encode(ops, value.fluidProvider));
-                
-                if (value.barrierProvider != null) {
-                    map.put(ops.createString("barrier_provider"), BlockStateProvider.CODEC.encode(ops, value.barrierProvider));
-                }
-                
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            BlockStateProvider.CODEC.fieldOf("fluid_provider").forGetter(Config.class, Config::fluidProvider),
+            BlockStateProvider.CODEC.nullable().optionalFieldOf("barrier_provider", null).forGetter(Config.class, Config::barrierProvider)
+        ).apply(instance, Config::new)).describe("LakeConfig");
     }
 }

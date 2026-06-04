@@ -1,9 +1,9 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataError;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.internal.tile_state.TileAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Material;
 import org.bukkit.block.DecoratedPot;
 import org.bukkit.block.TileState;
@@ -19,25 +19,51 @@ public class DecoratedPotTileAdapter extends TileAdapter<DecoratedPot> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, DecoratedPot value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, DecoratedPot value) {
         Map<D, D> map = new HashMap<>();
-        
+
         map.put(ops.createString("front"), ops.createString(value.getSherd(DecoratedPot.Side.FRONT).name()));
         map.put(ops.createString("back"), ops.createString(value.getSherd(DecoratedPot.Side.BACK).name()));
         map.put(ops.createString("left"), ops.createString(value.getSherd(DecoratedPot.Side.LEFT).name()));
         map.put(ops.createString("right"), ops.createString(value.getSherd(DecoratedPot.Side.RIGHT).name()));
 
-        return ops.createMap(map);
+        return DataResult.success(ops.createMap(map));
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, TileState base) throws Codec.CodecException {
-        if (!(base instanceof DecoratedPot pot)) return;
-        Map<D, D> map = ops.getMap(input).orElseThrow(() -> new Codec.CodecException("Expected map for DecoratedPot"));
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, TileState base) {
+        if (!(base instanceof DecoratedPot pot)) return DataResult.success(null);
 
-        ops.getStringValue(map.get(ops.createString("front"))).ifPresent(s -> Try.run(() -> pot.setSherd(DecoratedPot.Side.FRONT, Material.valueOf(s))));
-        ops.getStringValue(map.get(ops.createString("back"))).ifPresent(s -> Try.run(() -> pot.setSherd(DecoratedPot.Side.BACK, Material.valueOf(s))));
-        ops.getStringValue(map.get(ops.createString("left"))).ifPresent(s -> Try.run(() -> pot.setSherd(DecoratedPot.Side.LEFT, Material.valueOf(s))));
-        ops.getStringValue(map.get(ops.createString("right"))).ifPresent(s -> Try.run(() -> pot.setSherd(DecoratedPot.Side.RIGHT, Material.valueOf(s))));
+        return ops.getMap(input)
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error(DataError.typeMismatch("Map", "Unknown")))
+            .flatMap(map -> {
+                ops.getStringValue(map.get(ops.createString("front"))).ifPresent(s -> {
+                    try {
+                        pot.setSherd(DecoratedPot.Side.FRONT, Material.valueOf(s));
+                    } catch (Exception ignored) {
+                    }
+                });
+                ops.getStringValue(map.get(ops.createString("back"))).ifPresent(s -> {
+                    try {
+                        pot.setSherd(DecoratedPot.Side.BACK, Material.valueOf(s));
+                    } catch (Exception ignored) {
+                    }
+                });
+                ops.getStringValue(map.get(ops.createString("left"))).ifPresent(s -> {
+                    try {
+                        pot.setSherd(DecoratedPot.Side.LEFT, Material.valueOf(s));
+                    } catch (Exception ignored) {
+                    }
+                });
+                ops.getStringValue(map.get(ops.createString("right"))).ifPresent(s -> {
+                    try {
+                        pot.setSherd(DecoratedPot.Side.RIGHT, Material.valueOf(s));
+                    } catch (Exception ignored) {
+                    }
+                });
+
+                return DataResult.success(null);
+            });
     }
 }

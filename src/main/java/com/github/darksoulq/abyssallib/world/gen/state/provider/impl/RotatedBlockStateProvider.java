@@ -5,15 +5,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProviderType;
 import org.bukkit.Axis;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -28,72 +26,12 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
     /**
      * The codec used for serializing and deserializing the rotated block state provider.
      */
-    public static final Codec<RotatedBlockStateProvider> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the provider from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the rotated block state provider.
-         * @throws CodecException If the base provider is missing.
-         */
-        @Override
-        public <D> RotatedBlockStateProvider decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-
-            BlockStateProvider baseProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("base_provider")));
-
-            Axis axis = null;
-            D axisNode = map.get(ops.createString("axis"));
-            if (axisNode != null) {
-                axis = Codec.enumCodec(Axis.class).decode(ops, axisNode);
-            }
-
-            BlockFace facing = null;
-            D facingNode = map.get(ops.createString("facing"));
-            if (facingNode != null) {
-                facing = Codec.enumCodec(BlockFace.class).decode(ops, facingNode);
-            }
-
-            Integer rotation = null;
-            D rotationNode = map.get(ops.createString("rotation"));
-            if (rotationNode != null) {
-                rotation = Codecs.INT.decode(ops, rotationNode);
-            }
-
-            return new RotatedBlockStateProvider(baseProvider, axis, facing, rotation);
-        }
-
-        /**
-         * Encodes the provider into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The provider instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, RotatedBlockStateProvider value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-
-            map.put(ops.createString("base_provider"), BlockStateProvider.CODEC.encode(ops, value.baseProvider));
-
-            if (value.axis != null) {
-                map.put(ops.createString("axis"), Codec.enumCodec(Axis.class).encode(ops, value.axis));
-            }
-            if (value.facing != null) {
-                map.put(ops.createString("facing"), Codec.enumCodec(BlockFace.class).encode(ops, value.facing));
-            }
-            if (value.rotation != null) {
-                map.put(ops.createString("rotation"), Codecs.INT.encode(ops, value.rotation));
-            }
-
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<RotatedBlockStateProvider> CODEC = RecordBuilder.create(instance -> instance.group(
+        BlockStateProvider.CODEC.fieldOf("base_provider").forGetter(RotatedBlockStateProvider.class, p -> p.baseProvider),
+        Codec.enumCodec(Axis.class).nullable().optionalFieldOf("axis", null).forGetter(RotatedBlockStateProvider.class, p -> p.axis),
+        Codec.enumCodec(BlockFace.class).nullable().optionalFieldOf("facing", null).forGetter(RotatedBlockStateProvider.class, p -> p.facing),
+        Codecs.INT.nullable().optionalFieldOf("rotation", null).forGetter(RotatedBlockStateProvider.class, p -> p.rotation)
+    ).apply(instance, RotatedBlockStateProvider::new)).describe("RotatedBlockStateProvider");
 
     /**
      * The registered type definition for the rotated block state provider.
@@ -139,11 +77,13 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
         BlockInfo base = baseProvider.getState(random, location);
         if (base == null) return null;
 
-        ObjectNode statesNode = base.states();
-        if (statesNode == null) {
-            statesNode = JsonNodeFactory.instance.objectNode();
+        Object statesObj = base.states();
+        ObjectNode statesNode;
+
+        if (statesObj instanceof ObjectNode on) {
+            statesNode = on.deepCopy();
         } else {
-            statesNode = statesNode.deepCopy();
+            statesNode = JsonNodeFactory.instance.objectNode();
         }
 
         if (axis != null) {

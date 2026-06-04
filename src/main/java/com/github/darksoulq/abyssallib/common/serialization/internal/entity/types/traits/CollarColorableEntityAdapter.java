@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.traits;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import io.papermc.paper.entity.CollarColorable;
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Entity;
@@ -19,19 +16,27 @@ public class CollarColorableEntityAdapter extends EntityAdapter<CollarColorable>
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, CollarColorable value, Map<D, D> map) throws Codec.CodecException {
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, CollarColorable value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
         if (value.getCollarColor() != null) {
-            map.put(ops.createString("collar_color"), Codecs.STRING.encode(ops, value.getCollarColor().name()));
+            ctx.write("collar_color", Codecs.STRING, value.getCollarColor().name());
         }
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof CollarColorable colorable)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof CollarColorable colorable)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        D colorData = map.get(ops.createString("collar_color"));
-        if (colorData != null) {
-            Try.of(() -> Codecs.STRING.decode(ops, colorData)).onSuccess(s -> colorable.setCollarColor(DyeColor.valueOf(s)));
-        }
+        ctx.readOptional("collar_color", Codecs.STRING, opt -> opt.ifPresent(colorStr -> {
+            try {
+                colorable.setCollarColor(DyeColor.valueOf(colorStr));
+            } catch (Exception ignored) {
+            }
+        }));
+
+        return ctx.result();
     }
 }

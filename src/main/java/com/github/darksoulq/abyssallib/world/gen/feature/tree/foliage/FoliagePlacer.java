@@ -1,13 +1,12 @@
 package com.github.darksoulq.abyssallib.world.gen.feature.tree.foliage;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -21,58 +20,25 @@ public abstract class FoliagePlacer {
     /**
      * Polymorphic codec for serializing and deserializing any foliage placer implementation.
      */
-    public static final Codec<FoliagePlacer> CODEC = new Codec<>() {
-
-        /**
-         * Decodes a specific FoliagePlacer based on its registered type identifier.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input data.
-         * @param <D>   The data format type.
-         * @return The decoded foliage placer instance.
-         * @throws CodecException If the type is missing or unknown.
-         */
-        @Override
-        public <D> FoliagePlacer decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for FoliagePlacer"));
-            D typeNode = map.get(ops.createString("type"));
-            if (typeNode == null) {
-                throw new CodecException("Missing 'type'");
+    public static final Codec<FoliagePlacer> CODEC = Codec.dispatch(
+        FoliagePlacer.class,
+        "type",
+        Codecs.STRING,
+        placer -> {
+            String typeId = Registries.FOLIAGE_PLACERS.getId(placer.getType());
+            if (typeId == null) {
+                throw new IllegalStateException("Unregistered foliage placer type");
             }
-
-            String typeId = ops.getStringValue(typeNode).orElseThrow(() -> new CodecException("Invalid type value"));
+            return typeId;
+        },
+        typeId -> {
             FoliagePlacerType<?> type = Registries.FOLIAGE_PLACERS.get(typeId);
             if (type == null) {
-                throw new CodecException("Unknown foliage placer type: " + typeId);
+                return Codec.error("Unknown foliage placer type: " + typeId);
             }
-
-            return type.codec().decode(ops, input);
+            return type.codec().unchecked();
         }
-
-        /**
-         * Encodes a FoliagePlacer, injecting its registered type ID into the resulting data.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The foliage placer instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If the foliage placer type is not registered.
-         */
-        @Override
-        @SuppressWarnings("unchecked")
-        public <D> D encode(DynamicOps<D> ops, FoliagePlacer value) throws CodecException {
-            FoliagePlacerType<FoliagePlacer> type = (FoliagePlacerType<FoliagePlacer>) value.getType();
-            String typeId = Registries.FOLIAGE_PLACERS.getId(type);
-            if (typeId == null) {
-                throw new CodecException("Unregistered foliage placer type");
-            }
-
-            D encoded = type.codec().encode(ops, value);
-            Map<D, D> map = ops.getMap(encoded).orElseThrow(() -> new CodecException("Foliage placer codec must return a map"));
-            map.put(ops.createString("type"), ops.createString(typeId));
-            return ops.createMap(map);
-        }
-    };
+    ).describe("FoliagePlacer");
 
     /**
      * Executes the foliage generation logic around a specific point.

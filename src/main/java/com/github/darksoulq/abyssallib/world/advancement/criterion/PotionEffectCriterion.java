@@ -1,35 +1,35 @@
 package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.Map;
-
+/**
+ * An advancement criterion ensuring a player currently has a specific potion effect active.
+ */
 public class PotionEffectCriterion implements AdvancementCriterion {
 
-    public static final Codec<PotionEffectCriterion> CODEC = new Codec<>() {
-        @Override
-        public <D> PotionEffectCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow();
-            PotionEffectType type = ExtraCodecs.POTION_EFFECT_TYPE.decode(ops, map.get(ops.createString("effect")));
-            return new PotionEffectCriterion(type);
-        }
+    /**
+     * The codec used for serializing and deserializing the potion effect criterion.
+     */
+    public static final Codec<PotionEffectCriterion> CODEC = RecordBuilder.create(instance -> instance.group(
+        ExtraCodecs.POTION_EFFECT_TYPE.fieldOf("effect").forGetter(PotionEffectCriterion.class, p -> p.effect)
+    ).apply(instance, PotionEffectCriterion::new)).describe("PotionEffectCriterion");
 
-        @Override
-        public <D> D encode(DynamicOps<D> ops, PotionEffectCriterion value) throws CodecException {
-            return ops.createMap(Map.of(
-                ops.createString("effect"), ExtraCodecs.POTION_EFFECT_TYPE.encode(ops, value.effect)
-            ));
-        }
-    };
-
+    /**
+     * The registered type definition for the potion effect criterion.
+     */
     public static final CriterionType<PotionEffectCriterion> TYPE = () -> CODEC;
 
     private final PotionEffectType effect;
 
+    /**
+     * Constructs a new PotionEffectCriterion.
+     *
+     * @param effect The required potion effect type.
+     */
     public PotionEffectCriterion(PotionEffectType effect) {
         this.effect = effect;
     }
@@ -39,6 +39,12 @@ public class PotionEffectCriterion implements AdvancementCriterion {
         return TYPE;
     }
 
+    /**
+     * Checks if the player currently has the target potion effect active.
+     *
+     * @param player The player to evaluate.
+     * @return True if the condition is met.
+     */
     @Override
     public boolean isMet(Player player) {
         return player.hasPotionEffect(effect);

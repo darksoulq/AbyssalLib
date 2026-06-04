@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Shulker;
@@ -19,16 +16,29 @@ public class ShulkerEntityAdapter extends EntityAdapter<Shulker> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Shulker value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("peek"), Codecs.FLOAT.encode(ops, value.getPeek()));
-        map.put(ops.createString("attached_face"), Codecs.STRING.encode(ops, value.getAttachedFace().name()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Shulker value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("peek", Codecs.FLOAT, value.getPeek())
+            .write("attached_face", Codecs.STRING, value.getAttachedFace().name());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Shulker shulker)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Shulker shulker)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.FLOAT.decode(ops, map.get(ops.createString("peek")))).onSuccess(shulker::setPeek);
-        Try.of(() -> Codecs.STRING.decode(ops, map.get(ops.createString("attached_face")))).onSuccess(s -> shulker.setAttachedFace(BlockFace.valueOf(s)));
+        ctx.readOptional("peek", Codecs.FLOAT, opt -> opt.ifPresent(shulker::setPeek))
+            .readOptional("attached_face", Codecs.STRING, opt -> opt.ifPresent(faceStr -> {
+                try {
+                    shulker.setAttachedFace(BlockFace.valueOf(faceStr));
+                } catch (Exception ignored) {
+                }
+            }));
+
+        return ctx.result();
     }
 }

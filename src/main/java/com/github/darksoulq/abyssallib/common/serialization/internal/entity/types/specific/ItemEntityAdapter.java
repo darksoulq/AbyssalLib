@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 
@@ -18,35 +15,38 @@ public class ItemEntityAdapter extends EntityAdapter<Item> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Item value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("item_stack"), Codecs.ITEM_STACK.encode(ops, value.getItemStack()));
-        map.put(ops.createString("pickup_delay"), Codecs.INT.encode(ops, value.getPickupDelay()));
-        map.put(ops.createString("unlimited_lifetime"), Codecs.BOOLEAN.encode(ops, value.isUnlimitedLifetime()));
-        map.put(ops.createString("can_mob_pickup"), Codecs.BOOLEAN.encode(ops, value.canMobPickup()));
-        map.put(ops.createString("can_player_pickup"), Codecs.BOOLEAN.encode(ops, value.canPlayerPickup()));
-        map.put(ops.createString("will_age"), Codecs.BOOLEAN.encode(ops, value.willAge()));
-        map.put(ops.createString("health"), Codecs.INT.encode(ops, value.getHealth()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Item value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
 
-        if (value.getOwner() != null) map.put(ops.createString("owner"), Codecs.UUID.encode(ops, value.getOwner()));
-        if (value.getThrower() != null) map.put(ops.createString("thrower"), Codecs.UUID.encode(ops, value.getThrower()));
+        ctx.write("item_stack", Codecs.ITEM_STACK, value.getItemStack())
+            .write("pickup_delay", Codecs.INT, value.getPickupDelay())
+            .write("unlimited_lifetime", Codecs.BOOLEAN, value.isUnlimitedLifetime())
+            .write("can_mob_pickup", Codecs.BOOLEAN, value.canMobPickup())
+            .write("can_player_pickup", Codecs.BOOLEAN, value.canPlayerPickup())
+            .write("will_age", Codecs.BOOLEAN, value.willAge())
+            .write("health", Codecs.INT, value.getHealth())
+            .writeNullable("owner", Codecs.UUID, value.getOwner())
+            .writeNullable("thrower", Codecs.UUID, value.getThrower());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Item item)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Item item)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("item_stack")))).onSuccess(item::setItemStack);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("pickup_delay")))).onSuccess(item::setPickupDelay);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("unlimited_lifetime")))).onSuccess(item::setUnlimitedLifetime);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_mob_pickup")))).onSuccess(item::setCanMobPickup);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("can_player_pickup")))).onSuccess(item::setCanPlayerPickup);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("will_age")))).onSuccess(item::setWillAge);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("health")))).onSuccess(item::setHealth);
+        ctx.readOptional("item_stack", Codecs.ITEM_STACK, opt -> opt.ifPresent(item::setItemStack))
+            .readOptional("pickup_delay", Codecs.INT, opt -> opt.ifPresent(item::setPickupDelay))
+            .readOptional("unlimited_lifetime", Codecs.BOOLEAN, opt -> opt.ifPresent(item::setUnlimitedLifetime))
+            .readOptional("can_mob_pickup", Codecs.BOOLEAN, opt -> opt.ifPresent(item::setCanMobPickup))
+            .readOptional("can_player_pickup", Codecs.BOOLEAN, opt -> opt.ifPresent(item::setCanPlayerPickup))
+            .readOptional("will_age", Codecs.BOOLEAN, opt -> opt.ifPresent(item::setWillAge))
+            .readOptional("health", Codecs.INT, opt -> opt.ifPresent(item::setHealth))
+            .readOptional("owner", Codecs.UUID, opt -> opt.ifPresent(item::setOwner))
+            .readOptional("thrower", Codecs.UUID, opt -> opt.ifPresent(item::setThrower));
 
-        D ownerData = map.get(ops.createString("owner"));
-        if (ownerData != null) Try.of(() -> Codecs.UUID.decode(ops, ownerData)).onSuccess(item::setOwner);
-
-        D throwerData = map.get(ops.createString("thrower"));
-        if (throwerData != null) Try.of(() -> Codecs.UUID.decode(ops, throwerData)).onSuccess(item::setThrower);
+        return ctx.result();
     }
 }

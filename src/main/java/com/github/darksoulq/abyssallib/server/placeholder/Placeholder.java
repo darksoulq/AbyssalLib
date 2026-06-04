@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.placeholder;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -47,11 +48,12 @@ public abstract class Placeholder<T> {
         if (value instanceof Double d) return Component.text(d);
         if (value instanceof Float f) return Component.text(f);
         if (value instanceof Boolean b) return Component.text(b);
-        
+
         if (codec != null && ops != null) {
-            try {
-                return Component.text(codec.encode(ops, value));
-            } catch (Exception ignored) {}
+            DataResult<String> res = codec.encode(ops, value);
+            if (res.isSuccess()) {
+                return Component.text(res.getOrThrow());
+            }
         }
         return Component.text(String.valueOf(value));
     }

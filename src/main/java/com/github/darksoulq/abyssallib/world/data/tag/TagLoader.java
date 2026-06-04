@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
@@ -189,15 +190,24 @@ public class TagLoader {
                 return;
             }
 
-            String typeStr = Codecs.STRING.decode(ops, typeObj);
-            String idStr = Codecs.STRING.decode(ops, idObj);
+            DataResult<String> typeStrRes = Codecs.STRING.decode(ops, typeObj);
+            DataResult<String> idStrRes = Codecs.STRING.decode(ops, idObj);
+
+            if (typeStrRes.isError() || idStrRes.isError()) {
+                AbyssalLib.LOGGER.warning("Invalid format for 'type' or 'id' in " + source);
+                return;
+            }
+
+            String typeStr = typeStrRes.getOrThrow();
+            String idStr = idStrRes.getOrThrow();
 
             boolean replace = false;
             D replaceObj = map.get(ops.createString("replace"));
             if (replaceObj != null) {
-                try {
-                    replace = Codecs.BOOLEAN.decode(ops, replaceObj);
-                } catch (Exception ignored) {}
+                DataResult<Boolean> replaceRes = Codecs.BOOLEAN.decode(ops, replaceObj);
+                if (replaceRes.isSuccess()) {
+                    replace = replaceRes.getOrThrow();
+                }
             }
 
             TagType<T, V> type = (TagType<T, V>) Registries.TAG_TYPES.get(typeStr);
@@ -220,17 +230,17 @@ public class TagLoader {
 
             D valuesObj = map.get(ops.createString("values"));
             if (valuesObj != null) {
-                List<T> values = type.codec().list().decode(ops, valuesObj);
-                if (values != null) {
-                    values.forEach(tag::add);
+                DataResult<List<T>> valuesRes = type.codec().list().decode(ops, valuesObj);
+                if (valuesRes.isSuccess()) {
+                    valuesRes.getOrThrow().forEach(tag::add);
                 }
             }
 
             D includesObj = map.get(ops.createString("includes"));
             if (includesObj != null) {
-                List<String> includes = Codecs.STRING.list().decode(ops, includesObj);
-                if (includes != null) {
-                    PENDING_INCLUDES.computeIfAbsent(idStr, k -> new ArrayList<>()).addAll(includes);
+                DataResult<List<String>> includesRes = Codecs.STRING.list().decode(ops, includesObj);
+                if (includesRes.isSuccess()) {
+                    PENDING_INCLUDES.computeIfAbsent(idStr, k -> new ArrayList<>()).addAll(includesRes.getOrThrow());
                 }
             }
 

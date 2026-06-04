@@ -1,53 +1,45 @@
 package com.github.darksoulq.abyssallib.common.reflection;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 public class ReflectField<V> extends ReflectMember<Field> {
 
-    private final MethodHandle getter;
-    private final MethodHandle setter;
-    private final ReflectType genericType;
+    private final TypeDescriptor genericType;
 
-    protected ReflectField(Field field) throws IllegalAccessException {
+    protected ReflectField(Field field) {
         super(field);
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        this.getter = lookup.unreflectGetter(field);
-        this.setter = Modifier.isFinal(modifiers) ? null : lookup.unreflectSetter(field);
-        this.genericType = new ReflectType(field.getGenericType());
+        this.genericType = new TypeDescriptor(field.getGenericType());
+    }
+
+    @Override
+    public ReflectField<V> accessible() {
+        super.accessible();
+        return this;
     }
 
     public Class<?> getType() {
         return member.getType();
     }
 
-    public ReflectType getGenericType() {
+    public TypeDescriptor getGenericType() {
         return genericType;
     }
 
     @SuppressWarnings("unchecked")
     public Result<V> get(Object instance) {
         try {
-            return Result.success((V) (isStatic() ? getter.invokeWithArguments() : getter.invokeWithArguments(instance)));
-        } catch (Throwable t) {
-            return Result.failure(t);
+            return Result.success((V) member.get(instance));
+        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+            return Result.failure(e);
         }
     }
 
     public Result<Void> set(Object instance, V value) {
-        if (setter == null) return Result.failure(new IllegalAccessException("Cannot set final field: " + getName()));
         try {
-            if (isStatic()) {
-                setter.invokeWithArguments(value);
-            } else {
-                if (instance == null) return Result.failure(new NullPointerException("Instance cannot be null for non-static field: " + getName()));
-                setter.invokeWithArguments(instance, value);
-            }
+            member.set(instance, value);
             return Result.success(null);
-        } catch (Throwable t) {
-            return Result.failure(t);
+        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+            return Result.failure(e);
         }
     }
 

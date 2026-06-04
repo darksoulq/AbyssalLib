@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.common.config;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
+import com.github.darksoulq.abyssallib.common.serialization.fixer.DataFixer;
 import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -21,11 +23,17 @@ import java.util.*;
  */
 public class Config {
 
-    /** The physical file on the disk. */
+    /**
+     * The physical file on the disk.
+     */
     private final File file;
-    /** The underlying Bukkit YAML configuration instance. */
+    /**
+     * The underlying Bukkit YAML configuration instance.
+     */
     private final YamlConfiguration yaml;
-    /** A map storing comments associated with specific configuration paths. */
+    /**
+     * A map storing comments associated with specific configuration paths.
+     */
     private final Map<String, List<String>> comments = new HashMap<>();
 
     /**
@@ -49,6 +57,16 @@ public class Config {
     public Config(String pluginId, String name) {
         this.file = Path.of("config", pluginId, name + ".yml").toFile();
         this.yaml = YamlConfiguration.loadConfiguration(file);
+    }
+
+    /**
+     * Initializes a migration chain for this specific configuration file.
+     *
+     * @param targetVersion The final schema version this config should reach.
+     * @return A {@link MigrationChain} to fluently define upgrade steps.
+     */
+    public MigrationChain schema(int targetVersion) {
+        return new MigrationChain(targetVersion);
     }
 
     /**
@@ -115,6 +133,76 @@ public class Config {
             yaml.load(file);
         } catch (IOException | InvalidConfigurationException e) {
             throw new RuntimeException("Failed to reload configuration file: " + file, e);
+        }
+    }
+
+    /**
+     * Recursively extracts a Bukkit {@link ConfigurationSection} into a standard Java {@link Map}.
+     * This prepares the configuration data for processing by format-agnostic DataFixers.
+     *
+     * @param section The Bukkit configuration section to extract.
+     * @return A normalized Map representation of the section.
+     */
+    private Map<String, Object> extractMap(ConfigurationSection section) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            Object obj = section.get(key);
+            if (obj instanceof ConfigurationSection child) {
+                map.put(key, extractMap(child));
+            } else if (obj instanceof List<?> list) {
+                map.put(key, normalizeList(list));
+            } else {
+                map.put(key, obj);
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Recursively normalizes a list from the Bukkit configuration, converting any
+     * nested {@link ConfigurationSection}s or Maps into standardized String-keyed Maps.
+     *
+     * @param list The raw list from the configuration.
+     * @return A newly formatted list containing normalized elements.
+     */
+    private List<Object> normalizeList(List<?> list) {
+        List<Object> newList = new ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof ConfigurationSection child) {
+                newList.add(extractMap(child));
+            } else if (item instanceof Map<?, ?> map) {
+                Map<String, Object> stringMap = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    stringMap.put(entry.getKey().toString(), entry.getValue());
+                }
+                newList.add(stringMap);
+            } else if (item instanceof List<?> nested) {
+                newList.add(normalizeList(nested));
+            } else {
+                newList.add(item);
+            }
+        }
+        return newList;
+    }
+
+    /**
+     * Applies a standard Java {@link Map} back into a Bukkit {@link ConfigurationSection},
+     * wiping existing keys at the current level and recursively building nested sections.
+     *
+     * @param section The Bukkit section to populate.
+     * @param map     The map containing the upgraded data.
+     */
+    private void applyMap(ConfigurationSection section, Map<?, ?> map) {
+        for (String key : section.getKeys(false)) {
+            section.set(key, null);
+        }
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (entry.getValue() instanceof Map<?, ?> childMap) {
+                ConfigurationSection child = section.createSection(entry.getKey().toString());
+                applyMap(child, childMap);
+            } else {
+                section.set(entry.getKey().toString(), entry.getValue());
+            }
         }
     }
 
@@ -213,6 +301,72 @@ public class Config {
     }
 
     /**
+     * A fluent builder for defining data migrations specific to this configuration file.
+     */
+    public class MigrationChain {
+        /**
+         * The target version to upgrade the configuration to.
+         */
+        private final int targetVersion;
+        /**
+         * A sorted map of registered migration steps ensuring sequential execution.
+         */
+        private final TreeMap<Integer, DataFixer> steps = new TreeMap<>();
+
+        /**
+         * Constructs a new migration chain.
+         *
+         * @param targetVersion The final schema version this config should reach.
+         */
+        private MigrationChain(int targetVersion) {
+            this.targetVersion = targetVersion;
+        }
+
+        /**
+         * Registers a data fixer to transition the config from a specific version.
+         *
+         * @param fromVersion The version this fixer applies to.
+         * @param fixer       The data mutation logic.
+         * @return This builder instance for chaining.
+         */
+        public MigrationChain fix(int fromVersion, DataFixer fixer) {
+            steps.put(fromVersion, fixer);
+            return this;
+        }
+
+        /**
+         * Executes the migration chain and finalizes the configuration state.
+         * <p>
+         * Reads the current "config_version" from the file, applies all necessary
+         * registered fixers sequentially, and saves the updated structure back to disk.
+         *
+         * @return The parent {@link Config} instance.
+         */
+        @SuppressWarnings("unchecked")
+        public Config apply() {
+            int currentVersion = yaml.getInt("config_version", 0);
+            if (currentVersion >= targetVersion) return Config.this;
+
+            Object currentData = extractMap(yaml);
+
+            for (Map.Entry<Integer, DataFixer> entry : steps.tailMap(currentVersion, true).entrySet()) {
+                if (entry.getKey() >= targetVersion) break;
+                currentData = entry.getValue().fix(YamlOps.INSTANCE, currentData);
+            }
+
+            if (currentData instanceof Map<?, ?>) {
+                Map<String, Object> fixedMap = (Map<String, Object>) currentData;
+                fixedMap.put("config_version", targetVersion);
+                applyMap(yaml, fixedMap);
+                save();
+                reload();
+            }
+
+            return Config.this;
+        }
+    }
+
+    /**
      * Represents a specific value within the configuration.
      * Provides methods to get and set data with optional {@link Codec} support.
      *
@@ -220,11 +374,17 @@ public class Config {
      */
     public class Value<T> {
 
-        /** The configuration path for this value. */
+        /**
+         * The configuration path for this value.
+         */
         private final String path;
-        /** The default value to return if none is found. */
+        /**
+         * The default value to return if none is found.
+         */
         private final T defaultValue;
-        /** The optional codec used for complex object mapping. */
+        /**
+         * The optional codec used for complex object mapping.
+         */
         private final Codec<T> codec;
 
         /**
@@ -244,20 +404,19 @@ public class Config {
          * Retrieves the value from the configuration.
          *
          * @return The stored value, or the default if not present.
-         * @throws RuntimeException If a {@link Codec.CodecException} occurs during decoding.
+         * @throws RuntimeException If a decoding error occurs.
          */
         @SuppressWarnings({"unchecked"})
         public T get() {
-            try {
-                Object raw = yaml.get(path, defaultValue);
-                Object normalized = normalize(raw);
-                if (codec != null) {
-                    return (T) codec.decode(YamlOps.INSTANCE, normalized);
-                }
-                return (T) normalized;
-            } catch (Codec.CodecException e) {
-                throw new RuntimeException(e);
+            Object raw = yaml.get(path, defaultValue);
+            Object normalized = normalize(raw);
+            if (codec != null) {
+                DataResult<T> res = codec.decode(YamlOps.INSTANCE, normalized);
+                if (res.isError())
+                    throw new RuntimeException("Failed to decode value at path '" + path + "': " + res.error().get());
+                return res.getOrThrow();
             }
+            return (T) normalized;
         }
 
         /**
@@ -265,16 +424,15 @@ public class Config {
          * to encode the value into a YAML-compatible format.
          *
          * @param value The value to store.
-         * @throws RuntimeException If a {@link Codec.CodecException} occurs during encoding.
+         * @throws RuntimeException If an encoding error occurs.
          */
         public void set(T value) {
             if (codec != null) {
-                try {
-                    yaml.set(path, codec.encode(YamlOps.INSTANCE, value));
-                    return;
-                } catch (Codec.CodecException e) {
-                    throw new RuntimeException(e);
-                }
+                DataResult<Object> res = codec.encode(YamlOps.INSTANCE, value);
+                if (res.isError())
+                    throw new RuntimeException("Failed to encode value at path '" + path + "': " + res.error().get());
+                yaml.set(path, res.getOrThrow());
+                return;
             }
             yaml.set(path, value);
         }

@@ -2,15 +2,13 @@ package com.github.darksoulq.abyssallib.world.gen.placement.modifier;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementContext;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
 import org.bukkit.util.Vector;
 import org.bukkit.util.noise.SimplexNoiseGenerator;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -26,46 +24,12 @@ public class NoiseCountModifier extends PlacementModifier {
     /**
      * The codec used for serializing and deserializing the noise count modifier.
      */
-    public static final Codec<NoiseCountModifier> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the modifier from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the noise count modifier.
-         * @throws CodecException If any required fields are missing.
-         */
-        @Override
-        public <D> NoiseCountModifier decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            double frequency = Codecs.DOUBLE.decode(ops, map.get(ops.createString("frequency")));
-            double threshold = Codecs.DOUBLE.decode(ops, map.get(ops.createString("threshold")));
-            int countAbove = Codecs.INT.decode(ops, map.get(ops.createString("count_above")));
-            int countBelow = Codecs.INT.decode(ops, map.get(ops.createString("count_below")));
-            return new NoiseCountModifier(frequency, threshold, countAbove, countBelow);
-        }
-
-        /**
-         * Encodes the modifier into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The modifier instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, NoiseCountModifier value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("frequency"), Codecs.DOUBLE.encode(ops, value.frequency));
-            map.put(ops.createString("threshold"), Codecs.DOUBLE.encode(ops, value.threshold));
-            map.put(ops.createString("count_above"), Codecs.INT.encode(ops, value.countAbove));
-            map.put(ops.createString("count_below"), Codecs.INT.encode(ops, value.countBelow));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<NoiseCountModifier> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.DOUBLE.fieldOf("frequency").forGetter(NoiseCountModifier.class, p -> p.frequency),
+        Codecs.DOUBLE.fieldOf("threshold").forGetter(NoiseCountModifier.class, p -> p.threshold),
+        Codecs.INT.fieldOf("count_above").forGetter(NoiseCountModifier.class, p -> p.countAbove),
+        Codecs.INT.fieldOf("count_below").forGetter(NoiseCountModifier.class, p -> p.countBelow)
+    ).apply(instance, NoiseCountModifier::new)).describe("NoiseCountModifier");
 
     /**
      * The registered type definition for the noise count placement modifier.

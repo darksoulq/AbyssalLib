@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.block
 
+import com.github.darksoulq.abyssallib.common.serialization.DataError
+import com.github.darksoulq.abyssallib.common.serialization.DataResult
+import com.github.darksoulq.abyssallib.common.serialization.DynamicOps
 import com.github.darksoulq.abyssallib.server.event.ActionResult
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent
 import com.github.darksoulq.abyssallib.world.block.property.Property
@@ -74,23 +77,41 @@ class BlockBuilder(val id: Key, val material: Material) {
                 override fun onSave() = builder.onSaveHandler?.invoke(this) ?: super.onSave()
 
                 @Suppress("UNCHECKED_CAST")
-                override fun <D> serialize(ops: com.github.darksoulq.abyssallib.common.serialization.DynamicOps<D>): D {
+                override fun <D> serialize(ops: DynamicOps<D>): DataResult<D> {
                     val map = mutableMapOf<D, D>()
+                    val warnings = mutableListOf<DataError>()
+
                     for ((name, prop) in dynamicProperties) {
-                        map[ops.createString(name)] = (prop as Property<Any>).encode(ops)
+                        val res = (prop as Property<Any>).encode(ops)
+                        if (res.isError) return DataResult.error(res.dataError().get())
+                        map[ops.createString(name)] = res.orThrow
+                        if (res.isPartial) warnings.addAll(res.warnings())
                     }
-                    return ops.createMap(map)
+
+                    val out = ops.createMap(map)
+                    return if (warnings.isEmpty()) DataResult.success(out) else DataResult.partial(out, warnings)
                 }
 
                 @Suppress("UNCHECKED_CAST")
-                override fun <D> deserialize(ops: com.github.darksoulq.abyssallib.common.serialization.DynamicOps<D>, input: D) {
-                    val map = ops.getMap(input).orElse(emptyMap())
+                override fun <D> deserialize(ops: DynamicOps<D>, input: D): DataResult<Void> {
+                    val mapOpt = ops.getMap(input)
+                    if (mapOpt.isEmpty) return DataResult.error("Expected map structure for BlockEntity")
+
+                    val map = mapOpt.get()
+                    val warnings = mutableListOf<DataError>()
+
                     for ((name, prop) in dynamicProperties) {
                         val encoded = map[ops.createString(name)]
                         if (encoded != null) {
-                            (prop as Property<Any>).decode(ops, encoded)
+                            val res = (prop as Property<Any>).decode(ops, encoded)
+                            if (res is DataResult<*>) {
+                                if (res.isError) return DataResult.error(res.dataError().get())
+                                if (res.isPartial) warnings.addAll(res.warnings())
+                            }
                         }
                     }
+
+                    return if (warnings.isEmpty()) DataResult.success<Void>(null) else DataResult.partial<Void>(null, warnings)
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.common.reflection;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.NoSuchElementException;
 
 public class ReflectAnnotation<A extends Annotation> {
 
@@ -27,12 +28,30 @@ public class ReflectAnnotation<A extends Annotation> {
             Method method = type.getDeclaredMethod(attribute);
             method.setAccessible(true);
             return Result.success(method.invoke(annotation));
-        } catch (Throwable t) {
-            return Result.failure(t);
+        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+            return Result.failure(e);
         }
     }
 
     public Result<Object> value() {
         return getValue("value");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReflectAnnotation<?> that = (ReflectAnnotation<?>) o;
+        return annotation.equals(that.annotation);
+    }
+
+    @Override
+    public int hashCode() {
+        return annotation.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return annotation.toString();
     }
 }

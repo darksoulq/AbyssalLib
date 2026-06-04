@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Registry;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Villager;
@@ -19,35 +16,34 @@ public class VillagerEntityAdapter extends EntityAdapter<Villager> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Villager value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("villager_experience"), Codecs.INT.encode(ops, value.getVillagerExperience()));
-        map.put(ops.createString("villager_level"), Codecs.INT.encode(ops, value.getVillagerLevel()));
-        
-        map.put(ops.createString("villager_profession"), Codecs.NAMESPACED_KEY.encode(ops, value.getProfession().getKey()));
-        map.put(ops.createString("villager_type"), Codecs.NAMESPACED_KEY.encode(ops, value.getVillagerType().getKey()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Villager value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("villager_experience", Codecs.INT, value.getVillagerExperience())
+            .write("villager_level", Codecs.INT, value.getVillagerLevel())
+            .write("villager_profession", Codecs.NAMESPACED_KEY, value.getProfession().getKey())
+            .write("villager_type", Codecs.NAMESPACED_KEY, value.getVillagerType().getKey());
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Villager villager)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Villager villager)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("villager_experience")))).onSuccess(villager::setVillagerExperience);
-        Try.of(() -> Codecs.INT.decode(ops, map.get(ops.createString("villager_level")))).onSuccess(villager::setVillagerLevel);
-
-        D profData = map.get(ops.createString("villager_profession"));
-        if (profData != null) {
-            Try.of(() -> Codecs.NAMESPACED_KEY.decode(ops, profData)).onSuccess(key -> {
+        ctx.readOptional("villager_experience", Codecs.INT, opt -> opt.ifPresent(villager::setVillagerExperience))
+            .readOptional("villager_level", Codecs.INT, opt -> opt.ifPresent(villager::setVillagerLevel))
+            .readOptional("villager_profession", Codecs.NAMESPACED_KEY, opt -> opt.ifPresent(key -> {
                 Villager.Profession prof = Registry.VILLAGER_PROFESSION.get(key);
                 if (prof != null) villager.setProfession(prof);
-            });
-        }
-
-        D typeData = map.get(ops.createString("villager_type"));
-        if (typeData != null) {
-            Try.of(() -> Codecs.NAMESPACED_KEY.decode(ops, typeData)).onSuccess(key -> {
+            }))
+            .readOptional("villager_type", Codecs.NAMESPACED_KEY, opt -> opt.ifPresent(key -> {
                 Villager.Type type = Registry.VILLAGER_TYPE.get(key);
                 if (type != null) villager.setVillagerType(type);
-            });
-        }
+            }));
+
+        return ctx.result();
     }
 }

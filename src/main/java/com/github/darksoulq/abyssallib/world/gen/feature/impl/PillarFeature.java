@@ -9,9 +9,8 @@ import com.github.darksoulq.abyssallib.world.gen.internal.WorldGenUtils;
 import com.github.darksoulq.abyssallib.world.gen.state.provider.BlockStateProvider;
 import org.bukkit.Location;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A world generation feature that generates a continuous vertical pillar of blocks.
@@ -35,14 +34,14 @@ public class PillarFeature extends Feature<PillarFeature.Config> {
     public boolean place(FeaturePlaceContext<Config> context) {
         Location origin = context.origin();
         Config config = context.config();
-        
+
         int range = Math.max(1, config.maxHeight() - config.minHeight() + 1);
         int height = config.minHeight() + context.random().nextInt(range);
         int placedCount = 0;
 
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, config.upward() ? i : -i, 0);
-            
+
             if (target.getBlockY() < context.level().getWorld().getMinHeight() || target.getBlockY() >= context.level().getWorld().getMaxHeight()) {
                 break;
             }
@@ -86,53 +85,13 @@ public class PillarFeature extends Feature<PillarFeature.Config> {
         /**
          * The codec for serializing and deserializing the configuration.
          */
-        public static final Codec<Config> CODEC = new Codec<>() {
-
-            /**
-             * Decodes the configuration from a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param input The serialized input.
-             * @param <D>   The data format type.
-             * @return A new configuration instance.
-             * @throws CodecException If required fields are missing.
-             */
-            @Override
-            public <D> Config decode(DynamicOps<D> ops, D input) throws CodecException {
-                Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-                
-                int minHeight = Codecs.INT.decode(ops, map.get(ops.createString("min_height")));
-                int maxHeight = Codecs.INT.decode(ops, map.get(ops.createString("max_height")));
-                boolean upward = Codecs.BOOLEAN.decode(ops, map.get(ops.createString("upward")));
-                boolean stopOnInvalid = Codecs.BOOLEAN.decode(ops, map.get(ops.createString("stop_on_invalid")));
-                BlockStateProvider stateProvider = BlockStateProvider.CODEC.decode(ops, map.get(ops.createString("state_provider")));
-                List<BlockInfo> targets = ExtraCodecs.BLOCK_INFO.list().decode(ops, map.get(ops.createString("targets")));
-                
-                return new Config(minHeight, maxHeight, upward, stopOnInvalid, stateProvider, targets);
-            }
-
-            /**
-             * Encodes the configuration into a map.
-             *
-             * @param ops   The dynamic operations logic.
-             * @param value The configuration instance.
-             * @param <D>   The data format type.
-             * @return The encoded data object.
-             * @throws CodecException If serialization fails.
-             */
-            @Override
-            public <D> D encode(DynamicOps<D> ops, Config value) throws CodecException {
-                Map<D, D> map = new HashMap<>();
-                
-                map.put(ops.createString("min_height"), Codecs.INT.encode(ops, value.minHeight));
-                map.put(ops.createString("max_height"), Codecs.INT.encode(ops, value.maxHeight));
-                map.put(ops.createString("upward"), Codecs.BOOLEAN.encode(ops, value.upward));
-                map.put(ops.createString("stop_on_invalid"), Codecs.BOOLEAN.encode(ops, value.stopOnInvalid));
-                map.put(ops.createString("state_provider"), BlockStateProvider.CODEC.encode(ops, value.stateProvider));
-                map.put(ops.createString("targets"), ExtraCodecs.BLOCK_INFO.list().encode(ops, value.targets));
-                
-                return ops.createMap(map);
-            }
-        };
+        public static final Codec<Config> CODEC = RecordBuilder.create(instance -> instance.group(
+            Codecs.INT.optionalFieldOf("min_height", 1).forGetter(Config.class, Config::minHeight),
+            Codecs.INT.optionalFieldOf("max_height", 5).forGetter(Config.class, Config::maxHeight),
+            Codecs.BOOLEAN.optionalFieldOf("upward", true).forGetter(Config.class, Config::upward),
+            Codecs.BOOLEAN.optionalFieldOf("stop_on_invalid", true).forGetter(Config.class, Config::stopOnInvalid),
+            BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Config.class, Config::stateProvider),
+            ExtraCodecs.BLOCK_INFO.list().optionalFieldOf("targets", Collections.emptyList()).forGetter(Config.class, Config::targets)
+        ).apply(instance, Config::new)).describe("PillarConfig");
     }
 }

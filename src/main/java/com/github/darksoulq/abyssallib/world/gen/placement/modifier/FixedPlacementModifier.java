@@ -2,15 +2,13 @@ package com.github.darksoulq.abyssallib.world.gen.placement.modifier;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementContext;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifier;
 import com.github.darksoulq.abyssallib.world.gen.placement.PlacementModifierType;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -25,40 +23,9 @@ public class FixedPlacementModifier extends PlacementModifier {
     /**
      * The codec used for serializing and deserializing the fixed placement modifier.
      */
-    public static final Codec<FixedPlacementModifier> CODEC = new Codec<>() {
-
-        /**
-         * Decodes the modifier from a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return A new instance of the fixed placement modifier.
-         * @throws CodecException If the positions list is missing.
-         */
-        @Override
-        public <D> FixedPlacementModifier decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            List<Vector> positions = Codecs.VECTOR_I.list().decode(ops, map.get(ops.createString("positions")));
-            return new FixedPlacementModifier(positions);
-        }
-
-        /**
-         * Encodes the modifier into a serialized map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The modifier instance to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        public <D> D encode(DynamicOps<D> ops, FixedPlacementModifier value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("positions"), Codecs.VECTOR_I.list().encode(ops, value.positions));
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<FixedPlacementModifier> CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.VECTOR_I.list().fieldOf("positions").forGetter(FixedPlacementModifier.class, p -> p.positions)
+    ).apply(instance, FixedPlacementModifier::new)).describe("FixedPlacementModifier");
 
     /**
      * The registered type definition for the fixed placement modifier.

@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
 import com.github.darksoulq.abyssallib.common.util.Either;
 import com.github.darksoulq.abyssallib.server.event.custom.entity.CustomEntitySpawnEvent;
@@ -68,13 +69,39 @@ public class SavedEntity {
      */
     public static <D> SavedEntity create(Entity entity, DynamicOps<D> ops) {
         CustomEntity<?> custom = CustomEntity.resolve(entity);
-        Map<D, D> map = EntityAdapter.save(ops, entity);
+
+        DataResult<Map<D, D>> saveRes = EntityAdapter.save(ops, entity);
+        if (saveRes.isError()) {
+            AbyssalLib.LOGGER.severe("Failed to serialize entity: " + saveRes.error().get());
+            return null;
+        }
+        if (saveRes.isPartial()) {
+            saveRes.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Entity serialization warning: " + warning.message()));
+        }
+
+        Map<D, D> map = saveRes.getOrThrow();
 
         if (custom != null) {
-            map.put(ops.createString("id"), Codecs.STRING.encode(ops, custom.getId().asString()));
+            DataResult<D> idRes = Codecs.STRING.encode(ops, custom.getId().asString());
+            if (idRes.isError()) {
+                AbyssalLib.LOGGER.severe("Failed to serialize custom entity ID: " + idRes.error().get());
+            } else {
+                map.put(ops.createString("id"), idRes.getOrThrow());
+                if (idRes.isPartial()) {
+                    idRes.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Custom entity ID serialization warning: " + warning.message()));
+                }
+            }
             return new SavedEntity(Either.right(custom), ops.createMap(map), ops);
         } else {
-            map.put(ops.createString("id"), Codecs.STRING.encode(ops, "minecraft:" + entity.getType().name().toLowerCase()));
+            DataResult<D> idRes = Codecs.STRING.encode(ops, "minecraft:" + entity.getType().name().toLowerCase());
+            if (idRes.isError()) {
+                AbyssalLib.LOGGER.severe("Failed to serialize vanilla entity ID: " + idRes.error().get());
+            } else {
+                map.put(ops.createString("id"), idRes.getOrThrow());
+                if (idRes.isPartial()) {
+                    idRes.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Vanilla entity ID serialization warning: " + warning.message()));
+                }
+            }
             return new SavedEntity(Either.left(entity.getType()), ops.createMap(map), ops);
         }
     }
@@ -196,7 +223,13 @@ public class SavedEntity {
         if (rawData != null && ops != null) {
             DynamicOps<Object> typedOps = (DynamicOps<Object>) this.ops;
             Map<Object, Object> map = typedOps.getMap(this.rawData).orElse(Collections.emptyMap());
-            EntityAdapter.load(typedOps, map, entity);
+
+            DataResult<Void> loadRes = EntityAdapter.load(typedOps, map, entity);
+            if (loadRes.isError()) {
+                AbyssalLib.LOGGER.severe("Failed to deserialize entity data: " + loadRes.error().get());
+            } else if (loadRes.isPartial()) {
+                loadRes.warnings().forEach(warning -> AbyssalLib.LOGGER.warning("Entity deserialization warning: " + warning.message()));
+            }
         }
     }
 }

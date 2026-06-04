@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -32,11 +33,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/**
+ * Utility class handling the parsing, logic assimilation, and registration mapping
+ * of standard JSON format custom advancements.
+ */
 public class AdvancementLoader {
 
     private static final Path ADVANCEMENTS_FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "advancements").toPath();
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    /**
+     * Identifies, loads, and initializes the native advancement file structure.
+     */
     public static void load() {
         if (!Files.exists(ADVANCEMENTS_FOLDER)) {
             try {
@@ -109,16 +117,39 @@ public class AdvancementLoader {
         }
     }
 
+    /**
+     * Resolves a structural format node directly resolving logic.
+     *
+     * @param path The target file location.
+     * @param id   The registered target mapping logic natively evaluated.
+     * @return The parsed object boundary instance.
+     */
     public static Advancement load(Path path, Key id) {
         return Try.of(() -> {
             JsonNode root = MAPPER.readTree(path.toFile());
             if (root.isObject()) {
                 ((ObjectNode) root).put("id", id.asString());
             }
-            return Advancement.CODEC.decode(JsonOps.INSTANCE, root);
+            DataResult<Advancement> res = Advancement.CODEC.decode(JsonOps.INSTANCE, root);
+            if (res.isError()) {
+                AbyssalLib.LOGGER.warning("Failed to decode advancement from " + path + ": " + res.error().get());
+                return null;
+            }
+            if (res.isPartial()) {
+                res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning decoding advancement " + path + ": " + w.message()));
+            }
+            return res.getOrThrow();
         }).onFailure(e -> AbyssalLib.LOGGER.warning("Failed to load advancement from " + path + ": " + e.getMessage())).orElse(null);
     }
 
+    /**
+     * Maps an internal plugin file node directly into procedural evaluation boundaries structurally securely.
+     *
+     * @param plugin       The origin plugin context mapped targeting resources natively.
+     * @param resourcePath The internal JAR target structure identifying paths accurately.
+     * @param id           The registry configuration mapped key identity limits cleanly.
+     * @return The correctly evaluated target model mapping.
+     */
     public static Advancement loadResource(Plugin plugin, String resourcePath, Key id) {
         return Try.of(() -> {
             try (InputStream in = plugin.getResource(resourcePath)) {
@@ -127,19 +158,43 @@ public class AdvancementLoader {
                 if (root.isObject()) {
                     ((ObjectNode) root).put("id", id.asString());
                 }
-                return Advancement.CODEC.decode(JsonOps.INSTANCE, root);
+                DataResult<Advancement> res = Advancement.CODEC.decode(JsonOps.INSTANCE, root);
+                if (res.isError()) {
+                    plugin.getLogger().warning("Failed to decode advancement resource " + resourcePath + ": " + res.error().get());
+                    return null;
+                }
+                if (res.isPartial()) {
+                    res.warnings().forEach(w -> plugin.getLogger().warning("Warning decoding advancement resource " + resourcePath + ": " + w.message()));
+                }
+                return res.getOrThrow();
             }
         }).onFailure(Throwable::printStackTrace).orElse(null);
     }
 
+    /**
+     * Serializes mapped logical definitions explicitly returning configuration formats accurately saving files.
+     *
+     * @param id          The registry target natively establishing limits.
+     * @param advancement The logic instance targeting explicit mappings precisely.
+     * @return Execution confirmation reflecting safe I/O closures natively.
+     */
     public static boolean save(Key id, Advancement advancement) {
         Path namespaceFolder = ADVANCEMENTS_FOLDER.resolve(id.namespace());
         try {
             if (!Files.exists(namespaceFolder)) Files.createDirectories(namespaceFolder);
 
             Path file = namespaceFolder.resolve(id.value() + ".json");
-            JsonNode root = Advancement.CODEC.encode(JsonOps.INSTANCE, advancement);
-            MAPPER.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), root);
+            DataResult<JsonNode> res = Advancement.CODEC.encode(JsonOps.INSTANCE, advancement);
+
+            if (res.isError()) {
+                AbyssalLib.LOGGER.severe("Failed to encode advancement " + id + ": " + res.error().get());
+                return false;
+            }
+            if (res.isPartial()) {
+                res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning encoding advancement " + id + ": " + w.message()));
+            }
+
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), res.getOrThrow());
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -147,6 +202,12 @@ public class AdvancementLoader {
         }
     }
 
+    /**
+     * Calculates logic paths mapped against internal directory structures natively properly.
+     *
+     * @param file The literal path node.
+     * @return The constructed namespace.
+     */
     private static Key getAdvancementId(Path file) {
         Path relative = ADVANCEMENTS_FOLDER.relativize(file);
         if (relative.getNameCount() < 2) {

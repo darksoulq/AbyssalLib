@@ -1,8 +1,6 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.block_data.types;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.block_data.Adapter;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
@@ -21,7 +19,7 @@ public class MultipleFacingAdapter extends Adapter<MultipleFacing> {
     }
 
     @Override
-    public <D> D serialize(DynamicOps<D> ops, MultipleFacing value) throws Codec.CodecException {
+    public <D> DataResult<D> serialize(DynamicOps<D> ops, MultipleFacing value) {
         Map<BlockFace, Boolean> result = new HashMap<>();
         for (BlockFace face : value.getAllowedFaces()) {
             result.put(face, value.hasFace(face));
@@ -30,14 +28,18 @@ public class MultipleFacingAdapter extends Adapter<MultipleFacing> {
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, D input, BlockData base) throws Codec.CodecException {
-        if (!(base instanceof MultipleFacing facing)) return;
-        Map<BlockFace, Boolean> value = CODEC.decode(ops, input);
-        Set<BlockFace> allowed = facing.getAllowedFaces();
-
-        value.forEach((face, state) -> {
-            if (!allowed.contains(face)) return;
-            facing.setFace(face, state);
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, D input, BlockData base) {
+        if (!(base instanceof MultipleFacing facing))
+            return DataResult.error(DataError.custom("Base is not MultipleFacing, got: " + base.getClass().getSimpleName()));
+        return CODEC.decode(ops, input).flatMap(value -> {
+            Set<BlockFace> allowed = facing.getAllowedFaces();
+            for (Map.Entry<BlockFace, Boolean> entry : value.entrySet()) {
+                BlockFace face = entry.getKey();
+                if (!allowed.contains(face))
+                    return DataResult.error(DataError.custom("Invalid BlockFace '" + face.name() + "' for MultipleFacing block, allowed faces: " + allowed));
+                facing.setFace(face, entry.getValue());
+            }
+            return DataResult.success(null);
         });
     }
 }

@@ -2,13 +2,11 @@ package com.github.darksoulq.abyssallib.world.data.loot;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -75,50 +73,29 @@ public abstract class LootEntry {
         return result;
     }
 
+    private static final Codec<ItemEntry> ITEM_ENTRY_CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.ITEM_STACK.fieldOf("name").forGetter(ItemEntry.class, e -> e.stack),
+        Codecs.INT.optionalFieldOf("weight", 1).forGetter(ItemEntry.class, e -> e.weight),
+        Codecs.INT.optionalFieldOf("quality", 0).forGetter(ItemEntry.class, e -> e.quality),
+        LootCondition.CODEC.list().optionalFieldOf("conditions", Collections.emptyList()).forGetter(ItemEntry.class, e -> e.conditions),
+        LootFunction.CODEC.list().optionalFieldOf("functions", Collections.emptyList()).forGetter(ItemEntry.class, e -> e.functions)
+    ).apply(instance, ItemEntry::new)).describe("ItemEntry");
+
+    private static final Codec<EmptyEntry> EMPTY_ENTRY_CODEC = RecordBuilder.create(instance -> instance.group(
+        Codecs.INT.optionalFieldOf("weight", 1).forGetter(EmptyEntry.class, e -> e.weight),
+        Codecs.INT.optionalFieldOf("quality", 0).forGetter(EmptyEntry.class, e -> e.quality),
+        LootCondition.CODEC.list().optionalFieldOf("conditions", Collections.emptyList()).forGetter(EmptyEntry.class, e -> e.conditions),
+        LootFunction.CODEC.list().optionalFieldOf("functions", Collections.emptyList()).forGetter(EmptyEntry.class, e -> e.functions)
+    ).apply(instance, EmptyEntry::new)).describe("EmptyEntry");
+
     /** Polymorphic codec for handling various {@link LootEntry} implementations. */
-    public static final Codec<LootEntry> CODEC = new Codec<>() {
-        @Override
-        public <D> LootEntry decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map"));
-            String type = ops.getStringValue(map.get(ops.createString("type"))).orElse("item");
-            int weight = Codecs.INT.orElse(1).decode(ops, map.get(ops.createString("weight")));
-            int quality = Codecs.INT.orElse(0).decode(ops, map.get(ops.createString("quality")));
-
-            List<LootCondition> conditions = new ArrayList<>();
-            if (map.containsKey(ops.createString("conditions"))) {
-                conditions = LootCondition.CODEC.list().decode(ops, map.get(ops.createString("conditions")));
-            }
-
-            List<LootFunction> functions = new ArrayList<>();
-            if (map.containsKey(ops.createString("functions"))) {
-                functions = LootFunction.CODEC.list().decode(ops, map.get(ops.createString("functions")));
-            }
-
-            if (type.equals("empty")) {
-                return new EmptyEntry(weight, quality, conditions, functions);
-            } else {
-                ItemStack stack = Codecs.ITEM_STACK.decode(ops, map.get(ops.createString("name")));
-                return new ItemEntry(stack, weight, quality, conditions, functions);
-            }
-        }
-
-        @Override
-        public <D> D encode(DynamicOps<D> ops, LootEntry value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-            map.put(ops.createString("weight"), Codecs.INT.encode(ops, value.weight));
-            map.put(ops.createString("quality"), Codecs.INT.encode(ops, value.quality));
-            map.put(ops.createString("conditions"), LootCondition.CODEC.list().encode(ops, value.conditions));
-            map.put(ops.createString("functions"), LootFunction.CODEC.list().encode(ops, value.functions));
-
-            if (value instanceof EmptyEntry) {
-                map.put(ops.createString("type"), ops.createString("empty"));
-            } else if (value instanceof ItemEntry itemEntry) {
-                map.put(ops.createString("type"), ops.createString("item"));
-                map.put(ops.createString("name"), Codecs.ITEM_STACK.encode(ops, itemEntry.stack));
-            }
-            return ops.createMap(map);
-        }
-    };
+    public static final Codec<LootEntry> CODEC = Codec.dispatch(
+        LootEntry.class,
+        "type",
+        Codecs.STRING,
+        entry -> entry instanceof EmptyEntry ? "empty" : "item",
+        type -> type.equals("empty") ? EMPTY_ENTRY_CODEC.unchecked() : ITEM_ENTRY_CODEC.unchecked()
+    ).describe("LootEntry");
 
     /** A loot entry that generates a specific item stack. */
     public static class ItemEntry extends LootEntry {

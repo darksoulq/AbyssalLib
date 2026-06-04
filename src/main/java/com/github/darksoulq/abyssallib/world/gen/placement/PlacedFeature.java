@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.world.gen.placement;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.gen.WorldGenAccess;
@@ -30,65 +31,64 @@ public record PlacedFeature(ConfiguredFeature<?, ?> feature, List<PlacementModif
     /**
      * The internal codec for decoding a PlacedFeature defined explicitly as a JSON object.
      */
-    private static final Codec<PlacedFeature> INLINE_CODEC = new Codec<>() {
+    private static final Codec<PlacedFeature> INLINE_CODEC = Codec.of(
+        new Codec.Decoder<PlacedFeature>() {
+            @Override
+            public <D> DataResult<PlacedFeature> decode(DynamicOps<D> ops, D input) {
+                return ops.getMap(input)
+                    .map(DataResult::success)
+                    .orElseGet(() -> DataResult.error("Expected map for PlacedFeature"))
+                    .flatMap(map -> {
+                        D typeNode = map.get(ops.createString("type"));
+                        if (typeNode == null) return DataResult.error("Missing 'type' in PlacedFeature");
 
-        /**
-         * Decodes an inline feature definition from a map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param input The serialized input.
-         * @param <D>   The data format type.
-         * @return The decoded placed feature.
-         * @throws CodecException If required fields or the feature type are missing.
-         */
-        @Override
-        public <D> PlacedFeature decode(DynamicOps<D> ops, D input) throws CodecException {
-            Map<D, D> map = ops.getMap(input).orElseThrow(() -> new CodecException("Expected map for PlacedFeature"));
+                        return Codecs.STRING.decode(ops, typeNode).flatMap(typeId -> {
+                            Feature<?> featureBase = Registries.FEATURES.get(typeId);
+                            if (featureBase == null) return DataResult.error("Unknown feature type: " + typeId);
 
-            String typeId = Codecs.STRING.decode(ops, map.get(ops.createString("type")));
-            Feature<?> featureBase = Registries.FEATURES.get(typeId);
-            if (featureBase == null) {
-                throw new CodecException("Unknown feature type: " + typeId);
+                            D configNode = map.get(ops.createString("config"));
+                            if (configNode == null) return DataResult.error("Missing 'config' in PlacedFeature");
+
+                            return featureBase.getCodec().decode(ops, configNode).flatMap(config -> {
+                                List<PlacementModifier> modifiers = new ArrayList<>();
+                                D placementNode = map.get(ops.createString("placement"));
+                                if (placementNode != null) {
+                                    return PlacementModifier.CODEC.list().decode(ops, placementNode).map(mods -> createConfigured(featureBase, config, mods));
+                                }
+                                return DataResult.success(createConfigured(featureBase, config, modifiers));
+                            });
+                        });
+                    });
             }
+        },
+        new Codec.Encoder<PlacedFeature>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <D> DataResult<D> encode(DynamicOps<D> ops, PlacedFeature value) {
+                Map<D, D> map = new HashMap<>();
 
-            FeatureConfig config = featureBase.getCodec().decode(ops, map.get(ops.createString("config")));
+                Feature<FeatureConfig> featureBase = (Feature<FeatureConfig>) value.feature().feature();
+                String typeId = Registries.FEATURES.getId(featureBase);
+                if (typeId == null) return DataResult.error("Unregistered feature type");
 
-            List<PlacementModifier> modifiers = new ArrayList<>();
-            D placementNode = map.get(ops.createString("placement"));
-            if (placementNode != null) {
-                modifiers = PlacementModifier.CODEC.list().decode(ops, placementNode);
+                DataResult<D> typeRes = Codecs.STRING.encode(ops, typeId);
+                if (typeRes.isError()) return typeRes;
+                map.put(ops.createString("type"), typeRes.getOrThrow());
+
+                DataResult<D> configRes = featureBase.getCodec().encode(ops, value.feature().config());
+                if (configRes.isError()) return configRes;
+                map.put(ops.createString("config"), configRes.getOrThrow());
+
+                if (!value.placement().isEmpty()) {
+                    DataResult<D> placementRes = PlacementModifier.CODEC.list().encode(ops, value.placement());
+                    if (placementRes.isError()) return placementRes;
+                    map.put(ops.createString("placement"), placementRes.getOrThrow());
+                }
+
+                return DataResult.success(ops.createMap(map));
             }
-
-            return createConfigured(featureBase, config, modifiers);
         }
-
-        /**
-         * Encodes a placed feature into an inline map.
-         *
-         * @param ops   The dynamic operations logic.
-         * @param value The feature to encode.
-         * @param <D>   The data format type.
-         * @return The encoded data object.
-         * @throws CodecException If serialization fails.
-         */
-        @Override
-        @SuppressWarnings("unchecked")
-        public <D> D encode(DynamicOps<D> ops, PlacedFeature value) throws CodecException {
-            Map<D, D> map = new HashMap<>();
-
-            Feature<FeatureConfig> featureBase = (Feature<FeatureConfig>) value.feature().feature();
-            String typeId = Registries.FEATURES.getId(featureBase);
-
-            map.put(ops.createString("type"), Codecs.STRING.encode(ops, typeId));
-            map.put(ops.createString("config"), featureBase.getCodec().encode(ops, value.feature().config()));
-
-            if (!value.placement().isEmpty()) {
-                map.put(ops.createString("placement"), PlacementModifier.CODEC.list().encode(ops, value.placement()));
-            }
-
-            return ops.createMap(map);
-        }
-    };
+    ).describe("InlinePlacedFeature");
 
     /**
      * The internal codec for decoding a PlacedFeature defined as a string reference ID.
@@ -96,13 +96,13 @@ public record PlacedFeature(ConfiguredFeature<?, ?> feature, List<PlacementModif
     private static final Codec<PlacedFeature> REFERENCE_CODEC = Codecs.STRING.xmap(
         WorldGenLoader::resolveReference,
         feature -> "inline_feature"
-    );
+    ).describe("ReferencePlacedFeature");
 
     /**
      * The universal codec for PlacedFeatures, supporting both direct object definitions
      * and string-based registry lookups.
      */
-    public static final Codec<PlacedFeature> CODEC = Codec.fallback(INLINE_CODEC, REFERENCE_CODEC);
+    public static final Codec<PlacedFeature> CODEC = Codec.fallback(INLINE_CODEC, REFERENCE_CODEC).describe("PlacedFeature");
 
     /**
      * Helper method to safely bind wildcards when instantiating the ConfiguredFeature.

@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.placeholder;
 
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
 import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractBooleanPlaceholder;
 import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractDoublePlaceholder;
@@ -214,7 +215,7 @@ public class Placeholders {
                     if (modKey.isEmpty()) yield PlaceholderResult.empty();
                     NamespacedKey targetKey = NamespacedKey.fromString(modKey);
                     if (targetKey == null) yield PlaceholderResult.empty();
-                    
+
                     for (org.bukkit.attribute.AttributeModifier mod : instance.getModifiers()) {
                         if (mod.getKey().equals(targetKey)) {
                             yield PlaceholderResult.success(mod.getAmount());
@@ -283,12 +284,11 @@ public class Placeholders {
             Player player = context.getPlayer();
             if (player == null || !context.hasArgs()) return PlaceholderResult.empty();
 
-            try {
-                Statistic stat = Statistic.CODEC.decode(StringOps.INSTANCE, context.getRaw(0, ""));
-                return PlaceholderResult.success((double) PlayerStatistics.of(player).get(stat));
-            } catch (Exception e) {
+            DataResult<Statistic> res = Statistic.CODEC.decode(StringOps.INSTANCE, context.getRaw(0, ""));
+            if (res.isError()) {
                 return PlaceholderResult.error("Invalid custom statistic format");
             }
+            return PlaceholderResult.success((double) PlayerStatistics.of(player).get(res.getOrThrow()));
         }
     });
 }

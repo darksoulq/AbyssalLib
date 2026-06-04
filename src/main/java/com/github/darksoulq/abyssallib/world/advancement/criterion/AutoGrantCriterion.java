@@ -1,25 +1,27 @@
 package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import org.bukkit.entity.Player;
 
+/**
+ * An advancement criterion that automatically evaluates to true.
+ * Used for granting initial root advancements or immediate rewards.
+ */
 public class AutoGrantCriterion implements AdvancementCriterion {
 
-    public static final Codec<AutoGrantCriterion> CODEC = new Codec<>() {
-        @Override
-        public <D> AutoGrantCriterion decode(DynamicOps<D> ops, D input) throws CodecException {
-            return new AutoGrantCriterion();
-        }
+    /**
+     * The codec used for serializing and deserializing the auto-grant criterion.
+     */
+    public static final Codec<AutoGrantCriterion> CODEC = Codec.unit(AutoGrantCriterion::new).describe("AutoGrantCriterion");
 
-        @Override
-        public <D> D encode(DynamicOps<D> ops, AutoGrantCriterion value) throws CodecException {
-            return ops.empty();
-        }
-    };
-
+    /**
+     * The registered type definition for the auto-grant criterion.
+     */
     public static final CriterionType<AutoGrantCriterion> TYPE = () -> CODEC;
 
+    /**
+     * Constructs a new AutoGrantCriterion.
+     */
     public AutoGrantCriterion() {}
 
     @Override
@@ -27,6 +29,12 @@ public class AutoGrantCriterion implements AdvancementCriterion {
         return TYPE;
     }
 
+    /**
+     * Always evaluates to true.
+     *
+     * @param player The player to evaluate.
+     * @return true.
+     */
     @Override
     public boolean isMet(Player player) {
         return true;

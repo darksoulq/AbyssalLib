@@ -1,10 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.internal.entity.types.specific;
 
-import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
-import com.github.darksoulq.abyssallib.common.util.Try;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Piglin;
@@ -20,42 +17,52 @@ public class PiglinEntityAdapter extends EntityAdapter<Piglin> {
     }
 
     @Override
-    public <D> void serialize(DynamicOps<D> ops, Piglin value, Map<D, D> map) throws Codec.CodecException {
-        map.put(ops.createString("is_able_to_hunt"), Codecs.BOOLEAN.encode(ops, value.isAbleToHunt()));
-        map.put(ops.createString("is_charging_crossbow"), Codecs.BOOLEAN.encode(ops, value.isChargingCrossbow()));
-        map.put(ops.createString("is_dancing"), Codecs.BOOLEAN.encode(ops, value.isDancing()));
+    public <D> DataResult<Void> serialize(DynamicOps<D> ops, Piglin value, Map<D, D> map) {
+        EncodeContext<D> ctx = EncodeContext.of(ops, map);
+
+        ctx.write("is_able_to_hunt", Codecs.BOOLEAN, value.isAbleToHunt())
+            .write("is_charging_crossbow", Codecs.BOOLEAN, value.isChargingCrossbow())
+            .write("is_dancing", Codecs.BOOLEAN, value.isDancing());
 
         List<String> barterList = value.getBarterList().stream().map(Enum::name).toList();
         if (!barterList.isEmpty()) {
-            map.put(ops.createString("barter_list"), Codecs.STRING.list().encode(ops, barterList));
+            ctx.write("barter_list", Codecs.STRING.list(), barterList);
         }
 
         List<String> interestList = value.getInterestList().stream().map(Enum::name).toList();
         if (!interestList.isEmpty()) {
-            map.put(ops.createString("interest_list"), Codecs.STRING.list().encode(ops, interestList));
+            ctx.write("interest_list", Codecs.STRING.list(), interestList);
         }
+
+        DataResult<D> result = ctx.result();
+        return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
     }
 
     @Override
-    public <D> void deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) throws Codec.CodecException {
-        if (!(base instanceof Piglin piglin)) return;
+    public <D> DataResult<Void> deserialize(DynamicOps<D> ops, Map<D, D> map, Entity base) {
+        if (!(base instanceof Piglin piglin)) return DataResult.success(null);
+        DecodeContext<D> ctx = DecodeContext.of(ops, map);
 
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_able_to_hunt")))).onSuccess(piglin::setIsAbleToHunt);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_charging_crossbow")))).onSuccess(piglin::setChargingCrossbow);
-        Try.of(() -> Codecs.BOOLEAN.decode(ops, map.get(ops.createString("is_dancing")))).onSuccess(piglin::setDancing);
+        ctx.readOptional("is_able_to_hunt", Codecs.BOOLEAN, opt -> opt.ifPresent(piglin::setIsAbleToHunt))
+            .readOptional("is_charging_crossbow", Codecs.BOOLEAN, opt -> opt.ifPresent(piglin::setChargingCrossbow))
+            .readOptional("is_dancing", Codecs.BOOLEAN, opt -> opt.ifPresent(piglin::setDancing))
+            .readOptional("barter_list", Codecs.STRING.list(), opt -> opt.ifPresent(list -> {
+                list.forEach(mat -> {
+                    try {
+                        piglin.addBarterMaterial(Material.valueOf(mat));
+                    } catch (Exception ignored) {
+                    }
+                });
+            }))
+            .readOptional("interest_list", Codecs.STRING.list(), opt -> opt.ifPresent(list -> {
+                list.forEach(mat -> {
+                    try {
+                        piglin.addMaterialOfInterest(Material.valueOf(mat));
+                    } catch (Exception ignored) {
+                    }
+                });
+            }));
 
-        D barterData = map.get(ops.createString("barter_list"));
-        if (barterData != null) {
-            Try.of(() -> Codecs.STRING.list().decode(ops, barterData)).onSuccess(list -> {
-                for (String mat : list) piglin.addBarterMaterial(Material.valueOf(mat));
-            });
-        }
-
-        D interestData = map.get(ops.createString("interest_list"));
-        if (interestData != null) {
-            Try.of(() -> Codecs.STRING.list().decode(ops, interestData)).onSuccess(list -> {
-                for (String mat : list) piglin.addMaterialOfInterest(Material.valueOf(mat));
-            });
-        }
+        return ctx.result();
     }
 }

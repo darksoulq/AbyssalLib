@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.block.property;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 
 /**
@@ -12,15 +13,19 @@ import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
  * @param <T> the type of the value held by this property
  */
 public class Property<T> {
-    /** The codec used for encoding and decoding this property's value.
+
+    /**
+     * The codec used for encoding and decoding this property's value.
      */
     private final Codec<T> codec;
 
-    /** The current value of this property.
+    /**
+     * The current value of this property.
      */
     private T value;
 
-    /** The default value assigned during instantiation, used for resets or fallback.
+    /**
+     * The default value assigned during instantiation, used for resets or fallback.
      */
     private final T defaultValue;
 
@@ -68,10 +73,9 @@ public class Property<T> {
      *
      * @param ops the dynamic operations logic
      * @param <D> the data format type
-     * @return the encoded data object
-     * @throws Codec.CodecException if serialization fails
+     * @return a DataResult containing the encoded data object
      */
-    public <D> D encode(DynamicOps<D> ops) throws Codec.CodecException {
+    public <D> DataResult<D> encode(DynamicOps<D> ops) {
         return codec.encode(ops, value);
     }
 
@@ -81,9 +85,20 @@ public class Property<T> {
      * @param ops   the dynamic operations logic
      * @param input the serialized data object
      * @param <D>   the data format type
-     * @throws Codec.CodecException if deserialization fails
+     * @return a DataResult representing the success or partial failure of the operation
      */
-    public <D> void decode(DynamicOps<D> ops, D input) throws Codec.CodecException {
-        this.value = codec.decode(ops, input);
+    public <D> DataResult<Void> decode(DynamicOps<D> ops, D input) {
+        DataResult<T> result = codec.decode(ops, input);
+        if (result.isError()) {
+            return DataResult.error(result.dataError().get());
+        }
+
+        this.value = result.getOrThrow();
+
+        if (result.isPartial()) {
+            return DataResult.partial(null, result.warnings());
+        }
+
+        return DataResult.success(null);
     }
 }

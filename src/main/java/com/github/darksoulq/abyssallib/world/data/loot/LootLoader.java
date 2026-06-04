@@ -3,7 +3,9 @@ package com.github.darksoulq.abyssallib.world.data.loot;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
+import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.plugin.Plugin;
 
@@ -101,13 +103,21 @@ public class LootLoader {
      * @return The decoded {@link LootTable}, or {@code null} if parsing fails.
      */
     public static LootTable load(Path path) {
-        try {
+        return Try.of(() -> {
             JsonNode root = MAPPER.readTree(path.toFile());
-            return LootTable.CODEC.decode(JsonOps.INSTANCE, root);
-        } catch (Exception e) {
+            DataResult<LootTable> res = LootTable.CODEC.decode(JsonOps.INSTANCE, root);
+            if (res.isError()) {
+                AbyssalLib.LOGGER.warning("Failed to decode loot table from " + path + ": " + res.error().get());
+                return null;
+            }
+            if (res.isPartial()) {
+                res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning decoding loot table " + path + ": " + w.message()));
+            }
+            return res.getOrThrow();
+        }).onFailure(e -> {
+            AbyssalLib.LOGGER.warning("Failed to parse loot table JSON from " + path);
             e.printStackTrace();
-            return null;
-        }
+        }).orElse(null);
     }
 
     /**
@@ -118,13 +128,23 @@ public class LootLoader {
      * @return The decoded {@link LootTable}, or {@code null} if the resource is missing or invalid.
      */
     public static LootTable loadResource(Plugin plugin, String resourcePath) {
-        try (InputStream in = plugin.getResource(resourcePath)) {
-            if (in == null) return null;
-            JsonNode root = MAPPER.readTree(in);
-            return LootTable.CODEC.decode(JsonOps.INSTANCE, root);
-        } catch (Exception e) {
+        return Try.of(() -> {
+            try (InputStream in = plugin.getResource(resourcePath)) {
+                if (in == null) return null;
+                JsonNode root = MAPPER.readTree(in);
+                DataResult<LootTable> res = LootTable.CODEC.decode(JsonOps.INSTANCE, root);
+                if (res.isError()) {
+                    plugin.getLogger().warning("Failed to decode loot table resource " + resourcePath + ": " + res.error().get());
+                    return null;
+                }
+                if (res.isPartial()) {
+                    res.warnings().forEach(w -> plugin.getLogger().warning("Warning decoding loot table resource " + resourcePath + ": " + w.message()));
+                }
+                return res.getOrThrow();
+            }
+        }).onFailure(e -> {
+            plugin.getLogger().warning("Failed to load loot table resource from " + resourcePath);
             e.printStackTrace();
-            return null;
-        }
+        }).orElse(null);
     }
 }
