@@ -1,6 +1,8 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
+import com.github.darksoulq.abyssallib.common.serialization.schema.CodecVisitor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,7 @@ public class RecordBuilder {
     /**
      * Initiates the creation of a compound RecordCodec.
      *
-     * @param <O>     The target object type.
+     * @param <O>      The target object type.
      * @param builder A function defining the group of fields and mapping them to the constructor.
      * @return A newly constructed, fully functional Codec for the target object.
      */
@@ -963,6 +965,12 @@ public class RecordBuilder {
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
                 }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1));
+                }
             };
         }
     }
@@ -1001,6 +1009,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2));
                 }
             };
         }
@@ -1042,6 +1056,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3));
                 }
             };
         }
@@ -1085,6 +1105,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4));
                 }
             };
         }
@@ -1130,6 +1156,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5));
                 }
             };
         }
@@ -1177,6 +1209,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6));
                 }
             };
         }
@@ -1226,6 +1264,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7));
                 }
             };
         }
@@ -1277,6 +1321,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8));
                 }
             };
         }
@@ -1330,6 +1380,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9));
                 }
             };
         }
@@ -1385,6 +1441,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10));
                 }
             };
         }
@@ -1442,6 +1504,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11));
                 }
             };
         }
@@ -1501,6 +1569,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12));
                 }
             };
         }
@@ -1562,6 +1636,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13));
                 }
             };
         }
@@ -1625,6 +1705,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14));
                 }
             };
         }
@@ -1690,6 +1776,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs); tryEncode(ops, map, f15, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15));
                 }
             };
         }
@@ -1757,6 +1849,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs); tryEncode(ops, map, f15, value, errs); tryEncode(ops, map, f16, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16));
                 }
             };
         }
@@ -1826,6 +1924,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs); tryEncode(ops, map, f15, value, errs); tryEncode(ops, map, f16, value, errs); tryEncode(ops, map, f17, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17));
                 }
             };
         }
@@ -1897,6 +2001,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs); tryEncode(ops, map, f15, value, errs); tryEncode(ops, map, f16, value, errs); tryEncode(ops, map, f17, value, errs); tryEncode(ops, map, f18, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18));
                 }
             };
         }
@@ -1970,6 +2080,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs); tryEncode(ops, map, f15, value, errs); tryEncode(ops, map, f16, value, errs); tryEncode(ops, map, f17, value, errs); tryEncode(ops, map, f18, value, errs); tryEncode(ops, map, f19, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19));
                 }
             };
         }
@@ -2045,6 +2161,12 @@ public class RecordBuilder {
                     tryEncode(ops, map, f1, value, errs); tryEncode(ops, map, f2, value, errs); tryEncode(ops, map, f3, value, errs); tryEncode(ops, map, f4, value, errs); tryEncode(ops, map, f5, value, errs); tryEncode(ops, map, f6, value, errs); tryEncode(ops, map, f7, value, errs); tryEncode(ops, map, f8, value, errs); tryEncode(ops, map, f9, value, errs); tryEncode(ops, map, f10, value, errs); tryEncode(ops, map, f11, value, errs); tryEncode(ops, map, f12, value, errs); tryEncode(ops, map, f13, value, errs); tryEncode(ops, map, f14, value, errs); tryEncode(ops, map, f15, value, errs); tryEncode(ops, map, f16, value, errs); tryEncode(ops, map, f17, value, errs); tryEncode(ops, map, f18, value, errs); tryEncode(ops, map, f19, value, errs); tryEncode(ops, map, f20, value, errs);
                     if (!errs.isEmpty()) return DataResult.error(String.join(", ", errs));
                     return DataResult.success(ops.createMap(map));
+                }
+                @Override public String describe() {
+                    return "Record";
+                }
+                @Override public <R> R accept(CodecVisitor<R> visitor) {
+                    return visitor.visitRecord(Arrays.asList(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20));
                 }
             };
         }

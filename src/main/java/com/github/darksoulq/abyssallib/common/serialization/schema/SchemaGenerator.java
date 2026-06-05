@@ -1,10 +1,13 @@
 package com.github.darksoulq.abyssallib.common.serialization.schema;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.RecordField;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Generates schema representations from codec definitions.
@@ -27,8 +30,21 @@ public class SchemaGenerator implements CodecVisitor<SchemaNode> {
     }
 
     @Override
-    public SchemaNode visitRecord(Codec<?> codec) {
-        return new SchemaNode.RecordSchema(Collections.emptyMap());
+    public SchemaNode visitRecord(Iterable<RecordField<?, ?>> fields) {
+        Map<String, SchemaNode.FieldSchema> schemaFields = new LinkedHashMap<>();
+        for (RecordField<?, ?> field : fields) {
+            SchemaNode typeSchema = field.getCodec().accept(this);
+            String description = field.getCodec().describe();
+
+            schemaFields.put(field.getName(), new SchemaNode.FieldSchema(
+                field.getName(),
+                typeSchema,
+                field.isOptional(),
+                field.getDefaultValue(),
+                description.equals("Unknown") ? null : description
+            ));
+        }
+        return new SchemaNode.RecordSchema(schemaFields);
     }
 
     @Override
@@ -86,5 +102,10 @@ public class SchemaGenerator implements CodecVisitor<SchemaNode> {
     @Override
     public SchemaNode visitUnknown(String description) {
         return new SchemaNode.UnknownSchema(description);
+    }
+
+    @Override
+    public SchemaNode visitCustom(SchemaNode customSchema) {
+        return customSchema;
     }
 }

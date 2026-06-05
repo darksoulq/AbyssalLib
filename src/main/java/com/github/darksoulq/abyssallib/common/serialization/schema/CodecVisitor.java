@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.common.serialization.schema;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.RecordField;
 
 import java.util.List;
 
@@ -20,12 +21,12 @@ public interface CodecVisitor<R> {
     R visitPrimitive(String type);
 
     /**
-     * Visits a record codec.
+     * Visits a record codec structurally mapped from field parameters.
      *
-     * @param codec record codec being visited
+     * @param fields the iterable structure of fields mapped to the record
      * @return visitor result
      */
-    R visitRecord(Codec<?> codec);
+    R visitRecord(Iterable<RecordField<?, ?>> fields);
 
     /**
      * Visits a list codec.
@@ -100,4 +101,12 @@ public interface CodecVisitor<R> {
      * @return visitor result
      */
     R visitUnknown(String description);
+
+    /**
+     * Visits a predefined explicit custom schema representation.
+     *
+     * @param customSchema explicitly defined custom schema node
+     * @return visitor result
+     */
+    R visitCustom(SchemaNode customSchema);
 }

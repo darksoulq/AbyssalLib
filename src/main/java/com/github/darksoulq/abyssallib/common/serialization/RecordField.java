@@ -45,6 +45,27 @@ public class RecordField<O, T> {
     }
 
     /**
+     * @return The underlying codec responsible for resolving this field's data.
+     */
+    public Codec<T> getCodec() {
+        return codec;
+    }
+
+    /**
+     * @return Whether the field's absence should be tolerated.
+     */
+    public boolean isOptional() {
+        return optional;
+    }
+
+    /**
+     * @return The fallback value utilized if the field is missing.
+     */
+    public T getDefaultValue() {
+        return defaultValue;
+    }
+
+    /**
      * Safely executes decoding logic against a provided map structure.
      * Handles missing key mitigation logic natively.
      *

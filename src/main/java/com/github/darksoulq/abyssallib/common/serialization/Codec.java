@@ -56,12 +56,29 @@ public interface Codec<T> {
     }
 
     /**
-     * Constructs a hierarchical structured object graph defining serialization limits explicitly gracefully completely safely resolving configurations.
+     * Generates the schema representation for this codec.
      *
-     * @return Evaluated schema tree structurally identical properly parsing limits safely.
+     * @return The generated schema node.
      */
     default SchemaNode schema() {
         return accept(new SchemaGenerator());
+    }
+
+    /**
+     * Associates a custom schema with this codec.
+     * The provided schema is used instead of the automatically generated schema.
+     *
+     * @param schema The schema to associate with this codec.
+     * @return A codec that exposes the provided schema.
+     */
+    default Codec<T> withSchema(SchemaNode schema) {
+        Codec<T> self = this;
+        return new Codec<>() {
+            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) { return self.decode(ops, input); }
+            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) { return self.encode(ops, value); }
+            @Override public String describe() { return self.describe(); }
+            @Override public <R> R accept(CodecVisitor<R> visitor) { return visitor.visitCustom(schema); }
+        };
     }
 
     /**
@@ -164,16 +181,13 @@ public interface Codec<T> {
     }
 
     /**
-     * Translates mapping layouts matching structurally explicit tagged unions.
-     * Utilized identically to dispatch formats but enforces static identifier locations targeting enum discriminators.
+     * Creates a tagged union codec using an enum discriminator field.
      *
-     * @param <K>          Discriminating enum marker instance mapping variants.
-     * @param <V>          Supertype encompassing targeted variants.
-     * @param typeKey      The node storing variant context variables.
-     * @param keyCodec     The codec mapping marker key variants.
-     * @param typeGetter   The lambda identifying the variant enum context node attached to the layout.
-     * @param codecGetter  Function defining codec mappings linked directly to matched enum discriminators.
-     * @return A Codec mapping statically structured variant hierarchies correctly natively executing tag identification.
+     * @param typeKey The field containing the discriminator.
+     * @param keyCodec Codec for the discriminator type.
+     * @param typeGetter Function extracting the discriminator from a value.
+     * @param codecGetter Function providing the codec for a discriminator.
+     * @return A tagged union codec.
      */
     static <K extends Enum<K>, V> Codec<V> taggedUnion(String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
         Codec<V> base = dispatch(typeKey, keyCodec, typeGetter, codecGetter);
@@ -186,16 +200,14 @@ public interface Codec<T> {
     }
 
     /**
-     * Translates mapping layouts matching structurally explicit tagged unions, explicitly anchoring the type.
+     * Creates a tagged union codec using an enum discriminator field.
      *
-     * @param type         The class literal representing the base type hierarchy boundary.
-     * @param <K>          Discriminating enum marker instance mapping variants.
-     * @param <V>          Supertype encompassing targeted variants.
-     * @param typeKey      The node storing variant context variables.
-     * @param keyCodec     The codec mapping marker key variants.
-     * @param typeGetter   The lambda identifying the variant enum context node attached to the layout.
-     * @param codecGetter  Function defining codec mappings linked directly to matched enum discriminators.
-     * @return A Codec mapping statically structured variant hierarchies correctly natively executing tag identification.
+     * @param type The base type.
+     * @param typeKey The field containing the discriminator.
+     * @param keyCodec Codec for the discriminator type.
+     * @param typeGetter Function extracting the discriminator from a value.
+     * @param codecGetter Function providing the codec for a discriminator.
+     * @return A tagged union codec.
      */
     static <K extends Enum<K>, V> Codec<V> taggedUnion(Class<V> type, String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
         return taggedUnion(typeKey, keyCodec, typeGetter, codecGetter);
@@ -297,26 +309,23 @@ public interface Codec<T> {
     }
 
     /**
-     * Isolates operations onto a specific query path directly inside the current object structure.
+     * Creates a codec that operates on a nested path within the input structure.
      *
-     * @param <T>   The target type matching the child node.
-     * @param codec The codec responsible for interpreting the resolved query data.
-     * @param path  The literal target nested segment.
-     * @return A constrained reading codec targeting an explicit structure.
+     * @param codec The codec used to read and write the nested value.
+     * @param path The target path.
+     * @return A path-constrained codec.
      */
     static <T> Codec<T> query(Codec<T> codec, String path) {
         return new QueryCodec<>(codec, path);
     }
 
     /**
-     * Evaluates a structural condition on a target object to select an underlying codec sequence.
-     * Allows dependent serialization behaviors that hinge on preceding state context.
+     * Creates a codec that selects between two codecs based on a condition.
      *
-     * @param <T>        Target resolution type.
-     * @param condition  The predicate deciding execution flow.
-     * @param trueCodec  Executing codec when condition evaluates positively.
-     * @param falseCodec Executing codec when condition evaluates negatively.
-     * @return A context-sensitive conditional executing codec.
+     * @param condition The condition used to choose a codec.
+     * @param trueCodec Codec used when the condition is true.
+     * @param falseCodec Codec used when the condition is false.
+     * @return A conditional codec.
      */
     static <T> Codec<T> conditional(Predicate<T> condition, Codec<T> trueCodec, Codec<T> falseCodec) {
         return new ConditionalCodec<>(condition, trueCodec, falseCodec);
@@ -545,31 +554,27 @@ public interface Codec<T> {
     }
 
     /**
-     * Generates a polymorphic codec mapping diverse implementations via an explicit identifier field.
+     * Creates a dispatch codec that selects a subtype codec using a discriminator field.
      *
-     * @param <K>          The type of the key used to distinguish implementations.
-     * @param <V>          The base type shared by all implementations.
-     * @param typeKey      The structural field name representing the target implementation identifier.
-     * @param keyCodec     The codec governing the identifier key.
-     * @param typeGetter   Function isolating the key from a functional instance.
-     * @param codecGetter  Function yielding the specific target codec associated with the key.
-     * @return A functional dispatch codec dynamically managing implementation variants.
+     * @param typeKey The discriminator field name.
+     * @param keyCodec Codec for the discriminator type.
+     * @param typeGetter Function extracting the discriminator from a value.
+     * @param codecGetter Function providing the codec for a discriminator.
+     * @return A dispatch codec.
      */
     static <K, V> Codec<V> dispatch(String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
         return new DispatchCodec<>(typeKey, keyCodec, typeGetter, codecGetter);
     }
 
     /**
-     * Generates a polymorphic codec mapping diverse implementations, explicitly anchoring the base type context.
+     * Creates a dispatch codec that selects a subtype codec using a discriminator field.
      *
-     * @param type         The class literal representing the base type hierarchy boundary.
-     * @param <K>          The type of the key used to distinguish implementations.
-     * @param <V>          The base type shared by all implementations.
-     * @param typeKey      The structural field name representing the target implementation identifier.
-     * @param keyCodec     The codec governing the identifier key.
-     * @param typeGetter   Function isolating the key from a functional instance.
-     * @param codecGetter  Function yielding the specific target codec associated with the key.
-     * @return A functional dispatch codec dynamically managing implementation variants explicitly bound.
+     * @param type The base type.
+     * @param typeKey The discriminator field name.
+     * @param keyCodec Codec for the discriminator type.
+     * @param typeGetter Function extracting the discriminator from a value.
+     * @param codecGetter Function providing the codec for a discriminator.
+     * @return A dispatch codec.
      */
     static <K, V> Codec<V> dispatch(Class<V> type, String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
         return new DispatchCodec<>(typeKey, keyCodec, typeGetter, codecGetter);
@@ -728,10 +733,10 @@ public interface Codec<T> {
     }
 
     /**
-     * Validates decoded and encoded objects structurally via explicit schema construction limits.
+     * Applies schema-based validation to encoded and decoded values.
      *
-     * @param configurator The consumer formulating schema boundaries targeting implicit paths.
-     * @return A validating codec evaluating against map hierarchies directly.
+     * @param configurator Consumer used to configure validation rules.
+     * @return A validating codec.
      */
     default Codec<T> restrict(Consumer<SchemaValidator> configurator) {
         Codec<T> self = this;

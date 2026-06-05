@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomData;
 import com.github.darksoulq.abyssallib.world.recipe.type.*;
+import com.github.darksoulq.abyssallib.common.serialization.schema.SchemaNode;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -32,7 +33,7 @@ import java.util.*;
 
 public class Codecs {
 
-    public static final Codec<Object> PASSTHROUGH = new Codec<>() {
+    public static final Codec<Object> PASSTHROUGH = new Codec<Object>() {
         @Override
         public <D> DataResult<Object> decode(DynamicOps<D> ops, D input) {
             return DataResult.success(input);
@@ -48,9 +49,9 @@ public class Codecs {
         public String describe() {
             return "Passthrough";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("Any"));
 
-    public static final Codec<String> STRING = new Codec<>() {
+    public static final Codec<String> STRING = new Codec<String>() {
         @Override
         public <D> DataResult<String> decode(DynamicOps<D> ops, D input) {
             return ops.getStringValue(input)
@@ -67,14 +68,14 @@ public class Codecs {
         public String describe() {
             return "String";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("String"));
 
     public static final Codec<Character> CHARACTER = STRING.comapFlatMap(
         str -> str.length() == 1 ? DataResult.success(str.charAt(0)) : DataResult.error(DataError.invalidFormat(str, "Single Character")),
         String::valueOf
     ).describe("Character");
 
-    public static final Codec<Integer> INT = new Codec<>() {
+    public static final Codec<Integer> INT = new Codec<Integer>() {
         @Override
         public <D> DataResult<Integer> decode(DynamicOps<D> ops, D input) {
             return ops.getIntValue(input)
@@ -91,9 +92,9 @@ public class Codecs {
         public String describe() {
             return "Integer";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("Integer"));
 
-    public static final Codec<Long> LONG = new Codec<>() {
+    public static final Codec<Long> LONG = new Codec<Long>() {
         @Override
         public <D> DataResult<Long> decode(DynamicOps<D> ops, D input) {
             return ops.getLongValue(input)
@@ -110,9 +111,9 @@ public class Codecs {
         public String describe() {
             return "Long";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("Long"));
 
-    public static final Codec<Double> DOUBLE = new Codec<>() {
+    public static final Codec<Double> DOUBLE = new Codec<Double>() {
         @Override
         public <D> DataResult<Double> decode(DynamicOps<D> ops, D input) {
             return ops.getDoubleValue(input)
@@ -129,9 +130,9 @@ public class Codecs {
         public String describe() {
             return "Double";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("Double"));
 
-    public static final Codec<Float> FLOAT = new Codec<>() {
+    public static final Codec<Float> FLOAT = new Codec<Float>() {
         @Override
         public <D> DataResult<Float> decode(DynamicOps<D> ops, D input) {
             return ops.getFloatValue(input)
@@ -148,9 +149,9 @@ public class Codecs {
         public String describe() {
             return "Float";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("Float"));
 
-    public static final Codec<Boolean> BOOLEAN = new Codec<>() {
+    public static final Codec<Boolean> BOOLEAN = new Codec<Boolean>() {
         @Override
         public <D> DataResult<Boolean> decode(DynamicOps<D> ops, D input) {
             return ops.getBooleanValue(input)
@@ -167,13 +168,13 @@ public class Codecs {
         public String describe() {
             return "Boolean";
         }
-    };
+    }.withSchema(new SchemaNode.PrimitiveSchema("Boolean"));
 
     public static final Codec<Byte> BYTE = INT.xmap(Integer::byteValue, Byte::intValue).describe("Byte");
 
     public static final Codec<Color> COLOR = INT.xmap(Color::fromARGB, Color::asARGB).describe("Color");
 
-    public static final Codec<Vector3f> VECTOR3F = new Codec<>() {
+    public static final Codec<Vector3f> VECTOR3F = new Codec<Vector3f>() {
         @Override
         public <D> DataResult<Vector3f> decode(DynamicOps<D> ops, D input) {
             return ops.getList(input)
@@ -203,9 +204,9 @@ public class Codecs {
         public String describe() {
             return "Vector3f";
         }
-    };
+    }.withSchema(new SchemaNode.ListSchema(new SchemaNode.PrimitiveSchema("Float")));
 
-    public static final Codec<Quaternionf> QUATERNIONF = new Codec<>() {
+    public static final Codec<Quaternionf> QUATERNIONF = new Codec<Quaternionf>() {
         @Override
         public <D> DataResult<Quaternionf> decode(DynamicOps<D> ops, D input) {
             return ops.getList(input)
@@ -237,9 +238,9 @@ public class Codecs {
         public String describe() {
             return "Quaternionf";
         }
-    };
+    }.withSchema(new SchemaNode.ListSchema(new SchemaNode.PrimitiveSchema("Float")));
 
-    public static final Codec<Matrix4f> MATRIX4F = new Codec<>() {
+    public static final Codec<Matrix4f> MATRIX4F = new Codec<Matrix4f>() {
         @Override
         public <D> DataResult<Matrix4f> decode(DynamicOps<D> ops, D input) {
             return ops.getList(input)
@@ -273,7 +274,7 @@ public class Codecs {
         public String describe() {
             return "Matrix4f";
         }
-    };
+    }.withSchema(new SchemaNode.ListSchema(new SchemaNode.PrimitiveSchema("Float")));
 
     public static final Codec<Transformation> TRANSFORMATION = RecordBuilder.create(instance -> instance.group(
         VECTOR3F.fieldOf("translation").forGetter(Transformation::getTranslation),
@@ -291,7 +292,7 @@ public class Codecs {
     public static final Codec<ItemDisplay.ItemDisplayTransform> ITEM_DISPLAY_TRANSFORM = Codec.enumCodec(ItemDisplay.ItemDisplayTransform.class);
     public static final Codec<TextDisplay.TextAlignment> TEXT_ALIGNMENT = Codec.enumCodec(TextDisplay.TextAlignment.class);
 
-    public static final Codec<Vector> VECTOR_I = new Codec<>() {
+    public static final Codec<Vector> VECTOR_I = new Codec<Vector>() {
         @Override
         public <D> DataResult<Vector> decode(DynamicOps<D> ops, D input) {
             return ops.getList(input)
@@ -323,9 +324,9 @@ public class Codecs {
         public String describe() {
             return "VectorI";
         }
-    };
+    }.withSchema(new SchemaNode.ListSchema(new SchemaNode.PrimitiveSchema("Integer")));
 
-    public static final Codec<Vector> VECTOR_F = new Codec<>() {
+    public static final Codec<Vector> VECTOR_F = new Codec<Vector>() {
         @Override
         public <D> DataResult<Vector> decode(DynamicOps<D> ops, D input) {
             return ops.getList(input)
@@ -357,7 +358,7 @@ public class Codecs {
         public String describe() {
             return "VectorF";
         }
-    };
+    }.withSchema(new SchemaNode.ListSchema(new SchemaNode.PrimitiveSchema("Float")));
 
     public static final Codec<UUID> UUID = STRING.comapFlatMap(
         str -> {
@@ -428,7 +429,7 @@ public class Codecs {
         }
     ).describe("DataComponentType");
 
-    public static final Codec<List<DataComponent<?>>> DATA_COMPONENT_MAP = new Codec<>() {
+    public static final Codec<List<DataComponent<?>>> DATA_COMPONENT_MAP = new Codec<List<DataComponent<?>>>() {
         @Override
         public <D> DataResult<List<DataComponent<?>>> decode(DynamicOps<D> ops, D input) {
             return ops.getMap(input)
@@ -509,10 +510,17 @@ public class Codecs {
         public String describe() {
             return "DataComponentMap";
         }
-    };
+    }.withSchema(new SchemaNode.MapSchema(new SchemaNode.PrimitiveSchema("String"), new SchemaNode.PrimitiveSchema("Any")));
+
+    private static final Map<String, SchemaNode.FieldSchema> ITEM_STACK_FIELDS = new LinkedHashMap<>();
+    static {
+        ITEM_STACK_FIELDS.put("id", new SchemaNode.FieldSchema("id", KEY.schema(), false, null, "Item Identifier"));
+        ITEM_STACK_FIELDS.put("amount", new SchemaNode.FieldSchema("amount", INT.schema(), true, 1, "Item Amount"));
+        ITEM_STACK_FIELDS.put("data", new SchemaNode.FieldSchema("data", DATA_COMPONENT_MAP.schema(), true, null, "Item Components"));
+    }
 
     public static final Codec<ItemStack> ITEM_STACK = Codec.fallback(
-        new Codec<>() {
+        new Codec<ItemStack>() {
             @Override
             public <D> DataResult<ItemStack> decode(DynamicOps<D> ops, D input) {
                 return ops.getMap(input)
@@ -594,7 +602,7 @@ public class Codecs {
             public String describe() {
                 return "ItemStack";
             }
-        },
+        }.withSchema(new SchemaNode.RecordSchema(ITEM_STACK_FIELDS)),
         KEY.comapFlatMap(
             key -> {
                 if (!NamespacedKey.MINECRAFT.equals(key.namespace())) {
@@ -606,7 +614,7 @@ public class Codecs {
                 }
             },
             stack -> new Item(stack).getId()
-        )
+        ).withSchema(new SchemaNode.PrimitiveSchema("String"))
     ).describe("ItemStack");
 
     public static final Codec<RecipeChoice.ExactChoice> EXACT_CHOICE = ITEM_STACK.list().comapFlatMap(
