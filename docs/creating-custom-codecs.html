@@ -1,5 +1,5 @@
 <!DOCTYPE html SYSTEM "about:legacy-compat">
-<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-05-26T22:26:02.5854737"><title>Creating Custom Codecs | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"simple-codecs","level":0,"title":"Simple Codecs","anchor":"#simple-codecs"},{"id":"enum-codecs","level":0,"title":"Enum Codecs","anchor":"#enum-codecs"},{"id":"complex-objects","level":0,"title":"Complex Objects","anchor":"#complex-objects"},{"id":"dynamicops-aware-codecs","level":0,"title":"DynamicOps-Aware Codecs","anchor":"#dynamicops-aware-codecs"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating Custom Codecs | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/creating-custom-codecs.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating Custom Codecs | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-06-05T13:57:42.2044582"><title>Creating Custom Codecs | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"complex-objects-recordbuilder","level":0,"title":"Complex Objects (RecordBuilder)","anchor":"#complex-objects-recordbuilder"},{"id":"simple-codecs","level":0,"title":"Simple Codecs","anchor":"#simple-codecs"},{"id":"dynamicops-aware-codecs","level":0,"title":"DynamicOps-Aware Codecs","anchor":"#dynamicops-aware-codecs"},{"id":"enums-and-sequences","level":0,"title":"Enums and Sequences","anchor":"#enums-and-sequences"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Creating Custom Codecs | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/creating-custom-codecs.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Creating Custom Codecs | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
     "@context": "http://schema.org",
     "@type": "WebPage",
     "@id": "writerside-documentation/creating-custom-codecs.html#webpage",
@@ -13,67 +13,89 @@
     "@id": "writerside-documentation/#website",
     "url": "writerside-documentation/",
     "name": "AbyssalLib Help"
-}</script><!-- End Schema.org --></head><body data-id="creating-custom-codecs" data-main-title="Creating Custom Codecs" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Codecs"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="creating-custom-codecs" id="creating-custom-codecs.md">Creating Custom Codecs</h1><p id="t62y53_4">While AbyssalLib provides codecs for standard data types, you will frequently need to create codecs for your own custom classes, records, and enums.</p><section class="chapter"><h2 id="simple-codecs" data-toc="simple-codecs">Simple Codecs</h2><p id="t62y53_9">For simple wrapper classes or single-value objects, you can create a codec by providing a decoding and encoding function directly to <code class="code" id="t62y53_12">Codec.of()</code>.</p><div class="code-block" data-lang="java">
-public static final Codec&lt;UUID&gt; UUID_CODEC = Codec.of(
-    // Decoder: Converts the raw data object into a UUID
-    raw -&gt; UUID.fromString(raw.toString()),
-    // Encoder: Converts the UUID back into a raw string
-    UUID::toString
-);
-</div></section><section class="chapter"><h2 id="enum-codecs" data-toc="enum-codecs">Enum Codecs</h2><p id="t62y53_13">Serializing enums is a highly common requirement. The API provides a built-in <code class="code" id="t62y53_16">Codec.enumCodec(Class)</code> factory that automatically serializes any enum to and from its exact string name.</p><div class="code-block" data-lang="java">
-// Creates a codec that writes &quot;SURVIVAL&quot;, &quot;CREATIVE&quot;, etc.
-public static final Codec&lt;GameMode&gt; GAMEMODE_CODEC = Codec.enumCodec(GameMode.class);
-</div></section><section class="chapter"><h2 id="complex-objects" data-toc="complex-objects">Complex Objects</h2><p id="t62y53_17">For structured data like Java records or custom POJOs, use the <code class="code" id="t62y53_22">RecordCodecBuilder</code>. This builder allows you to map specific object fields to specific serialized keys (like JSON properties).</p><p id="t62y53_18">You define fields by taking an existing codec, calling <code class="code" id="t62y53_23">.fieldOf(&quot;key_name&quot;, getterMethod)</code>, and combining them into a constructor.</p><div class="code-block" data-lang="java">
-public record PlayerStats(int kills, int deaths) {
+}</script><!-- End Schema.org --></head><body data-id="creating-custom-codecs" data-main-title="Creating Custom Codecs" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Codecs"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="creating-custom-codecs" id="creating-custom-codecs.md">Creating Custom Codecs</h1><p id="-c8vvy9_4">While AbyssalLib provides codecs for standard primitive types, you will frequently need to create codecs for your own custom classes, records, and data structures. The API provides several tools to cleanly map your objects without dealing with manual parsing logic.</p><section class="chapter"><h2 id="complex-objects-recordbuilder" data-toc="complex-objects-recordbuilder">Complex Objects (RecordBuilder)</h2><p id="-c8vvy9_9">For structured data like Java records or custom POJOs, use the <code class="code" id="-c8vvy9_14">RecordBuilder</code>. This builder maps your object's fields to serialized keys (like JSON properties) and binds them directly to your constructor.</p><p id="-c8vvy9_10">To define fields, call <code class="code" id="-c8vvy9_15">.fieldOf(&quot;key&quot;)</code> on a base codec, followed by <code class="code" id="-c8vvy9_16">.forGetter(getterMethod)</code>. You group these fields together using <code class="code" id="-c8vvy9_17">instance.group(...)</code> and apply them to the constructor.</p><div class="code-block" data-lang="java">
+public record PlayerStats(String username, int kills, int deaths) {
 
-    public static final Codec&lt;PlayerStats&gt; CODEC = RecordCodecBuilder.create(
-        // Map the &quot;kills&quot; key to the kills() getter using the INT codec
-        Codecs.INT.fieldOf(&quot;kills&quot;, PlayerStats::kills),
-
-        // Map the &quot;deaths&quot; key
-        Codecs.INT.fieldOf(&quot;deaths&quot;, PlayerStats::deaths),
-
-        // The constructor used to build the object during deserialization
-        PlayerStats::new
+    public static final Codec&lt;PlayerStats&gt; CODEC = RecordBuilder.create(instance -&gt; 
+        instance.group(
+            // A required field
+            Codecs.STRING.fieldOf(&quot;username&quot;).forGetter(PlayerStats::username),
+            
+            // A required field
+            Codecs.INT.fieldOf(&quot;kills&quot;).forGetter(PlayerStats::kills),
+            
+            // An optional field with a default fallback of 0
+            Codecs.INT.optionalFieldOf(&quot;deaths&quot;, 0).forGetter(PlayerStats::deaths)
+        ).apply(instance, PlayerStats::new)
     );
 }
-</div><aside class="prompt" data-type="tip" data-title="" id="t62y53_20"><p>If a field in your object is not strictly required, append the <code class="code" id="t62y53_24">.optional()</code> or <code class="code" id="t62y53_25">.orElse()</code> modifiers to that field's codec before calling <code class="code" id="t62y53_26">.fieldOf()</code>. This prevents deserialization failures when loading older or incomplete data!</p></aside></section><section class="chapter"><h2 id="dynamicops-aware-codecs" data-toc="dynamicops-aware-codecs">DynamicOps-Aware Codecs</h2><p id="t62y53_27">While <code class="code" id="t62y53_30">RecordCodecBuilder</code> is excellent for standard, flat objects, it completely abstracts away the <code class="code" id="t62y53_31">DynamicOps</code> provider. Sometimes, you need direct access to the <code class="code" id="t62y53_32">ops</code> instance to read dynamic maps, handle deeply nested unknown structures, or process highly specific legacy data formats.</p><p id="t62y53_28">In these cases, you can use the DynamicOps-aware overload of <code class="code" id="t62y53_33">Codec.of(Decoder, Encoder)</code>. By passing explicit instances of <code class="code" id="t62y53_34">Codec.Decoder</code> and <code class="code" id="t62y53_35">Codec.Encoder</code>, you gain full control over reading and writing the serialized tree without needing to manually implement the entire <code class="code" id="t62y53_36">Codec</code> interface.</p><div class="code-block" data-lang="java">
+</div><aside class="prompt" data-type="note" data-title="" id="-c8vvy9_12"><p>The <code class="code" id="-c8vvy9_18">RecordBuilder</code> supports grouping up to 20 fields natively. If your object requires more than 20 parameters, consider nesting your data structures into sub-objects!</p></aside></section><section class="chapter"><h2 id="simple-codecs" data-toc="simple-codecs">Simple Codecs</h2><p id="-c8vvy9_19">For simple wrapper classes or single-value objects, you can create a codec by providing decoding and encoding lambdas directly to <code class="code" id="-c8vvy9_23">Codec.of()</code>.</p><p id="-c8vvy9_20">Because codecs are safe, these lambdas must return a <code class="code" id="-c8vvy9_24">DataResult</code> rather than throwing exceptions or returning raw objects.</p><div class="code-block" data-lang="java">
+public static final Codec&lt;UUID&gt; UUID_CODEC = Codec.of(
+    (ops, input) -&gt; {
+        // 1. Decode the input as a string first
+        return Codecs.STRING.decode(ops, input).flatMap(str -&gt; {
+            // 2. Safely parse the UUID
+            try {
+                return DataResult.success(UUID.fromString(str));
+            } catch (IllegalArgumentException e) {
+                return DataResult.error(&quot;Invalid UUID format: &quot; + str);
+            }
+        });
+    },
+    (ops, value) -&gt; {
+        // Encode the UUID back to a string
+        return Codecs.STRING.encode(ops, value.toString());
+    }
+);
+</div></section><section class="chapter"><h2 id="dynamicops-aware-codecs" data-toc="dynamicops-aware-codecs">DynamicOps-Aware Codecs</h2><p id="-c8vvy9_25">Sometimes you need direct access to the <code class="code" id="-c8vvy9_30">DynamicOps</code> instance to read dynamic maps or highly irregular legacy data formats that <code class="code" id="-c8vvy9_31">RecordBuilder</code> cannot handle.</p><p id="-c8vvy9_26">Using <code class="code" id="-c8vvy9_32">Codec.of(Decoder, Encoder)</code>, you can manually traverse the tree. Use <code class="code" id="-c8vvy9_33">DataResult.success()</code> and <code class="code" id="-c8vvy9_34">DataResult.error()</code> to handle the serialization state gracefully.</p><div class="code-block" data-lang="java">
 public class CustomData {
     private final String name;
-    private final int count;
-
-    public CustomData(String name, int count) {
-        this.name = name;
-        this.count = count;
-    }
-
+    
+    public CustomData(String name) { this.name = name; }
     public String getName() { return name; }
-    public int getCount() { return count; }
 
     public static final Codec&lt;CustomData&gt; CODEC = Codec.of(
         new Codec.Decoder&lt;CustomData&gt;() {
             @Override
-            public &lt;D&gt; CustomData decode(DynamicOps&lt;D&gt; ops, D input) {
-                // 1. Direct access to 'ops' allows manual traversal of the serialized tree.
-                Map&lt;D, D&gt; map = ops.getMap(input).orElseThrow(() -&gt; new Codec.CodecException(&quot;Expected a map&quot;));
-
-                // 2. Extract and decode fields manually
-                String name = Codecs.STRING.decode(ops, map.get(ops.createString(&quot;name&quot;)));
-                int count = Codecs.INT.decode(ops, map.get(ops.createString(&quot;count&quot;)));
-
-                return new CustomData(name, count);
+            public &lt;D&gt; DataResult&lt;CustomData&gt; decode(DynamicOps&lt;D&gt; ops, D input) {
+                // Ask ops to treat the input as a Map
+                var mapOpt = ops.getMap(input);
+                if (mapOpt.isEmpty()) return DataResult.error(&quot;Expected a map object&quot;);
+                
+                var map = mapOpt.get();
+                D nameData = map.get(ops.createString(&quot;name&quot;));
+                
+                if (nameData == null) return DataResult.error(&quot;Missing 'name' key&quot;);
+                
+                return Codecs.STRING.decode(ops, nameData)
+                    .map(nameString -&gt; new CustomData(nameString));
             }
         },
         new Codec.Encoder&lt;CustomData&gt;() {
             @Override
-            public &lt;D&gt; D encode(DynamicOps&lt;D&gt; ops, CustomData value) {
-                // Manually construct the serialized map using 'ops' creation methods
-                return ops.createMap(Map.of(
-                    ops.createString(&quot;name&quot;), Codecs.STRING.encode(ops, value.getName()),
-                    ops.createString(&quot;count&quot;), Codecs.INT.encode(ops, value.getCount())
-                ));
+            public &lt;D&gt; DataResult&lt;D&gt; encode(DynamicOps&lt;D&gt; ops, CustomData value) {
+                // Manually construct the serialized map
+                DataResult&lt;D&gt; encodedString = Codecs.STRING.encode(ops, value.getName());
+                if (encodedString.isError()) return encodedString;
+                
+                return DataResult.success(ops.createMap(java.util.Map.of(
+                    ops.createString(&quot;name&quot;), encodedString.getOrThrow()
+                )));
             }
         }
     );
 }
-</div></section><div class="last-modified">26 May 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="understanding-codecs.html" class="navigation-links__prev">Understanding Codecs</a><a href="first-placeholder.html" class="navigation-links__next">Creating Your First Placeholder</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>
+</div><aside class="prompt" data-type="tip" data-title="" id="-c8vvy9_28"><p>For highly complex manual map parsing, check out <a href="codec-context.html" id="-c8vvy9_35" data-tooltip="Simplifying map traversal using DecodeContext and EncodeContext">Advanced Context &amp; Parsing</a> to learn how to use <code class="code" id="-c8vvy9_36">DecodeContext</code> and <code class="code" id="-c8vvy9_37">EncodeContext</code> to remove the boilerplate associated with manual <code class="code" id="-c8vvy9_38">DynamicOps</code> navigation!</p></aside></section><section class="chapter"><h2 id="enums-and-sequences" data-toc="enums-and-sequences">Enums and Sequences</h2><p id="-c8vvy9_39">The API includes built-in factories for common programmatic patterns like Enums and Tuples.</p><div class="tabs" id="-c8vvy9_40" data-anchors="[-c8vvy9_41,-c8vvy9_42]"><div class="tabs__content" data-gtm="tab" id="-c8vvy9_41" data-title="Enum Codecs"><p id="-c8vvy9_43">Serializing enums is a highly common requirement. The <code class="code" id="-c8vvy9_45">Codec.enumCodec(Class)</code> factory automatically serializes any enum to and from its exact string name. If the serialized string does not match an enum constant, it safely yields a <code class="code" id="-c8vvy9_46">DataError.UnknownEnum</code>.</p><div class="code-block" data-lang="java" data-title="Java">
+// Serializes to/from &quot;SURVIVAL&quot;, &quot;CREATIVE&quot;, etc.
+public static final Codec&lt;GameMode&gt; GAMEMODE_CODEC = Codec.enumCodec(GameMode.class);
+</div></div><div class="tabs__content" data-gtm="tab" id="-c8vvy9_42" data-title="Pairs and Tuples"><p id="-c8vvy9_47">If you need to serialize a strictly ordered array of mixed types (e.g., <code class="code" id="-c8vvy9_49">[15, &quot;hello&quot;, true]</code>), you can construct a Tuple codec. The API supports <code class="code" id="-c8vvy9_50">pair()</code> (2 elements) and <code class="code" id="-c8vvy9_51">tuple()</code> (up to 4 elements).</p><div class="code-block" data-lang="java" data-title="Java">
+// Creates a codec that writes data as: [ 50, &quot;hello&quot; ]
+Codec&lt;Codec.Pair&lt;Integer, String&gt;&gt; PAIR_CODEC = Codec.pair(Codecs.INT, Codecs.STRING);
+
+// Decoding yields the immutable Pair wrapper
+DataResult&lt;Codec.Pair&lt;Integer, String&gt;&gt; result = PAIR_CODEC.decode(JsonOps.INSTANCE, jsonNode);
+if (result.isSuccess()) {
+    int number = result.getOrThrow().first();
+    String text = result.getOrThrow().second();
+}
+</div></div></div></section><div class="last-modified">05 June 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="understanding-codecs.html" class="navigation-links__prev">Executing &amp; Handling Codecs</a><a href="codec-modifiers.html" class="navigation-links__next">Modifiers &amp; Validation</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

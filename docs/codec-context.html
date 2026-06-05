@@ -1,0 +1,74 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html lang="en-US" data-preset="soft" data-primary-color="#24AFD0"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="UTF-8"><meta name="built-on" content="2026-06-05T13:57:42.2394"><title>Advanced Context &amp; Parsing | AbyssalLib</title><script type="application/json" id="virtual-toc-data">[{"id":"decoding-maps","level":0,"title":"Decoding Maps","anchor":"#decoding-maps"},{"id":"encoding-maps","level":0,"title":"Encoding Maps","anchor":"#encoding-maps"}]</script><script type="application/json" id="topic-shortcuts"></script><link href="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.css" rel="stylesheet"><meta name="msapplication-TileColor" content="#000000"><link rel="apple-touch-icon" sizes="180x180" href="https://jetbrains.com/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="https://jetbrains.com/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="https://jetbrains.com/favicon-16x16.png"><meta name="msapplication-TileImage" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-144x144.png"><meta name="msapplication-square70x70logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-70x70.png"><meta name="msapplication-square150x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-150x150.png"><meta name="msapplication-wide310x150logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x150.png"><meta name="msapplication-square310x310logo" content="https://resources.jetbrains.com/storage/ui/favicons/mstile-310x310.png"><meta name="image" content=""><!-- Open Graph --><meta property="og:title" content="Advanced Context &amp; Parsing | AbyssalLib"><meta property="og:description" content=""><meta property="og:image" content=""><meta property="og:site_name" content="AbyssalLib Help"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="writerside-documentation/codec-context.html"><!-- End Open Graph --><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content=""><meta name="twitter:title" content="Advanced Context &amp; Parsing | AbyssalLib"><meta name="twitter:description" content=""><meta name="twitter:creator" content=""><meta name="twitter:image:src" content=""><!-- End Twitter Card --><!-- Schema.org WebPage --><script type="application/ld+json">{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "writerside-documentation/codec-context.html#webpage",
+    "url": "writerside-documentation/codec-context.html",
+    "name": "Advanced Context &amp; Parsing | AbyssalLib",
+    "description": "",
+    "image": "",
+    "inLanguage":"en-US"
+}</script><!-- End Schema.org --><!-- Schema.org WebSite --><script type="application/ld+json">{
+    "@type": "WebSite",
+    "@id": "writerside-documentation/#website",
+    "url": "writerside-documentation/",
+    "name": "AbyssalLib Help"
+}</script><!-- End Schema.org --></head><body data-id="codec-context" data-main-title="Advanced Context & Parsing" data-article-props="{&quot;seeAlsoStyle&quot;:&quot;links&quot;}" data-template="article" data-breadcrumbs="Codecs"><div class="wrapper"><main class="panel _main"><header class="panel__header"><div class="container"><h3>AbyssalLib  Help</h3><div class="panel-trigger"></div></div></header><section class="panel__content"><div class="container"><article class="article" data-shortcut-switcher="inactive"><h1 data-toc="codec-context" id="codec-context.md">Advanced Context & Parsing</h1><p id="-ycyfo2_4">When manually writing codecs for map structures, checking <code class="code" id="-ycyfo2_7">Optional</code> returns and appending <code class="code" id="-ycyfo2_8">DataResult</code> error paths can become verbose. AbyssalLib provides <code class="code" id="-ycyfo2_9">DecodeContext</code> and <code class="code" id="-ycyfo2_10">EncodeContext</code> to streamline this process by wrapping map operations in a fluent API that automatically collects errors and warnings.</p><section class="chapter"><h2 id="decoding-maps" data-toc="decoding-maps">Decoding Maps</h2><p id="-ycyfo2_11"><code class="code" id="-ycyfo2_15">DecodeContext</code> wraps a deserialized map node. It allows you to sequentially read keys, apply their respective codecs, and pass the resulting values into a callback function.</p><p id="-ycyfo2_12">If a required key is missing, or if a codec fails, the context logs a <code class="code" id="-ycyfo2_16">DataError</code> internally. Calling <code class="code" id="-ycyfo2_17">.result()</code> returns a single <code class="code" id="-ycyfo2_18">DataResult</code> containing all collected issues, or <code class="code" id="-ycyfo2_19">DataResult.success(null)</code> if parsing succeeded.</p><div class="code-block" data-lang="java">
+public class CustomData {
+    private final String name;
+    private final int count;
+
+    public CustomData(String name, int count) {
+        this.name = name;
+        this.count = count;
+    }
+
+    public String getName() { return name; }
+    public int getCount() { return count; }
+
+    public static final Codec&lt;CustomData&gt; CODEC = Codec.of(
+        new Codec.Decoder&lt;CustomData&gt;() {
+            @Override
+            public &lt;D&gt; DataResult&lt;CustomData&gt; decode(DynamicOps&lt;D&gt; ops, D input) {
+                var mapOpt = ops.getMap(input);
+                if (mapOpt.isEmpty()) return DataResult.error(&quot;Expected a map object&quot;);
+                
+                // Prepare variables to hold the parsed data
+                String[] name = new String[1];
+                int[] count = new int[1];
+                
+                // Parse the map sequentially
+                DataResult&lt;Void&gt; validation = DecodeContext.of(ops, mapOpt.get())
+                    // Reads a required key
+                    .read(&quot;name&quot;, Codecs.STRING, val -&gt; name[0] = val)
+                    
+                    // Reads an optional key, providing a default if missing
+                    .readOrElse(&quot;count&quot;, Codecs.INT, 1, val -&gt; count[0] = val)
+                    
+                    // Finish and get the combined result
+                    .result();
+                    
+                // If validation failed, return the error
+                if (validation.isError()) {
+                    return DataResult.error(validation.dataError().get());
+                }
+                
+                return DataResult.success(new CustomData(name[0], count[0]));
+            }
+        },
+        // ... Encoder logic below ...
+</div></section><section class="chapter"><h2 id="encoding-maps" data-toc="encoding-maps">Encoding Maps</h2><p id="-ycyfo2_20">Similarly, <code class="code" id="-ycyfo2_22">EncodeContext</code> simplifies building a new serialized map by chaining write operations. If a <code class="code" id="-ycyfo2_23">null</code> value is passed or a codec fails to encode, it automatically logs the error to the context.</p><div class="code-block" data-lang="java">
+        // ... Decoder logic above ...
+        new Codec.Encoder&lt;CustomData&gt;() {
+            @Override
+            public &lt;D&gt; DataResult&lt;D&gt; encode(DynamicOps&lt;D&gt; ops, CustomData value) {
+                return EncodeContext.of(ops)
+                    .write(&quot;name&quot;, Codecs.STRING, value.getName())
+                    // Only writes the count if it is not the default value of 1
+                    .writeOrElse(&quot;count&quot;, Codecs.INT, value.getCount(), 1)
+                    .result();
+            }
+        }
+    );
+}
+</div></section><div class="last-modified">05 June 2026</div><div data-feedback-placeholder="true"></div><div class="navigation-links _bottom"><a href="codec-modifiers.html" class="navigation-links__prev">Modifiers &amp; Validation</a><a href="data-versioning.html" class="navigation-links__next">Data Versioning (DataFixers)</a></div></article><div id="disqus_thread"></div></div></section></main></div><script src="https://resources.jetbrains.com/writerside/apidoc/6.26.0-b913/app.js"></script></body></html>

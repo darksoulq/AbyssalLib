@@ -1,22 +1,10 @@
-# Understanding Codecs
-<link-summary>Introduction to bidirectional serialization, DynamicOps, and codec manipulation</link-summary>
+# Executing & Handling Codecs
+<link-summary>Learn how to serialize, deserialize, and securely handle DataResults using DynamicOps</link-summary>
 
-The Codec API provides a standardized, format-agnostic way to serialize and deserialize Java objects. Instead of writing separate logic to read from JSON, write to JSON, read from YAML, and write to YAML, you define the structure of your object *once* using a `Codec<T>`.
+Codecs define *how* an object is serialized, but they do not process the data themselves. To execute a codec, you must provide a `DynamicOps` implementation, which tells the codec what format (JSON, YAML, NBT, etc.) it should read from or write to.
 
-A `Codec<T>` represents the exact rules for converting a Java object of type `T` into raw, serialized data, and vice versa.
-
-### How Codecs Work
-Codecs operate bidirectionally. Every codec guarantees two primary operations:
-
-1. **Decoding (`decode`):** Translates raw data into a Java object. Throws a `CodecException` if the data is malformed or missing required fields.
-2. **Encoding (`encode`):** Translates a Java object back into raw data. Throws a `CodecException` if the object contains non-serializable states.
-
----
-
-### Executing Codecs (DynamicOps)
-A `Codec` only defines the *rules* for translation. To actually serialize or deserialize data, you must execute the codec using a `DynamicOps` provider.
-
-The `DynamicOps<T>` interface acts as the bridge. It defines exactly how to create and read strings, integers, lists, and maps in a specific target format. AbyssalLib provides five highly versatile operation implementations:
+### DynamicOps Implementations
+AbyssalLib provides several built-in format operations:
 
 <table>
 <tr>
@@ -33,128 +21,121 @@ The `DynamicOps<T>` interface acts as the bridge. It defines exactly how to crea
 </tr>
 <tr>
 <td><code>NbtOps.INSTANCE</code></td>
-<td>Minecraft <code>Tag</code></td>
+<td>Minecraft <code>Tag</code> (CompoundTag, ListTag, etc.)</td>
 </tr>
 <tr>
 <td><code>ByteOps.INSTANCE</code></td>
-<td><code>byte[]</code> (Binary)</td>
+<td><code>byte[]</code> (Custom binary format)</td>
 </tr>
 <tr>
 <td><code>StringOps.INSTANCE</code></td>
-<td><code>String</code></td>
+<td><code>String</code> (Inline literal representation)</td>
 </tr>
 </table>
 
-#### Example: JSON Execution
-To read or write data, pass the `DynamicOps` instance directly to your codec's `encode` or `decode` methods.
+---
+
+### Encoding and Decoding
+When you run a codec, it does not immediately return your object or throw an exception. Instead, it returns a `DataResult<T>`, a monadic container that safely wraps either the successful value, partial successes (with warnings), or a detailed structural error.
+
+<tabs>
+<tab title="Decoding (Reading)">
+
+To convert raw serialized data back into a Java object, use `decode`.
 
 ```Java
-// 1. Create our Java object
-PlayerStats stats = new PlayerStats(150, 12);
+JsonNode json = getJsonFromSomewhere();
 
-// ENCODING: Java Object -> Jackson JsonNode
-JsonNode json = PlayerStats.CODEC.encode(JsonOps.INSTANCE, stats);
+// Pass the operations instance and the raw input
+DataResult<PlayerStats> result = PlayerStats.CODEC.decode(JsonOps.INSTANCE, json);
 
-// DECODING: Jackson JsonNode -> Java Object
-try {
-    String rawJson = "{\"kills\": 5, \"deaths\": 0}";
-    JsonNode parsedNode = JsonOps.INSTANCE.mapper.readTree(rawJson);
-    
-    PlayerStats decodedStats = PlayerStats.CODEC.decode(JsonOps.INSTANCE, parsedNode);
-    System.out.println("Kills: " + decodedStats.kills());
-} catch (Exception e) {
-    e.printStackTrace();
+if (result.isSuccess()) {
+    PlayerStats stats = result.getOrThrow();
+    System.out.println("Loaded: " + stats.kills());
+} else {
+    // Gracefully handle the error without try/catch blocks
+    System.err.println("Failed to load stats: " + result.error().get());
 }
 ```
 
-<note>
-If you are using the <code>Config</code> API, you do not need to manually call <code>YamlOps.INSTANCE</code>. The <code>Config.Value&lt;T&gt;</code> wrapper handles the YAML encoding and decoding automatically when you pass a codec into its definition.
-</note>
+</tab>
+<tab title="Encoding (Writing)">
+
+To convert a Java object into serialized data, use `encode`.
+
+```Java
+PlayerStats stats = new PlayerStats(150, 12);
+
+// Encode the object into a Jackson JsonNode
+DataResult<JsonNode> result = PlayerStats.CODEC.encode(JsonOps.INSTANCE, stats);
+
+if (result.isSuccess()) {
+    JsonNode json = result.getOrThrow();
+    saveToFile(json);
+}
+```
+
+</tab>
+<tab title="Asynchronous Execution">
+
+If you are decoding massive configurations or chunk data, you can execute the codec off the main thread natively using the async variants. These return a standard `CompletableFuture`.
+
+```Java
+PlayerStats.CODEC.decodeAsync(JsonOps.INSTANCE, largeJsonInput).thenAccept(result -> {
+    if (result.isSuccess()) {
+        System.out.println("Decoded successfully in the background!");
+    }
+});
+```
+
+</tab>
+</tabs>
 
 ---
 
-### Codec Modifiers (Sub-methods)
-The `Codec` interface provides numerous default instance methods that allow you to modify how an existing codec behaves without needing to rewrite it.
+### Handling DataResults
+Because data structures can be deeply nested, `DataResult` acts as a safe container. It traces the exact path of failures (e.g., `Missing required field: 'config.weapons.damage'`) and allows you to provide fallbacks easily.
 
-<table>
-<tr>
-<th>Method</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><code>list()</code></td>
-<td>Transforms a <code>Codec&lt;T&gt;</code> into a <code>Codec&lt;List&lt;T&gt;&gt;</code>. It automatically handles iterating through serialized arrays.</td>
-</tr>
-<tr>
-<td><code>collection(Supplier)</code></td>
-<td>Similar to <code>list()</code>, but allows you to specify the exact collection type (e.g., <code>HashSet::new</code>).</td>
-</tr>
-<tr>
-<td><code>optional()</code></td>
-<td>Transforms a <code>Codec&lt;T&gt;</code> into a <code>Codec&lt;Optional&lt;T&gt;&gt;</code>. If the field is missing or empty, it safely returns <code>Optional.empty()</code>.</td>
-</tr>
-<tr>
-<td><code>nullable()</code></td>
-<td>Modifies the codec to safely handle <code>null</code> Java values. If it encounters a null during encoding, it writes an empty state. If it reads an empty state, it returns <code>null</code>.</td>
-</tr>
-<tr>
-<td><code>orElse(T fallback)</code></td>
-<td>Provides a default fallback value. If the decoding process fails, the codec catches the exception and returns your fallback.</td>
-</tr>
-<tr>
-<td><code>xmap(forward, backward)</code></td>
-<td>Transforms a <code>Codec&lt;T&gt;</code> into a <code>Codec&lt;R&gt;</code> by providing two-way conversion functions. Useful for wrapping primitive values into custom classes.</td>
-</tr>
-<tr>
-<td><code>flatXmap(forward, backward)</code></td>
-<td>Similar to <code>xmap</code>, but the conversion functions return an <code>Optional</code>. If the function returns <code>Optional.empty()</code>, the codec deliberately throws a <code>CodecException</code>.</td>
-</tr>
-<tr>
-<td><code>fieldOf(name, getter)</code></td>
-<td>Binds this codec to a specific string key/name, returning a <code>Field</code> definition for use inside the <code>RecordCodecBuilder</code>.</td>
-</tr>
-<tr>
-<td><code>unchecked()</code></td>
-<td>Performs an unsafe cast of the codec to a different type. Use with extreme caution.</td>
-</tr>
-</table>
+```Java
+DataResult<Weapon> result = Weapon.CODEC.decode(YamlOps.INSTANCE, yamlNode);
+
+// 1. Throw an exception if it fails (Classic behavior)
+Weapon weapon = result.getOrThrow();
+
+// 2. Provide a default fallback if it fails
+Weapon safeWeapon = result.orElse(Weapon.DEFAULT);
+
+// 3. Check for partial successes (Data loaded, but warnings were logged)
+if (result.isPartial()) {
+    Weapon loaded = result.getOrThrow();
+    for (DataError warning : result.warnings()) {
+        plugin.getLogger().warning("Non-fatal issue: " + warning.message());
+    }
+}
+
+// 4. Map the result directly if successful
+DataResult<Integer> damageResult = result.map(Weapon::getDamage);
+```
 
 ---
 
-### Static Combiners and Factories
-You can also build and combine multiple codecs together using the static factory methods provided on the `Codec` interface.
+### The Dynamic Wrapper
+If you need to quickly extract, modify, or convert a specific nested value from a raw serialized object without writing a full `RecordCodec`, you can wrap it in a `Dynamic<T>`.
 
-<table>
-<tr>
-<th>Method</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><code>Codec.of(...)</code></td>
-<td>Creates a base codec either from mapping functions or explicit <code>Encoder</code> and <code>Decoder</code> interfaces.</td>
-</tr>
-<tr>
-<td><code>Codec.fallback(primary, secondary)</code></td>
-<td>Attempts to decode using the primary codec. If it fails, it suppresses the error and tries the secondary codec. Excellent for backwards compatibility when data formats change.</td>
-</tr>
-<tr>
-<td><code>Codec.either(left, right)</code></td>
-<td>Creates a codec that returns an <code>Either&lt;A, B&gt;</code> object, testing the left format first, then the right.</td>
-</tr>
-<tr>
-<td><code>Codec.oneOf(codecs...)</code></td>
-<td>An expanded version of <code>fallback</code> that accepts a varargs array of codecs, trying them in sequence until one succeeds.</td>
-</tr>
-<tr>
-<td><code>Codec.map(keyCodec, valCodec)</code></td>
-<td>Creates a codec that maps dynamic key-value pairs (e.g., a <code>LinkedHashMap</code>).</td>
-</tr>
-<tr>
-<td><code>Codec.enumCodec(Class)</code></td>
-<td>Automatically generates a standard string-based codec for a given Java Enum.</td>
-</tr>
-<tr>
-<td><code>Codec.recursive(Function)</code></td>
-<td>Creates a lazy-evaluated codec capable of resolving cyclic dependencies correctly without infinite loops.</td>
-</tr>
-</table>
+The `Dynamic` object binds the raw data to its `DynamicOps`, allowing fluent path querying and conversions.
+
+```Java
+JsonNode rawJson = getLargeConfigFile();
+
+// Wrap the JSON in a Dynamic instance
+Dynamic<JsonNode> dynamic = new Dynamic<>(JsonOps.INSTANCE, rawJson);
+
+// Safely query nested paths
+dynamic.get("server.database.port").ifPresent(portNode -> {
+    int port = Codecs.INT.decode(JsonOps.INSTANCE, portNode.value()).orElse(3306);
+    System.out.println("Database Port: " + port);
+});
+
+// Convert the entire JSON structure into NBT format instantly
+Dynamic<Tag> nbtDynamic = dynamic.convert(NbtOps.INSTANCE);
+```
