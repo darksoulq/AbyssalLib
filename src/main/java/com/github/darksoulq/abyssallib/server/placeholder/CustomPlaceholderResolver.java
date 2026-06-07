@@ -55,7 +55,6 @@ public final class CustomPlaceholderResolver {
         });
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> Tag process(Placeholder<T> placeholder, PlaceholderContext context) {
         PlaceholderResult<T> result = placeholder.resolve(context);
 

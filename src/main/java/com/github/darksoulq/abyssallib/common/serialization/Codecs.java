@@ -1,13 +1,12 @@
 package com.github.darksoulq.abyssallib.common.serialization;
 
-import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.serialization.schema.SchemaNode;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.ComponentMap;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomData;
 import com.github.darksoulq.abyssallib.world.recipe.type.*;
-import com.github.darksoulq.abyssallib.common.serialization.schema.SchemaNode;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;

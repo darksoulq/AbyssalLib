@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.world.structure;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.*;
+import com.github.darksoulq.abyssallib.common.serialization.fixer.DataFixers;
 import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.scheduler.Clock;
@@ -126,7 +127,7 @@ public class Structure {
         PALETTE_ENTRY_CODEC.list().optionalFieldOf("palette", Collections.emptyList()).forGetter(Structure.class, s -> s.palette),
         STRUCTURE_BLOCK_CODEC.list().optionalFieldOf("blocks", Collections.emptyList()).forGetter(Structure.class, s -> s.blocks),
         STRUCTURE_ENTITY_CODEC.list().optionalFieldOf("entities", Collections.emptyList()).forGetter(Structure.class, s -> s.entities)
-    ).apply(instance, Structure::new)).describe("Structure");
+    ).apply(instance, Structure::new)).describe("Structure").versioned(DataFixers.STRUCTURE, DataFixers.FIXERS);
 
     /**
      * Captures all blocks within the defined region, excluding entities.
@@ -135,8 +136,8 @@ public class Structure {
      * @param corner2 The opposite corner {@link Location} bounding the region.
      * @param origin  The designated origin {@link Location} utilized for relative positioning.
      */
-    public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin) {
-        fill(corner1, corner2, origin, true);
+    public CompletableFuture<Void> fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin) {
+        return fill(corner1, corner2, origin, true);
     }
 
     /**
@@ -148,8 +149,9 @@ public class Structure {
      * @param origin          The origin {@link Location} used for zero-point relative alignment.
      * @param includeEntities True if entities within the bounding box should be captured and serialized.
      */
-    @SuppressWarnings("unchecked")
-    public void fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin, boolean includeEntities) {
+    public CompletableFuture<Void> fill(@NotNull Location corner1, @NotNull Location corner2, @NotNull Location origin, boolean includeEntities) {
+        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+
         palette.clear();
         blocks.clear();
         entities.clear();
@@ -217,9 +219,14 @@ public class Structure {
                             this.entities.add(new StructureEntity(relativePos, savedEntity));
                         }
                     }
+                    completionFuture.complete(null);
                 }).region(origin).once();
+            } else {
+                completionFuture.complete(null);
             }
         });
+
+        return completionFuture;
     }
 
     /**
@@ -320,7 +327,6 @@ public class Structure {
      * @param rotation  The specified {@link StructureRotation}.
      * @param mirror    The specified {@link Mirror} transform.
      */
-    @SuppressWarnings("unchecked")
     private void bakePalette(BlockData[] dataOut, CustomBlock[] customOut, StructureRotation rotation, Mirror mirror) {
         for (int i = 0; i < palette.size(); i++) {
             PaletteEntry entry = palette.get(i);

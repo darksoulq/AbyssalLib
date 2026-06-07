@@ -13,6 +13,7 @@ import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
 import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
+import com.github.darksoulq.abyssallib.server.util.Integrations;
 import com.github.darksoulq.abyssallib.world.advancement.Advancement;
 import com.github.darksoulq.abyssallib.world.advancement.AdvancementLoader;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
@@ -54,6 +55,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.event.world.WorldInitEvent;
@@ -218,6 +220,11 @@ public class ServerEvents {
     @SubscribeEvent(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
         checkAndGenerateLoot(e.getBlock(), e.getPlayer());
+    }
+
+    @SubscribeEvent
+    public void onPluginLoad(PluginEnableEvent event) {
+        Integrations.resolve(event.getPlugin());
     }
 
     private void checkAndGenerateLoot(Block block, @Nullable Player looter) {

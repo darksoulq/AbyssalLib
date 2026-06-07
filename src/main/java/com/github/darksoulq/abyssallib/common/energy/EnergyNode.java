@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.common.energy;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;

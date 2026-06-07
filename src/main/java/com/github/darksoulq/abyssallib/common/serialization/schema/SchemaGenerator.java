@@ -3,11 +3,7 @@ package com.github.darksoulq.abyssallib.common.serialization.schema;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.RecordField;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Generates schema representations from codec definitions.

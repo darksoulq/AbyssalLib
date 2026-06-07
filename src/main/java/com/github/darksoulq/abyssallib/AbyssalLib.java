@@ -2,9 +2,6 @@ package com.github.darksoulq.abyssallib;
 
 import com.github.darksoulq.abyssallib.bootstrap.*;
 import com.github.darksoulq.abyssallib.common.config.internal.PluginConfig;
-import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
-import com.github.darksoulq.abyssallib.common.serialization.ops.JsonOps;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.permission.PermissionManager;
 import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebServer;
@@ -58,13 +55,14 @@ public final class AbyssalLib extends JavaPlugin {
         Events.init(this);
         Services.init();
         PackSetup.init(this);
+        Compatibilities.init();
 
         if (CONFIG.metrics.get()) {
             Metrics metricsImpl = metrics.create(this);
             metricsImpl.ready();
         }
 
-        new UpdateChecker(this, "abyssallib", true, ".alpha").check(result -> {
+        new UpdateChecker(this, "abyssallib", true, "-alpha").check(result -> {
             getLogger().warning("A new update is available: " + result.version().toString());
             getLogger().warning("Download at: " + result.link());
         });

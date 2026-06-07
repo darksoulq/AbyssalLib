@@ -1,10 +1,10 @@
 package com.github.darksoulq.abyssallib.common.serialization.codecs;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
-import com.github.darksoulq.abyssallib.common.serialization.schema.CodecVisitor;
 import com.github.darksoulq.abyssallib.common.serialization.DataError;
 import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
+import com.github.darksoulq.abyssallib.common.serialization.schema.CodecVisitor;
 import com.github.darksoulq.abyssallib.common.util.Either;
 
 /**

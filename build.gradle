@@ -47,10 +47,14 @@ repositories {
         name = 'faststatsReleases'
         url = uri('https://repo.faststats.dev/releases')
     }
+
+    maven {
+        url = uri('https://repo.breweryteam.dev/releases')
+    }
 }
 
 dependencies {
-    paperweight.paperDevBundle('26.1.2.build.7-alpha')
+    paperweight.paperDevBundle('26.1.2.build.+')
 
     compileOnly 'dev.faststats.metrics:bukkit:0.22.0'
     compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2'
@@ -69,6 +73,7 @@ dependencies {
 
     compileOnly 'com.magmaguy:ResourcePackManager:1.7.1'
     compileOnly 'me.clip:placeholderapi:2.11.7'
+    compileOnly 'dev.jsinco.brewery:thebrewingproject-bukkit:3.1.4'
 }
 
 runPaper.folia.registerTask()

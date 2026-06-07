@@ -81,5 +81,10 @@
       <option name="name" value="faststatsReleases" />
       <option name="url" value="https://repo.faststats.dev/releases" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven" />
+      <option name="name" value="maven" />
+      <option name="url" value="https://repo.breweryteam.dev/releases" />
+    </remote-repository>
   </component>
 </project>

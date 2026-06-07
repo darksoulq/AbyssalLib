@@ -2,7 +2,6 @@ package com.github.darksoulq.abyssallib.common.reflection;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.NoSuchElementException;
 
 public class ReflectAnnotation<A extends Annotation> {
 

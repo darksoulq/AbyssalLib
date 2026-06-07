@@ -4,12 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.DataError;
 import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.DynamicOps;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Validates structured data against a set of schema rules.
