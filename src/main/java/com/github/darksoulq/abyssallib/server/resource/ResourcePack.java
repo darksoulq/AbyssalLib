@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackCompileEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
 import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
@@ -207,6 +208,25 @@ public class ResourcePack {
         compile(override);
         AbyssalLib.PACK_SERVER.registerResourcePack(pluginId, outputFile);
         if (HookConstants.isEnabled(HookConstants.Plugin.RSPM)) {
+            registerWithRspm(0);
+        }
+    }
+
+    /**
+     * Registers this pack with ResourcePackManager.
+     * <p>
+     * RSPM's API is documented as callable during onEnable, but some RSPM builds
+     * do not finish loading their own config until a later (delayed-init) phase.
+     * Calling the API before that completes throws (e.g. NPE from a null
+     * priorityOrder list) and aborts AbyssalLib's enable. To stay robust against
+     * RSPM's init timing we attempt the call and, if it fails, retry on a short
+     * delay until it succeeds or we exhaust a bounded number of attempts.
+     *
+     * @param attempt the current attempt number (0-indexed)
+     */
+    private void registerWithRspm(int attempt) {
+        final int maxAttempts = 100; // ~100s at 20 TPS; covers RSPM delayed init
+        try {
             ResourcePackManagerAPI.registerLocalResourcePack(
                     plugin.getName(),
                     plugin.getName() + "/pack/resourcepack.zip",
@@ -215,6 +235,18 @@ public class ResourcePack {
                     true,
                     null
             );
+        } catch (Throwable t) {
+            if (attempt >= maxAttempts) {
+                AbyssalLib.LOGGER.warning(
+                        "Failed to register resource pack with ResourcePackManager after "
+                        + maxAttempts + " attempts; giving up. Pack will still be served "
+                        + "via AbyssalLib's built-in pack server. Last error: " + t);
+                return;
+            }
+            final int next = attempt + 1;
+            AbyssalLib.SCHEDULER.schedule(() -> registerWithRspm(next))
+                    .after(20, Clock.TICKS)
+                    .once();
         }
     }
 
