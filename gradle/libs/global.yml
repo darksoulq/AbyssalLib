@@ -1,0 +1,69 @@
+faststats:
+  group: dev.faststats.metrics
+  name: bukkit
+  version: 0.22.0
+
+coroutines:
+  group: org.jetbrains.kotlinx
+  name: kotlinx-coroutines-core
+  version: 1.10.2
+
+sqlite:
+  group: org.xerial
+  name: sqlite-jdbc
+  version: 3.44.1.0
+
+pdfbox:
+  group: org.apache.pdfbox
+  name: fontbox
+  version: 3.0.5
+
+mongodb:
+  group: org.mongodb
+  name: mongodb-driver-sync
+  version: 5.0.0
+
+jedis:
+  group: redis.clients
+  name: jedis
+  version: 5.1.2
+
+mariadb:
+  group: org.mariadb.jdbc
+  name: mariadb-java-client
+  version: 3.3.3
+
+postgresql:
+  group: org.postgresql
+  name: postgresql
+  version: 42.7.3
+
+h2:
+  group: com.h2database
+  name: h2
+  version: 2.2.224
+
+jackson_databind:
+  group: com.fasterxml.jackson.core
+  name: jackson-databind
+  version: 2.17.0
+
+jackson_core:
+  group: com.fasterxml.jackson.core
+  name: jackson-core
+  version: 2.17.0
+
+resourcepack:
+  group: com.magmaguy
+  name: ResourcePackManager
+  version: 1.7.1
+
+placeholderapi:
+  group: me.clip
+  name: placeholderapi
+  version: 2.11.7
+
+brewery:
+  group: dev.jsinco.brewery
+  name: thebrewingproject-bukkit
+  version: 3.1.4
