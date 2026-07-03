@@ -9,7 +9,11 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.EntityType;
+//? if <=26.1.2 {
+/*import net.minecraft.world.entity.EntityType;
+*///?} else {
+import net.minecraft.world.entity.EntityTypes;
+//?}
 import net.minecraft.world.entity.PositionMoveRotation;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.*;
@@ -227,7 +231,11 @@ public class Renderers {
             }
 
             while (pool.size() < points.size()) {
-                Display.ItemDisplay nms = new Display.ItemDisplay(EntityType.ITEM_DISPLAY, level);
+                //? if <=26.1.2 {
+                /*Display.ItemDisplay nms = new Display.ItemDisplay(EntityType.ITEM_DISPLAY, level);
+                *///?} else {
+                Display.ItemDisplay nms = new Display.ItemDisplay(EntityTypes.ITEM_DISPLAY, level);
+                //?}
                 nms.setPos(center.getX(), center.getY(), center.getZ());
 
                 org.bukkit.entity.ItemDisplay bukkit = (org.bukkit.entity.ItemDisplay) nms.getBukkitEntity();

@@ -19,6 +19,7 @@ import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
+import io.papermc.paper.registry.tag.TagKey;
 import io.papermc.paper.text.Filtered;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.ComponentLike;
@@ -536,7 +537,15 @@ public class ExtraCodecs {
         Codecs.FLOAT.fieldOf("disable_cooldown_scale").forGetter(BlocksAttacks::disableCooldownScale),
         DAMAGE_REDUCTION.list().fieldOf("damage_reductions").forGetter(BlocksAttacks::damageReductions),
         ITEM_DAMAGE_FUNCTION.fieldOf("item_damage").forGetter(BlocksAttacks::itemDamage),
+        //? if >=26.1.2 {
         DAMAGE_TYPE_KEYS.optionalFieldOf("bypassed_by", null).forGetter(BlocksAttacks::bypassedBy),
+        //?} else {
+        /*DAMAGE_TYPE.optionalFieldOf("bypassed_by", null).forGetter(BlocksAttacks.class, o -> {
+            TagKey<DamageType> bypassedBy = o.bypassedBy();
+            if (bypassedBy == null) return null;
+            return RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).get(bypassedBy.key());
+        }),
+        *///?}
         Codecs.KEY.optionalFieldOf("block_sound", null).forGetter(BlocksAttacks::blockSound),
         Codecs.KEY.optionalFieldOf("disable_sound", null).forGetter(BlocksAttacks::disableSound)
     ).apply(instance, (blockDelaySeconds, disableCooldownScale, damageReductions, itemDamage, bypassedBy, blockSound, disableSound) -> {
@@ -544,7 +553,13 @@ public class ExtraCodecs {
             .blockDelaySeconds(blockDelaySeconds).disableCooldownScale(disableCooldownScale)
             .damageReductions(damageReductions).itemDamage(itemDamage)
             .blockSound(blockSound).disableSound(disableSound);
-        if (bypassedBy != null) builder.bypassedBy(bypassedBy);
+        if (bypassedBy != null) {
+            //? if >=26.1.2 {
+            builder.bypassedBy(bypassedBy);
+            //?} else {
+            /*builder.bypassedBy(TagKey.create(RegistryKey.DAMAGE_TYPE, bypassedBy.key()));
+            *///?}
+        }
         return builder.build();
     })).describe("BlocksAttacks");
 

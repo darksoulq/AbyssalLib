@@ -8,6 +8,7 @@ import com.github.darksoulq.abyssallib.server.permission.internal.PermissionWebS
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.server.resource.PackServer;
 import com.github.darksoulq.abyssallib.server.scheduler.Scheduler;
+import com.github.darksoulq.abyssallib.server.util.Integrations;
 import com.github.darksoulq.abyssallib.server.util.UpdateChecker;
 import dev.faststats.bukkit.BukkitMetrics;
 import dev.faststats.core.ErrorTracker;
@@ -40,6 +41,7 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        
         INSTANCE = this;
         LOGGER = getLogger();
         SCHEDULER = new Scheduler(this);
@@ -55,7 +57,7 @@ public final class AbyssalLib extends JavaPlugin {
         Events.init(this);
         Services.init();
         PackSetup.init(this);
-        Compatibilities.init();
+        Integrations.when("TheBrewingProject", (ignored) -> Compatibilities.brewery());
 
         if (CONFIG.metrics.get()) {
             Metrics metricsImpl = metrics.create(this);

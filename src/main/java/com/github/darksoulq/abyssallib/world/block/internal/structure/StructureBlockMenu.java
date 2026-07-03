@@ -101,8 +101,13 @@ public class StructureBlockMenu {
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("SAVE", NamedTextColor.GREEN, TextDecoration.BOLD),
             ctx -> {
-                if (tile.save()) player.sendMessage(Component.text("Structure saved successfully!", NamedTextColor.GREEN));
-                else player.sendMessage(Component.text("Structure save failed.", NamedTextColor.RED));
+                tile.save().thenAccept(success -> {
+                    if (success) {
+                        player.sendMessage(Component.text("Structure saved successfully!", NamedTextColor.GREEN));
+                    } else {
+                        player.sendMessage(Component.text("Structure save failed.", NamedTextColor.RED));
+                    }
+                });
             },
             Component.text("Click to save structure", NamedTextColor.GRAY)
         ));
@@ -173,7 +178,7 @@ public class StructureBlockMenu {
 
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("LOAD", NamedTextColor.GREEN, TextDecoration.BOLD),
-            _ -> {
+            ignored -> {
                 if (tile.load()) player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure load failed. Check name.", NamedTextColor.RED));
             },

@@ -323,19 +323,19 @@ public final class ServerTranslator {
      */
     private static List<Component> extractArguments(@NotNull TranslatableComponent translatable) {
         List<Component> extracted = new ArrayList<>();
-        try {
-            for (TranslationArgument arg : translatable.arguments()) {
-                if (arg.value() instanceof Component comp) {
-                    extracted.add(comp);
-                } else {
-                    extracted.add(Component.text(String.valueOf(arg.value())));
-                }
-            }
-        } catch (Throwable ignored) {}
 
-        if (extracted.isEmpty()) {
-            extracted.addAll(translatable.args());
+        //? if <=26.1.2 {
+        /*extracted.addAll(translatable.args());
+        *///?} else {
+        for (TranslationArgument arg : translatable.arguments()) {
+            if (arg.value() instanceof Component comp) {
+                extracted.add(comp);
+            } else {
+                extracted.add(Component.text(String.valueOf(arg.value())));
+            }
         }
+        //?}
+
         return extracted;
     }
 

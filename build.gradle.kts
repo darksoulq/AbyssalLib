@@ -1,6 +1,7 @@
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.util.LinkedHashMap
+import net.thebugmc.gradle.sonatypepublisher.PublishingType
 
 buildscript {
     repositories { mavenCentral() }
@@ -9,14 +10,16 @@ buildscript {
 
 plugins {
     `java-library`
+    signing
+    id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
     kotlin("jvm") version "2.3.20"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.21"
     id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
-group = "com.github.darksoulq"
+group = "io.github.darksoulq"
 val mcVersion = stonecutter.current.project
-version = "2.4.0-mc.${mcVersion}-alpha.1"
+version = "2.4.0-mc.${mcVersion}-alpha.2-SNAPSHOT"
 
 val yamlParser = Yaml()
 
@@ -27,7 +30,7 @@ fun parseYaml(f: File): Map<String, Any> {
     return (obj as? Map<String, Any>) ?: emptyMap()
 }
 
-fun readRemovals(f: File): List<String> {
+fun readLinesSafe(f: File): List<String> {
     if (!f.exists()) return emptyList()
     return f.readLines().map { it.trim() }.filter { it.isNotEmpty() }
 }
@@ -51,6 +54,17 @@ val targetJavaVersion = activeConfig["java"]?.toString()?.toIntOrNull() ?: 25
 val paperweightStr = activeConfig["paperweight"]?.toString()?.replace("{version}", mcVersion) ?: ""
 val apiVersionStr = activeConfig["apiVersion"]?.toString()?.replace("{version}", mcVersion) ?: ""
 
+val activeExcludes = (
+        readLinesSafe(File(rootDir, "gradle/excludes/global.txt")) +
+                readLinesSafe(File(rootDir, "gradle/excludes/${mcVersion}/excludes.txt"))
+        ).minus(readLinesSafe(File(rootDir, "gradle/excludes/${mcVersion}/removal.txt")).toSet())
+
+sourceSets {
+    main {
+        activeExcludes.forEach { java.exclude(it) }
+    }
+}
+
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
     withSourcesJar()
@@ -62,7 +76,7 @@ kotlin { jvmToolchain(targetJavaVersion) }
 val activeRepos = mergeMaps(
     parseYaml(File(rootDir, "gradle/repos/global.yml")),
     parseYaml(File(rootDir, "gradle/repos/${mcVersion}/repos.yml")),
-    readRemovals(File(rootDir, "gradle/repos/${mcVersion}/removal.txt"))
+    readLinesSafe(File(rootDir, "gradle/repos/${mcVersion}/removal.txt"))
 )
 
 repositories {
@@ -75,7 +89,7 @@ repositories {
 val activeLibs = mergeMaps(
     parseYaml(File(rootDir, "gradle/libs/global.yml")),
     parseYaml(File(rootDir, "gradle/libs/${mcVersion}/libs.yml")),
-    readRemovals(File(rootDir, "gradle/libs/${mcVersion}/removal.txt"))
+    readLinesSafe(File(rootDir, "gradle/libs/${mcVersion}/removal.txt"))
 )
 
 dependencies {
@@ -99,6 +113,12 @@ dependencies {
 runPaper { folia.registerTask() }
 
 tasks {
+    withType<Jar>().configureEach {
+        archiveVersion.set(project.version.toString())
+        archiveBaseName.set("AbyssalLib")
+        activeExcludes.forEach { exclude(it) }
+    }
+
     withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
         options.release.set(targetJavaVersion)
@@ -121,12 +141,7 @@ tasks {
         filesMatching("paper-plugin.yml") { expand(props) }
     }
 
-    val excludesFile = File(rootDir, "gradle/javadoc-excludes.txt")
-    val javadocExcludesList = if (excludesFile.exists()) {
-        excludesFile.readLines().map { it.trim() }.filter { it.isNotEmpty() }
-    } else {
-        emptyList()
-    }
+    val javadocExcludesList = readLinesSafe(File(rootDir, "gradle/javadoc-excludes.txt"))
 
     javadoc {
         val standardOptions = options as StandardJavadocDocletOptions
@@ -139,5 +154,85 @@ tasks {
             links("https://docs.oracle.com/en/java/javase/$targetJavaVersion/docs/api/")
         }
         exclude(javadocExcludesList)
+    }
+}
+
+centralPortal {
+    name = "AbyssalLib"
+    publishingType = PublishingType.AUTOMATIC
+    pom {
+        name = "AbyssalLib"
+        description = "Library for Minecraft/Folia plugins"
+        url = "https://github.com/darksoulq/AbyssalLib"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://opensource.org/licenses/MIT"
+            }
+        }
+        developers {
+            developer {
+                id = "darksoulq"
+                name = "darksoulq"
+            }
+        }
+        scm {
+            connection = "scm:git:git://github.com/darksoulq/AbyssalLib.git"
+            developerConnection = "scm:git:ssh://github.com/darksoulq/AbyssalLib.git"
+            url = "https://github.com/darksoulq/AbyssalLib"
+        }
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("snapshot") {
+            from(components["java"])
+            artifactId = "AbyssalLib"
+
+            pom {
+                name.set("AbyssalLib")
+                description.set("Library for Minecraft/Folia plugins")
+                url.set("https://github.com/darksoulq/AbyssalLib")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("darksoulq")
+                        name.set("darksoulq")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/darksoulq/AbyssalLib.git")
+                    developerConnection.set("scm:git:ssh://github.com/darksoulq/AbyssalLib.git")
+                    url.set("https://github.com/darksoulq/AbyssalLib")
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = "SonatypeSnapshots"
+            url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+            credentials {
+                username = project.findProperty("centralPortal.username") as String?
+                password = project.findProperty("centralPortal.password") as String?
+            }
+        }
+    }
+}
+
+signing {
+    val keyFile = rootProject.file("sonatype.asc")
+    if (keyFile.exists()) {
+        useInMemoryPgpKeys(
+            project.providers.gradleProperty("signing.keyId").orNull,
+            keyFile.readText(),
+            project.providers.gradleProperty("signing.password").orNull
+        )
     }
 }

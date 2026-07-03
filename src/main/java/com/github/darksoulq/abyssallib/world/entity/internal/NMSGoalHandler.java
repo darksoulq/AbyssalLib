@@ -8,13 +8,21 @@ import org.bukkit.entity.LivingEntity;
 public class NMSGoalHandler {
     public static void clearGoals(LivingEntity entity) {
         Mob nms = (Mob) ((CraftLivingEntity) entity).getHandle();
-        nms.goalSelector.removeAllGoals(g -> true);
+        //? if <=26.1.2 {
+        /*nms.goalSelector.removeAllGoals(g -> true);
+        *///?} else {
+        nms.getGoalSelector().removeAllGoals(g -> true);
+        //?}
         nms.targetSelector.removeAllGoals(g -> true);
     }
 
     public static void addGoal(LivingEntity entity, Goal goal, int priority) {
         Mob nms = (Mob) ((CraftLivingEntity) entity).getHandle();
-        nms.goalSelector.addGoal(priority, goal);
+        //? if <=26.1.2 {
+        /*nms.goalSelector.addGoal(priority, goal);
+        *///?} else {
+        nms.getGoalSelector().addGoal(priority, goal);
+        //?}
     }
     public static void addTargetGoal(LivingEntity entity, Goal goal, int priority) {
         Mob nms = (Mob) ((CraftLivingEntity) entity).getHandle();

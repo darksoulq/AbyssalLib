@@ -107,7 +107,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
         Condition.codec(Codecs.KEY).list().optionalFieldOf("without", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.without),
         Condition.codec(Codecs.KEY).list().optionalFieldOf("with", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.with),
         Condition.codec(COMPONENT_ENTRY_CODEC).list().optionalFieldOf("components", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.valued),
-        Condition.codec(Codec.<ItemPredicate>recursive(_ -> ItemPredicate.CODEC)).list().optionalFieldOf("predicates", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.predicates),
+        Condition.codec(Codec.<ItemPredicate>recursive(ignored -> ItemPredicate.CODEC)).list().optionalFieldOf("predicates", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.predicates),
         Codecs.KEY.nullable().optionalFieldOf("id", null).forGetter(ItemPredicate.class, p -> p.id)
     ).apply(instance, ItemPredicate::new)).describe("InlineItemPredicate");
 

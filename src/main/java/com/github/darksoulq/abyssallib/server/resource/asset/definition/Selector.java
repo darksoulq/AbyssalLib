@@ -1160,31 +1160,9 @@ public interface Selector {
             Map<String, Object> toJson();
         }
 
-        public record Banner(NamedColor color, @Nullable Attachment attachment) implements Type {
-            public Banner(NamedColor color) {
-                this(color, null);
-            }
 
-            @Override
-            public String id() {
-                return "minecraft:banner";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("color", color.name().toLowerCase());
-                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
-                return json;
-            }
-
-            public enum Attachment {
-                WALL, GROUND
-            }
-        }
-
-        public record Bed(Texture texture, Part part) implements Type {
+        //? if <=26.1.2 {
+        /*public record Bed(Texture texture, Part part) implements Type {
             @Override
             public String id() {
                 return "minecraft:bed";
@@ -1203,104 +1181,6 @@ public interface Selector {
                 HEAD, FOOT
             }
         }
-
-        public static class Bell implements Type {
-            @Override
-            public String id() {
-                return "minecraft:bell";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                return Map.of("type", id());
-            }
-        }
-
-        public record Book(float openAngle, float page1, float page2) implements Type {
-            @Override
-            public String id() {
-                return "minecraft:book";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("open_angle", openAngle);
-                json.put("page1", page1);
-                json.put("page2", page2);
-                return json;
-            }
-        }
-
-        public static class Conduit implements Type {
-            @Override
-            public String id() {
-                return "minecraft:conduit";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                return Map.of("type", id());
-            }
-        }
-
-        public record Chest(Texture texture, int openness, @Nullable ChestType chestType) implements Type {
-            public Chest(Texture texture, int openness) {
-                this(texture, openness, null);
-            }
-
-            @Override
-            public String id() {
-                return "minecraft:chest";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("texture", texture.file());
-                json.put("openness", openness);
-                if (chestType != null) json.put("chest_type", chestType.name().toLowerCase());
-                return json;
-            }
-
-            public enum ChestType {
-                SINGLE, LEFT, RIGHT
-            }
-        }
-
-        public static class DecoratedPot implements Type {
-            @Override
-            public String id() {
-                return "minecraft:decorated_pot";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                return Map.of("type", id());
-            }
-        }
-
-        public record EndCube(Effect effect) implements Type {
-            @Override
-            public String id() {
-                return "minecraft:end_cube";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("effect", effect.name().toLowerCase());
-                return json;
-            }
-
-            public enum Effect {
-                PORTAL, GATEWAY
-            }
-        }
-
         public static class HangingSign implements Type {
             private final WoodType type;
             private final Texture texture;
@@ -1348,83 +1228,6 @@ public interface Selector {
                 WALL, CEILING, CEILING_MIDDLE
             }
         }
-
-        public record Head(HeadType kind, Texture texture, int animationTime) implements Type {
-            public Head(HeadType kind, @Nullable Texture texture, int animationTime) {
-                this.kind = kind;
-                this.texture = texture;
-                this.animationTime = animationTime;
-            }
-
-            @Nullable
-            public Texture texture() {
-                return texture;
-            }
-
-            @Override
-            public String id() {
-                return "minecraft:head";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("kind", kind.name().toLowerCase());
-                if (texture != null) {
-                    json.put("texture", texture.file());
-                }
-                if (kind.equals(HeadType.DRAGON) || kind.equals(HeadType.PIGLIN)) {
-                    json.put("animation", animationTime);
-                }
-                return json;
-            }
-        }
-
-        public static class Shield implements Type {
-            @Override
-            public String id() {
-                return "minecraft:shield";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                return Map.of("type", id());
-            }
-        }
-
-        public static class ShulkerBox implements Type {
-            private final Texture texture;
-            private final int openness;
-
-            public ShulkerBox(Texture texture, int openness) {
-                this.texture = texture;
-                this.openness = openness;
-            }
-
-            public Texture getTexture() {
-                return texture;
-            }
-
-            public int getOpenness() {
-                return openness;
-            }
-
-            @Override
-            public String id() {
-                return "minecraft:shulker_box";
-            }
-
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("texture", texture.file());
-                json.put("openness", openness);
-                return json;
-            }
-        }
-
         public static class StandingSign implements Type {
             private final WoodType type;
             private final Texture texture;
@@ -1472,7 +1275,195 @@ public interface Selector {
                 WALL, GROUND
             }
         }
+        *///?}
 
+        public record Banner(NamedColor color, @Nullable Attachment attachment) implements Type {
+            public Banner(NamedColor color) {
+                this(color, null);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:banner";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("color", color.name().toLowerCase());
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
+                return json;
+            }
+
+            public enum Attachment {
+                WALL, GROUND
+            }
+        }
+        public static class Bell implements Type {
+            @Override
+            public String id() {
+                return "minecraft:bell";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                return Map.of("type", id());
+            }
+        }
+        public record Book(float openAngle, float page1, float page2) implements Type {
+            @Override
+            public String id() {
+                return "minecraft:book";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("open_angle", openAngle);
+                json.put("page1", page1);
+                json.put("page2", page2);
+                return json;
+            }
+        }
+        public static class Conduit implements Type {
+            @Override
+            public String id() {
+                return "minecraft:conduit";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                return Map.of("type", id());
+            }
+        }
+        public record Chest(Texture texture, int openness, @Nullable ChestType chestType) implements Type {
+            public Chest(Texture texture, int openness) {
+                this(texture, openness, null);
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:chest";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("texture", texture.file());
+                json.put("openness", openness);
+                if (chestType != null) json.put("chest_type", chestType.name().toLowerCase());
+                return json;
+            }
+
+            public enum ChestType {
+                SINGLE, LEFT, RIGHT
+            }
+        }
+        public static class DecoratedPot implements Type {
+            @Override
+            public String id() {
+                return "minecraft:decorated_pot";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                return Map.of("type", id());
+            }
+        }
+        public record EndCube(Effect effect) implements Type {
+            @Override
+            public String id() {
+                return "minecraft:end_cube";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("effect", effect.name().toLowerCase());
+                return json;
+            }
+
+            public enum Effect {
+                PORTAL, GATEWAY
+            }
+        }
+        public record Head(HeadType kind, Texture texture, int animationTime) implements Type {
+            public Head(HeadType kind, @Nullable Texture texture, int animationTime) {
+                this.kind = kind;
+                this.texture = texture;
+                this.animationTime = animationTime;
+            }
+
+            @Nullable
+            public Texture texture() {
+                return texture;
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:head";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("kind", kind.name().toLowerCase());
+                if (texture != null) {
+                    json.put("texture", texture.file());
+                }
+                if (kind.equals(HeadType.DRAGON) || kind.equals(HeadType.PIGLIN)) {
+                    json.put("animation", animationTime);
+                }
+                return json;
+            }
+        }
+        public static class Shield implements Type {
+            @Override
+            public String id() {
+                return "minecraft:shield";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                return Map.of("type", id());
+            }
+        }
+        public static class ShulkerBox implements Type {
+            private final Texture texture;
+            private final int openness;
+
+            public ShulkerBox(Texture texture, int openness) {
+                this.texture = texture;
+                this.openness = openness;
+            }
+
+            public Texture getTexture() {
+                return texture;
+            }
+
+            public int getOpenness() {
+                return openness;
+            }
+
+            @Override
+            public String id() {
+                return "minecraft:shulker_box";
+            }
+
+            @Override
+            public Map<String, Object> toJson() {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", id());
+                json.put("texture", texture.file());
+                json.put("openness", openness);
+                return json;
+            }
+        }
         public static class Trident implements Type {
             @Override
             public String id() {

@@ -21,7 +21,6 @@ import org.bukkit.block.data.type.Leaves;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +231,6 @@ public class Structure {
     /**
      * Places this structure asynchronously using a scheduled repeating task securely evaluating regional boundaries.
      *
-     * @param plugin        The {@link Plugin} utilized for scheduling the task.
      * @param origin        The target placement origin {@link Location}.
      * @param rotation      The {@link StructureRotation} to apply.
      * @param mirror        The {@link Mirror} transformation to apply.
@@ -240,9 +238,9 @@ public class Structure {
      * @param blocksPerTick The maximum number of blocks to process per execution slice.
      * @return A {@link CompletableFuture} that resolves when the entire placement operation completes.
      */
-    public CompletableFuture<Void> placeAsync(@NotNull Plugin plugin, @NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity, int blocksPerTick) {
+    public CompletableFuture<Void> placeAsync(@NotNull Location origin, @NotNull StructureRotation rotation, @NotNull Mirror mirror, float integrity, int blocksPerTick) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).start(plugin);
+        new Paster(origin, rotation, mirror, integrity, blocksPerTick, future).start();
         return future;
     }
 
@@ -618,7 +616,7 @@ public class Structure {
             bakePalette(bakedData, bakedCustom, rotation, mirror);
         }
 
-        public void start(Plugin plugin) {
+        public void start() {
             activeTask = AbyssalLib.SCHEDULER.schedule(this::tick).region(origin).repeatEvery(1L, Clock.TICKS);
         }
 

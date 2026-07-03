@@ -2,73 +2,84 @@ package com.github.darksoulq.abyssallib.world.item.component.builtin;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
-import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponent;
 import com.github.darksoulq.abyssallib.world.item.component.DataComponentType;
 import com.github.darksoulq.abyssallib.world.item.component.Vanilla;
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
-import io.papermc.paper.registry.TypedKey;
-import io.papermc.paper.registry.set.RegistryKeySet;
-import io.papermc.paper.registry.set.RegistrySet;
 import net.kyori.adventure.key.Key;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.inventory.ItemStack;
 
+//? if >=26.1.2 {
+import com.github.darksoulq.abyssallib.common.serialization.DataResult;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.set.RegistryKeySet;
+import io.papermc.paper.registry.set.RegistrySet;
+import io.papermc.paper.registry.TypedKey;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import java.util.ArrayList;
 import java.util.List;
+//?} else {
+/*import io.papermc.paper.registry.tag.TagKey;
+*///?}
 
-public class ProvidesBannerPatterns extends DataComponent<List<Key>> implements Vanilla {
+public class ProvidesBannerPatterns extends DataComponent</*? if >=26.1.2 {*/List<Key>/*?} else {*//*Key*//*?}*/> implements Vanilla {
 
+    //? if >=26.1.2 {
     public static final Codec<ProvidesBannerPatterns> CODEC = Codec.oneOf(ProvidesBannerPatterns.class,
         Codecs.KEY.flatXmap(
             key -> DataResult.success(new ProvidesBannerPatterns(key)),
             component -> {
-                if (component.value.size() != 1) {
-                    return DataResult.error("Expected exactly 1 key.");
-                }
+                if (component.value.size() != 1) return DataResult.error("Expected exactly 1 key.");
                 return DataResult.success(component.value.getFirst());
             }
         ),
-        Codecs.KEY.list().xmap(
-            ProvidesBannerPatterns::new,
-            ProvidesBannerPatterns::getValue
-        )
+        Codecs.KEY.list().xmap(ProvidesBannerPatterns::new, ProvidesBannerPatterns::getValue)
     ).describe("ProvidesBannerPatterns");
+    //?} else {
+    /*public static final Codec<ProvidesBannerPatterns> CODEC = Codecs.KEY.xmap(
+        ProvidesBannerPatterns::new,
+        ProvidesBannerPatterns::getValue
+    ).describe("ProvidesBannerPatterns");
+    *///?}
 
-    public static final DataComponentType<ProvidesBannerPatterns> TYPE = DataComponentType.<ProvidesBannerPatterns, RegistryKeySet<PatternType>>valued(
+    public static final DataComponentType<ProvidesBannerPatterns> TYPE = DataComponentType.<ProvidesBannerPatterns, /*? if >=26.1.2 {*/RegistryKeySet<PatternType>/*?} else {*//*TagKey<PatternType>*//*?}*/>valued(
         CODEC,
         ProvidesBannerPatterns::new
     );
 
+    //? if >=26.1.2 {
     public ProvidesBannerPatterns(RegistryKeySet<PatternType> patterns) {
         super(resolveKeys(patterns));
     }
 
-    public ProvidesBannerPatterns(Key pattern) {
-        super(List.of(pattern));
+    private static List<Key> resolveKeys(RegistryKeySet<PatternType> patterns) {
+        Registry<PatternType> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN);
+        List<Key> keys = new ArrayList<>();
+        patterns.resolve(registry).forEach(type -> {
+            NamespacedKey key = registry.getKey(type);
+            if (key != null) keys.add(Key.key(key.asString()));
+        });
+        return keys;
     }
 
     public ProvidesBannerPatterns(List<Key> patterns) {
         super(patterns);
     }
+    //?} else {
+    /*public ProvidesBannerPatterns(TagKey<PatternType> tag) {
+        super(tag.key());
+    }
+    *///?}
 
-    private static List<Key> resolveKeys(RegistryKeySet<PatternType> patterns) {
-        Registry<PatternType> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN);
-
-        List<Key> keys = new ArrayList<>();
-
-        patterns.resolve(registry).forEach(type -> {
-            NamespacedKey key = registry.getKey(type);
-            if (key != null) {
-                keys.add(Key.key(key.asString()));
-            }
-        });
-
-        return keys;
+    public ProvidesBannerPatterns(Key pattern) {
+        //? if >=26.1.2 {
+        super(List.of(pattern));
+        //?} else {
+        /*super(pattern);
+        *///?}
     }
 
     @Override
@@ -78,13 +89,15 @@ public class ProvidesBannerPatterns extends DataComponent<List<Key>> implements 
 
     @Override
     public void apply(ItemStack stack) {
+        //? if >=26.1.2 {
         List<TypedKey<PatternType>> keys = new ArrayList<>();
-
         for (Key key : value) {
             keys.add(TypedKey.create(RegistryKey.BANNER_PATTERN, key));
         }
-
         stack.setData(DataComponentTypes.PROVIDES_BANNER_PATTERNS, RegistrySet.keySet(RegistryKey.BANNER_PATTERN, keys));
+        //?} else {
+        /*stack.setData(DataComponentTypes.PROVIDES_BANNER_PATTERNS, TagKey.create(RegistryKey.BANNER_PATTERN, value));
+        *///?}
     }
 
     @Override

@@ -87,12 +87,17 @@ public class CommandBus {
             } else if (cmd.legacyMethod != null) {
                 Command command = cmd.legacyMethod.getAnnotation(Command.class);
                 registerLegacyMethod(cmd.pluginId, cmd.handler, cmd.legacyMethod, command);
-                registered.remove(registered.size() - 1); 
+                registered.removeLast();
             }
         }
 
-        Bukkit.getOnlinePlayers().forEach(p ->
-            MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle())
+        Bukkit.getOnlinePlayers().forEach(p -> {
+            //? if <=26.1.2 {
+            /*MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle());
+            *///?} else {
+            MinecraftServer.getServer().getCommands().sendCommands(((CraftPlayer) p).getHandle());
+            //?}
+            }
         );
     }
 

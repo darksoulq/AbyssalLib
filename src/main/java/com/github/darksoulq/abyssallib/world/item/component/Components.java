@@ -32,7 +32,6 @@ public class Components {
     public static DataComponentType<?> DEATH_PROTECTION = register("death_protection", DeathProtect.TYPE);
     public static DataComponentType<?> TOOLTIP_DISPLAY = register("tooltip_display", DisplayTooltip.TYPE);
     public static DataComponentType<?> DAMAGE = register("damage", Durability.TYPE);
-    public static DataComponentType<?> DYE = register("dye", Dye.TYPE);
     public static DataComponentType<?> DYED_COLOR = register("dyed_color", DyedColor.TYPE);
     public static DataComponentType<?> ENCHANTABLE = register("enchantable", EnchantableComponent.TYPE);
     public static DataComponentType<?> ENCHANTMENT_GLINT_OVERRIDE = register("enchantment_glint_override", EnchantmentGlintOverride.TYPE);
@@ -68,6 +67,10 @@ public class Components {
     public static DataComponentType<?> DAMAGE_RESISTAMT = register("damage_resistant", ResistantDamage.TYPE);
     public static DataComponentType<?> SHULKER_COLOR = register("shulker_color", ShulkerColor.TYPE);
     public static DataComponentType<?> STORED_ENCHANTMENTS = register("stored_enchantments", StoredEnchantments.TYPE);
+    //? if >26.1.2 {
+    public static DataComponentType<?> DYE = register("dye", Dye.TYPE);
+    /*public static DataComponentType<?> SULFUR_CUBE_CONTENT = register("sulfur_cube_content", SulfurCubeItem.TYPE);
+    *///?}
     public static DataComponentType<?> SUSPICIOUS_STEW_EFFECTS = register("suspicious_stew_effects", SuspiciousStewEffect.TYPE);
     public static DataComponentType<?> TOOL = register("tool", ToolComponent.TYPE);
     public static DataComponentType<?> TOOLTIP_STYLE = register("tooltip_style", TooltipStyle.TYPE);

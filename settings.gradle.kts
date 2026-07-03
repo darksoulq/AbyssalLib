@@ -15,9 +15,11 @@ rootProject.name = "AbyssalLib"
 
 stonecutter {
     create(rootProject) {
-        versions("26.1.2", "1.21.11")
-        vcsVersion.set("26.1.2")
+        versions("26.2", "26.1.2", "1.21.11")
+        vcsVersion.set("26.2")
     }
 }
 
+include("1.21.11")
 include("26.1.2")
+include("26.2")

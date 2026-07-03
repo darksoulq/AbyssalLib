@@ -4,6 +4,7 @@ import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.serialization.internal.entity.EntityAdapter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Vex;
 
@@ -25,9 +26,15 @@ public class VexEntityAdapter extends EntityAdapter<Vex> {
             .write("limited_lifetime_ticks", Codecs.INT, value.getLimitedLifetimeTicks())
             .writeNullable("bound_location", Codecs.LOCATION, value.getBound());
 
-        if (value.getSummoner() != null) {
+        //? if <=26.1.2 {
+        /*if (value.getSummoner() != null) {
             ctx.write("summoner_uuid", Codecs.UUID, value.getSummoner().getUniqueId());
         }
+        *///?} else {
+        if (value.getOwner() != null) {
+            ctx.write("summoner_uuid", Codecs.UUID, value.getOwner().getUniqueId());
+        }
+        //?}
 
         DataResult<D> result = ctx.result();
         return result.isSuccess() ? DataResult.success(null) : DataResult.partial(null, result.warnings());
@@ -44,7 +51,11 @@ public class VexEntityAdapter extends EntityAdapter<Vex> {
             .readOptional("bound_location", Codecs.LOCATION, opt -> opt.ifPresent(vex::setBound))
             .readOptional("summoner_uuid", Codecs.UUID, opt -> opt.ifPresent(uuid -> {
                 Entity summoner = Bukkit.getEntity(uuid);
-                if (summoner instanceof Mob mob) vex.setSummoner(mob);
+                //? if <=26.1.2 {
+                /*if (summoner instanceof Mob mob) vex.setSummoner(mob);
+                *///?} else {
+                if (summoner instanceof LivingEntity livingOwner) vex.setOwner(livingOwner);
+                //?}
             }));
 
         return ctx.result();

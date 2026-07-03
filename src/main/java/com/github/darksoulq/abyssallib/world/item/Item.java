@@ -40,6 +40,7 @@ import java.util.*;
  * This class serves as the primary template for creating new items, handling
  * their data components, tooltips, and interaction logic.
  */
+@SuppressWarnings("UnstableApiUsage")
 public class Item implements Cloneable {
 
     /**

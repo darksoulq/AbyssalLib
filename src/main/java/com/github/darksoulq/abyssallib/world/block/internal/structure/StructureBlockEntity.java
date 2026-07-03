@@ -22,6 +22,7 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class StructureBlockEntity extends BlockEntity {
 
@@ -87,7 +88,7 @@ public class StructureBlockEntity extends BlockEntity {
             points.add(new Pixel(x, y, i, Color.BLUE));
         }
 
-        Generator boxGenerator = _ -> points;
+        Generator boxGenerator = ignored -> points;
 
         particles = Particles.builder()
             .origin(origin)
@@ -106,8 +107,8 @@ public class StructureBlockEntity extends BlockEntity {
         }
     }
 
-    public boolean save() {
-        if (mode.get() != StructureMode.SAVE) return false;
+    public CompletableFuture<Boolean> save() {
+        if (mode.get() != StructureMode.SAVE) return CompletableFuture.completedFuture(false);
         validateName();
         Key id = Key.key(structureName.get());
 
@@ -116,12 +117,11 @@ public class StructureBlockEntity extends BlockEntity {
         Location corner2 = corner1.clone().add(sizeX.get() - 1, sizeY.get() - 1, sizeZ.get() - 1);
 
         Structure structure = new Structure();
-        structure.fill(corner1, corner2, corner1, includeEntities.get());
-
-        Registries.STRUCTURES.remove(id.toString());
-        Registries.STRUCTURES.register(id.toString(), structure);
-
-        return StructureLoader.save(id, structure);
+        return structure.fill(corner1, corner2, corner1, includeEntities.get()).thenApply(ignored -> {
+            Registries.STRUCTURES.remove(id.toString());
+            Registries.STRUCTURES.register(id.toString(), structure);
+            return StructureLoader.save(id, structure);
+        });
     }
 
     public boolean load() {
@@ -134,7 +134,7 @@ public class StructureBlockEntity extends BlockEntity {
             if (structure == null) return false;
 
             Location target = getBlock().getLocation().clone().add(offsetX.get(), offsetY.get(), offsetZ.get());
-            structure.placeAsync(AbyssalLib.getInstance(), target, rotation.get(), mirror.get(), integrity.get(), AbyssalLib.CONFIG.features.structureBlocksPlacedPerTick.get());
+            structure.placeAsync(target, rotation.get(), mirror.get(), integrity.get(), AbyssalLib.CONFIG.features.structureBlocksPlacedPerTick.get());
             return true;
         } catch (Exception e) {
             e.printStackTrace();

@@ -9,10 +9,18 @@ import com.github.darksoulq.abyssallib.world.advancement.reward.AdvancementRewar
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.key.Key;
 import net.minecraft.advancements.*;
-import net.minecraft.advancements.criterion.ImpossibleTrigger;
+//? if <=26.1.2 {
+/*import net.minecraft.advancements.criterion.ImpossibleTrigger;
+*///?} else {
+import net.minecraft.advancements.triggers.CriteriaTriggers;
+import net.minecraft.advancements.triggers.Criterion;
+import net.minecraft.advancements.triggers.ImpossibleTrigger;
+//?}
 import net.minecraft.core.ClientAsset;
 import net.minecraft.resources.Identifier;
+//? if >1.21.11 {
 import net.minecraft.world.item.ItemStackTemplate;
+//?}
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -162,7 +170,11 @@ public class Advancement {
                 : Optional.empty();
 
             DisplayInfo info = new DisplayInfo(
+                //? if >=26.1.2 {
                 ItemStackTemplate.fromNonEmptyStack(CraftItemStack.asNMSCopy(display.getIcon())),
+                //?} else {
+                /*CraftItemStack.asNMSCopy(display.getIcon()),
+                *///?}
                 PaperAdventure.asVanilla(display.getTitle()),
                 PaperAdventure.asVanilla(display.getDescription()),
                 background,

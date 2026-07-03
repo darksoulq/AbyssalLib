@@ -534,9 +534,9 @@ public class ItemPacketModifier {
     private static Component preProcessTags(Component component) {
         return component
             .replaceText(b -> b.match(LANG_PATTERN)
-                .replacement((match, _) -> Component.translatable(match.group(1))))
+                .replacement((match, ignored) -> Component.translatable(match.group(1))))
             .replaceText(b -> b.match(LANG_OR_PATTERN)
-                .replacement((match, _) -> Component.translatable(match.group(1)).fallback(match.group(2))));
+                .replacement((match, ignored) -> Component.translatable(match.group(1)).fallback(match.group(2))));
     }
 
     public static net.minecraft.network.chat.Component translateItemNMS(net.minecraft.network.chat.Component vanilla, Player player, ItemStack stack, ItemTranslationContext context) {
