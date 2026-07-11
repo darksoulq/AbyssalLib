@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ToolComponent extends DataComponent<Tool> implements Vanilla {
     public static final Codec<ToolComponent> CODEC = ExtraCodecs.TOOL.xmap(
-            ToolComponent::new,
-            ToolComponent::getValue
+        ToolComponent::new,
+        ToolComponent::getValue
     );
     public static final DataComponentType<ToolComponent> TYPE = DataComponentType.valued(CODEC, ToolComponent::new);
 

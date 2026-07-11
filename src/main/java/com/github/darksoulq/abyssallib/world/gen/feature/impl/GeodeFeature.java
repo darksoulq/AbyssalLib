@@ -41,8 +41,8 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
             return false;
         }
 
-        int minHeight = context.level().getWorld().getMinHeight();
-        int maxHeight = context.level().getWorld().getMaxHeight();
+        int minHeight = context.level().world().getMinHeight();
+        int maxHeight = context.level().world().getMaxHeight();
 
         int nodeCount = random.nextInt(4) + 3;
         Vector[] nodes = new Vector[nodeCount];
@@ -76,7 +76,7 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
                     }
 
                     double distance = Math.sqrt(minDistance);
-                    Location currentLoc = new Location(context.level().getWorld(), x, y, z);
+                    Location currentLoc = new Location(context.level().world(), x, y, z);
 
                     if (distance > config.maxRadius()) continue;
 
@@ -110,14 +110,14 @@ public class GeodeFeature extends Feature<GeodeFeature.Config> {
     /**
      * Configuration record for the geode feature.
      *
-     * @param outerWallProvider        The block provider for the outermost protective shell.
-     * @param middleWallProvider       The block provider for the intermediate transition layer.
-     * @param innerWallProvider        The block provider for the inner geode crust.
-     * @param fillingProvider          The block provider used to fill the hollow center.
-     * @param innerPlacementsProvider  The block provider used for random crystal attachments on the inner wall.
-     * @param invalidBlocks            A list of block info structures that will abort generation if encountered at the origin.
-     * @param minRadius                The baseline radius of the inner geode cavity.
-     * @param maxRadius                The absolute maximum radius of the geode's outermost shell.
+     * @param outerWallProvider       The block provider for the outermost protective shell.
+     * @param middleWallProvider      The block provider for the intermediate transition layer.
+     * @param innerWallProvider       The block provider for the inner geode crust.
+     * @param fillingProvider         The block provider used to fill the hollow center.
+     * @param innerPlacementsProvider The block provider used for random crystal attachments on the inner wall.
+     * @param invalidBlocks           A list of block info structures that will abort generation if encountered at the origin.
+     * @param minRadius               The baseline radius of the inner geode cavity.
+     * @param maxRadius               The absolute maximum radius of the geode's outermost shell.
      */
     public record Config(
         BlockStateProvider outerWallProvider,

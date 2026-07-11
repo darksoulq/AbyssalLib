@@ -15,13 +15,21 @@ import java.util.function.Consumer;
  * Entries can represent items, empty slots, or recursive loot tables.
  */
 public abstract class LootEntry {
-    /** The relative probability weight of this entry. */
+    /**
+     * The relative probability weight of this entry.
+     */
     protected final int weight;
-    /** The quality modifier applied when luck is involved. */
+    /**
+     * The quality modifier applied when luck is involved.
+     */
     protected final int quality;
-    /** Conditions that must be met for this specific entry to be valid. */
+    /**
+     * Conditions that must be met for this specific entry to be valid.
+     */
     protected final List<LootCondition> conditions;
-    /** Functions applied to the generated item (e.g., setting amount or enchantments). */
+    /**
+     * Functions applied to the generated item (e.g., setting amount or enchantments).
+     */
     protected final List<LootFunction> functions;
 
     /**
@@ -88,7 +96,9 @@ public abstract class LootEntry {
         LootFunction.CODEC.list().optionalFieldOf("functions", Collections.emptyList()).forGetter(EmptyEntry.class, e -> e.functions)
     ).apply(instance, EmptyEntry::new)).describe("EmptyEntry");
 
-    /** Polymorphic codec for handling various {@link LootEntry} implementations. */
+    /**
+     * Polymorphic codec for handling various {@link LootEntry} implementations.
+     */
     public static final Codec<LootEntry> CODEC = Codec.dispatch(
         LootEntry.class,
         "type",
@@ -97,7 +107,9 @@ public abstract class LootEntry {
         type -> type.equals("empty") ? EMPTY_ENTRY_CODEC.unchecked() : ITEM_ENTRY_CODEC.unchecked()
     ).describe("LootEntry");
 
-    /** A loot entry that generates a specific item stack. */
+    /**
+     * A loot entry that generates a specific item stack.
+     */
     public static class ItemEntry extends LootEntry {
         private final ItemStack stack;
 
@@ -112,13 +124,16 @@ public abstract class LootEntry {
         }
     }
 
-    /** A loot entry that represents a "no drop" chance. */
+    /**
+     * A loot entry that represents a "no drop" chance.
+     */
     public static class EmptyEntry extends LootEntry {
         public EmptyEntry(int weight, int quality, List<LootCondition> conditions, List<LootFunction> functions) {
             super(weight, quality, conditions, functions);
         }
 
         @Override
-        public void expand(LootContext context, Consumer<ItemStack> generator) {}
+        public void expand(LootContext context, Consumer<ItemStack> generator) {
+        }
     }
 }

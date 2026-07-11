@@ -13,7 +13,9 @@ import org.jetbrains.annotations.NotNull;
  * fluid client-side interpolation between animation frames.
  */
 public class MotionVector extends Pixel {
-    /** The velocity {@link Vector} representing the movement direction and speed. */
+    /**
+     * The velocity {@link Vector} representing the movement direction and speed.
+     */
     private final Vector velocity;
 
     /**

@@ -22,18 +22,22 @@ import java.util.List;
  */
 public abstract class BaseMap {
 
-    /** The owning plugin instance. */
+    /**
+     * The owning plugin instance.
+     */
     private final Plugin plugin;
 
-    /** The underlying Bukkit map view object. */
+    /**
+     * The underlying Bukkit map view object.
+     */
     protected final MapView mapView;
 
     /**
      * Constructs a new {@code BaseMap} using a provided {@link MapView}.
      * Registers the renderer and saves metadata for reloading later.
      *
-     * @param plugin   The plugin owning this map.
-     * @param mapView  The map view this map instance should render on.
+     * @param plugin  The plugin owning this map.
+     * @param mapView The map view this map instance should render on.
      */
     public BaseMap(Plugin plugin, MapView mapView) {
         this.plugin = plugin;

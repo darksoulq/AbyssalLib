@@ -19,7 +19,7 @@ public abstract class Try<T> {
     /**
      * Executes a supplier that may throw an exception and wraps the result in a Try.
      *
-     * @param <T> The result type of the supplier.
+     * @param <T>      The result type of the supplier.
      * @param supplier The computation to perform which may throw a Throwable.
      * @return A Success containing the value if successful, or a Failure containing the caught Throwable.
      */
@@ -71,7 +71,7 @@ public abstract class Try<T> {
     /**
      * Transforms the successful value using the provided throwing mapper function.
      *
-     * @param <U> The new result type after mapping.
+     * @param <U>    The new result type after mapping.
      * @param mapper The function to apply to the successful value.
      * @return A new Success instance if mapping succeeds, or a Failure if an exception is caught.
      */
@@ -80,7 +80,7 @@ public abstract class Try<T> {
     /**
      * Transforms the successful value into another Try using a throwing mapper function.
      *
-     * @param <U> The result type of the new Try.
+     * @param <U>    The result type of the new Try.
      * @param mapper The function to apply which returns a Try.
      * @return The result of the mapper, or a Failure if an exception occurs during execution.
      */
@@ -121,7 +121,7 @@ public abstract class Try<T> {
     /**
      * Returns the successful value or throws a transformed exception.
      *
-     * @param <X> The specific type of Throwable to be thrown.
+     * @param <X>               The specific type of Throwable to be thrown.
      * @param exceptionProvider Function to convert the original Throwable into type X.
      * @return The successful value.
      * @throws X If the computation failed.
@@ -155,9 +155,20 @@ public abstract class Try<T> {
             this.value = value;
         }
 
-        @Override public boolean isSuccess() { return true; }
-        @Override public T get() { return value; }
-        @Override public Throwable getException() { throw new NoSuchElementException("Try is a Success, no exception available."); }
+        @Override
+        public boolean isSuccess() {
+            return true;
+        }
+
+        @Override
+        public T get() {
+            return value;
+        }
+
+        @Override
+        public Throwable getException() {
+            throw new NoSuchElementException("Try is a Success, no exception available.");
+        }
 
         @Override
         public <U> Try<U> map(ThrowingFunction<? super T, ? extends U> mapper) {
@@ -177,12 +188,36 @@ public abstract class Try<T> {
             }
         }
 
-        @Override public Try<T> onFailure(Consumer<Throwable> action) { return this; }
-        @Override public Try<T> onSuccess(Consumer<T> action) { action.accept(value); return this; }
-        @Override public T orElse(T other) { return value; }
-        @Override public T orElseGet(Supplier<? extends T> other) { return value; }
-        @Override public <X extends Throwable> T orElseThrow(Function<Throwable, X> exceptionProvider) { return value; }
-        @Override public Optional<T> toOptional() { return Optional.ofNullable(value); }
+        @Override
+        public Try<T> onFailure(Consumer<Throwable> action) {
+            return this;
+        }
+
+        @Override
+        public Try<T> onSuccess(Consumer<T> action) {
+            action.accept(value);
+            return this;
+        }
+
+        @Override
+        public T orElse(T other) {
+            return value;
+        }
+
+        @Override
+        public T orElseGet(Supplier<? extends T> other) {
+            return value;
+        }
+
+        @Override
+        public <X extends Throwable> T orElseThrow(Function<Throwable, X> exceptionProvider) {
+            return value;
+        }
+
+        @Override
+        public Optional<T> toOptional() {
+            return Optional.ofNullable(value);
+        }
     }
 
     /**
@@ -205,22 +240,63 @@ public abstract class Try<T> {
             this.exception = exception;
         }
 
-        @Override public boolean isSuccess() { return false; }
-        @Override public T get() { throw new RuntimeException(exception); }
-        @Override public Throwable getException() { return exception; }
+        @Override
+        public boolean isSuccess() {
+            return false;
+        }
 
-        @Override @SuppressWarnings("unchecked")
-        public <U> Try<U> map(ThrowingFunction<? super T, ? extends U> mapper) { return (Try<U>) this; }
+        @Override
+        public T get() {
+            throw new RuntimeException(exception);
+        }
 
-        @Override @SuppressWarnings("unchecked")
-        public <U> Try<U> flatMap(ThrowingFunction<? super T, Try<U>> mapper) { return (Try<U>) this; }
+        @Override
+        public Throwable getException() {
+            return exception;
+        }
 
-        @Override public Try<T> onFailure(Consumer<Throwable> action) { action.accept(exception); return this; }
-        @Override public Try<T> onSuccess(Consumer<T> action) { return this; }
-        @Override public T orElse(T other) { return other; }
-        @Override public T orElseGet(Supplier<? extends T> other) { return other.get(); }
-        @Override public <X extends Throwable> T orElseThrow(Function<Throwable, X> exceptionProvider) throws X { throw exceptionProvider.apply(exception); }
-        @Override public Optional<T> toOptional() { return Optional.empty(); }
+        @Override
+        @SuppressWarnings("unchecked")
+        public <U> Try<U> map(ThrowingFunction<? super T, ? extends U> mapper) {
+            return (Try<U>) this;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <U> Try<U> flatMap(ThrowingFunction<? super T, Try<U>> mapper) {
+            return (Try<U>) this;
+        }
+
+        @Override
+        public Try<T> onFailure(Consumer<Throwable> action) {
+            action.accept(exception);
+            return this;
+        }
+
+        @Override
+        public Try<T> onSuccess(Consumer<T> action) {
+            return this;
+        }
+
+        @Override
+        public T orElse(T other) {
+            return other;
+        }
+
+        @Override
+        public T orElseGet(Supplier<? extends T> other) {
+            return other.get();
+        }
+
+        @Override
+        public <X extends Throwable> T orElseThrow(Function<Throwable, X> exceptionProvider) throws X {
+            throw exceptionProvider.apply(exception);
+        }
+
+        @Override
+        public Optional<T> toOptional() {
+            return Optional.empty();
+        }
     }
 
     /**

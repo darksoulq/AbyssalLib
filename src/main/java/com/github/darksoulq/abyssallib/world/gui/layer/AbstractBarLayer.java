@@ -25,40 +25,64 @@ import java.util.*;
  */
 public abstract class AbstractBarLayer implements GuiLayer {
 
-    /** The top-left starting position of the bar in the inventory. */
+    /**
+     * The top-left starting position of the bar in the inventory.
+     */
     protected final SlotPosition origin;
 
-    /** The arrangement of item templates that form the visual bar. */
+    /**
+     * The arrangement of item templates that form the visual bar.
+     */
     protected final StructureArray<Item> structure;
 
-    /** The number of visual increments per single slot/item. */
+    /**
+     * The number of visual increments per single slot/item.
+     */
     protected final int progressMax;
 
-    /** Internal GUI elements representing each piece of the bar. */
+    /**
+     * Internal GUI elements representing each piece of the bar.
+     */
     protected final GuiItem[] guiItems;
 
-    /** Precomputed slot positions for each segment of the bar. */
+    /**
+     * Precomputed slot positions for each segment of the bar.
+     */
     protected final SlotPosition[] slots;
 
-    /** The order in which slots are filled (e.g., Left-to-Right, Top-to-Bottom). */
+    /**
+     * The order in which slots are filled (e.g., Left-to-Right, Top-to-Bottom).
+     */
     protected final int[] fillOrder;
 
-    /** Cache of the previous state for each slot to minimize unnecessary updates. */
+    /**
+     * Cache of the previous state for each slot to minimize unnecessary updates.
+     */
     protected final int[] lastStates;
 
-    /** Custom string-based metadata injected into the Custom Model Data. */
+    /**
+     * Custom string-based metadata injected into the Custom Model Data.
+     */
     protected final Map<String, String> customStates = new LinkedHashMap<>();
 
-    /** Current progress percentage (0.0 to 100.0). */
+    /**
+     * Current progress percentage (0.0 to 100.0).
+     */
     protected float progress = -1;
 
-    /** The absolute fill value calculated from the last render. */
+    /**
+     * The absolute fill value calculated from the last render.
+     */
     protected int lastFilled = -1;
 
-    /** Custom display name for the bar segments. */
+    /**
+     * Custom display name for the bar segments.
+     */
     protected Component customName;
 
-    /** Cache of the last rendered name. */
+    /**
+     * Cache of the last rendered name.
+     */
     protected Component lastName;
 
     /**

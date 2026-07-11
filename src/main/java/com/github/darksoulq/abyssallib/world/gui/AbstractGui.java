@@ -12,7 +12,10 @@ import java.util.List;
  * An abstract base implementation of a Graphical User Interface (GUI).
  * This class serves as a template for creating custom menus by providing
  * lifecycle hooks and simplified methods for managing elements, flags, and layers.
+ *
+ * @deprecated Will be removed soon
  */
+@Deprecated(forRemoval = true, since = "1.4.0")
 public abstract class AbstractGui extends Gui {
 
     /**
@@ -20,12 +23,9 @@ public abstract class AbstractGui extends Gui {
      * Initializes internal collections including a HashMap for elements and
      * LinkedLists for layers and animations.
      *
-     * @param menuType
-     * The {@link MenuType} defining the size and shape of the inventory.
-     * @param title
-     * The {@link Component} representing the display name of the menu.
-     * @param tickInterval
-     * The interval between each GuiView#render call
+     * @param menuType     The {@link MenuType} defining the size and shape of the inventory.
+     * @param title        The {@link Component} representing the display name of the menu.
+     * @param tickInterval The interval between each GuiView#render call
      */
     public AbstractGui(MenuType menuType, Component title, int tickInterval) {
         super(menuType, title, new HashMap<>(), new LinkedList<>(), new LinkedList<>(), EnumSet.noneOf(GuiFlag.class), tickInterval, null, null);
@@ -44,26 +44,22 @@ public abstract class AbstractGui extends Gui {
     /**
      * Logic to execute when a player opens this GUI.
      *
-     * @param view
-     * The {@link GuiView} representing the interaction between the player and the GUI.
+     * @param view The {@link GuiView} representing the interaction between the player and the GUI.
      */
     protected abstract void onOpen(GuiView view);
 
     /**
      * Logic to execute when a player closes this GUI.
      *
-     * @param view
-     * The {@link GuiView} representing the interaction between the player and the GUI.
+     * @param view The {@link GuiView} representing the interaction between the player and the GUI.
      */
     protected abstract void onClose(GuiView view);
 
     /**
      * Assigns a {@link GuiElement} to a specific position within the GUI grid.
      *
-     * @param pos
-     * The {@link SlotPosition} where the element should be placed.
-     * @param element
-     * The {@link GuiElement} to be rendered at the specified position.
+     * @param pos     The {@link SlotPosition} where the element should be placed.
+     * @param element The {@link GuiElement} to be rendered at the specified position.
      */
     public void set(SlotPosition pos, GuiElement element) {
         this.getElements().put(pos, element);
@@ -72,8 +68,7 @@ public abstract class AbstractGui extends Gui {
     /**
      * Enables a specific behavior or restriction flag for this GUI.
      *
-     * @param flag
-     * The {@link GuiFlag} to be added to the GUI configuration.
+     * @param flag The {@link GuiFlag} to be added to the GUI configuration.
      */
     public void addFlag(GuiFlag flag) {
         this.getFlags().add(flag);
@@ -82,8 +77,7 @@ public abstract class AbstractGui extends Gui {
     /**
      * Enables multiple behavior or restriction flags for this GUI.
      *
-     * @param flags
-     * A varargs array of {@link GuiFlag} constants to be added.
+     * @param flags A varargs array of {@link GuiFlag} constants to be added.
      */
     public void addFlags(GuiFlag... flags) {
         this.getFlags().addAll(List.of(flags));
@@ -93,8 +87,7 @@ public abstract class AbstractGui extends Gui {
      * Adds a functional layer to the GUI.
      * Layers are processed to determine element visibility and interaction priority.
      *
-     * @param layer
-     * The {@link GuiLayer} to append to the GUI's layer stack.
+     * @param layer The {@link GuiLayer} to append to the GUI's layer stack.
      */
     public void addLayer(GuiLayer layer) {
         this.getLayers().add(layer);

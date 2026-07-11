@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class BreakSound extends DataComponent<Key> implements Vanilla {
     public static final Codec<BreakSound> CODEC = Codecs.KEY.xmap(
-            BreakSound::new,
-            BreakSound::getValue
+        BreakSound::new,
+        BreakSound::getValue
     );
     public static final DataComponentType<BreakSound> TYPE = DataComponentType.valued(CODEC, BreakSound::new);
 

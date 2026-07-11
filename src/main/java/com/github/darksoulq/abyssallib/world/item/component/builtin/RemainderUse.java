@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class RemainderUse extends DataComponent<UseRemainder> implements Vanilla {
     public static final Codec<RemainderUse> CODEC = Codecs.ITEM_STACK.xmap(
-            RemainderUse::new,
-            r -> r.value.transformInto()
+        RemainderUse::new,
+        r -> r.value.transformInto()
     );
     public static final DataComponentType<RemainderUse> TYPE = DataComponentType.valued(CODEC, remainder -> new RemainderUse((UseRemainder) remainder));
 

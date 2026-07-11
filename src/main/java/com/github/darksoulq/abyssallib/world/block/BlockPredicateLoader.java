@@ -55,8 +55,7 @@ public class BlockPredicateLoader {
     /**
      * Processes a single file path, attempting to parse and register the block predicate.
      *
-     * @param path
-     * The {@link Path} to the YAML file to process.
+     * @param path The {@link Path} to the YAML file to process.
      */
     private static void loadSingle(Path path) {
         Key id = getPredicateId(path);
@@ -73,10 +72,8 @@ public class BlockPredicateLoader {
     /**
      * Reads a YAML file from the file system and decodes it into a BlockPredicate instance.
      *
-     * @param path
-     * The {@link Path} to the YAML file to read.
-     * @return
-     * The parsed {@link BlockPredicate}, or null if parsing fails or the file is invalid.
+     * @param path The {@link Path} to the YAML file to read.
+     * @return The parsed {@link BlockPredicate}, or null if parsing fails or the file is invalid.
      */
     public static BlockPredicate load(Path path) {
         return Try.of(() -> {
@@ -98,12 +95,9 @@ public class BlockPredicateLoader {
     /**
      * Reads a YAML file bundled within a plugin's JAR resources and decodes it.
      *
-     * @param plugin
-     * The {@link Plugin} instance owning the resource.
-     * @param resourcePath
-     * The internal path to the YAML resource file.
-     * @return
-     * The parsed {@link BlockPredicate}, or null if the resource is missing or parsing fails.
+     * @param plugin       The {@link Plugin} instance owning the resource.
+     * @param resourcePath The internal path to the YAML resource file.
+     * @return The parsed {@link BlockPredicate}, or null if the resource is missing or parsing fails.
      */
     public static BlockPredicate loadResource(Plugin plugin, String resourcePath) {
         return Try.of(() -> {
@@ -129,10 +123,8 @@ public class BlockPredicateLoader {
      * Determines the unique Key for a predicate based on its directory structure.
      * The structure must be {@code predicates/block/<namespace>/<path_to_file>.yml}.
      *
-     * @param file
-     * The {@link Path} of the file being evaluated.
-     * @return
-     * The resolved {@link Key}, or null if the directory structure is invalid.
+     * @param file The {@link Path} of the file being evaluated.
+     * @return The resolved {@link Key}, or null if the directory structure is invalid.
      */
     private static Key getPredicateId(Path file) {
         Path relative = PREDICATES_FOLDER.relativize(file);
@@ -147,7 +139,7 @@ public class BlockPredicateLoader {
             if (i > 1) {
                 pathBuilder.append("/");
             }
-            pathBuilder.append(relative.getName(i).toString());
+            pathBuilder.append(relative.getName(i));
         }
 
         String fullPath = pathBuilder.toString();

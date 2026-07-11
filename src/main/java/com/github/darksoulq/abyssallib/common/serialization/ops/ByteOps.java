@@ -25,7 +25,8 @@ public class ByteOps extends DynamicOps<byte[]> {
     /**
      * Creates a new {@code ByteOps} instance.
      */
-    private ByteOps() {}
+    private ByteOps() {
+    }
 
     /**
      * Indicates that this format benefits from compressed map encoding.
@@ -57,7 +58,7 @@ public class ByteOps extends DynamicOps<byte[]> {
      */
     @Override
     public byte[] createByte(byte value) {
-        return new byte[]{ value };
+        return new byte[]{value};
     }
 
     /**
@@ -133,7 +134,7 @@ public class ByteOps extends DynamicOps<byte[]> {
      */
     @Override
     public byte[] createBoolean(boolean value) {
-        return new byte[]{ (byte)(value ? 1 : 0) };
+        return new byte[]{(byte) (value ? 1 : 0)};
     }
 
     /**
@@ -182,6 +183,7 @@ public class ByteOps extends DynamicOps<byte[]> {
         }
         return buf.array();
     }
+
     /**
      * Attempts to decode a UTF-8 string from a length-prefixed byte array.
      *
@@ -326,6 +328,7 @@ public class ByteOps extends DynamicOps<byte[]> {
             return Optional.empty();
         }
     }
+
     /**
      * Returns the decoded string keys contained in a serialized map.
      *

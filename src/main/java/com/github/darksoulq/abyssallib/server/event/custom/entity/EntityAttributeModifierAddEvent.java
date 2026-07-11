@@ -43,12 +43,9 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Constructs a new EntityAttributeModifierAddEvent.
      *
-     * @param entity
-     * The {@link Entity} receiving the modifier.
-     * @param attribute
-     * The {@link Attribute} instance being modified.
-     * @param modifier
-     * The {@link AttributeModifier} object to be added.
+     * @param entity    The {@link Entity} receiving the modifier.
+     * @param attribute The {@link Attribute} instance being modified.
+     * @param modifier  The {@link AttributeModifier} object to be added.
      */
     public EntityAttributeModifierAddEvent(@NotNull Entity entity, @NotNull Attribute attribute, @NotNull AttributeModifier modifier) {
         this.entity = entity;
@@ -59,8 +56,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Retrieves the entity involved in this event.
      *
-     * @return
-     * The {@link Entity} receiving the modifier.
+     * @return The {@link Entity} receiving the modifier.
      */
     public @NotNull Entity getEntity() {
         return entity;
@@ -69,8 +65,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Retrieves the specific attribute that the modifier is being applied to.
      *
-     * @return
-     * The {@link Attribute} definition.
+     * @return The {@link Attribute} definition.
      */
     public @NotNull Attribute getAttribute() {
         return attribute;
@@ -79,8 +74,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Retrieves the current modifier object that is proposed to be added.
      *
-     * @return
-     * The {@link AttributeModifier} instance.
+     * @return The {@link AttributeModifier} instance.
      */
     public @NotNull AttributeModifier getModifier() {
         return modifier;
@@ -89,8 +83,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Sets a new modifier object to be added instead of the original one.
      *
-     * @param modifier
-     * The replacement {@link AttributeModifier} instance.
+     * @param modifier The replacement {@link AttributeModifier} instance.
      */
     public void setModifier(@NotNull AttributeModifier modifier) {
         this.modifier = modifier;
@@ -99,8 +92,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Checks if the addition of the modifier has been cancelled.
      *
-     * @return
-     * True if the event is cancelled.
+     * @return True if the event is cancelled.
      */
     @Override
     public boolean isCancelled() {
@@ -110,8 +102,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Sets the cancellation state of the event.
      *
-     * @param v
-     * True to prevent the modifier from being added.
+     * @param v True to prevent the modifier from being added.
      */
     @Override
     public void setCancelled(boolean v) {
@@ -121,8 +112,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Retrieves the list of handlers listening to this event instance.
      *
-     * @return
-     * The {@link HandlerList} for this event.
+     * @return The {@link HandlerList} for this event.
      */
     @Override
     public @NotNull HandlerList getHandlers() {
@@ -132,8 +122,7 @@ public class EntityAttributeModifierAddEvent extends Event implements Cancellabl
     /**
      * Provides a static method to retrieve the handler list, required by Bukkit.
      *
-     * @return
-     * The static {@link HandlerList} for this event type.
+     * @return The static {@link HandlerList} for this event type.
      */
     public static HandlerList getHandlerList() {
         return handlers;

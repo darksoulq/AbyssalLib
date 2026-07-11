@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class MaxDurability extends DataComponent<Integer> implements Vanilla {
     public static final Codec<MaxDurability> CODEC = Codecs.INT.xmap(
-            MaxDurability::new,
-            MaxDurability::getValue
+        MaxDurability::new,
+        MaxDurability::getValue
     );
     public static final DataComponentType<MaxDurability> TYPE = DataComponentType.valued(CODEC, MaxDurability::new);
 

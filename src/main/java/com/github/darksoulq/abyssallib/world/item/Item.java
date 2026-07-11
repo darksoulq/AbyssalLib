@@ -76,8 +76,7 @@ public class Item implements Cloneable {
     /**
      * Internal constructor for wrapping an existing item stack.
      *
-     * @param stack
-     * The {@link ItemStack} to wrap and analyze.
+     * @param stack The {@link ItemStack} to wrap and analyze.
      */
     @ApiStatus.Internal
     public Item(ItemStack stack) {
@@ -89,8 +88,7 @@ public class Item implements Cloneable {
     /**
      * Constructs a new custom item definition.
      *
-     * @param id
-     * The unique {@link Key} for the item (e.g, "plugin_id:item_name").
+     * @param id The unique {@link Key} for the item (e.g, "plugin_id:item_name").
      */
     public Item(Key id) {
         this(id, Material.STICK);
@@ -99,10 +97,8 @@ public class Item implements Cloneable {
     /**
      * Constructs a new custom item definition.
      *
-     * @param id
-     * The unique {@link Key} for the item (e.g., "plugin_id:item_name").
-     * @param base
-     * The base {@link Material} used for the underlying item stack.
+     * @param id   The unique {@link Key} for the item (e.g., "plugin_id:item_name").
+     * @param base The base {@link Material} used for the underlying item stack.
      */
     public Item(Key id, Material base) {
         this.id = id;
@@ -146,8 +142,7 @@ public class Item implements Cloneable {
     /**
      * Called when a tooltip is being generated. Override to add static lines.
      *
-     * @param tooltip
-     * The {@link Tooltip} instance to populate with lines and styles.
+     * @param tooltip The {@link Tooltip} instance to populate with lines and styles.
      */
     public void createTooltip(Tooltip tooltip) {
     }
@@ -155,10 +150,8 @@ public class Item implements Cloneable {
     /**
      * Called when a tooltip is being generated for a specific viewer.
      *
-     * @param tooltip
-     * The {@link Tooltip} instance to populate.
-     * @param player
-     * The {@link Player} viewing the item, or {@code null} if unknown.
+     * @param tooltip The {@link Tooltip} instance to populate.
+     * @param player  The {@link Player} viewing the item, or {@code null} if unknown.
      */
     public void createTooltip(Tooltip tooltip, @Nullable Player player) {
         createTooltip(tooltip);
@@ -183,8 +176,7 @@ public class Item implements Cloneable {
     /**
      * Adds or updates a data component for this item.
      *
-     * @param component
-     * The {@link DataComponent} instance to apply.
+     * @param component The {@link DataComponent} instance to apply.
      */
     public void setData(DataComponent<?> component) {
         componentMap.setData(component);
@@ -193,12 +185,9 @@ public class Item implements Cloneable {
     /**
      * Retrieves the data component of the specified type.
      *
-     * @param <C>
-     * The specific type of DataComponent.
-     * @param type
-     * The {@link DataComponentType} to look for.
-     * @return
-     * The found component, or {@code null} if not set.
+     * @param <C>  The specific type of DataComponent.
+     * @param type The {@link DataComponentType} to look for.
+     * @return The found component, or {@code null} if not set.
      */
     public <C extends DataComponent<?>> C getData(DataComponentType<C> type) {
         return componentMap.getData(type);
@@ -207,10 +196,8 @@ public class Item implements Cloneable {
     /**
      * Checks if this item possesses a specific component type.
      *
-     * @param type
-     * The {@link DataComponentType} to verify.
-     * @return
-     * True if the component is present, false otherwise.
+     * @param type The {@link DataComponentType} to verify.
+     * @return True if the component is present, false otherwise.
      */
     public boolean hasData(DataComponentType<?> type) {
         return componentMap.hasData(type);
@@ -219,8 +206,7 @@ public class Item implements Cloneable {
     /**
      * Removes the data component associated with the provided type.
      *
-     * @param type
-     * The {@link DataComponentType} identifying the component to unset.
+     * @param type The {@link DataComponentType} identifying the component to unset.
      */
     public void unsetData(DataComponentType<?> type) {
         componentMap.removeData(type);
@@ -229,10 +215,8 @@ public class Item implements Cloneable {
     /**
      * Checks if this item belongs to a specific tag by its Key.
      *
-     * @param id
-     * The {@link Key} of the tag (e.g., "minecraft:swords").
-     * @return
-     * True if the item is included in the tag.
+     * @param id The {@link Key} of the tag (e.g., "minecraft:swords").
+     * @return True if the item is included in the tag.
      */
     public boolean hasTag(Key id) {
         if (!(Registries.TAGS.get(id.asString()) instanceof ItemTag tag)) {
@@ -245,10 +229,8 @@ public class Item implements Cloneable {
     /**
      * Checks if this item belongs to a specific {@link ItemTag}.
      *
-     * @param tag
-     * The {@link ItemTag} instance to check.
-     * @return
-     * True if the item stack matches the tag criteria.
+     * @param tag The {@link ItemTag} instance to check.
+     * @return True if the item stack matches the tag criteria.
      */
     public boolean hasTag(ItemTag tag) {
         return tag.contains(stack);
@@ -257,8 +239,7 @@ public class Item implements Cloneable {
     /**
      * Adds this custom item's identity to an existing tag's logic.
      *
-     * @param tag
-     * The {@link ItemTag} to extend with this item.
+     * @param tag The {@link ItemTag} to extend with this item.
      */
     public void setTag(ItemTag tag) {
         tag.add(ItemPredicate.builder()
@@ -268,6 +249,7 @@ public class Item implements Cloneable {
 
     /**
      * Sets whether or not this item should be hidden in /give
+     *
      * @param hidden whether or not to hide the item
      */
     public void setHidden(boolean hidden) {
@@ -276,6 +258,7 @@ public class Item implements Cloneable {
 
     /**
      * Gets whether or not this item should be hidden in /give
+     *
      * @return whether or not to hide the item
      */
     public boolean isHidden() {
@@ -285,12 +268,9 @@ public class Item implements Cloneable {
     /**
      * Callback triggered after an entity successfully mines a block with this item.
      *
-     * @param source
-     * The {@link LivingEntity} performing the mining.
-     * @param target
-     * The {@link Block} that was destroyed.
-     * @return
-     * The resulting {@link ActionResult} determining event continuation.
+     * @param source The {@link LivingEntity} performing the mining.
+     * @param target The {@link Block} that was destroyed.
+     * @return The resulting {@link ActionResult} determining event continuation.
      */
     public ActionResult onMine(LivingEntity source, Block target) {
         return ActionResult.PASS;
@@ -299,12 +279,9 @@ public class Item implements Cloneable {
     /**
      * Callback triggered after an entity hits another entity with this item.
      *
-     * @param source
-     * The {@link LivingEntity} attacker.
-     * @param target
-     * The {@link Entity} victim.
-     * @return
-     * The resulting {@link ActionResult} for the hit event.
+     * @param source The {@link LivingEntity} attacker.
+     * @param target The {@link Entity} victim.
+     * @return The resulting {@link ActionResult} for the hit event.
      */
     public ActionResult onHit(LivingEntity source, Entity target) {
         return ActionResult.PASS;
@@ -313,10 +290,8 @@ public class Item implements Cloneable {
     /**
      * Callback triggered when a player uses this item on a specific block or entity.
      *
-     * @param ctx
-     * The {@link UseContext} containing information about the interaction.
-     * @return
-     * The {@link ActionResult} of the block interaction.
+     * @param ctx The {@link UseContext} containing information about the interaction.
+     * @return The {@link ActionResult} of the block interaction.
      */
     public ActionResult onUseOn(UseContext ctx) {
         return ActionResult.PASS;
@@ -325,14 +300,10 @@ public class Item implements Cloneable {
     /**
      * Callback triggered when a player uses this item while clicking into the air.
      *
-     * @param source
-     * The {@link LivingEntity} using the item.
-     * @param hand
-     * The {@link EquipmentSlot} used for the click.
-     * @param type
-     * The {@link ClickType} (Right-click or Left-click) performed in air.
-     * @return
-     * The {@link ActionResult} of the air interaction.
+     * @param source The {@link LivingEntity} using the item.
+     * @param hand   The {@link EquipmentSlot} used for the click.
+     * @param type   The {@link ClickType} (Right-click or Left-click) performed in air.
+     * @return The {@link ActionResult} of the air interaction.
      */
     public ActionResult onUse(LivingEntity source, EquipmentSlot hand, ClickType type) {
         return ActionResult.PASS;
@@ -341,8 +312,7 @@ public class Item implements Cloneable {
     /**
      * Called once per tick for every player that has this item in their inventory.
      *
-     * @param player
-     * The {@link Player} carrying the item.
+     * @param player The {@link Player} carrying the item.
      */
     public void onInventoryTick(Player player) {
     }
@@ -350,10 +320,8 @@ public class Item implements Cloneable {
     /**
      * Called when the item's position within a player's inventory changes.
      *
-     * @param player
-     * The {@link Player} whose inventory was updated.
-     * @param newSlot
-     * The index of the new slot, or {@code null} if moved out of inventory.
+     * @param player  The {@link Player} whose inventory was updated.
+     * @param newSlot The index of the new slot, or {@code null} if moved out of inventory.
      */
     public void onSlotChange(Player player, @Nullable Integer newSlot) {
     }
@@ -361,16 +329,11 @@ public class Item implements Cloneable {
     /**
      * Callback triggered when a player clicks this item inside an inventory GUI.
      *
-     * @param player
-     * The {@link Player} clicking.
-     * @param slot
-     * The raw slot index clicked.
-     * @param inventory
-     * The {@link PlayerInventory} involved.
-     * @param type
-     * The {@link InventoryClickType} representing the click style.
-     * @return
-     * The {@link ActionResult} determining if the click is allowed.
+     * @param player    The {@link Player} clicking.
+     * @param slot      The raw slot index clicked.
+     * @param inventory The {@link PlayerInventory} involved.
+     * @param type      The {@link InventoryClickType} representing the click style.
+     * @return The {@link ActionResult} determining if the click is allowed.
      */
     public ActionResult onClick(Player player, int slot, PlayerInventory inventory, InventoryClickType type) {
         return ActionResult.PASS;
@@ -379,10 +342,8 @@ public class Item implements Cloneable {
     /**
      * Called when a player drops this item onto the ground.
      *
-     * @param player
-     * The {@link Player} who dropped the item.
-     * @return
-     * The {@link ActionResult} of the drop.
+     * @param player The {@link Player} who dropped the item.
+     * @return The {@link ActionResult} of the drop.
      */
     public ActionResult onDrop(Player player) {
         return ActionResult.PASS;
@@ -391,10 +352,8 @@ public class Item implements Cloneable {
     /**
      * Called when a player picks this item up from the ground.
      *
-     * @param player
-     * The {@link Player} picking up the item.
-     * @return
-     * The {@link ActionResult} of the pickup.
+     * @param player The {@link Player} picking up the item.
+     * @return The {@link ActionResult} of the pickup.
      */
     public ActionResult onPickup(Player player) {
         return ActionResult.PASS;
@@ -403,12 +362,9 @@ public class Item implements Cloneable {
     /**
      * Called when a player uses the swap-hand key with this item.
      *
-     * @param player
-     * The {@link Player} swapping the item.
-     * @param current
-     * The {@link EquipmentSlot} the item was in before the swap.
-     * @return
-     * The {@link ActionResult} of the swap action.
+     * @param player  The {@link Player} swapping the item.
+     * @param current The {@link EquipmentSlot} the item was in before the swap.
+     * @return The {@link ActionResult} of the swap action.
      */
     public ActionResult onSwapHand(Player player, EquipmentSlot current) {
         return ActionResult.PASS;
@@ -417,10 +373,8 @@ public class Item implements Cloneable {
     /**
      * Called when this item is placed in an anvil and requires custom logic.
      *
-     * @param ctx
-     * The {@link AnvilContext} containing the input and result slots.
-     * @return
-     * The {@link ActionResult} of the anvil process.
+     * @param ctx The {@link AnvilContext} containing the input and result slots.
+     * @return The {@link ActionResult} of the anvil process.
      */
     public ActionResult onAnvil(AnvilContext ctx) {
         return ActionResult.PASS;
@@ -429,8 +383,7 @@ public class Item implements Cloneable {
     /**
      * Called when a player successfully crafts this item.
      *
-     * @param player
-     * The {@link Player} who completed the craft.
+     * @param player The {@link Player} who completed the craft.
      */
     public void onCraft(Player player) {
     }
@@ -438,8 +391,7 @@ public class Item implements Cloneable {
     /**
      * Retrieves the unique Key associated with this item.
      *
-     * @return
-     * The item's unique {@link Key}.
+     * @return The item's unique {@link Key}.
      */
     public Key getId() {
         return id;
@@ -448,8 +400,7 @@ public class Item implements Cloneable {
     /**
      * Retrieves the underlying Bukkit ItemStack managed by this instance.
      *
-     * @return
-     * The underlying {@link ItemStack}.
+     * @return The underlying {@link ItemStack}.
      */
     public ItemStack getStack() {
         return stack;
@@ -458,10 +409,8 @@ public class Item implements Cloneable {
     /**
      * Creates a temporary clone of the item and renders it for a specific player's view.
      *
-     * @param player
-     * The {@link Player} for whom the stack is being generated.
-     * @return
-     * A localized {@link ItemStack} with a customized tooltip.
+     * @param player The {@link Player} for whom the stack is being generated.
+     * @return A localized {@link ItemStack} with a customized tooltip.
      */
     public ItemStack getStack(@Nullable Player player) {
         Item contextItem = this.clone();
@@ -474,8 +423,7 @@ public class Item implements Cloneable {
     /**
      * Retrieves the component map managing the item's state and data.
      *
-     * @return
-     * The internal {@link ComponentMap}.
+     * @return The internal {@link ComponentMap}.
      */
     public ComponentMap getComponentMap() {
         return componentMap;
@@ -484,8 +432,7 @@ public class Item implements Cloneable {
     /**
      * Retrieves the AbyssalLib persistent data tag for this item.
      *
-     * @return
-     * A {@link CTag} instance for accessing persistent data.
+     * @return A {@link CTag} instance for accessing persistent data.
      */
     public CTag getCTag() {
         return CTag.getCTag(stack);
@@ -494,8 +441,7 @@ public class Item implements Cloneable {
     /**
      * Sets the AbyssalLib persistent data tag for this item.
      *
-     * @param container
-     * The {@link CTag} data to apply to the item's persistent data container.
+     * @param container The {@link CTag} data to apply to the item's persistent data container.
      */
     public void setCTag(CTag container) {
         CTag.setCTag(container, stack);
@@ -504,10 +450,8 @@ public class Item implements Cloneable {
     /**
      * Resolves a standard Bukkit stack into a custom library Item.
      *
-     * @param stack
-     * The {@link ItemStack} to check.
-     * @return
-     * A custom {@link Item} instance if valid, otherwise {@code null}.
+     * @param stack The {@link ItemStack} to check.
+     * @return A custom {@link Item} instance if valid, otherwise {@code null}.
      */
     public static Item resolve(ItemStack stack) {
         if (stack == null || stack.getType().isAir()) {
@@ -534,10 +478,8 @@ public class Item implements Cloneable {
     /**
      * Attempts to find the custom block associated with a block-item.
      *
-     * @param item
-     * The {@link Item} to analyze.
-     * @return
-     * The {@link CustomBlock} counterpart, or {@code null} if not a block.
+     * @param item The {@link Item} to analyze.
+     * @return The {@link CustomBlock} counterpart, or {@code null} if not a block.
      */
     public static CustomBlock asBlock(Item item) {
         if (!item.hasData(BlockItem.TYPE)) {
@@ -550,8 +492,7 @@ public class Item implements Cloneable {
     /**
      * Performs a deep clone of the item, including its stack, map, and tooltip state.
      *
-     * @return
-     * A new {@link Item} clone.
+     * @return A new {@link Item} clone.
      */
     @Override
     public Item clone() {
@@ -575,10 +516,8 @@ public class Item implements Cloneable {
     /**
      * Compares this item against another object for equality based on Key.
      *
-     * @param o
-     * The other object to compare.
-     * @return
-     * True if both items share the same unique Key.
+     * @param o The other object to compare.
+     * @return True if both items share the same unique Key.
      */
     @Override
     public boolean equals(Object o) {
@@ -591,8 +530,7 @@ public class Item implements Cloneable {
     /**
      * Generates a hash code derived from the item's unique Key.
      *
-     * @return
-     * The integer hash code.
+     * @return The integer hash code.
      */
     @Override
     public int hashCode() {
@@ -627,8 +565,7 @@ public class Item implements Cloneable {
         /**
          * Sets whether the tooltip should be visible to players.
          *
-         * @param v
-         * True for visible, false for hidden.
+         * @param v True for visible, false for hidden.
          */
         public void setVisible(boolean v) {
             this.hide = !v;
@@ -637,8 +574,7 @@ public class Item implements Cloneable {
         /**
          * Marks a vanilla data component as hidden in the tooltip display.
          *
-         * @param type
-         * The Paper {@link io.papermc.paper.datacomponent.DataComponentType} to hide.
+         * @param type The Paper {@link io.papermc.paper.datacomponent.DataComponentType} to hide.
          */
         public void withHidden(io.papermc.paper.datacomponent.DataComponentType type) {
             this.hiddenComponents.add(type);
@@ -647,8 +583,7 @@ public class Item implements Cloneable {
         /**
          * Appends a new line of text to the tooltip lore.
          *
-         * @param component
-         * The {@link Component} text line to add.
+         * @param component The {@link Component} text line to add.
          */
         public void addLine(Component component) {
             lines.add(component);
@@ -657,8 +592,7 @@ public class Item implements Cloneable {
         /**
          * Assigns a custom style Key to the tooltip.
          *
-         * @param style
-         * The {@link Key} representing the style.
+         * @param style The {@link Key} representing the style.
          */
         public void withStyle(Key style) {
             this.style = style;
@@ -667,8 +601,7 @@ public class Item implements Cloneable {
         /**
          * Retrieves the currently assigned tooltip style Key.
          *
-         * @return
-         * The assigned {@link Key}, or null.
+         * @return The assigned {@link Key}, or null.
          */
         public Key getStyle() {
             return this.style;
@@ -677,8 +610,7 @@ public class Item implements Cloneable {
         /**
          * Checks if the tooltip is currently set to be visible.
          *
-         * @return
-         * True if the tooltip is visible.
+         * @return True if the tooltip is visible.
          */
         public boolean isVisible() {
             return !hide;
@@ -687,10 +619,8 @@ public class Item implements Cloneable {
         /**
          * Retrieves a specific line from the tooltip lore.
          *
-         * @param index
-         * The line index.
-         * @return
-         * The {@link Component} at the given index.
+         * @param index The line index.
+         * @return The {@link Component} at the given index.
          */
         public Component getLine(int index) {
             return lines.get(index);

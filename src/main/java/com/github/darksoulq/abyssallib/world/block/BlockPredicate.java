@@ -113,12 +113,12 @@ public class BlockPredicate implements Predicate<BlockInfo> {
                 return ops.createList(list);
             } else if (node.isNumber()) {
                 if (node.isFloatingPointNumber()) {
-                    return (D) Codecs.FLOAT.encode(ops, node.floatValue()).getOrThrow();
+                    return Codecs.FLOAT.encode(ops, node.floatValue()).getOrThrow();
                 } else {
-                    return (D) Codecs.INT.encode(ops, node.intValue()).getOrThrow();
+                    return Codecs.INT.encode(ops, node.intValue()).getOrThrow();
                 }
             } else if (node.isBoolean()) {
-                return (D) Codecs.BOOLEAN.encode(ops, node.booleanValue()).getOrThrow();
+                return Codecs.BOOLEAN.encode(ops, node.booleanValue()).getOrThrow();
             } else {
                 return ops.createString(node.asText());
             }
@@ -167,34 +167,39 @@ public class BlockPredicate implements Predicate<BlockInfo> {
      */
     public static final Codec<BlockPredicate> CODEC = Codec.fallback(REFERENCE_CODEC, INLINE_CODEC).describe("BlockPredicate");
 
-    /** The specific base identity Key the block must match, if any. */
+    /**
+     * The specific base identity Key the block must match, if any.
+     */
     private final Key id;
 
-    /** A list of conditions checking for exact matches against block visual states. */
+    /**
+     * A list of conditions checking for exact matches against block visual states.
+     */
     private final List<Condition<Map.Entry<String, JsonNode>>> states;
 
-    /** A list of conditions checking for exact matches against custom block properties. */
+    /**
+     * A list of conditions checking for exact matches against custom block properties.
+     */
     private final List<Condition<Map.Entry<String, JsonNode>>> properties;
 
-    /** A list of conditions checking for exact matches against vanilla NBT data. */
+    /**
+     * A list of conditions checking for exact matches against vanilla NBT data.
+     */
     private final List<Condition<Map.Entry<String, JsonNode>>> nbt;
 
-    /** A list of nested predicate conditions to evaluate against the block. */
+    /**
+     * A list of nested predicate conditions to evaluate against the block.
+     */
     private final List<Condition<BlockPredicate>> predicates;
 
     /**
      * Constructs a new BlockPredicate with the specified conditional rules.
      *
-     * @param id
-     * The base block Key that must match (nullable for any block).
-     * @param states
-     * The list of state-matching JSON data conditions.
-     * @param properties
-     * The list of property-matching JSON data conditions.
-     * @param nbt
-     * The list of NBT-matching JSON data conditions.
-     * @param predicates
-     * The list of nested predicate conditions.
+     * @param id         The base block Key that must match (nullable for any block).
+     * @param states     The list of state-matching JSON data conditions.
+     * @param properties The list of property-matching JSON data conditions.
+     * @param nbt        The list of NBT-matching JSON data conditions.
+     * @param predicates The list of nested predicate conditions.
      */
     public BlockPredicate(Key id, List<Condition<Map.Entry<String, JsonNode>>> states, List<Condition<Map.Entry<String, JsonNode>>> properties,
                           List<Condition<Map.Entry<String, JsonNode>>> nbt, List<Condition<BlockPredicate>> predicates) {
@@ -208,8 +213,7 @@ public class BlockPredicate implements Predicate<BlockInfo> {
     /**
      * Creates a new fluent builder instance for constructing a BlockPredicate.
      *
-     * @return
-     * A new {@link Builder} instance.
+     * @return A new {@link Builder} instance.
      */
     public static Builder builder() {
         return new Builder();
@@ -218,10 +222,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
     /**
      * Compares this predicate against another object for logical equivalence.
      *
-     * @param o
-     * The object to compare.
-     * @return
-     * True if the object is an identical BlockPredicate.
+     * @param o The object to compare.
+     * @return True if the object is an identical BlockPredicate.
      */
     @Override
     public boolean equals(Object o) {
@@ -241,8 +243,7 @@ public class BlockPredicate implements Predicate<BlockInfo> {
     /**
      * Generates a hash code based on the predicate's underlying conditions.
      *
-     * @return
-     * The integer hash code.
+     * @return The integer hash code.
      */
     @Override
     public int hashCode() {
@@ -252,10 +253,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
     /**
      * Evaluates a {@link BlockInfo} against all configured conditions within this predicate.
      *
-     * @param info
-     * The {@link BlockInfo} to test.
-     * @return
-     * True if the block satisfies all identity, data, and nested rules; false otherwise.
+     * @param info The {@link BlockInfo} to test.
+     * @return True if the block satisfies all identity, data, and nested rules; false otherwise.
      */
     @Override
     public boolean test(BlockInfo info) {
@@ -294,12 +293,9 @@ public class BlockPredicate implements Predicate<BlockInfo> {
      * Internal helper method to evaluate a parsed JSON ObjectNode against a list of data conditions.
      * Handles fuzzy matching between numeric and textual representations.
      *
-     * @param node
-     * The root {@link ObjectNode} representing a subset of the block's data.
-     * @param conditions
-     * The list of conditions to evaluate against the node.
-     * @return
-     * True if the JSON node satisfies all data conditions, false otherwise.
+     * @param node       The root {@link ObjectNode} representing a subset of the block's data.
+     * @param conditions The list of conditions to evaluate against the node.
+     * @return True if the JSON node satisfies all data conditions, false otherwise.
      */
     private boolean checkNodes(ObjectNode node, List<Condition<Map.Entry<String, JsonNode>>> conditions) {
         for (Condition<Map.Entry<String, JsonNode>> condition : conditions) {
@@ -336,10 +332,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Mandates that the block matches a specific identity Key.
          *
-         * @param id
-         * The {@link Key} to match.
-         * @return
-         * This builder instance.
+         * @param id The {@link Key} to match.
+         * @return This builder instance.
          */
         public Builder id(Key id) {
             this.id = id;
@@ -349,10 +343,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Mandates that the block matches a specific vanilla material.
          *
-         * @param material
-         * The {@link Material} to match.
-         * @return
-         * This builder instance.
+         * @param material The {@link Material} to match.
+         * @return This builder instance.
          */
         public Builder material(Material material) {
             this.id = Key.key(Key.MINECRAFT_NAMESPACE, material.name().toLowerCase(Locale.ROOT));
@@ -362,10 +354,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Adds an exact value-matching condition against the block's state data.
          *
-         * @param condition
-         * The {@link Condition} wrapping a JSON node entry.
-         * @return
-         * This builder instance.
+         * @param condition The {@link Condition} wrapping a JSON node entry.
+         * @return This builder instance.
          */
         public Builder state(Condition<Map.Entry<String, JsonNode>> condition) {
             this.states.add(condition);
@@ -375,10 +365,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Adds an exact value-matching condition against the block's custom properties.
          *
-         * @param condition
-         * The {@link Condition} wrapping a JSON node entry.
-         * @return
-         * This builder instance.
+         * @param condition The {@link Condition} wrapping a JSON node entry.
+         * @return This builder instance.
          */
         public Builder property(Condition<Map.Entry<String, JsonNode>> condition) {
             this.properties.add(condition);
@@ -388,10 +376,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Adds an exact value-matching condition against the block's NBT data.
          *
-         * @param condition
-         * The {@link Condition} wrapping a JSON node entry.
-         * @return
-         * This builder instance.
+         * @param condition The {@link Condition} wrapping a JSON node entry.
+         * @return This builder instance.
          */
         public Builder nbt(Condition<Map.Entry<String, JsonNode>> condition) {
             this.nbt.add(condition);
@@ -401,10 +387,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Adds a nested predicate condition.
          *
-         * @param condition
-         * The {@link Condition} wrapping a nested block predicate.
-         * @return
-         * This builder instance.
+         * @param condition The {@link Condition} wrapping a nested block predicate.
+         * @return This builder instance.
          */
         public Builder check(Condition<BlockPredicate> condition) {
             this.predicates.add(condition);
@@ -414,12 +398,9 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires an exact match for a specific key-value pair within the block's states.
          *
-         * @param key
-         * The state key to inspect.
-         * @param value
-         * The expected value object to match against.
-         * @return
-         * This builder instance.
+         * @param key   The state key to inspect.
+         * @param value The expected value object to match against.
+         * @return This builder instance.
          */
         public Builder state(String key, Object value) {
             return state(Condition.one(Map.entry(key, MAPPER.valueToTree(value))));
@@ -428,12 +409,9 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires an exact match for a specific key-value pair within the block's properties.
          *
-         * @param key
-         * The property key to inspect.
-         * @param value
-         * The expected value object to match against.
-         * @return
-         * This builder instance.
+         * @param key   The property key to inspect.
+         * @param value The expected value object to match against.
+         * @return This builder instance.
          */
         public Builder property(String key, Object value) {
             return property(Condition.one(Map.entry(key, MAPPER.valueToTree(value))));
@@ -442,12 +420,9 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires an exact match for a specific key-value pair within the block's NBT.
          *
-         * @param key
-         * The NBT key to inspect.
-         * @param value
-         * The expected value object to match against.
-         * @return
-         * This builder instance.
+         * @param key   The NBT key to inspect.
+         * @param value The expected value object to match against.
+         * @return This builder instance.
          */
         public Builder nbt(String key, Object value) {
             return nbt(Condition.one(Map.entry(key, MAPPER.valueToTree(value))));
@@ -456,10 +431,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Evaluates a sub-predicate against the block.
          *
-         * @param predicate
-         * The nested {@link BlockPredicate} to test.
-         * @return
-         * This builder instance.
+         * @param predicate The nested {@link BlockPredicate} to test.
+         * @return This builder instance.
          */
         public Builder check(BlockPredicate predicate) {
             return check(Condition.one(predicate));
@@ -468,10 +441,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires the block's states to match at least one of the provided key-value data entries.
          *
-         * @param entries
-         * The varargs array of map entries to check.
-         * @return
-         * This builder instance.
+         * @param entries The varargs array of map entries to check.
+         * @return This builder instance.
          */
         @SafeVarargs
         public final Builder stateAny(Map.Entry<String, Object>... entries) {
@@ -485,10 +456,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires the block's properties to match at least one of the provided key-value data entries.
          *
-         * @param entries
-         * The varargs array of map entries to check.
-         * @return
-         * This builder instance.
+         * @param entries The varargs array of map entries to check.
+         * @return This builder instance.
          */
         @SafeVarargs
         public final Builder propertyAny(Map.Entry<String, Object>... entries) {
@@ -502,10 +471,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires the block's NBT to match at least one of the provided key-value data entries.
          *
-         * @param entries
-         * The varargs array of map entries to check.
-         * @return
-         * This builder instance.
+         * @param entries The varargs array of map entries to check.
+         * @return This builder instance.
          */
         @SafeVarargs
         public final Builder nbtAny(Map.Entry<String, Object>... entries) {
@@ -519,10 +486,8 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Requires the block to satisfy at least one of the provided sub-predicates.
          *
-         * @param predicates
-         * The varargs array of nested {@link BlockPredicate}s to check.
-         * @return
-         * This builder instance.
+         * @param predicates The varargs array of nested {@link BlockPredicate}s to check.
+         * @return This builder instance.
          */
         public Builder checkAny(BlockPredicate... predicates) {
             return check(Condition.anyOf(Arrays.stream(predicates).map(Condition::one).toList()));
@@ -531,8 +496,7 @@ public class BlockPredicate implements Predicate<BlockInfo> {
         /**
          * Finalizes construction and returns the built BlockPredicate.
          *
-         * @return
-         * The configured {@link BlockPredicate} instance.
+         * @return The configured {@link BlockPredicate} instance.
          */
         public BlockPredicate build() {
             return new BlockPredicate(id, states, properties, nbt, predicates);

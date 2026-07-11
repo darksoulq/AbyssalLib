@@ -29,12 +29,9 @@ public abstract class AbstractGradient implements ColorProvider {
     /**
      * Constructs a gradient with specific color stops and their positions.
      *
-     * @param colors
-     * The array of {@link Color} stops used for interpolation.
-     * @param positions
-     * The array of normalized positions (0.0 to 1.0) for each stop.
-     * @throws IllegalArgumentException
-     * If the color and position arrays do not have the same length.
+     * @param colors    The array of {@link Color} stops used for interpolation.
+     * @param positions The array of normalized positions (0.0 to 1.0) for each stop.
+     * @throws IllegalArgumentException If the color and position arrays do not have the same length.
      */
     public AbstractGradient(Color[] colors, float[] positions) {
         if (colors.length != positions.length) {
@@ -47,8 +44,7 @@ public abstract class AbstractGradient implements ColorProvider {
     /**
      * Constructs a gradient with colors evenly distributed across the 0.0 to 1.0 range.
      *
-     * @param colors
-     * The varargs array of {@link Color} stops to distribute.
+     * @param colors The varargs array of {@link Color} stops to distribute.
      */
     public AbstractGradient(Color... colors) {
         this.colors = colors;
@@ -65,8 +61,7 @@ public abstract class AbstractGradient implements ColorProvider {
     /**
      * Constructs a gradient with a list of colors evenly distributed across the 0.0 to 1.0 range.
      *
-     * @param colors
-     * The list of {@link Color} stops to distribute.
+     * @param colors The list of {@link Color} stops to distribute.
      */
     public AbstractGradient(List<Color> colors) {
         this(colors.toArray(new Color[0]));
@@ -75,8 +70,7 @@ public abstract class AbstractGradient implements ColorProvider {
     /**
      * Calculates the color at a specific interpolation point using a local progress calculation.
      *
-     * @param t
-     * The normalized progress (0.0 to 1.0).
+     * @param t The normalized progress (0.0 to 1.0).
      * @return The interpolated {@link Color} based on the surrounding stops.
      */
     public Color getAt(double t) {
@@ -107,10 +101,8 @@ public abstract class AbstractGradient implements ColorProvider {
     /**
      * Retrieves the color for a specific spatial position and time progress.
      *
-     * @param pos
-     * The spatial {@link Vector} position of the pixel or point.
-     * @param t
-     * The global progress (typically 0.0 to 1.0).
+     * @param pos The spatial {@link Vector} position of the pixel or point.
+     * @param t   The global progress (typically 0.0 to 1.0).
      * @return The resulting {@link Color} at the sampled point.
      */
     @Override

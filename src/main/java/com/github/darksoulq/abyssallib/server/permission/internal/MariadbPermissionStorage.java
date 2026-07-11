@@ -47,7 +47,8 @@ public class MariadbPermissionStorage implements PermissionStorage {
         });
         db.executor().table("permission_group_nodes").select(rs -> {
             PermissionGroup group = Registries.PERMISSION_GROUPS.get(rs.getString("group_id"));
-            if (group != null) group.permissions.put(rs.getString("node"), new Node(rs.getString("node"), rs.getBoolean("val"), rs.getLong("expiry")));
+            if (group != null)
+                group.permissions.put(rs.getString("node"), new Node(rs.getString("node"), rs.getBoolean("val"), rs.getLong("expiry")));
             return null;
         });
     }
@@ -93,11 +94,12 @@ public class MariadbPermissionStorage implements PermissionStorage {
             exec.table("permission_groups").replace().value("id", group.getId()).value("weight", group.getWeight()).execute();
             exec.table("permission_group_parents").delete().where("group_id = ?", group.getId()).execute();
             BatchQuery parentBatch = exec.table("permission_group_parents").batch("group_id", "parent_id").insert();
-            for (Node parent : group.getParentNodes()) parentBatch.add(group.getId(), parent.getKey());
+            for (Node parent : group.getParentNodes()) parentBatch.add(group.getId(), parent.key());
             parentBatch.execute();
             exec.table("permission_group_nodes").delete().where("group_id = ?", group.getId()).execute();
             BatchQuery nodeBatch = exec.table("permission_group_nodes").batch("group_id", "node", "val", "expiry").insert();
-            for (Node node : group.getNodes()) nodeBatch.add(group.getId(), node.getKey(), node.getValue(), node.getExpiry());
+            for (Node node : group.getNodes())
+                nodeBatch.add(group.getId(), node.key(), node.value(), node.expiry());
             nodeBatch.execute();
         });
     }
@@ -108,11 +110,12 @@ public class MariadbPermissionStorage implements PermissionStorage {
             exec.table("permission_users").replace().value("uuid", user.getUuid().toString()).value("name", user.getName()).execute();
             exec.table("permission_user_groups").delete().where("uuid = ?", user.getUuid().toString()).execute();
             BatchQuery groupBatch = exec.table("permission_user_groups").batch("uuid", "group_id").insert();
-            for (Node parent : user.getParentNodes()) groupBatch.add(user.getUuid().toString(), parent.getKey());
+            for (Node parent : user.getParentNodes()) groupBatch.add(user.getUuid().toString(), parent.key());
             groupBatch.execute();
             exec.table("permission_user_nodes").delete().where("uuid = ?", user.getUuid().toString()).execute();
             BatchQuery nodeBatch = exec.table("permission_user_nodes").batch("uuid", "node", "val", "expiry").insert();
-            for (Node node : user.getNodes()) nodeBatch.add(user.getUuid().toString(), node.getKey(), node.getValue(), node.getExpiry());
+            for (Node node : user.getNodes())
+                nodeBatch.add(user.getUuid().toString(), node.key(), node.value(), node.expiry());
             nodeBatch.execute();
         });
     }
@@ -147,6 +150,7 @@ public class MariadbPermissionStorage implements PermissionStorage {
     public void shutdown() {
         try {
             db.disconnect();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

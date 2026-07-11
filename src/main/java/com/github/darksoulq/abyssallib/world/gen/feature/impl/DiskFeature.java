@@ -38,8 +38,8 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
         Config config = context.config();
         int placedCount = 0;
 
-        int minHeight = context.level().getWorld().getMinHeight();
-        int maxHeight = context.level().getWorld().getMaxHeight();
+        int minHeight = context.level().world().getMinHeight();
+        int maxHeight = context.level().world().getMaxHeight();
 
         int radius = config.radius();
         int halfHeight = config.halfHeight();
@@ -54,7 +54,7 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
                     for (int y = origin.getBlockY() - halfHeight; y <= origin.getBlockY() + halfHeight; y++) {
                         if (y < minHeight || y >= maxHeight) continue;
 
-                        Location target = new Location(context.level().getWorld(), x, y, z);
+                        Location target = new Location(context.level().world(), x, y, z);
 
                         if (WorldGenUtils.isValidBlock(context.level(), target, config.targets())) {
                             BlockInfo stateToPlace = config.stateProvider().getState(context.random(), target);
@@ -79,7 +79,8 @@ public class DiskFeature extends Feature<DiskFeature.Config> {
      * @param halfHeight    The vertical thickness offset applied above and below the origin Y.
      * @param targets       The list of allowed block info targets that the disk can replace.
      */
-    public record Config(BlockStateProvider stateProvider, int radius, int halfHeight, List<BlockInfo> targets) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, int radius, int halfHeight,
+                         List<BlockInfo> targets) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

@@ -20,8 +20,8 @@ public class ConditionalCodec<T> implements Codec<T> {
     /**
      * Creates a conditional codec.
      *
-     * @param condition Predicate used to select the active codec.
-     * @param trueCodec Codec used when the predicate matches.
+     * @param condition  Predicate used to select the active codec.
+     * @param trueCodec  Codec used when the predicate matches.
      * @param falseCodec Codec used when the predicate does not match.
      */
     public ConditionalCodec(Predicate<T> condition, Codec<T> trueCodec, Codec<T> falseCodec) {

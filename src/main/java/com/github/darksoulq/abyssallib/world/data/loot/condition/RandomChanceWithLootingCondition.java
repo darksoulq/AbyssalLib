@@ -35,10 +35,14 @@ public class RandomChanceWithLootingCondition extends LootCondition {
      */
     public static final LootConditionType<RandomChanceWithLootingCondition> TYPE = () -> CODEC;
 
-    /** The base probability threshold (0.0 to 1.0). */
+    /**
+     * The base probability threshold (0.0 to 1.0).
+     */
     private final float chance;
 
-    /** The amount added to the base chance per level of Looting. */
+    /**
+     * The amount added to the base chance per level of Looting.
+     */
     private final float multiplier;
 
     /**

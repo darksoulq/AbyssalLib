@@ -8,8 +8,8 @@ import net.kyori.adventure.key.Key;
 
 public class EntitySpawner extends DataComponent<Key> {
     public static final Codec<EntitySpawner> CODEC = Codecs.KEY.xmap(
-            EntitySpawner::new,
-            EntitySpawner::getValue
+        EntitySpawner::new,
+        EntitySpawner::getValue
     );
     public static final DataComponentType<EntitySpawner> TYPE = DataComponentType.simple(CODEC);
 

@@ -11,11 +11,17 @@ import org.bukkit.util.Vector;
  * divided by the specified size.
  */
 public class CheckeredPattern implements ColorProvider {
-    /** The first color of the checkerboard. */
+    /**
+     * The first color of the checkerboard.
+     */
     private final Color c1;
-    /** The second color of the checkerboard. */
+    /**
+     * The second color of the checkerboard.
+     */
     private final Color c2;
-    /** The size of each individual color cube in the grid. */
+    /**
+     * The size of each individual color cube in the grid.
+     */
     private final double size;
 
     /**

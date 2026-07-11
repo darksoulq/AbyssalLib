@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 //?} else {
 /*import io.papermc.paper.registry.tag.TagKey;
-*///?}
+ *///?}
 
 public class ProvidesBannerPatterns extends DataComponent</*? if >=26.1.2 {*/List<Key>/*?} else {*//*Key*//*?}*/> implements Vanilla {
 
@@ -79,7 +79,7 @@ public class ProvidesBannerPatterns extends DataComponent</*? if >=26.1.2 {*/Lis
         super(List.of(pattern));
         //?} else {
         /*super(pattern);
-        *///?}
+         *///?}
     }
 
     @Override
@@ -97,7 +97,7 @@ public class ProvidesBannerPatterns extends DataComponent</*? if >=26.1.2 {*/Lis
         stack.setData(DataComponentTypes.PROVIDES_BANNER_PATTERNS, RegistrySet.keySet(RegistryKey.BANNER_PATTERN, keys));
         //?} else {
         /*stack.setData(DataComponentTypes.PROVIDES_BANNER_PATTERNS, TagKey.create(RegistryKey.BANNER_PATTERN, value));
-        *///?}
+         *///?}
     }
 
     @Override

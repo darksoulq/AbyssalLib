@@ -45,6 +45,7 @@ public abstract class PacketEvent extends Event implements Cancellable {
     public Packet<?> getPacket() {
         return packet;
     }
+
     /**
      * Sets the packet being received.
      *

@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class RepairableComponent extends DataComponent<Repairable> implements Vanilla {
     public static final Codec<RepairableComponent> CODEC = ExtraCodecs.REPAIRABLE_COMPONENT.xmap(
-            RepairableComponent::new,
-            RepairableComponent::getValue
+        RepairableComponent::new,
+        RepairableComponent::getValue
     );
     public static final DataComponentType<RepairableComponent> TYPE = DataComponentType.valued(CODEC, RepairableComponent::new);
 

@@ -18,8 +18,7 @@ import java.util.function.Supplier;
  * underlying {@link Registry} is fully initialized. When {@link #apply()} is called,
  * all queued entries are instantiated and moved into the main registry.
  *
- * @param <T>
- * The type of objects handled by this registry.
+ * @param <T> The type of objects handled by this registry.
  */
 public final class DeferredRegistry<T> {
 
@@ -55,10 +54,8 @@ public final class DeferredRegistry<T> {
     /**
      * Private constructor for the factory method.
      *
-     * @param registry
-     * The target {@link Registry} instance.
-     * @param pluginId
-     * The namespace for these entries.
+     * @param registry The target {@link Registry} instance.
+     * @param pluginId The namespace for these entries.
      */
     private DeferredRegistry(@NotNull Registry<T> registry, @NotNull String pluginId) {
         this.registry = registry;
@@ -69,8 +66,7 @@ public final class DeferredRegistry<T> {
      * Registers a custom modifier factory to dynamically intercept and handle external
      * registration side effects (e.g., blocks automatically registering item forms).
      *
-     * @param modifierFactory
-     * The supplier providing instances of the custom modifier.
+     * @param modifierFactory The supplier providing instances of the custom modifier.
      */
     public static void registerModifier(Supplier<DeferredRegistryModifier> modifierFactory) {
         MODIFIERS.add(modifierFactory);
@@ -79,14 +75,10 @@ public final class DeferredRegistry<T> {
     /**
      * Factory method to create a new deferred registry instance.
      *
-     * @param <T>
-     * The registry type.
-     * @param registry
-     * The base {@link Registry} instance.
-     * @param pluginId
-     * The namespace for the objects.
-     * @return
-     * A new {@link DeferredRegistry} instance.
+     * @param <T>      The registry type.
+     * @param registry The base {@link Registry} instance.
+     * @param pluginId The namespace for the objects.
+     * @return A new {@link DeferredRegistry} instance.
      */
     public static <T> DeferredRegistry<T> create(Registry<T> registry, String pluginId) {
         return new DeferredRegistry<>(registry, pluginId);
@@ -95,14 +87,10 @@ public final class DeferredRegistry<T> {
     /**
      * Queues an object for registration.
      *
-     * @param name
-     * The unique name (path) within this registry's namespace.
-     * @param supplier
-     * A function that creates the object using the generated {@link Key}.
-     * @return
-     * A {@link T} registered object.
-     * @throws IllegalStateException
-     * If the name has already been registered in this deferred registry.
+     * @param name     The unique name (path) within this registry's namespace.
+     * @param supplier A function that creates the object using the generated {@link Key}.
+     * @return A {@link T} registered object.
+     * @throws IllegalStateException If the name has already been registered in this deferred registry.
      */
     public T register(String name, Function<Key, T> supplier) {
         if (entries.containsKey(name)) {
@@ -154,8 +142,7 @@ public final class DeferredRegistry<T> {
     /**
      * Retrieves an unmodifiable collection of all pending holders in this registry.
      *
-     * @return
-     * A collection of {@link Holder} entries.
+     * @return A collection of {@link Holder} entries.
      */
     public Collection<Holder<T>> getEntries() {
         return Collections.unmodifiableCollection(entries.values());
@@ -164,8 +151,7 @@ public final class DeferredRegistry<T> {
     /**
      * Retrieves the namespace associated with this deferred registry.
      *
-     * @return
-     * The plugin or mod namespace string.
+     * @return The plugin or mod namespace string.
      */
     public String getPluginId() {
         return pluginId;

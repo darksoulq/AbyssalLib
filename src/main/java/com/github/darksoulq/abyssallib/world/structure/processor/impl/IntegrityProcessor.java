@@ -37,10 +37,14 @@ public class IntegrityProcessor extends StructureProcessor {
      */
     public static final StructureProcessorType<IntegrityProcessor> TYPE = () -> CODEC;
 
-    /** The probability (0.0 to 1.0) that a block will be successfully placed. */
+    /**
+     * The probability (0.0 to 1.0) that a block will be successfully placed.
+     */
     private final float integrity;
 
-    /** Random source for performing the integrity checks. */
+    /**
+     * Random source for performing the integrity checks.
+     */
     private final Random random = new Random();
 
     /**

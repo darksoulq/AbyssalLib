@@ -17,12 +17,36 @@ public class BukkitTaskDispatcher {
             : Bukkit.getScheduler().runTaskLater(plugin, wrapped, Math.max(1, delayTicks)));
 
         return new ScheduledTask() {
-            @Override public void cancel() { abstractTask.cancel(); bukkitTask.cancel(); }
-            @Override public boolean isCancelled() { return abstractTask.isCancelled(); }
-            @Override public boolean isRunning() { return abstractTask.isRunning(); }
-            @Override public Instant nextExecution() { return abstractTask.nextExecution(); }
-            @Override public Optional<Throwable> failure() { return abstractTask.failure(); }
-            @Override public CompletionStage<Void> completion() { return abstractTask.completion(); }
+            @Override
+            public void cancel() {
+                abstractTask.cancel();
+                bukkitTask.cancel();
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return abstractTask.isCancelled();
+            }
+
+            @Override
+            public boolean isRunning() {
+                return abstractTask.isRunning();
+            }
+
+            @Override
+            public Instant nextExecution() {
+                return abstractTask.nextExecution();
+            }
+
+            @Override
+            public Optional<Throwable> failure() {
+                return abstractTask.failure();
+            }
+
+            @Override
+            public CompletionStage<Void> completion() {
+                return abstractTask.completion();
+            }
         };
     }
 }

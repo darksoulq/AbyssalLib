@@ -20,28 +20,44 @@ public final class StructureArray<T> {
      * Defines the primary axis for iteration and rendering logic.
      */
     public enum Orientation {
-        /** Iterate through columns first, then move to the next row. */
+        /**
+         * Iterate through columns first, then move to the next row.
+         */
         HORIZONTAL,
-        /** Iterate through rows first, then move to the next column. */
+        /**
+         * Iterate through rows first, then move to the next column.
+         */
         VERTICAL
     }
 
-    /** The number of horizontal cells in the structure. */
+    /**
+     * The number of horizontal cells in the structure.
+     */
     private final int width;
 
-    /** The number of vertical cells in the structure. */
+    /**
+     * The number of vertical cells in the structure.
+     */
     private final int height;
 
-    /** The flat array containing all elements in row-major order. */
+    /**
+     * The flat array containing all elements in row-major order.
+     */
     private final T[] elements;
 
-    /** Precomputed indices for horizontal (row-major) iteration. */
+    /**
+     * Precomputed indices for horizontal (row-major) iteration.
+     */
     private final int[] rowMajorOrder;
 
-    /** Precomputed indices for vertical (column-major) iteration. */
+    /**
+     * Precomputed indices for vertical (column-major) iteration.
+     */
     private final int[] columnMajorOrder;
 
-    /** The class type of the generic elements, used for array reflection. */
+    /**
+     * The class type of the generic elements, used for array reflection.
+     */
     private final Class<T> type;
 
     /**
@@ -133,7 +149,7 @@ public final class StructureArray<T> {
      * @param generator Function receiving (x, y) and returning an element.
      * @return A generated StructureArray.
      */
-    public static <T> StructureArray<T> generateGrid(Class<T> type, int width, int height, BiFunction<Integer,Integer,T> generator) {
+    public static <T> StructureArray<T> generateGrid(Class<T> type, int width, int height, BiFunction<Integer, Integer, T> generator) {
         if (width <= 0 || height <= 0) throw new IllegalArgumentException();
         T[] arr = newArray(type, width * height);
         for (int y = 0; y < height; y++)
@@ -340,7 +356,7 @@ public final class StructureArray<T> {
      * @return A 2-wide StructureArray.
      */
     public static <T> StructureArray<T> twoColumns(Class<T> type, int height, T left, T right) {
-        return generateGrid(type, 2, height, (x,y) -> x == 0 ? left : right);
+        return generateGrid(type, 2, height, (x, y) -> x == 0 ? left : right);
     }
 
     /**
@@ -354,7 +370,7 @@ public final class StructureArray<T> {
      * @return A 2-high StructureArray.
      */
     public static <T> StructureArray<T> twoRows(Class<T> type, int width, T top, T bottom) {
-        return generateGrid(type, width, 2, (x,y) -> y == 0 ? top : bottom);
+        return generateGrid(type, width, 2, (x, y) -> y == 0 ? top : bottom);
     }
 
     /**
@@ -418,8 +434,7 @@ public final class StructureArray<T> {
     public StructureArray<T> flippedVertically() {
         T[] arr = newArray(type, elements.length);
         for (int y = 0; y < height; y++)
-            for (int x = 0; x < width; x++)
-                arr[(height - 1 - y) * width + x] = elements[y * width + x];
+            if (width >= 0) System.arraycopy(elements, y * width + 0, arr, (height - 1 - y) * width + 0, width);
         return new StructureArray<>(type, width, height, arr);
     }
 
@@ -453,12 +468,26 @@ public final class StructureArray<T> {
         return elements.clone();
     }
 
-    /** @return Total horizontal cells. */
-    public int width() { return width; }
-    /** @return Total vertical cells. */
-    public int height() { return height; }
-    /** @return Total number of cells. */
-    public int size() { return elements.length; }
+    /**
+     * @return Total horizontal cells.
+     */
+    public int width() {
+        return width;
+    }
+
+    /**
+     * @return Total vertical cells.
+     */
+    public int height() {
+        return height;
+    }
+
+    /**
+     * @return Total number of cells.
+     */
+    public int size() {
+        return elements.length;
+    }
 
     /**
      * Starts a coordinated builder for manual grid assembly.
@@ -492,13 +521,21 @@ public final class StructureArray<T> {
      * @param <T> The element type.
      */
     public static final class Builder<T> {
-        /** The grid width. */
+        /**
+         * The grid width.
+         */
         private final int width;
-        /** The grid height. */
+        /**
+         * The grid height.
+         */
         private final int height;
-        /** The working flat array. */
+        /**
+         * The working flat array.
+         */
         private final T[] elements;
-        /** The element class. */
+        /**
+         * The element class.
+         */
         private final Class<T> type;
 
         private Builder(Class<T> type, int width, int height, T[] elements) {
@@ -532,7 +569,9 @@ public final class StructureArray<T> {
             return this;
         }
 
-        /** @return A new StructureArray with current assignments. */
+        /**
+         * @return A new StructureArray with current assignments.
+         */
         public StructureArray<T> build() {
             return new StructureArray<>(type, width, height, elements.clone());
         }
@@ -544,11 +583,17 @@ public final class StructureArray<T> {
      * @param <T> The element type.
      */
     public static final class PatternBuilder<T> {
-        /** The element class. */
+        /**
+         * The element class.
+         */
         private final Class<T> type;
-        /** The visual pattern rows. */
+        /**
+         * The visual pattern rows.
+         */
         private final List<String> pattern = new ArrayList<>();
-        /** Mapping of characters to objects. */
+        /**
+         * Mapping of characters to objects.
+         */
         private final Map<Character, T> keys = new HashMap<>();
 
         private PatternBuilder(Class<T> type) {

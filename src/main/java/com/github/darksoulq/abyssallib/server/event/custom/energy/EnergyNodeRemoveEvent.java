@@ -12,13 +12,21 @@ import org.bukkit.event.HandlerList;
  */
 public final class EnergyNodeRemoveEvent extends Event implements Cancellable {
 
-    /** The list of handlers for this event. */
+    /**
+     * The list of handlers for this event.
+     */
     private static final HandlerList HANDLERS = new HandlerList();
-    /** The node being removed. */
+    /**
+     * The node being removed.
+     */
     private final EnergyNode node;
-    /** The native unit of the node being removed. */
+    /**
+     * The native unit of the node being removed.
+     */
     private final EnergyUnit unit;
-    /** The cancellation state of the event. */
+    /**
+     * The cancellation state of the event.
+     */
     private boolean cancelled;
 
     /**
@@ -34,24 +42,48 @@ public final class EnergyNodeRemoveEvent extends Event implements Cancellable {
         this.unit = unit;
     }
 
-    /** @return The {@link EnergyNode} slated for removal. */
-    public EnergyNode getNode() { return node; }
+    /**
+     * @return The {@link EnergyNode} slated for removal.
+     */
+    public EnergyNode getNode() {
+        return node;
+    }
 
-    /** @return The {@link EnergyUnit} associated with the node. */
-    public EnergyUnit getUnit() { return unit; }
+    /**
+     * @return The {@link EnergyUnit} associated with the node.
+     */
+    public EnergyUnit getUnit() {
+        return unit;
+    }
 
-    /** @return True if the removal is cancelled. */
+    /**
+     * @return True if the removal is cancelled.
+     */
     @Override
-    public boolean isCancelled() { return cancelled; }
+    public boolean isCancelled() {
+        return cancelled;
+    }
 
-    /** @param cancel True to keep the node in the network. */
+    /**
+     * @param cancel True to keep the node in the network.
+     */
     @Override
-    public void setCancelled(boolean cancel) { this.cancelled = cancel; }
+    public void setCancelled(boolean cancel) {
+        this.cancelled = cancel;
+    }
 
-    /** @return The specific {@link HandlerList} for this event. */
+    /**
+     * @return The specific {@link HandlerList} for this event.
+     */
     @Override
-    public HandlerList getHandlers() { return HANDLERS; }
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
 
-    /** @return The static {@link HandlerList} required for Bukkit events. */
-    public static HandlerList getHandlerList() { return HANDLERS; }
+    /**
+     * @return The static {@link HandlerList} required for Bukkit events.
+     */
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
 }

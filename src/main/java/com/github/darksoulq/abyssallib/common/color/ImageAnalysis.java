@@ -107,8 +107,8 @@ public class ImageAnalysis {
     /**
      * Internal implementation of the K-Means clustering algorithm for color grouping.
      *
-     * @param pixels  The list of pixel colors to cluster.
-     * @param k       The number of clusters (centroids) to find.
+     * @param pixels The list of pixel colors to cluster.
+     * @param k      The number of clusters (centroids) to find.
      * @return A {@link List} of colors representing the final centroids.
      */
     private static List<Color> kMeans(List<Color> pixels, int k) {
@@ -149,8 +149,6 @@ public class ImageAnalysis {
 
     /**
      * Quantizes an RGB integer value into a specific number of bins.
-     *
-     *
      *
      * @param rgb  The raw RGB integer.
      * @param bins The number of bins per channel.

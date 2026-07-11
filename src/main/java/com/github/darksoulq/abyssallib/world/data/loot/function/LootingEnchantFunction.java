@@ -35,14 +35,16 @@ public class LootingEnchantFunction extends LootFunction {
      */
     public static final LootFunctionType<LootingEnchantFunction> TYPE = () -> CODEC;
 
-    /** The maximum stack size allowed after applying the bonus. */
+    /**
+     * The maximum stack size allowed after applying the bonus.
+     */
     private final int limit;
 
     /**
      * Constructs a new LootingEnchantFunction with a specific stack size limit.
      *
      * @param limit The maximum amount an item stack can reach via this function.
-     * If 0 or less, defaults to 64.
+     *              If 0 or less, defaults to 64.
      */
     public LootingEnchantFunction(int limit) {
         this.limit = limit;

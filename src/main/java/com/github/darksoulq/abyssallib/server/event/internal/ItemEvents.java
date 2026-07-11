@@ -63,6 +63,7 @@ public class ItemEvents {
     public static void addMeleeDamageType(DamageType type) {
         MELEE_TYPES.add(type);
     }
+
     public static void addRangedDamageType(DamageType type) {
         RANGED_TYPES.add(type);
     }
@@ -173,12 +174,14 @@ public class ItemEvents {
             if (hotbarSlot != -1) {
                 Item item = Item.resolve(event.getClickedInventory().getItem(hotbarSlot));
                 if (item != null
-                        && item.onClick((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+                    && item.onClick((Player) event.getWhoClicked(), hotbarSlot, pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL)
+                    event.setCancelled(true);
             }
         }
         Item item = Item.resolve(event.getCurrentItem());
         if (item == null) return;
-        if (item.onClick((Player) event.getWhoClicked(), event.getSlot(), pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL) event.setCancelled(true);
+        if (item.onClick((Player) event.getWhoClicked(), event.getSlot(), pInv, InventoryClickType.of(event.getClick())) == ActionResult.CANCEL)
+            event.setCancelled(true);
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -352,7 +355,6 @@ public class ItemEvents {
         if (view.getTopInventory().getType() != InventoryType.LOOM) return;
         ItemStack result = event.getResult();
         if (result == null) return;
-        ;
         if (Item.resolve(result) != null) return;
 
         Inventory inv = view.getTopInventory();

@@ -13,11 +13,17 @@ import java.util.Random;
  * is assigned a color from the provided palette.
  */
 public class VoronoiPattern implements ColorProvider {
-    /** The palette of colors used to color individual cells. */
+    /**
+     * The palette of colors used to color individual cells.
+     */
     private final Color[] palette;
-    /** The array of seed points for the Voronoi cells. */
+    /**
+     * The array of seed points for the Voronoi cells.
+     */
     private final Vector[] points;
-    /** The scale of the coordinate system before repeating. */
+    /**
+     * The scale of the coordinate system before repeating.
+     */
     private final double scale;
 
     /**

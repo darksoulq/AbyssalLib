@@ -25,7 +25,8 @@ import java.util.Map;
  */
 public final class AbyssalLibBlockSerializer {
 
-    private AbyssalLibBlockSerializer() {}
+    private AbyssalLibBlockSerializer() {
+    }
 
     /**
      * Serializes the current {@link BlockData} state of a {@link CustomBlock}.

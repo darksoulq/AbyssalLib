@@ -79,9 +79,9 @@ public final class MapLoader {
      * <p>Called by {@link BaseMap} upon creation of a new map to persist its metadata.
      * The data is saved under the appropriate plugin's subfolder.</p>
      *
-     * @param map    The map instance to save.
-     * @param clazz  The class object of the map implementation.
-     * @param mapId  The Bukkit map ID to store.
+     * @param map   The map instance to save.
+     * @param clazz The class object of the map implementation.
+     * @param mapId The Bukkit map ID to store.
      */
     public static void saveMetadata(BaseMap map, Class<?> clazz, int mapId) {
         Plugin plugin = map.getPlugin();

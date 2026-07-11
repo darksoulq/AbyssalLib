@@ -83,7 +83,7 @@ public class ItemMenu {
 
             if (defaultItems.isEmpty()) {
                 GuiManager.close(player);
-            };
+            }
 
             Item pluginIconItem = Registries.ITEMS.get(namespace + ":plugin_icon");
             ItemStack iconStack = pluginIconItem != null ? pluginIconItem.getStack().clone() : new ItemStack(Material.STONE);

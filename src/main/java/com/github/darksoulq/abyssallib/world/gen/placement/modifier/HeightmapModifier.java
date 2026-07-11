@@ -28,7 +28,9 @@ public class HeightmapModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<HeightmapModifier> TYPE = () -> CODEC;
 
-    /** The heightmap projection to use when calculating the surface. */
+    /**
+     * The heightmap projection to use when calculating the surface.
+     */
     private final HeightMap heightmap;
 
     /**

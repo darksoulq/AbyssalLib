@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class TrackerLodestone extends DataComponent<LodestoneTracker> implements Vanilla {
     public static final Codec<TrackerLodestone> CODEC = ExtraCodecs.LODESTONE_TRACKER.xmap(
-            TrackerLodestone::new,
-            TrackerLodestone::getValue
+        TrackerLodestone::new,
+        TrackerLodestone::getValue
     );
     public static final DataComponentType<TrackerLodestone> TYPE = DataComponentType.valued(CODEC, TrackerLodestone::new);
 

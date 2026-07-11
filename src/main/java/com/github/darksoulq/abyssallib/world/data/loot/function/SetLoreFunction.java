@@ -38,7 +38,9 @@ public class SetLoreFunction extends LootFunction {
      */
     public static final LootFunctionType<SetLoreFunction> TYPE = () -> CODEC;
 
-    /** The list of text components to be applied as lore. */
+    /**
+     * The list of text components to be applied as lore.
+     */
     private final List<Component> lore;
 
     /**

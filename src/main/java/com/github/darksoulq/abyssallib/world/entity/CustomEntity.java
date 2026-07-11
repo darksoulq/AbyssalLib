@@ -464,7 +464,8 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
     /**
      * Called after spawn.
      */
-    public void onSpawn() {}
+    public void onSpawn() {
+    }
 
     /**
      * Called on entity death.
@@ -472,17 +473,21 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
      * @param event the death event
      * @return action result
      */
-    public ActionResult onDeath(EntityDeathEvent event) { return ActionResult.PASS; }
+    public ActionResult onDeath(EntityDeathEvent event) {
+        return ActionResult.PASS;
+    }
 
     /**
      * Called when entity unloads.
      */
-    public void onUnload() {}
+    public void onUnload() {
+    }
 
     /**
      * Called when entity loads.
      */
-    public void onLoad() {}
+    public void onLoad() {
+    }
 
     /**
      * Resolves a custom entity wrapper.
@@ -528,43 +533,69 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
      */
     public static class SpawnSettings {
 
-        /** Spawn weight. */
+        /**
+         * Spawn weight.
+         */
         public int weight;
 
-        /** Minimum pack size. */
+        /**
+         * Minimum pack size.
+         */
         public int minPack;
 
-        /** Maximum pack size. */
+        /**
+         * Maximum pack size.
+         */
         public int maxPack;
 
-        /** Minimum Y level. */
+        /**
+         * Minimum Y level.
+         */
         public int minY = ServerLevel.MIN_ENTITY_SPAWN_Y;
 
-        /** Maximum Y level. */
+        /**
+         * Maximum Y level.
+         */
         public int maxY = ServerLevel.MAX_ENTITY_SPAWN_Y;
 
-        /** Minimum light level. */
+        /**
+         * Minimum light level.
+         */
         public int minLight = 0;
 
-        /** Maximum light level. */
+        /**
+         * Maximum light level.
+         */
         public int maxLight = 15;
 
-        /** Requires darkness. */
+        /**
+         * Requires darkness.
+         */
         public boolean requireSkyDarkness;
 
-        /** Requires sky access. */
+        /**
+         * Requires sky access.
+         */
         public boolean requireSkyAccess;
 
-        /** Spawn placement type. */
+        /**
+         * Spawn placement type.
+         */
         public SpawnPlacement placement;
 
-        /** Heightmap type. */
+        /**
+         * Heightmap type.
+         */
         public HeightMap heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES;
 
-        /** Allowed biomes. */
+        /**
+         * Allowed biomes.
+         */
         public Set<NamespacedKey> biomes = new HashSet<>();
 
-        /** Custom spawn predicate. */
+        /**
+         * Custom spawn predicate.
+         */
         public BiPredicate<World, Location> canSpawn;
 
         /**
@@ -608,47 +639,124 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
             private final Set<NamespacedKey> biomes = new HashSet<>();
             private BiPredicate<World, Location> canSpawn;
 
-            /** @param weight spawn weight */
-            public Builder weight(int weight) { this.weight = weight; return this; }
+            /**
+             * @param weight spawn weight
+             */
+            public Builder weight(int weight) {
+                this.weight = weight;
+                return this;
+            }
 
-            /** @param min min pack @param max max pack */
-            public Builder pack(int min, int max) { this.minPack = min; this.maxPack = max; return this; }
+            /**
+             * @param min min pack @param max max pack
+             */
+            public Builder pack(int min, int max) {
+                this.minPack = min;
+                this.maxPack = max;
+                return this;
+            }
 
-            /** @param placement placement */
-            public Builder placement(SpawnPlacement placement) { this.placement = placement; return this; }
+            /**
+             * @param placement placement
+             */
+            public Builder placement(SpawnPlacement placement) {
+                this.placement = placement;
+                return this;
+            }
 
-            /** @param minY min Y @param maxY max Y */
-            public Builder heightRange(int minY, int maxY) { this.minY = minY; this.maxY = maxY; return this; }
+            /**
+             * @param minY min Y @param maxY max Y
+             */
+            public Builder heightRange(int minY, int maxY) {
+                this.minY = minY;
+                this.maxY = maxY;
+                return this;
+            }
 
-            /** @param map heightmap */
-            public Builder heightMap(HeightMap map) { this.heightMap = map; return this; }
+            /**
+             * @param map heightmap
+             */
+            public Builder heightMap(HeightMap map) {
+                this.heightMap = map;
+                return this;
+            }
 
-            /** @param min min light @param max max light */
-            public Builder light(int min, int max) { this.minLight = min; this.maxLight = max; return this; }
+            /**
+             * @param min min light @param max max light
+             */
+            public Builder light(int min, int max) {
+                this.minLight = min;
+                this.maxLight = max;
+                return this;
+            }
 
-            /** Enables night-only spawning */
-            public Builder nightOnly() { this.requireSkyDarkness = true; this.maxLight = Math.min(this.maxLight, 7); return this; }
+            /**
+             * Enables night-only spawning
+             */
+            public Builder nightOnly() {
+                this.requireSkyDarkness = true;
+                this.maxLight = Math.min(this.maxLight, 7);
+                return this;
+            }
 
-            /** Requires sky access */
-            public Builder requireSkyAccess() { this.requireSkyAccess = true; return this; }
+            /**
+             * Requires sky access
+             */
+            public Builder requireSkyAccess() {
+                this.requireSkyAccess = true;
+                return this;
+            }
 
-            /** @param biome biome key */
-            public Builder biome(NamespacedKey biome) { this.biomes.add(biome); return this; }
+            /**
+             * @param biome biome key
+             */
+            public Builder biome(NamespacedKey biome) {
+                this.biomes.add(biome);
+                return this;
+            }
 
-            /** @param biomes biome keys */
-            public Builder biomes(Collection<NamespacedKey> biomes) { this.biomes.addAll(biomes); return this; }
+            /**
+             * @param biomes biome keys
+             */
+            public Builder biomes(Collection<NamespacedKey> biomes) {
+                this.biomes.addAll(biomes);
+                return this;
+            }
 
-            /** @param predicate spawn predicate */
-            public Builder canSpawn(BiPredicate<World, Location> predicate) { this.canSpawn = predicate; return this; }
+            /**
+             * @param predicate spawn predicate
+             */
+            public Builder canSpawn(BiPredicate<World, Location> predicate) {
+                this.canSpawn = predicate;
+                return this;
+            }
 
-            /** Ground preset */
-            public Builder groundMob() { this.placement = SpawnPlacement.ON_GROUND; this.heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES; return this; }
+            /**
+             * Ground preset
+             */
+            public Builder groundMob() {
+                this.placement = SpawnPlacement.ON_GROUND;
+                this.heightMap = HeightMap.MOTION_BLOCKING_NO_LEAVES;
+                return this;
+            }
 
-            /** Water preset */
-            public Builder waterMob() { this.placement = SpawnPlacement.IN_WATER; this.heightMap = HeightMap.OCEAN_FLOOR; return this; }
+            /**
+             * Water preset
+             */
+            public Builder waterMob() {
+                this.placement = SpawnPlacement.IN_WATER;
+                this.heightMap = HeightMap.OCEAN_FLOOR;
+                return this;
+            }
 
-            /** Lava preset */
-            public Builder lavaMob() { this.placement = SpawnPlacement.IN_LAVA; this.heightMap = HeightMap.MOTION_BLOCKING; return this; }
+            /**
+             * Lava preset
+             */
+            public Builder lavaMob() {
+                this.placement = SpawnPlacement.IN_LAVA;
+                this.heightMap = HeightMap.MOTION_BLOCKING;
+                return this;
+            }
 
             /**
              * Builds settings.
@@ -676,13 +784,19 @@ public class CustomEntity<T extends LivingEntity> implements Cloneable {
      */
     public enum SpawnPlacement {
 
-        /** Ground placement */
+        /**
+         * Ground placement
+         */
         ON_GROUND,
 
-        /** Water placement */
+        /**
+         * Water placement
+         */
         IN_WATER,
 
-        /** Lava placement */
+        /**
+         * Lava placement
+         */
         IN_LAVA
     }
 }

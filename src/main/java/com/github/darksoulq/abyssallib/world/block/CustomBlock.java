@@ -359,12 +359,14 @@ public class CustomBlock implements Cloneable, Locatable {
     /**
      * Called every server tick. Override to provide active logic.
      */
-    public void onTick() {}
+    public void onTick() {
+    }
 
     /**
      * Called during a random world tick.
      */
-    public void onRandomTick() {}
+    public void onRandomTick() {
+    }
 
     /**
      * Intelligently starts regional tick evaluations.
@@ -447,14 +449,16 @@ public class CustomBlock implements Cloneable, Locatable {
      *
      * @param entity the entity
      */
-    public void onLanded(Entity entity) {}
+    public void onLanded(Entity entity) {
+    }
 
     /**
      * Called when an entity steps onto the block.
      *
      * @param entity the entity
      */
-    public void onSteppedOn(LivingEntity entity) {}
+    public void onSteppedOn(LivingEntity entity) {
+    }
 
     /**
      * Called when the block receives a redstone update.
@@ -543,9 +547,9 @@ public class CustomBlock implements Cloneable, Locatable {
     /**
      * Called when the block ignites.
      *
-     * @param cause           the reason for ignition
-     * @param ignitingEntity  the entity causing ignition
-     * @param ignitingBlock   the block causing ignition
+     * @param cause          the reason for ignition
+     * @param ignitingEntity the entity causing ignition
+     * @param ignitingBlock  the block causing ignition
      * @return ActionResult
      */
     public ActionResult onIgnite(BlockIgniteEvent.IgniteCause cause, Entity ignitingEntity, Block ignitingBlock) {

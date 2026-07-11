@@ -37,6 +37,7 @@ public class WaypointStyle implements Asset {
         this.id = id;
         this.rawData = null;
     }
+
     public WaypointStyle(String namespace, String id, byte[] data) {
         this.namespace = namespace;
         this.id = id;
@@ -73,6 +74,6 @@ public class WaypointStyle implements Asset {
         root.add("sprites", arr);
 
         files.put("assets/" + namespace + "/waypoint_style/" + id + ".json",
-                GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
+            GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
     }
 }

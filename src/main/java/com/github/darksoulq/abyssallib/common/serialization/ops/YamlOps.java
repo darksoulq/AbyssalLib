@@ -28,7 +28,8 @@ public class YamlOps extends DynamicOps<Object> {
     /**
      * Creates a new {@code YamlOps} instance.
      */
-    private YamlOps() {}
+    private YamlOps() {
+    }
 
     /**
      * Creates a string value.

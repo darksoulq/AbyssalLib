@@ -30,24 +30,40 @@ public class BatchQuery extends AbstractBatchQuery<BatchQuery> {
      * @throws RuntimeException if a {@link SQLException} occurs during retrieval.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Returns the MySQL-specific verb for insertion.
+     *
      * @return {@code "INSERT INTO "}
      */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
 
     /**
      * Returns the MySQL-specific verb for replacement.
+     *
      * @return {@code "REPLACE INTO "}
      */
-    @Override protected String getReplaceVerb() { return "REPLACE INTO "; }
+    @Override
+    protected String getReplaceVerb() {
+        return "REPLACE INTO ";
+    }
 
     /**
      * Returns the MySQL-specific verb for ignoring duplicates.
+     *
      * @return {@code "INSERT IGNORE INTO "}
      */
-    @Override protected String getInsertIgnoreVerb() { return "INSERT IGNORE INTO "; }
+    @Override
+    protected String getInsertIgnoreVerb() {
+        return "INSERT IGNORE INTO ";
+    }
 }

@@ -12,8 +12,8 @@ import java.util.Optional;
 
 public class Unbreakable extends DataComponent<Boolean> implements Vanilla {
     public static final Codec<Unbreakable> CODEC = Codecs.STRING.optional().xmap(
-            b -> new Unbreakable(),
-            d -> Optional.empty()
+        b -> new Unbreakable(),
+        d -> Optional.empty()
     );
     public static final DataComponentType<Unbreakable> TYPE = DataComponentType.valued(CODEC, v -> new Unbreakable());
 

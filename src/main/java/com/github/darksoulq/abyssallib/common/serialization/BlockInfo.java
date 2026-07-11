@@ -38,21 +38,22 @@ import java.util.Map;
  * </ul>
  *
  * @param pos        The absolute or relative position of the block as a {@link Vector}.
- * May be {@code null} when position is not relevant (e.g., templates).
+ *                   May be {@code null} when position is not relevant (e.g., templates).
  * @param block      The underlying block representation:
- * <ul>
- * <li>{@link CustomBlock} for custom blocks</li>
- * <li>{@link BlockData} for vanilla blocks</li>
- * </ul>
- * Must not be {@code null}.
+ *                   <ul>
+ *                   <li>{@link CustomBlock} for custom blocks</li>
+ *                   <li>{@link BlockData} for vanilla blocks</li>
+ *                   </ul>
+ *                   Must not be {@code null}.
  * @param states     A JSON object representing serialized block state properties
- * (e.g., facing, waterlogged). May be {@code null} if no states exist.
+ *                   (e.g., facing, waterlogged). May be {@code null} if no states exist.
  * @param properties A JSON object representing custom block entity data specific
- * to {@link CustomBlock} implementations. May be {@code null}.
+ *                   to {@link CustomBlock} implementations. May be {@code null}.
  * @param nbt        A JSON object representing serialized vanilla tile entity (NBT-like)
- * data such as inventories or sign text. May be {@code null}.
+ *                   data such as inventories or sign text. May be {@code null}.
  */
-public record BlockInfo(@Nullable Vector pos, Object block, @Nullable ObjectNode states, @Nullable ObjectNode properties, @Nullable ObjectNode nbt) {
+public record BlockInfo(@Nullable Vector pos, Object block, @Nullable ObjectNode states,
+                        @Nullable ObjectNode properties, @Nullable ObjectNode nbt) {
 
     /**
      * Returns the string identifier of the underlying block.
@@ -95,7 +96,6 @@ public record BlockInfo(@Nullable Vector pos, Object block, @Nullable ObjectNode
      * </ol>
      *
      * @param block The Bukkit {@link Block} to snapshot. Must not be {@code null}.
-     *
      * @return A fully populated {@link BlockInfo} representing the current block state.
      */
     public static BlockInfo resolve(Block block) {

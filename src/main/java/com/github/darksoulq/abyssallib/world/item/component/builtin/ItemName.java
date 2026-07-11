@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ItemName extends DataComponent<Component> implements Vanilla {
     public static final Codec<ItemName> CODEC = Codecs.TEXT_COMPONENT.xmap(
-            ItemName::new,
-            ItemName::getValue
+        ItemName::new,
+        ItemName::getValue
     );
     public static final DataComponentType<ItemName> TYPE = DataComponentType.valued(CODEC, ItemName::new);
 

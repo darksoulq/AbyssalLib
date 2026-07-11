@@ -45,10 +45,14 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
      */
     public static final TrunkPlacerType<ForkingTrunkPlacer> TYPE = () -> CODEC;
 
-    /** The maximum number of branches this trunk will attempt to generate. */
+    /**
+     * The maximum number of branches this trunk will attempt to generate.
+     */
     private final int branchCount;
 
-    /** The maximum block length of each generated branch. */
+    /**
+     * The maximum block length of each generated branch.
+     */
     private final int branchLength;
 
     /**
@@ -78,7 +82,7 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
 
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, i, 0);
-            if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
+            if (target.getBlockY() >= level.world().getMaxHeight()) break;
 
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {
@@ -103,8 +107,8 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
                 currentZ += direction.getModZ();
                 currentY += 1;
 
-                Location branchTarget = new Location(level.getWorld(), currentX, currentY, currentZ);
-                if (branchTarget.getBlockY() >= level.getWorld().getMaxHeight()) break;
+                Location branchTarget = new Location(level.world(), currentX, currentY, currentZ);
+                if (branchTarget.getBlockY() >= level.world().getMaxHeight()) break;
 
                 BlockInfo stateToPlace = trunkProvider.getState(random, branchTarget);
                 if (stateToPlace != null) {

@@ -34,9 +34,13 @@ public class SetCountFunction extends LootFunction {
      */
     public static final LootFunctionType<SetCountFunction> TYPE = () -> CODEC;
 
-    /** The inclusive minimum stack size. */
+    /**
+     * The inclusive minimum stack size.
+     */
     private final int min;
-    /** The inclusive maximum stack size. */
+    /**
+     * The inclusive maximum stack size.
+     */
     private final int max;
 
     /**

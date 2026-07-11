@@ -124,23 +124,41 @@ public class BlockProperties {
      * Builder for constructing {@link BlockProperties} instances.
      */
     public static class Builder {
-        /** The default hardness value. */
+        /**
+         * The default hardness value.
+         */
         private float hardness = 1.0f;
-        /** The default resistance value. */
+        /**
+         * The default resistance value.
+         */
         private float resistance = 1.0f;
-        /** The default silk touch requirement. */
+        /**
+         * The default silk touch requirement.
+         */
         private boolean requireSilkTouch = false;
-        /** The default fortune allowance. */
+        /**
+         * The default fortune allowance.
+         */
         private boolean allowFortune = false;
-        /** The default flammability state. */
+        /**
+         * The default flammability state.
+         */
         private boolean isFlammable = false;
-        /** The default physics allowance. */
+        /**
+         * The default physics allowance.
+         */
         private boolean allowPhysics = false;
-        /** The default minimum experience. */
+        /**
+         * The default minimum experience.
+         */
         private int minExp = 0;
-        /** The default maximum experience. */
+        /**
+         * The default maximum experience.
+         */
         private int maxExp = 0;
-        /** The default piston reaction. */
+        /**
+         * The default piston reaction.
+         */
         private PistonReaction pistonReaction = PistonReaction.MOVE;
 
         /**

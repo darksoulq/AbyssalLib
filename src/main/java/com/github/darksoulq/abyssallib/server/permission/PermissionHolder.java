@@ -32,8 +32,8 @@ public abstract class PermissionHolder {
      * @param node The {@link Node} to set.
      */
     public void setPermission(Node node) {
-        if (!PermissionManager.isValidNode(node.getKey())) return;
-        permissions.put(node.getKey(), node);
+        if (!PermissionManager.isValidNode(node.key())) return;
+        permissions.put(node.key(), node);
         invalidateCache();
     }
 
@@ -54,7 +54,7 @@ public abstract class PermissionHolder {
      * @param node The node representing group inheritance.
      */
     public void addParent(Node node) {
-        parents.put(node.getKey(), node);
+        parents.put(node.key(), node);
         invalidateCache();
     }
 
@@ -77,7 +77,7 @@ public abstract class PermissionHolder {
      */
     public boolean hasDirectPermission(String key) {
         Node node = permissions.get(key);
-        return node != null && !node.hasExpired() && node.getValue();
+        return node != null && !node.hasExpired() && node.value();
     }
 
     /**
@@ -114,8 +114,8 @@ public abstract class PermissionHolder {
         boolean changed = false;
         long now = System.currentTimeMillis();
 
-        changed |= permissions.values().removeIf(node -> node.isTemporary() && now >= node.getExpiry());
-        changed |= parents.values().removeIf(node -> node.isTemporary() && now >= node.getExpiry());
+        changed |= permissions.values().removeIf(node -> node.isTemporary() && now >= node.expiry());
+        changed |= parents.values().removeIf(node -> node.isTemporary() && now >= node.expiry());
 
         if (changed) {
             invalidateCache();

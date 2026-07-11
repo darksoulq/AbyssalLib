@@ -7,6 +7,7 @@ import java.util.*;
 
 public interface ValueComponent {
     String id();
+
     Object toJson();
 
     class AttributeModifiers implements ValueComponent {
@@ -54,10 +55,12 @@ public interface ValueComponent {
                 this.contains.add(contains);
                 return this;
             }
+
             public Builder contains(List<Contains> contains) {
                 this.contains.addAll(contains);
                 return this;
             }
+
             public Builder contains(Contains... contains) {
                 this.contains.addAll(Arrays.stream(contains).toList());
                 return this;
@@ -67,10 +70,12 @@ public interface ValueComponent {
                 this.counts.add(count);
                 return this;
             }
+
             public Builder counts(List<Count> counts) {
                 this.counts.addAll(counts);
                 return this;
             }
+
             public Builder counts(Count... counts) {
                 this.counts.addAll(Arrays.stream(counts).toList());
                 return this;
@@ -80,6 +85,7 @@ public interface ValueComponent {
                 this.min = size;
                 return this;
             }
+
             public Builder size(int min, int max) {
                 this.min = min;
                 this.max = max;
@@ -91,7 +97,8 @@ public interface ValueComponent {
             }
         }
 
-        public record Contains(List<Attribute> attributes, Key id, Integer min, Integer max, Operation operation, Slot slot) {
+        public record Contains(List<Attribute> attributes, Key id, Integer min, Integer max, Operation operation,
+                               Slot slot) {
             public static Builder builder() {
                 return new Builder();
             }
@@ -124,10 +131,12 @@ public interface ValueComponent {
                     attributes.add(attribute);
                     return this;
                 }
+
                 public Builder attributes(Set<Attribute> attributes) {
                     this.attributes.addAll(attributes);
                     return this;
                 }
+
                 public Builder attributes(Attribute... attributes) {
                     this.attributes.addAll(Arrays.stream(attributes).toList());
                     return this;
@@ -142,6 +151,7 @@ public interface ValueComponent {
                     this.min = size;
                     return this;
                 }
+
                 public Builder size(int min, int max) {
                     this.min = min;
                     this.max = max;
@@ -152,6 +162,7 @@ public interface ValueComponent {
                     this.operation = operation;
                     return this;
                 }
+
                 public Builder slot(Slot slot) {
                     this.slot = slot;
                     return this;
@@ -163,6 +174,7 @@ public interface ValueComponent {
                 }
             }
         }
+
         public record Count(Contains contains, Integer min, Integer max) {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
@@ -186,15 +198,18 @@ public interface ValueComponent {
                     this.contains = contains;
                     return this;
                 }
+
                 public Builder count(int count) {
                     this.min = count;
                     return this;
                 }
+
                 public Builder count(int min, int max) {
                     this.min = min;
                     this.max = max;
                     return this;
                 }
+
                 public Count build() {
                     if (contains == null || min == null) throw new IllegalStateException("Missing test or count");
                     return new Count(contains, min, max);
@@ -205,10 +220,12 @@ public interface ValueComponent {
         public enum Operation {
             ADD_VALUE, ADD_MULTIPLIED_BASE, ADD_MULTIPLIED_TOTAL
         }
+
         public enum Slot {
             MAIN_HAND, OFF_HAND, HEAD, CHEST, LEGS, FEET, HAND, ARMOR, ANY, BODY, SADDLE
         }
     }
+
     class CustomData implements ValueComponent {
         private final String value;
         private final Map<String, CustomDataValue> values = new LinkedHashMap<>();
@@ -217,6 +234,7 @@ public interface ValueComponent {
             this.values.putAll(values);
             this.value = null;
         }
+
         public CustomData(String value) {
             this.value = value;
         }
@@ -242,24 +260,31 @@ public interface ValueComponent {
             public static BooleanValue bool(boolean bool) {
                 return new BooleanValue(bool);
             }
+
             public static DoubleValue dbl(double dbl) {
                 return new DoubleValue(dbl);
             }
+
             public static FloatValue flt(float flt) {
                 return new FloatValue(flt);
             }
+
             public static IntegerValue integer(int integer) {
                 return new IntegerValue(integer);
             }
+
             public static StringValue string(String string) {
                 return new StringValue(string);
             }
+
             public static ListValue list(List<CustomDataValue> values) {
                 return new ListValue(values);
             }
+
             public static ListValue list(CustomDataValue... values) {
                 return new ListValue(Arrays.stream(values).toList());
             }
+
             public static StructBuilder struct() {
                 return new StructBuilder();
             }
@@ -271,6 +296,7 @@ public interface ValueComponent {
                     values.put(key, value);
                     return this;
                 }
+
                 public StructValue build() {
                     return new StructValue(values);
                 }
@@ -280,42 +306,49 @@ public interface ValueComponent {
         public interface CustomDataValue {
             Object toJson();
         }
+
         public record BooleanValue(boolean value) implements CustomDataValue {
             @Override
             public Object toJson() {
                 return value;
             }
         }
+
         public record DoubleValue(double value) implements CustomDataValue {
             @Override
             public Object toJson() {
                 return value;
             }
         }
+
         public record FloatValue(float value) implements CustomDataValue {
             @Override
             public Object toJson() {
                 return value;
             }
         }
+
         public record IntegerValue(int value) implements CustomDataValue {
             @Override
             public Object toJson() {
                 return value;
             }
         }
+
         public record StringValue(String value) implements CustomDataValue {
             @Override
             public Object toJson() {
                 return value;
             }
         }
+
         public record ListValue(List<CustomDataValue> value) implements CustomDataValue {
             @Override
             public List<Object> toJson() {
                 return List.of(value.stream().map(CustomDataValue::toJson));
             }
         }
+
         public record StructValue(Map<String, CustomDataValue> values) implements CustomDataValue {
             @Override
             public Object toJson() {
@@ -325,6 +358,7 @@ public interface ValueComponent {
             }
         }
     }
+
     class Damage implements ValueComponent {
         private final Integer minDmg, maxDmg, minDur, maxDur;
 
@@ -369,6 +403,7 @@ public interface ValueComponent {
                 this.minDmg = damage;
                 return this;
             }
+
             public Builder damage(int min, int max) {
                 this.minDmg = min;
                 this.maxDmg = max;
@@ -379,6 +414,7 @@ public interface ValueComponent {
                 this.minDur = durability;
                 return this;
             }
+
             public Builder durability(int min, int max) {
                 this.minDur = min;
                 this.maxDmg = max;

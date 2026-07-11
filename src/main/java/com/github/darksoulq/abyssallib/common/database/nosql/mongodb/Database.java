@@ -15,15 +15,25 @@ import java.util.concurrent.Executors;
  * thread pool for non-blocking operations.
  */
 public class Database {
-    /** The MongoDB connection URI (e.g., "mongodb://localhost:27017"). */
+    /**
+     * The MongoDB connection URI (e.g., "mongodb://localhost:27017").
+     */
     private final String uri;
-    /** The name of the database to interact with. */
+    /**
+     * The name of the database to interact with.
+     */
     private final String databaseName;
-    /** The executor service used for asynchronous query execution. */
+    /**
+     * The executor service used for asynchronous query execution.
+     */
     private final ExecutorService asyncPool;
-    /** The underlying MongoDB client. */
+    /**
+     * The underlying MongoDB client.
+     */
     private MongoClient client;
-    /** The specific MongoDB database instance. */
+    /**
+     * The specific MongoDB database instance.
+     */
     private MongoDatabase database;
 
     /**

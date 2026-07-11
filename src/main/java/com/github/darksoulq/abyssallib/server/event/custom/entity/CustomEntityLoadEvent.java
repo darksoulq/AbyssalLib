@@ -52,5 +52,7 @@ public class CustomEntityLoadEvent extends Event {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

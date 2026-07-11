@@ -9,11 +9,17 @@ import org.bukkit.util.noise.PerlinNoiseGenerator;
  * A color provider that uses 3D Perlin noise to sample from a base ColorProvider.
  */
 public class NoiseGradient implements ColorProvider {
-    /** The base color provider to sample from. */
+    /**
+     * The base color provider to sample from.
+     */
     private final ColorProvider base;
-    /** The frequency of the noise (higher values result in more granular noise). */
+    /**
+     * The frequency of the noise (higher values result in more granular noise).
+     */
     private final double frequency;
-    /** The internal Perlin noise generator. */
+    /**
+     * The internal Perlin noise generator.
+     */
     private final PerlinNoiseGenerator generator;
 
     /**

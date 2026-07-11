@@ -19,7 +19,9 @@ import java.util.List;
  */
 public class SpringFeature extends Feature<SpringFeature.Config> {
 
-    /** The standard array of 6 adjacent block faces used for boundary calculation. */
+    /**
+     * The standard array of 6 adjacent block faces used for boundary calculation.
+     */
     private static final BlockFace[] FACES = {
         BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST
     };
@@ -88,13 +90,14 @@ public class SpringFeature extends Feature<SpringFeature.Config> {
     /**
      * Configuration record for the spring feature.
      *
-     * @param stateProvider       The dynamic block provider representing the core liquid to place.
-     * @param rock                The list of target blocks considered valid encasing materials.
-     * @param requiresBlockBelow  Flag dictating if the block directly beneath the origin must be rock.
-     * @param holeCount           The exact number of adjacent blocks that must be air for placement.
-     * @param validNeighbors      The exact number of adjacent blocks that must be rock for placement.
+     * @param stateProvider      The dynamic block provider representing the core liquid to place.
+     * @param rock               The list of target blocks considered valid encasing materials.
+     * @param requiresBlockBelow Flag dictating if the block directly beneath the origin must be rock.
+     * @param holeCount          The exact number of adjacent blocks that must be air for placement.
+     * @param validNeighbors     The exact number of adjacent blocks that must be rock for placement.
      */
-    public record Config(BlockStateProvider stateProvider, List<BlockInfo> rock, boolean requiresBlockBelow, int holeCount, int validNeighbors) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> rock, boolean requiresBlockBelow,
+                         int holeCount, int validNeighbors) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

@@ -487,7 +487,7 @@ public class DialogContent {
      * @param actionId The {@link Key} identifying the action.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, Key actionId) {
+    public static ActionButton button(Component label, Key actionId) {
         return button(label, null, actionId, null);
     }
 
@@ -499,7 +499,7 @@ public class DialogContent {
      * @param additions Extra NBT data.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, Key actionId, BinaryTagHolder additions) {
+    public static ActionButton button(Component label, Key actionId, BinaryTagHolder additions) {
         return button(label, null, actionId, additions);
     }
 
@@ -511,7 +511,7 @@ public class DialogContent {
      * @param actionId The action {@link Key}.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, Component tooltip, Key actionId) {
+    public static ActionButton button(Component label, Component tooltip, Key actionId) {
         return button(label, tooltip, actionId, null);
     }
 
@@ -524,7 +524,7 @@ public class DialogContent {
      * @param additions Extra NBT data.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, Component tooltip, Key actionId, BinaryTagHolder additions) {
+    public static ActionButton button(Component label, Component tooltip, Key actionId, BinaryTagHolder additions) {
         return ActionButton.builder(label)
             .action(DialogAction.customClick(actionId, additions))
             .tooltip(tooltip)
@@ -539,7 +539,7 @@ public class DialogContent {
      * @param actionId The action {@link Key}.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, int width, Key actionId) {
+    public static ActionButton button(Component label, int width, Key actionId) {
         return button(label, null, width, actionId, null);
     }
 
@@ -552,7 +552,7 @@ public class DialogContent {
      * @param additions Extra NBT data.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, int width, Key actionId, BinaryTagHolder additions) {
+    public static ActionButton button(Component label, int width, Key actionId, BinaryTagHolder additions) {
         return button(label, null, width, actionId, additions);
     }
 
@@ -565,7 +565,7 @@ public class DialogContent {
      * @param actionId The action {@link Key}.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, Component tooltip, int width, Key actionId) {
+    public static ActionButton button(Component label, Component tooltip, int width, Key actionId) {
         return button(label, tooltip, width, actionId, null);
     }
 
@@ -579,7 +579,7 @@ public class DialogContent {
      * @param additions Extra NBT data.
      * @return A configured {@link ActionButton}.
      */
-    public static ActionButton button (Component label, Component tooltip, int width, Key actionId, BinaryTagHolder additions) {
+    public static ActionButton button(Component label, Component tooltip, int width, Key actionId, BinaryTagHolder additions) {
         return ActionButton.builder(label)
             .action(DialogAction.customClick(actionId, additions))
             .tooltip(tooltip)

@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class BlockAttacks extends DataComponent<BlocksAttacks> implements Vanilla {
     public static final Codec<BlockAttacks> CODEC = ExtraCodecs.BLOCKS_ATTACKS.xmap(
-            BlockAttacks::new,
-            BlockAttacks::getValue
+        BlockAttacks::new,
+        BlockAttacks::getValue
     );
     public static final DataComponentType<BlockAttacks> TYPE = DataComponentType.valued(CODEC, BlockAttacks::new);
 

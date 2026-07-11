@@ -34,12 +34,36 @@ public class FoliaTaskDispatcher {
         }
 
         return new ScheduledTask() {
-            @Override public void cancel() { abstractTask.cancel(); if (foliaTask != null) foliaTask.cancel(); }
-            @Override public boolean isCancelled() { return abstractTask.isCancelled(); }
-            @Override public boolean isRunning() { return abstractTask.isRunning(); }
-            @Override public Instant nextExecution() { return abstractTask.nextExecution(); }
-            @Override public Optional<Throwable> failure() { return abstractTask.failure(); }
-            @Override public CompletionStage<Void> completion() { return abstractTask.completion(); }
+            @Override
+            public void cancel() {
+                abstractTask.cancel();
+                if (foliaTask != null) foliaTask.cancel();
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return abstractTask.isCancelled();
+            }
+
+            @Override
+            public boolean isRunning() {
+                return abstractTask.isRunning();
+            }
+
+            @Override
+            public Instant nextExecution() {
+                return abstractTask.nextExecution();
+            }
+
+            @Override
+            public Optional<Throwable> failure() {
+                return abstractTask.failure();
+            }
+
+            @Override
+            public CompletionStage<Void> completion() {
+                return abstractTask.completion();
+            }
         };
     }
 }

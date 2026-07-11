@@ -25,7 +25,7 @@ public final class CustomPlaceholderResolver {
             if (!queue.hasNext()) {
                 return Tag.selfClosingInserting(Component.text("<placeholder:" + namespace + ">"));
             }
-            
+
             String value = queue.pop().value();
             Key key = Key.key(namespace, value);
 

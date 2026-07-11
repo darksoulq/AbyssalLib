@@ -71,12 +71,12 @@ public class BlockInteractionEvent extends Event implements Cancellable {
      * @param item        The item used by the player during the interaction.
      */
     public BlockInteractionEvent(
-            @NotNull Player player,
-            @NotNull CustomBlock block,
-            @NotNull BlockFace face,
-            Location interaction,
-            @NotNull Action action,
-            @Nullable ItemStack item
+        @NotNull Player player,
+        @NotNull CustomBlock block,
+        @NotNull BlockFace face,
+        Location interaction,
+        @NotNull Action action,
+        @Nullable ItemStack item
     ) {
         this.player = player;
         this.block = block;
@@ -173,8 +173,9 @@ public class BlockInteractionEvent extends Event implements Cancellable {
     /**
      * Provides a static method to retrieve the handler list, required by Bukkit.
      *
-     * @return
-     * The static {@link HandlerList} for this event type.
+     * @return The static {@link HandlerList} for this event type.
      */
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

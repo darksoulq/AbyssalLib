@@ -34,10 +34,14 @@ public class EnvironmentScanModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<EnvironmentScanModifier> TYPE = () -> CODEC;
 
-    /** The maximum number of blocks to scan in the specified direction. */
+    /**
+     * The maximum number of blocks to scan in the specified direction.
+     */
     private final int maxSteps;
 
-    /** Determines the scan direction; true to scan upwards, false to scan downwards. */
+    /**
+     * Determines the scan direction; true to scan upwards, false to scan downwards.
+     */
     private final boolean up;
 
     /**

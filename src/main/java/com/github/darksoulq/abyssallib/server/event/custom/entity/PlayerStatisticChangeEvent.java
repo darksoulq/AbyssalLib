@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * This event is {@link Cancellable}, allowing listeners to prevent the change
  * or modify the new value before it is saved to the database.
  *
- * @param <T>
- * The data type of the statistic value being changed.
+ * @param <T> The data type of the statistic value being changed.
  */
 public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable {
 
@@ -50,14 +49,10 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Constructs a new PlayerStatisticChangeEvent.
      *
-     * @param player
-     * The {@link Player} instance whose data is changing.
-     * @param statistic
-     * The {@link Statistic} instance involved in the change.
-     * @param oldValue
-     * The value prior to the update.
-     * @param newValue
-     * The value proposed for the update.
+     * @param player    The {@link Player} instance whose data is changing.
+     * @param statistic The {@link Statistic} instance involved in the change.
+     * @param oldValue  The value prior to the update.
+     * @param newValue  The value proposed for the update.
      */
     public PlayerStatisticChangeEvent(@NotNull Player player, @NotNull Statistic statistic, T oldValue, T newValue) {
         this.player = player;
@@ -69,8 +64,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Retrieves the player involved in this statistic change.
      *
-     * @return
-     * The {@link Player} instance.
+     * @return The {@link Player} instance.
      */
     public @NotNull Player getPlayer() {
         return player;
@@ -79,8 +73,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Retrieves the specific statistic container that is being updated.
      *
-     * @return
-     * The {@link Statistic} definition and container.
+     * @return The {@link Statistic} definition and container.
      */
     public @NotNull Statistic getStatistic() {
         return statistic;
@@ -89,8 +82,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Retrieves the value of the statistic prior to this change event.
      *
-     * @return
-     * The old value of type {@code T}.
+     * @return The old value of type {@code T}.
      */
     public T getOldValue() {
         return oldValue;
@@ -99,8 +91,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Retrieves the proposed new value for the statistic.
      *
-     * @return
-     * The proposed new value of type {@code T}.
+     * @return The proposed new value of type {@code T}.
      */
     public T getNewValue() {
         return newValue;
@@ -109,8 +100,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Overrides the proposed new value with a different one.
      *
-     * @param newValue
-     * The new value to be assigned to the player's statistic.
+     * @param newValue The new value to be assigned to the player's statistic.
      */
     public void setNewValue(T newValue) {
         this.newValue = newValue;
@@ -119,8 +109,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Checks if the statistic change has been cancelled.
      *
-     * @return
-     * True if the change is prevented, false otherwise.
+     * @return True if the change is prevented, false otherwise.
      */
     @Override
     public boolean isCancelled() {
@@ -130,8 +119,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Sets the cancellation state of the event.
      *
-     * @param v
-     * True to cancel the change, false to allow it.
+     * @param v True to cancel the change, false to allow it.
      */
     @Override
     public void setCancelled(boolean v) {
@@ -141,8 +129,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Retrieves the list of handlers listening to this event instance.
      *
-     * @return
-     * The {@link HandlerList} for this event.
+     * @return The {@link HandlerList} for this event.
      */
     @Override
     public @NotNull HandlerList getHandlers() {
@@ -152,8 +139,7 @@ public class PlayerStatisticChangeEvent<T> extends Event implements Cancellable 
     /**
      * Provides a static method to retrieve the handler list, required by Bukkit.
      *
-     * @return
-     * The static {@link HandlerList} for this event type.
+     * @return The static {@link HandlerList} for this event type.
      */
     public static HandlerList getHandlerList() {
         return handlers;

@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class Consume extends DataComponent<Consumable> implements Vanilla {
     public static final Codec<Consume> CODEC = ExtraCodecs.CONSUMABLE.xmap(
-            Consume::new,
-            Consume::getValue
+        Consume::new,
+        Consume::getValue
     );
     public static final DataComponentType<Consume> TYPE = DataComponentType.valued(CODEC, Consume::new);
 

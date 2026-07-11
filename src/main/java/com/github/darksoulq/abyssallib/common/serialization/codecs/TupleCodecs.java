@@ -26,7 +26,7 @@ public class TupleCodecs {
         /**
          * Creates a pair codec.
          *
-         * @param first Codec for the first element.
+         * @param first  Codec for the first element.
          * @param second Codec for the second element.
          */
         public PairCodec(Codec<A> first, Codec<B> second) {
@@ -80,9 +80,9 @@ public class TupleCodecs {
         /**
          * Creates a three-element tuple codec.
          *
-         * @param first Codec for the first element.
+         * @param first  Codec for the first element.
          * @param second Codec for the second element.
-         * @param third Codec for the third element.
+         * @param third  Codec for the third element.
          */
         public Tuple3Codec(Codec<A> first, Codec<B> second, Codec<C> third) {
             this.first = first;
@@ -128,9 +128,9 @@ public class TupleCodecs {
     /**
      * Codec for a four-element tuple.
      *
-     * @param <A> First element type.
-     * @param <B> Second element type.
-     * @param <C> Third element type.
+     * @param <A>      First element type.
+     * @param <B>      Second element type.
+     * @param <C>      Third element type.
      * @param <D_TYPE> Fourth element type.
      */
     public static class Tuple4Codec<A, B, C, D_TYPE> implements Codec<Codec.Tuple4<A, B, C, D_TYPE>> {
@@ -142,9 +142,9 @@ public class TupleCodecs {
         /**
          * Creates a four-element tuple codec.
          *
-         * @param first Codec for the first element.
+         * @param first  Codec for the first element.
          * @param second Codec for the second element.
-         * @param third Codec for the third element.
+         * @param third  Codec for the third element.
          * @param fourth Codec for the fourth element.
          */
         public Tuple4Codec(Codec<A> first, Codec<B> second, Codec<C> third, Codec<D_TYPE> fourth) {

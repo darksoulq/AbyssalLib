@@ -10,13 +10,21 @@ import org.bukkit.util.Vector;
  * This pattern consists of a background color and thin lines that repeat at a set interval.
  */
 public class GridPattern implements ColorProvider {
-    /** The color of the grid cells. */
+    /**
+     * The color of the grid cells.
+     */
     private final Color bg;
-    /** The color of the grid lines. */
+    /**
+     * The color of the grid lines.
+     */
     private final Color line;
-    /** The distance between each grid line. */
+    /**
+     * The distance between each grid line.
+     */
     private final double size;
-    /** The width of the grid lines. */
+    /**
+     * The width of the grid lines.
+     */
     private final double thickness;
 
     /**

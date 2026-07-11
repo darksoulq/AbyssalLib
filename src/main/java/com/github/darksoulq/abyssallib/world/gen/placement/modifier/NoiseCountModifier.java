@@ -36,19 +36,29 @@ public class NoiseCountModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<NoiseCountModifier> TYPE = () -> CODEC;
 
-    /** The frequency multiplier applied to coordinates before sampling the noise field. */
+    /**
+     * The frequency multiplier applied to coordinates before sampling the noise field.
+     */
     private final double frequency;
 
-    /** The noise value boundary determining which count is used. */
+    /**
+     * The noise value boundary determining which count is used.
+     */
     private final double threshold;
 
-    /** The number of positions to yield if the sampled noise is strictly greater than the threshold. */
+    /**
+     * The number of positions to yield if the sampled noise is strictly greater than the threshold.
+     */
     private final int countAbove;
 
-    /** The number of positions to yield if the sampled noise is less than or equal to the threshold. */
+    /**
+     * The number of positions to yield if the sampled noise is less than or equal to the threshold.
+     */
     private final int countBelow;
 
-    /** A lazily initialized noise generator tied to the world seed. */
+    /**
+     * A lazily initialized noise generator tied to the world seed.
+     */
     private transient SimplexNoiseGenerator noiseGenerator;
 
     /**
@@ -76,7 +86,7 @@ public class NoiseCountModifier extends PlacementModifier {
     @Override
     public Stream<Vector> getPositions(PlacementContext context, Stream<Vector> positions) {
         if (noiseGenerator == null) {
-            noiseGenerator = new SimplexNoiseGenerator(context.level().getWorld());
+            noiseGenerator = new SimplexNoiseGenerator(context.level().world());
         }
 
         return positions.flatMap(pos -> {

@@ -10,7 +10,7 @@ public final class FileSetup {
 
     public static void init(JavaPlugin plugin) {
         HookConstants.load();
-        
+
         File tagFolder = new File(plugin.getDataFolder(), "tags");
         if (!new File(LanguageLoader.LANG_FOLDER.toFile(), "en_us.properties").exists()) {
             plugin.saveResource("lang/en_us.properties", false);

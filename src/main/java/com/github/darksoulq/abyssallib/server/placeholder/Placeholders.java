@@ -1,9 +1,14 @@
 package com.github.darksoulq.abyssallib.server.placeholder;
 
+import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.ops.StringOps;
+import com.github.darksoulq.abyssallib.server.permission.Node;
+import com.github.darksoulq.abyssallib.server.permission.PermissionGroup;
+import com.github.darksoulq.abyssallib.server.permission.PermissionUser;
 import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractBooleanPlaceholder;
 import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractDoublePlaceholder;
+import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractListStringPlaceholder;
 import com.github.darksoulq.abyssallib.server.placeholder.expression.AbstractStringPlaceholder;
 import com.github.darksoulq.abyssallib.server.registry.DeferredRegistry;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
@@ -17,6 +22,8 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class Placeholders {
@@ -134,6 +141,127 @@ public class Placeholders {
         public PlaceholderResult<Double> resolve(PlaceholderContext context) {
             Player player = context.getPlayer();
             return player == null ? PlaceholderResult.empty() : PlaceholderResult.success(player.getLocation().getZ());
+        }
+    });
+
+    public static final Placeholder<?> PLAYER_HAS_PERMISSION = PLACEHOLDERS.register("player_has_permission", id -> new AbstractBooleanPlaceholder(id) {
+        @Override
+        public PlaceholderResult<Boolean> resolve(PlaceholderContext context) {
+            Player player = context.getPlayer();
+            if (player == null || !context.hasArgs()) return PlaceholderResult.empty();
+            String perm = context.getRaw(0, "");
+            return PlaceholderResult.success(player.hasPermission(perm));
+        }
+    });
+
+    public static final Placeholder<?> PLAYER_HAS_GROUP = PLACEHOLDERS.register("player_has_group", id -> new AbstractBooleanPlaceholder(id) {
+        @Override
+        public PlaceholderResult<Boolean> resolve(PlaceholderContext context) {
+            Player player = context.getPlayer();
+            if (player == null || !context.hasArgs() || AbyssalLib.PERMISSION_MANAGER == null)
+                return PlaceholderResult.empty();
+
+            PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getLoadedUser(player.getUniqueId());
+            if (user == null) return PlaceholderResult.empty();
+
+            String group = context.getRaw(0, "");
+            return PlaceholderResult.success(user.hasParent(group));
+        }
+    });
+
+    public static final Placeholder<?> PLAYER_GROUPS = PLACEHOLDERS.register("player_groups", id -> new AbstractListStringPlaceholder(id) {
+        @Override
+        public PlaceholderResult<List<String>> resolve(PlaceholderContext context) {
+            Player player = context.getPlayer();
+            if (player == null || AbyssalLib.PERMISSION_MANAGER == null) return PlaceholderResult.empty();
+
+            PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getLoadedUser(player.getUniqueId());
+            if (user == null) return PlaceholderResult.empty();
+
+            List<String> groups = new ArrayList<>();
+            for (Node node : user.getParentNodes()) {
+                groups.add(node.key());
+            }
+
+            groups.sort((g1, g2) -> {
+                PermissionGroup group1 = Registries.PERMISSION_GROUPS.get(g1);
+                PermissionGroup group2 = Registries.PERMISSION_GROUPS.get(g2);
+
+                int w1 = group1 != null ? group1.getWeight() : 0;
+                int w2 = group2 != null ? group2.getWeight() : 0;
+
+                if (w1 != w2) {
+                    return Integer.compare(w2, w1);
+                }
+                return g1.compareTo(g2);
+            });
+
+            return PlaceholderResult.success(groups);
+        }
+    });
+
+    public static final Placeholder<?> PLAYER_GROUP = PLACEHOLDERS.register("player_group", id -> new AbstractStringPlaceholder(id) {
+        @Override
+        public PlaceholderResult<String> resolve(PlaceholderContext context) {
+            Player player = context.getPlayer();
+            if (player == null || !context.hasArgs() || AbyssalLib.PERMISSION_MANAGER == null)
+                return PlaceholderResult.empty();
+
+            PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getLoadedUser(player.getUniqueId());
+            if (user == null) return PlaceholderResult.empty();
+
+            int index;
+            try {
+                index = Integer.parseInt(context.getRaw(0, "0"));
+            } catch (NumberFormatException e) {
+                return PlaceholderResult.empty();
+            }
+
+            List<String> groups = new ArrayList<>();
+            for (Node node : user.getParentNodes()) {
+                groups.add(node.key());
+            }
+
+            groups.sort((g1, g2) -> {
+                PermissionGroup group1 = Registries.PERMISSION_GROUPS.get(g1);
+                PermissionGroup group2 = Registries.PERMISSION_GROUPS.get(g2);
+
+                int w1 = group1 != null ? group1.getWeight() : 0;
+                int w2 = group2 != null ? group2.getWeight() : 0;
+
+                if (w1 != w2) {
+                    return Integer.compare(w2, w1);
+                }
+                return g1.compareTo(g2);
+            });
+
+            if (index < 0 || index >= groups.size()) return PlaceholderResult.empty();
+            return PlaceholderResult.success(groups.get(index));
+        }
+    });
+
+    public static final Placeholder<?> PLAYER_PRIMARY_GROUP = PLACEHOLDERS.register("player_primary_group", id -> new AbstractStringPlaceholder(id) {
+        @Override
+        public PlaceholderResult<String> resolve(PlaceholderContext context) {
+            Player player = context.getPlayer();
+            if (player == null || AbyssalLib.PERMISSION_MANAGER == null) return PlaceholderResult.empty();
+
+            PermissionUser user = AbyssalLib.PERMISSION_MANAGER.getLoadedUser(player.getUniqueId());
+            if (user == null || user.getParentNodes().isEmpty()) return PlaceholderResult.empty();
+
+            String highestGroup = null;
+            int highestWeight = Integer.MIN_VALUE;
+
+            for (Node node : user.getParentNodes()) {
+                PermissionGroup group = Registries.PERMISSION_GROUPS.get(node.key());
+
+                if (group != null && group.getWeight() > highestWeight) {
+                    highestWeight = group.getWeight();
+                    highestGroup = group.getId();
+                }
+            }
+
+            return highestGroup == null ? PlaceholderResult.empty() : PlaceholderResult.success(highestGroup);
         }
     });
 
@@ -271,7 +399,7 @@ public class Placeholders {
                     com.github.darksoulq.abyssallib.world.data.attribute.AttributeInstance instance = attributes.getInstance(attribute);
                     com.github.darksoulq.abyssallib.world.data.attribute.AttributeModifier mod = instance.getModifier(modKey);
 
-                    yield mod != null ? PlaceholderResult.success(mod.getAmount()) : PlaceholderResult.empty();
+                    yield mod != null ? PlaceholderResult.success(mod.amount()) : PlaceholderResult.empty();
                 }
                 default -> PlaceholderResult.success(attributes.getValue(attribute));
             };

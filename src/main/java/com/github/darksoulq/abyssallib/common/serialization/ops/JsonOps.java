@@ -29,7 +29,8 @@ public class JsonOps extends DynamicOps<JsonNode> {
     /**
      * Creates a new {@code JsonOps} instance.
      */
-    private JsonOps() {}
+    private JsonOps() {
+    }
 
     /**
      * Creates a JSON string node.

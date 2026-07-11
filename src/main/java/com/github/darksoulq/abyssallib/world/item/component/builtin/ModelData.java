@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ModelData extends DataComponent<CustomModelData> implements Vanilla {
     public static final Codec<ModelData> CODEC = ExtraCodecs.CUSTOM_MODEL_DATA.xmap(
-            ModelData::new,
-            ModelData::getValue
+        ModelData::new,
+        ModelData::getValue
     );
     public static final DataComponentType<ModelData> TYPE = DataComponentType.valued(CODEC, ModelData::new);
 

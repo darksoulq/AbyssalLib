@@ -130,7 +130,7 @@ public record PlacedFeature(ConfiguredFeature<?, ?> feature, List<PlacementModif
     public boolean place(WorldGenAccess level, Random random, int chunkX, int chunkZ) {
         int startX = (chunkX << 4) + 8;
         int startZ = (chunkZ << 4) + 8;
-        return place(level, random, new Location(level.getWorld(), startX, 0, startZ));
+        return place(level, random, new Location(level.world(), startX, 0, startZ));
     }
 
     /**

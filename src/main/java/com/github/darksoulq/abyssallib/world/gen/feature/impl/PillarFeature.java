@@ -42,7 +42,7 @@ public class PillarFeature extends Feature<PillarFeature.Config> {
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, config.upward() ? i : -i, 0);
 
-            if (target.getBlockY() < context.level().getWorld().getMinHeight() || target.getBlockY() >= context.level().getWorld().getMaxHeight()) {
+            if (target.getBlockY() < context.level().world().getMinHeight() || target.getBlockY() >= context.level().world().getMaxHeight()) {
                 break;
             }
 
@@ -80,7 +80,8 @@ public class PillarFeature extends Feature<PillarFeature.Config> {
      * @param stateProvider The dynamic provider supplying the blocks to build the pillar.
      * @param targets       The list of allowed target block identifiers that can be overwritten.
      */
-    public record Config(int minHeight, int maxHeight, boolean upward, boolean stopOnInvalid, BlockStateProvider stateProvider, List<BlockInfo> targets) implements FeatureConfig {
+    public record Config(int minHeight, int maxHeight, boolean upward, boolean stopOnInvalid,
+                         BlockStateProvider stateProvider, List<BlockInfo> targets) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

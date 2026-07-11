@@ -49,9 +49,9 @@ public class TextUtil {
      */
     public static void buildGson() {
         GsonBuilder builder = new GsonBuilder()
-                .serializeNulls()
-                .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.TRANSIENT)
-                .setPrettyPrinting();
+            .serializeNulls()
+            .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.TRANSIENT)
+            .setPrettyPrinting();
 
         for (TypeAdapterRegistration<?> reg : ADAPTERS) {
             if (reg.hierarchy) {
@@ -142,6 +142,7 @@ public class TextUtil {
          * @param adapter   the type adapter
          * @param hierarchy {@code true} if registered as a hierarchy adapter
          */
-        private TypeAdapterRegistration {}
+        private TypeAdapterRegistration {
+        }
     }
 }

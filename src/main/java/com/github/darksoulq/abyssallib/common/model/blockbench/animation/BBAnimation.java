@@ -27,14 +27,43 @@ public class BBAnimation {
         this.loopDelay = loopDelay;
     }
 
-    public String getUuid() { return uuid; }
-    public String getName() { return name; }
-    public String getLoop() { return loop; }
-    public boolean isOverride() { return override; }
-    public float getLength() { return length; }
-    public int getSnapping() { return snapping; }
-    public String getBlendWeight() { return blendWeight; }
-    public String getStartDelay() { return startDelay; }
-    public String getLoopDelay() { return loopDelay; }
-    public Map<String, BBAnimator> getAnimators() { return animators; }
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getLoop() {
+        return loop;
+    }
+
+    public boolean isOverride() {
+        return override;
+    }
+
+    public float getLength() {
+        return length;
+    }
+
+    public int getSnapping() {
+        return snapping;
+    }
+
+    public String getBlendWeight() {
+        return blendWeight;
+    }
+
+    public String getStartDelay() {
+        return startDelay;
+    }
+
+    public String getLoopDelay() {
+        return loopDelay;
+    }
+
+    public Map<String, BBAnimator> getAnimators() {
+        return animators;
+    }
 }

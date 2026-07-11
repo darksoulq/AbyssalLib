@@ -102,7 +102,8 @@ public class StatisticsCommand extends BaseCommand {
         int page = 1;
         try {
             page = ctx.getArgument("page", Integer.class);
-        } catch (IllegalArgumentException ignored) {}
+        } catch (IllegalArgumentException ignored) {
+        }
 
         if (player == null) {
             CommandUtil.reply(ctx, "<red>Only players can execute this command.</red>");
@@ -116,7 +117,8 @@ public class StatisticsCommand extends BaseCommand {
         int page = 1;
         try {
             page = ctx.getArgument("page", Integer.class);
-        } catch (IllegalArgumentException ignored) {}
+        } catch (IllegalArgumentException ignored) {
+        }
 
         if (target == null) {
             CommandUtil.reply(ctx, "<red>Player not found</red>");

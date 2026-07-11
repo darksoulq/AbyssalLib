@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
  * to pass color data directly to {@link com.github.darksoulq.abyssallib.world.particle.ParticleRenderer}s.
  */
 public class Pixel extends Vector {
-    /** The Bukkit {@link Color} assigned to this specific coordinate. */
+    /**
+     * The Bukkit {@link Color} assigned to this specific coordinate.
+     */
     private final Color color;
 
     /**

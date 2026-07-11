@@ -12,8 +12,8 @@ import org.bukkit.inventory.ItemStack;
 @SuppressWarnings("UnstableApiUsage")
 public class WrittenBookContents extends DataComponent<WrittenBookContent> implements Vanilla {
     public static final Codec<WrittenBookContents> CODEC = ExtraCodecs.WRITTEN_BOOK_CONTENT.xmap(
-            WrittenBookContents::new,
-            WrittenBookContents::getValue
+        WrittenBookContents::new,
+        WrittenBookContents::getValue
     );
     public static final DataComponentType<WrittenBookContents> TYPE = DataComponentType.valued(CODEC, WrittenBookContents::new);
 

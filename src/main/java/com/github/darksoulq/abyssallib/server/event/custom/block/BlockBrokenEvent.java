@@ -46,7 +46,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * The level of the Fortune enchantment on the tool used to break the block.
      */
-    private int fortuneLevel;
+    private final int fortuneLevel;
 
     /**
      * The current cancellation state of this event.
@@ -56,12 +56,9 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Constructs a new BlockBrokenEvent with player, block, and enchantment data.
      *
-     * @param player
-     * The player breaking the block, or null if broken by other means.
-     * @param block
-     * The {@link CustomBlock} instance being broken.
-     * @param fortuneLevel
-     * The level of the Fortune enchantment detected on the item used.
+     * @param player       The player breaking the block, or null if broken by other means.
+     * @param block        The {@link CustomBlock} instance being broken.
+     * @param fortuneLevel The level of the Fortune enchantment detected on the item used.
      */
     public BlockBrokenEvent(@Nullable Player player, @NotNull CustomBlock block, int fortuneLevel) {
         this.player = player;
@@ -72,8 +69,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Retrieves the custom block involved in this break event.
      *
-     * @return
-     * The non-null {@link CustomBlock} involved in the event.
+     * @return The non-null {@link CustomBlock} involved in the event.
      */
     public @NotNull CustomBlock getBlock() {
         return block;
@@ -82,8 +78,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Retrieves the player responsible for breaking the block.
      *
-     * @return
-     * The {@link Player} instance, or null.
+     * @return The {@link Player} instance, or null.
      */
     public @Nullable Player getPlayer() {
         return player;
@@ -92,8 +87,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Sets whether the internal API should proceed with its default loot table logic.
      *
-     * @param shouldDrop
-     * True to use default API drops, false to override with custom drops.
+     * @param shouldDrop True to use default API drops, false to override with custom drops.
      */
     public void setBaseDrops(boolean shouldDrop) {
         baseDrops = shouldDrop;
@@ -102,8 +96,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Checks if the internal API is currently configured to handle block drops.
      *
-     * @return
-     * True if the API handles drops, false otherwise.
+     * @return True if the API handles drops, false otherwise.
      */
     public boolean getBaseDrops() {
         return baseDrops;
@@ -112,8 +105,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Defines a specific list of items to drop instead of the default API loot.
      *
-     * @param drops
-     * The {@link List} of {@link ItemStack} objects to drop.
+     * @param drops The {@link List} of {@link ItemStack} objects to drop.
      */
     public void setDrops(List<ItemStack> drops) {
         newDrops = drops;
@@ -122,8 +114,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Retrieves the list of custom items to be dropped if base drops are disabled.
      *
-     * @return
-     * A list of {@link ItemStack} objects, or null if none are set.
+     * @return A list of {@link ItemStack} objects, or null if none are set.
      */
     public List<ItemStack> getNewDrops() {
         return newDrops;
@@ -132,8 +123,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Retrieves the detected Fortune level applied to the block break calculation.
      *
-     * @return
-     * The integer level of the Fortune enchantment.
+     * @return The integer level of the Fortune enchantment.
      */
     public int getFortuneLevel() {
         return fortuneLevel;
@@ -142,8 +132,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Checks whether the block break event has been cancelled by a listener.
      *
-     * @return
-     * True if cancelled, false otherwise.
+     * @return True if cancelled, false otherwise.
      */
     @Override
     public boolean isCancelled() {
@@ -153,8 +142,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Sets the cancellation status of the block break.
      *
-     * @param cancel
-     * True to prevent the block from breaking, false to allow it.
+     * @param cancel True to prevent the block from breaking, false to allow it.
      */
     @Override
     public void setCancelled(boolean cancel) {
@@ -164,8 +152,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Retrieves the set of handlers listening to this event instance.
      *
-     * @return
-     * The {@link HandlerList} for this event.
+     * @return The {@link HandlerList} for this event.
      */
     @Override
     public @NotNull HandlerList getHandlers() {
@@ -175,8 +162,7 @@ public class BlockBrokenEvent extends Event implements Cancellable {
     /**
      * Provides a static method to retrieve the handler list, required by Bukkit.
      *
-     * @return
-     * The static {@link HandlerList} for this event type.
+     * @return The static {@link HandlerList} for this event type.
      */
     public static HandlerList getHandlerList() {
         return handlers;

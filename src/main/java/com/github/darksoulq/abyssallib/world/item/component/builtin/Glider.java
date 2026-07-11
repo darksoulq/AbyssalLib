@@ -12,8 +12,8 @@ import java.util.Optional;
 
 public class Glider extends DataComponent<Boolean> implements Vanilla {
     public static final Codec<Glider> CODEC = Codecs.STRING.optional().xmap(
-            b -> new Glider(),
-            d -> Optional.empty()
+        b -> new Glider(),
+        d -> Optional.empty()
     );
     public static final DataComponentType<Glider> TYPE = DataComponentType.valued(CODEC, v -> new Glider());
 

@@ -31,11 +31,17 @@ import java.util.Map;
  */
 @SuppressWarnings("UnstableApiUsage")
 public class ComponentMap {
-    /** The internal storage mapping component types to their active instances. */
+    /**
+     * The internal storage mapping component types to their active instances.
+     */
     private final Map<DataComponentType<?>, DataComponent<?>> components = new HashMap<>();
-    /** The item instance associated with this map, or null if assigned to an entity. */
+    /**
+     * The item instance associated with this map, or null if assigned to an entity.
+     */
     private final Item item;
-    /** The custom entity instance associated with this map, or null if assigned to an item. */
+    /**
+     * The custom entity instance associated with this map, or null if assigned to an item.
+     */
     private final CustomEntity<? extends LivingEntity> entity;
 
     /**

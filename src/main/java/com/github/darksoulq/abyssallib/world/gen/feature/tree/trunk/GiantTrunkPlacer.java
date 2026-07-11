@@ -36,7 +36,8 @@ public class GiantTrunkPlacer extends TrunkPlacer {
     /**
      * Constructs a new GiantTrunkPlacer.
      */
-    public GiantTrunkPlacer() {}
+    public GiantTrunkPlacer() {
+    }
 
     /**
      * Places a 2x2 vertical column of blocks up to the specified height.
@@ -56,7 +57,7 @@ public class GiantTrunkPlacer extends TrunkPlacer {
             for (int dz = 0; dz <= 1; dz++) {
                 for (int y = 0; y < height; y++) {
                     Location target = origin.clone().add(dx, y, dz);
-                    if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
+                    if (target.getBlockY() >= level.world().getMaxHeight()) break;
 
                     BlockInfo stateToPlace = trunkProvider.getState(random, target);
                     if (stateToPlace != null) {

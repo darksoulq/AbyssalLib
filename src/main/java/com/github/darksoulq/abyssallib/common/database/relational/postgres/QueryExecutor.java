@@ -10,7 +10,9 @@ import java.sql.Statement;
  * associated {@link Database}.
  */
 public class QueryExecutor {
-    /** The PostgreSQL database instance providing the connection and thread pool. */
+    /**
+     * The PostgreSQL database instance providing the connection and thread pool.
+     */
     private final Database database;
 
     /**

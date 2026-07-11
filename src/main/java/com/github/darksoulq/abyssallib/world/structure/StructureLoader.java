@@ -202,7 +202,7 @@ public class StructureLoader {
             if (i > 1) {
                 pathBuilder.append("/");
             }
-            pathBuilder.append(relative.getName(i).toString());
+            pathBuilder.append(relative.getName(i));
         }
 
         String fullPath = pathBuilder.toString();

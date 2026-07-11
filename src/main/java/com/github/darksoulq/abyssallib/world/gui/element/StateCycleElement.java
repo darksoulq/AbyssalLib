@@ -21,13 +21,19 @@ import java.util.function.Consumer;
  */
 public class StateCycleElement<T> implements GuiElement {
 
-    /** The list of possible states for this element. */
+    /**
+     * The list of possible states for this element.
+     */
     private final List<State<T>> states;
 
-    /** The callback executed whenever the current state index changes. */
+    /**
+     * The callback executed whenever the current state index changes.
+     */
     private final Consumer<T> onChange;
 
-    /** The index of the currently active state in the list. */
+    /**
+     * The index of the currently active state in the list.
+     */
     private int currentIndex;
 
     /**
@@ -104,7 +110,8 @@ public class StateCycleElement<T> implements GuiElement {
      * @param icon  The item to display for this state.
      * @param value The logic value represented by this state.
      */
-    public record State<T>(ItemStack icon, T value) {}
+    public record State<T>(ItemStack icon, T value) {
+    }
 
     /**
      * Static factory method to create a StateCycleElement.

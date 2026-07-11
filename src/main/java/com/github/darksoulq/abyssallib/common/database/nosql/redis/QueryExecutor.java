@@ -14,7 +14,9 @@ import java.util.concurrent.CompletableFuture;
  * and provides both synchronous and asynchronous variants of common commands.
  */
 public class QueryExecutor {
-    /** The parent database instance providing resources. */
+    /**
+     * The parent database instance providing resources.
+     */
     private final Database database;
 
     /**

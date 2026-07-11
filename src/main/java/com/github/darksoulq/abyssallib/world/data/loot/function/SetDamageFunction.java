@@ -34,9 +34,13 @@ public class SetDamageFunction extends LootFunction {
      */
     public static final LootFunctionType<SetDamageFunction> TYPE = () -> CODEC;
 
-    /** The minimum damage percentage (inclusive). */
+    /**
+     * The minimum damage percentage (inclusive).
+     */
     private final float min;
-    /** The maximum damage percentage (inclusive). */
+    /**
+     * The maximum damage percentage (inclusive).
+     */
     private final float max;
 
     /**
@@ -67,7 +71,7 @@ public class SetDamageFunction extends LootFunction {
         int maxDurability = stack.getType().getMaxDurability();
         Integer maxDamage = stack.getData(DataComponentTypes.MAX_DAMAGE);
         if (maxDamage != null) maxDurability = maxDamage;
-        stack.setData(DataComponentTypes.DAMAGE, (int)(maxDurability * damagePercent));
+        stack.setData(DataComponentTypes.DAMAGE, (int) (maxDurability * damagePercent));
         return stack;
     }
 

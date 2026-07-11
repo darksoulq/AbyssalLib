@@ -26,9 +26,9 @@ public class CollectionCodec<T, C extends Collection<T>> implements Codec<C> {
     /**
      * Creates a collection codec.
      *
-     * @param factory Supplier used to create collection instances.
+     * @param factory      Supplier used to create collection instances.
      * @param elementCodec Codec used for collection elements.
-     * @param wrapper Function applied before returning decoded collections.
+     * @param wrapper      Function applied before returning decoded collections.
      */
     public CollectionCodec(Supplier<C> factory, Codec<T> elementCodec, Function<C, C> wrapper) {
         this.factory = factory;

@@ -20,12 +20,18 @@ public class HookConstants {
      * provides specialized hooks.
      */
     public enum Plugin {
-        /** Integration with ResourcePackManager. */
+        /**
+         * Integration with ResourcePackManager.
+         */
         RSPM("ResourcePackManager"),
-        /** Integration with the PlaceholderAPI string expansion utility. */
+        /**
+         * Integration with the PlaceholderAPI string expansion utility.
+         */
         PLACEHOLDER_API("PlaceholderAPI");
 
-        /** The exact name of the plugin as defined in its {@code plugin.yml}. */
+        /**
+         * The exact name of the plugin as defined in its {@code plugin.yml}.
+         */
         public final String pluginName;
 
         /**
@@ -38,7 +44,8 @@ public class HookConstants {
         }
     }
 
-    /** * A thread-safe internal map storing the enabled state of each
+    /**
+     * A thread-safe internal map storing the enabled state of each
      * supported {@link Plugin}.
      */
     private static final Map<Plugin, Boolean> PLUGIN_STATE = new HashMap<>();

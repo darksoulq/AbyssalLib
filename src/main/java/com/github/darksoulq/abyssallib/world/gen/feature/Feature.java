@@ -30,7 +30,7 @@ public abstract class Feature<C extends FeatureConfig> {
      * Executes the procedural generation logic to place blocks in the world.
      *
      * @param context The {@link FeaturePlaceContext} containing world access, random source,
-     * origin location, and the specific configuration instance.
+     *                origin location, and the specific configuration instance.
      * @return True if the feature was successfully generated at the location, false otherwise.
      */
     public abstract boolean place(FeaturePlaceContext<C> context);

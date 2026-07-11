@@ -47,8 +47,8 @@ public class OreFeature extends Feature<OreFeature.Config> {
         double startY = origin.getY() + random.nextInt(3) - 2;
         double endY = origin.getY() + random.nextInt(3) - 2;
 
-        int minHeight = context.level().getWorld().getMinHeight();
-        int maxHeight = context.level().getWorld().getMaxHeight();
+        int minHeight = context.level().world().getMinHeight();
+        int maxHeight = context.level().world().getMaxHeight();
 
         for (int l = 0; l < size; ++l) {
             float progress = (float) l / (float) size;
@@ -79,7 +79,7 @@ public class OreFeature extends Feature<OreFeature.Config> {
                         double zDist = ((double) z + 0.5D - currentZ) / (widthMod / 2.0D);
 
                         if (xDist * xDist + yDist * yDist + zDist * zDist < 1.0D && minHeight <= y && y < maxHeight) {
-                            Location loc = new Location(context.level().getWorld(), x, y, z);
+                            Location loc = new Location(context.level().world(), x, y, z);
 
                             for (Target target : context.config().targets) {
                                 if (WorldGenUtils.isValidBlock(context.level(), loc, target.target)) {

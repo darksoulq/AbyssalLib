@@ -6,12 +6,12 @@ import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackCompileEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.ResourcePackGenerateEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
-import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.resource.asset.Icon;
 import com.github.darksoulq.abyssallib.server.resource.asset.Model;
 import com.github.darksoulq.abyssallib.server.resource.asset.PackMcMeta;
 import com.github.darksoulq.abyssallib.server.resource.asset.Texture;
 import com.github.darksoulq.abyssallib.server.resource.asset.definition.Selector;
+import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.util.HookConstants;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemModel;
@@ -42,38 +42,56 @@ import java.util.zip.ZipOutputStream;
 public class ResourcePack {
     public static final Set<String> EXTERNAL_CACHE = new HashSet<>();
 
-    /** Plugin that owns this pack. */
+    /**
+     * Plugin that owns this pack.
+     */
     private final Plugin plugin;
 
-    /** The modid. */
+    /**
+     * The modid.
+     */
     private final String pluginId;
 
-    /** Output path: {@code <plugin>/pack/resourcepack.zip} */
+    /**
+     * Output path: {@code <plugin>/pack/resourcepack.zip}
+     */
     private final Path outputFile;
 
-    /** The icon to use for the pack (can remain null) */
+    /**
+     * The icon to use for the pack (can remain null)
+     */
     private Icon icon = null;
 
-    /** The McMeta file of the pack (can be null) */
+    /**
+     * The McMeta file of the pack (can be null)
+     */
     private PackMcMeta mcMeta = null;
 
-    /** Files to write into the zip. */
+    /**
+     * Files to write into the zip.
+     */
     private final Map<String, byte[]> files = new TreeMap<>();
 
-    /** Namespace containers for assets. */
+    /**
+     * Namespace containers for assets.
+     */
     private final Map<String, Namespace> namespaces = new HashMap<>();
 
-    /** Tracks UUIDs for registered packs (used by the sending server). */
+    /**
+     * Tracks UUIDs for registered packs (used by the sending server).
+     */
     public static final Map<String, UUID> UUID_MAP = new HashMap<>();
 
-    /** Tracks SHA1 hashes of compiled packs. */
+    /**
+     * Tracks SHA1 hashes of compiled packs.
+     */
     public static final Map<String, String> HASH_MAP = new HashMap<>();
 
     /**
      * Creates a new resource pack instance.
      *
-     * @param plugin Owning plugin
-     * @param pluginId     The modid
+     * @param plugin   Owning plugin
+     * @param pluginId The modid
      */
     public ResourcePack(@NotNull Plugin plugin, @NotNull String pluginId) {
         this.plugin = plugin;
@@ -101,6 +119,7 @@ public class ResourcePack {
     public void icon(byte[] data) {
         this.icon = new Icon(data);
     }
+
     /**
      * Autoloads the Icon for this pack from {@code resourcepack/pack.png}
      */
@@ -140,6 +159,7 @@ public class ResourcePack {
 
     /**
      * Compiles and zips the pack contents asynchronously.
+     *
      * @param override whether to generate zip if it has been generated before
      */
     public void compile(boolean override) {
@@ -202,6 +222,7 @@ public class ResourcePack {
 
     /**
      * Compiles and registers the pack for sending to players.
+     *
      * @param override whether to generate zip if it has been generated before.
      */
     public void register(boolean override) {
@@ -228,25 +249,25 @@ public class ResourcePack {
         final int maxAttempts = 100; // ~100s at 20 TPS; covers RSPM delayed init
         try {
             ResourcePackManagerAPI.registerLocalResourcePack(
-                    plugin.getName(),
-                    plugin.getName() + "/pack/resourcepack.zip",
-                    false,
-                    true,
-                    true,
-                    null
+                plugin.getName(),
+                plugin.getName() + "/pack/resourcepack.zip",
+                false,
+                true,
+                true,
+                null
             );
         } catch (Throwable t) {
             if (attempt >= maxAttempts) {
                 AbyssalLib.LOGGER.warning(
-                        "Failed to register resource pack with ResourcePackManager after "
+                    "Failed to register resource pack with ResourcePackManager after "
                         + maxAttempts + " attempts; giving up. Pack will still be served "
                         + "via AbyssalLib's built-in pack server. Last error: " + t);
                 return;
             }
             final int next = attempt + 1;
             AbyssalLib.SCHEDULER.schedule(() -> registerWithRspm(next))
-                    .after(20, Clock.TICKS)
-                    .once();
+                .after(20, Clock.TICKS)
+                .once();
         }
     }
 
@@ -259,6 +280,7 @@ public class ResourcePack {
     /**
      * Resends pack to either a list of players or whole server depending on argument
      * Resends to everyone if RSPM is being used instead of builtin server
+     *
      * @param players The players to send to, or null if to whole server
      */
     public void resend(@Nullable List<Player> players) {
@@ -309,10 +331,10 @@ public class ResourcePack {
      */
     private @NotNull String generatePackMeta() {
         return "{\n" +
-                "  \"pack\": {\n" +
-                "    \"pack_format\": 55,\n" +
-                "    \"description\": \"" + pluginId + " internal Resource Pack\"\n" +
-                "  }\n" +
-                "}";
+            "  \"pack\": {\n" +
+            "    \"pack_format\": 55,\n" +
+            "    \"description\": \"" + pluginId + " internal Resource Pack\"\n" +
+            "  }\n" +
+            "}";
     }
 }

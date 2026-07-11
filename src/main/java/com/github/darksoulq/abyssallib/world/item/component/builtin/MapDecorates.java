@@ -14,14 +14,15 @@ import java.util.Map;
 
 public class MapDecorates extends DataComponent<Map<String, MapDecorations.DecorationEntry>> implements Vanilla {
     public static final Codec<MapDecorates> CODEC = Codec.map(Codecs.STRING, ExtraCodecs.MAP_DECO_ENTRY).xmap(
-            MapDecorates::new,
-            MapDecorates::getValue
+        MapDecorates::new,
+        MapDecorates::getValue
     );
     public static final DataComponentType<MapDecorates> TYPE = DataComponentType.valued(CODEC, v -> new MapDecorates((MapDecorations) v));
 
     public MapDecorates(MapDecorations decor) {
         super(decor.decorations());
     }
+
     public MapDecorates(Map<String, MapDecorations.DecorationEntry> decor) {
         super(decor);
     }

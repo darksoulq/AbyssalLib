@@ -61,7 +61,8 @@ public final class DefaultConditions {
     @SafeVarargs
     public static Predicate<CommandSourceStack> hasAllPerms(Holder<PermissionNode>... permissions) {
         return src -> {
-            for (Holder<PermissionNode> perm : permissions) if (!src.getSender().hasPermission(perm.get().getNode())) return false;
+            for (Holder<PermissionNode> perm : permissions)
+                if (!src.getSender().hasPermission(perm.get().getNode())) return false;
             return true;
         };
     }

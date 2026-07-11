@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class NoteBlockSound extends DataComponent<Key> implements Vanilla {
     public static final Codec<NoteBlockSound> CODEC = Codecs.KEY.xmap(
-            NoteBlockSound::new,
-            NoteBlockSound::getValue
+        NoteBlockSound::new,
+        NoteBlockSound::getValue
     );
     public static final DataComponentType<NoteBlockSound> TYPE = DataComponentType.valued(CODEC, NoteBlockSound::new);
 

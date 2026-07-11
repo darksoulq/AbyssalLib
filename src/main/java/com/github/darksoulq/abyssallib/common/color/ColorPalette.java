@@ -15,7 +15,9 @@ import java.util.*;
  */
 public class ColorPalette implements Iterable<Color> {
 
-    /** A predefined palette containing soft, high-lightness pastel colors. */
+    /**
+     * A predefined palette containing soft, high-lightness pastel colors.
+     */
     public static final ColorPalette PASTEL = new ColorPalette(
         Color.fromRGB(255, 179, 186),
         Color.fromRGB(255, 223, 186),
@@ -24,7 +26,9 @@ public class ColorPalette implements Iterable<Color> {
         Color.fromRGB(186, 225, 255)
     );
 
-    /** A predefined palette containing high-saturation, vibrant neon colors. */
+    /**
+     * A predefined palette containing high-saturation, vibrant neon colors.
+     */
     public static final ColorPalette NEON = new ColorPalette(
         Color.fromRGB(255, 0, 255),
         Color.fromRGB(0, 255, 255),
@@ -32,15 +36,21 @@ public class ColorPalette implements Iterable<Color> {
         Color.fromRGB(57, 255, 20)
     );
 
-    /** A predefined palette representing the standard colors of a rainbow. */
+    /**
+     * A predefined palette representing the standard colors of a rainbow.
+     */
     public static final ColorPalette RAINBOW = new ColorPalette(
         Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.PURPLE
     );
 
-    /** The internal list of colors comprising this palette. */
+    /**
+     * The internal list of colors comprising this palette.
+     */
     private final List<Color> colors;
 
-    /** Internal random generator for the {@link #random()} method. */
+    /**
+     * Internal random generator for the {@link #random()} method.
+     */
     private final Random random = new Random();
 
     /**

@@ -14,8 +14,7 @@ import java.util.List;
  * This class encapsulates the state required to construct Paper-based dialogs, including
  * input elements, body content, and lifecycle actions.
  *
- * @param <T>
- * The type of the dialog implementation, used for method chaining.
+ * @param <T> The type of the dialog implementation, used for method chaining.
  */
 @SuppressWarnings("UnstableApiUsage")
 public abstract class BaseDialog<T extends BaseDialog<T>> {
@@ -56,10 +55,8 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Sets the behavior of the dialog after an action is performed.
      *
-     * @param afterAction
-     * The {@link DialogBase.DialogAfterAction} to apply upon completion.
-     * @return
-     * This dialog instance cast to the implementation type {@code T}.
+     * @param afterAction The {@link DialogBase.DialogAfterAction} to apply upon completion.
+     * @return This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T after(DialogBase.DialogAfterAction afterAction) {
@@ -70,10 +67,8 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Sets an external title for the dialog.
      *
-     * @param title
-     * The {@link Component} to display as an external title header.
-     * @return
-     * This dialog instance cast to the implementation type {@code T}.
+     * @param title The {@link Component} to display as an external title header.
+     * @return This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T external(Component title) {
@@ -84,10 +79,8 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Sets whether the dialog should close when the Escape key is pressed.
      *
-     * @param should
-     * True if escape should close the dialog, false otherwise.
-     * @return
-     * This dialog instance cast to the implementation type {@code T}.
+     * @param should True if escape should close the dialog, false otherwise.
+     * @return This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T closeWithEscape(boolean should) {
@@ -98,10 +91,8 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Adds an input element to the dialog collection.
      *
-     * @param input
-     * The {@link DialogInput} interactive element to append.
-     * @return
-     * This dialog instance cast to the implementation type {@code T}.
+     * @param input The {@link DialogInput} interactive element to append.
+     * @return This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T input(DialogInput input) {
@@ -112,10 +103,8 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Adds a body element to the dialog collection.
      *
-     * @param body
-     * The {@link DialogBody} content element to append.
-     * @return
-     * This dialog instance cast to the implementation type {@code T}.
+     * @param body The {@link DialogBody} content element to append.
+     * @return This dialog instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T body(DialogBody body) {
@@ -126,8 +115,7 @@ public abstract class BaseDialog<T extends BaseDialog<T>> {
     /**
      * Constructs the final {@link Dialog} object from the configured state.
      *
-     * @return
-     * A built Dialog ready to be shown to a player via the API.
+     * @return A built Dialog ready to be shown to a player via the API.
      */
     public abstract Dialog build();
 }

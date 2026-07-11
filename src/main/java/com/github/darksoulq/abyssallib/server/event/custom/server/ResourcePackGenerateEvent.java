@@ -33,7 +33,7 @@ public class ResourcePackGenerateEvent extends Event {
      * Constructs a new {@code ResourcePackGenerateEvent}.
      *
      * @param pluginId The mod ID responsible for generating the resource pack.
-     * @param zip   The resulting zip file of the generated resource pack.
+     * @param zip      The resulting zip file of the generated resource pack.
      */
     public ResourcePackGenerateEvent(@NotNull String pluginId, @NotNull File zip) {
         this.pluginId = pluginId;
@@ -68,5 +68,7 @@ public class ResourcePackGenerateEvent extends Event {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

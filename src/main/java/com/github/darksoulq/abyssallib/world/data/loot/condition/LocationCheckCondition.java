@@ -39,7 +39,9 @@ public class LocationCheckCondition extends LootCondition {
      */
     public static final LootConditionType<LocationCheckCondition> TYPE = () -> CODEC;
 
-    /** The list of biome identifiers (namespaced strings) that satisfy this condition. */
+    /**
+     * The list of biome identifiers (namespaced strings) that satisfy this condition.
+     */
     private final List<String> biomes;
 
     /**

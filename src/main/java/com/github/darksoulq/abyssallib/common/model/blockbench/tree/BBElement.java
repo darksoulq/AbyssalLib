@@ -38,20 +38,61 @@ public class BBElement {
         this.rotation = rotation;
     }
 
-    public String getUuid() { return uuid; }
-    public String getName() { return name; }
-    public String getType() { return type; }
-    public boolean isBoxUv() { return boxUv; }
-    public String getRenderOrder() { return renderOrder; }
-    public boolean isLocked() { return locked; }
-    public boolean isExport() { return export; }
-    public int getColor() { return color; }
-    public int getAutouv() { return autouv; }
-    public Vector3f getFrom() { return from; }
-    public Vector3f getTo() { return to; }
-    public Vector3f getOrigin() { return origin; }
-    public Vector3f getRotation() { return rotation; }
-    public Map<String, BBFace> getFaces() { return faces; }
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public boolean isBoxUv() {
+        return boxUv;
+    }
+
+    public String getRenderOrder() {
+        return renderOrder;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public boolean isExport() {
+        return export;
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    public int getAutouv() {
+        return autouv;
+    }
+
+    public Vector3f getFrom() {
+        return from;
+    }
+
+    public Vector3f getTo() {
+        return to;
+    }
+
+    public Vector3f getOrigin() {
+        return origin;
+    }
+
+    public Vector3f getRotation() {
+        return rotation;
+    }
+
+    public Map<String, BBFace> getFaces() {
+        return faces;
+    }
 
     public record BBFace(Vector4f uv, String texture) {
     }

@@ -8,6 +8,7 @@ import org.bukkit.Color;
 public class LinearGradient extends AbstractGradient {
     /**
      * Constructs a LinearGradient with evenly spaced colors.
+     *
      * @param colors The varargs {@link Color} stops.
      */
     public LinearGradient(Color... colors) {
@@ -16,6 +17,7 @@ public class LinearGradient extends AbstractGradient {
 
     /**
      * Constructs a LinearGradient with specific color stop positions.
+     *
      * @param colors    The array of {@link Color} stops.
      * @param positions The array of positions (0.0 to 1.0).
      */

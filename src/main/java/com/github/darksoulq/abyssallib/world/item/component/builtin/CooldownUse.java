@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class CooldownUse extends DataComponent<UseCooldown> implements Vanilla {
     public static final Codec<CooldownUse> CODEC = ExtraCodecs.USE_COOLDOWN.xmap(
-            CooldownUse::new,
-            CooldownUse::getValue
+        CooldownUse::new,
+        CooldownUse::getValue
     );
     public static final DataComponentType<CooldownUse> TYPE = DataComponentType.valued(CODEC, CooldownUse::new);
 

@@ -12,14 +12,15 @@ import org.bukkit.inventory.ItemStack;
 
 public class MapColor extends DataComponent<Color> implements Vanilla {
     public static final Codec<MapColor> CODEC = ExtraCodecs.COLOR.xmap(
-            MapColor::new,
-            MapColor::getValue
+        MapColor::new,
+        MapColor::getValue
     );
     public static final DataComponentType<MapColor> TYPE = DataComponentType.valued(CODEC, v -> new MapColor((MapItemColor) v));
 
     public MapColor(MapItemColor color) {
         super(color.color());
     }
+
     public MapColor(Color color) {
         super(color);
     }

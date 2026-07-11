@@ -4,7 +4,8 @@ import org.joml.Vector3f;
 
 public final class BBInterpolation {
 
-    private BBInterpolation() {}
+    private BBInterpolation() {
+    }
 
     public static void interpolate(BBKeyframe before, BBKeyframe a, BBKeyframe b, BBKeyframe after, float time, Vector3f dest) {
         if (a.interpolation() == BBEasing.STEP || b == null) {

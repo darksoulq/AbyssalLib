@@ -17,7 +17,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GuiItem implements GuiElement {
 
-    /** The item stack to be displayed in the GUI slot. */
+    /**
+     * The item stack to be displayed in the GUI slot.
+     */
     private final ItemStack item;
 
     /**

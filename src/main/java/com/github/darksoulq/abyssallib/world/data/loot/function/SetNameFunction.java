@@ -35,7 +35,9 @@ public class SetNameFunction extends LootFunction {
      */
     public static final LootFunctionType<SetNameFunction> TYPE = () -> CODEC;
 
-    /** The Adventure {@link Component} to be applied as the item name. */
+    /**
+     * The Adventure {@link Component} to be applied as the item name.
+     */
     private final Component name;
 
     /**

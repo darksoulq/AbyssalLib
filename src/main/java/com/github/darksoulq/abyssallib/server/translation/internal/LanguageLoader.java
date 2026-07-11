@@ -24,7 +24,9 @@ import java.util.stream.Stream;
  */
 public class LanguageLoader {
 
-    /** The directory path where external language files are stored. */
+    /**
+     * The directory path where external language files are stored.
+     */
     public static final Path LANG_FOLDER = AbyssalLib.getInstance().getDataFolder().toPath().resolve("lang");
 
     /**

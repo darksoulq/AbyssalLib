@@ -41,8 +41,8 @@ public class BlockPatchFeature extends Feature<BlockPatchFeature.Config> {
         Location origin = context.origin();
         Config config = context.config();
 
-        int minHeight = context.level().getWorld().getMinHeight();
-        int maxHeight = context.level().getWorld().getMaxHeight();
+        int minHeight = context.level().world().getMinHeight();
+        int maxHeight = context.level().world().getMaxHeight();
 
         for (int i = 0; i < config.tries(); i++) {
             int dx = origin.getBlockX() + random.nextInt(config.xzSpread() * 2 + 1) - config.xzSpread();
@@ -53,7 +53,7 @@ public class BlockPatchFeature extends Feature<BlockPatchFeature.Config> {
                 continue;
             }
 
-            Location target = new Location(context.level().getWorld(), dx, dy, dz);
+            Location target = new Location(context.level().world(), dx, dy, dz);
 
             if (WorldGenUtils.isValidBlock(context.level(), target, config.targets())) {
                 BlockInfo stateToPlace = config.stateProvider().getState(random, target);
@@ -86,7 +86,8 @@ public class BlockPatchFeature extends Feature<BlockPatchFeature.Config> {
      * @param stateProvider The dynamic provider supplying the blocks to be scattered.
      * @param targets       The list of allowed target block identifiers that can be overwritten.
      */
-    public record Config(int tries, int xzSpread, int ySpread, BlockStateProvider stateProvider, List<BlockInfo> targets) implements FeatureConfig {
+    public record Config(int tries, int xzSpread, int ySpread, BlockStateProvider stateProvider,
+                         List<BlockInfo> targets) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

@@ -210,9 +210,13 @@ public interface Condition<T> {
         /**
          * Tests the single value against the predicate.
          * * @param predicate The predicate to apply.
+         *
          * @return The result of the predicate.
          */
-        @Override public boolean test(Predicate<T> predicate) { return predicate.test(value); }
+        @Override
+        public boolean test(Predicate<T> predicate) {
+            return predicate.test(value);
+        }
     }
 
     /**
@@ -225,9 +229,11 @@ public interface Condition<T> {
         /**
          * Returns true if any child condition returns true. Short-circuits on the first success.
          * * @param predicate The predicate to apply to children.
+         *
          * @return True if at least one child matches.
          */
-        @Override public boolean test(Predicate<T> predicate) {
+        @Override
+        public boolean test(Predicate<T> predicate) {
             for (Condition<T> child : children) if (child.test(predicate)) return true;
             return false;
         }
@@ -243,9 +249,11 @@ public interface Condition<T> {
         /**
          * Returns true only if all child conditions return true. Short-circuits on the first failure.
          * * @param predicate The predicate to apply to children.
+         *
          * @return True if all children match.
          */
-        @Override public boolean test(Predicate<T> predicate) {
+        @Override
+        public boolean test(Predicate<T> predicate) {
             for (Condition<T> child : children) if (!child.test(predicate)) return false;
             return true;
         }

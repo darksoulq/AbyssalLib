@@ -20,11 +20,12 @@ public class CommandBus {
     private static final List<RegisteredCommand> registered = new ArrayList<>();
 
     private record RegisteredCommand(
-            String pluginId,
-            Object handler,
-            Method legacyMethod,
-            BaseCommand newCommand
-    ) {}
+        String pluginId,
+        Object handler,
+        Method legacyMethod,
+        BaseCommand newCommand
+    ) {
+    }
 
     public static void init(CommandDispatcher<CommandSourceStack> dispatcher) {
         CommandBus.dispatcher = dispatcher;
@@ -48,7 +49,7 @@ public class CommandBus {
         String commandName = command.name();
         LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(commandName);
         List<LiteralArgumentBuilder<CommandSourceStack>> aliases = new ArrayList<>();
-        
+
         for (String alias : command.aliases()) {
             aliases.add(LiteralArgumentBuilder.literal(alias));
         }
@@ -92,11 +93,11 @@ public class CommandBus {
         }
 
         Bukkit.getOnlinePlayers().forEach(p -> {
-            //? if <=26.1.2 {
-            /*MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle());
-            *///?} else {
-            MinecraftServer.getServer().getCommands().sendCommands(((CraftPlayer) p).getHandle());
-            //?}
+                //? if <=26.1.2 {
+                /*MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle());
+                 *///?} else {
+                MinecraftServer.getServer().getCommands().sendCommands(((CraftPlayer) p).getHandle());
+                //?}
             }
         );
     }

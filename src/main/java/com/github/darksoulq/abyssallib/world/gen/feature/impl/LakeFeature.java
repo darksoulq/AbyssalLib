@@ -38,7 +38,7 @@ public class LakeFeature extends Feature<LakeFeature.Config> {
         Random random = context.random();
         Config config = context.config();
 
-        if (origin.getBlockY() <= context.level().getWorld().getMinHeight() + 4) {
+        if (origin.getBlockY() <= context.level().world().getMinHeight() + 4) {
             return false;
         }
 
@@ -123,7 +123,8 @@ public class LakeFeature extends Feature<LakeFeature.Config> {
      * @param fluidProvider   The block state provider defining the core liquid of the lake.
      * @param barrierProvider The optional block state provider defining the outer casing of the lake.
      */
-    public record Config(BlockStateProvider fluidProvider, BlockStateProvider barrierProvider) implements FeatureConfig {
+    public record Config(BlockStateProvider fluidProvider,
+                         BlockStateProvider barrierProvider) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

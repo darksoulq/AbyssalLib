@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class Durability extends DataComponent<Integer> implements Vanilla {
     public static final Codec<Durability> CODEC = Codecs.INT.xmap(
-            Durability::new,
-            Durability::getValue
+        Durability::new,
+        Durability::getValue
     );
     public static final DataComponentType<Durability> TYPE = DataComponentType.valued(CODEC, Durability::new);
 

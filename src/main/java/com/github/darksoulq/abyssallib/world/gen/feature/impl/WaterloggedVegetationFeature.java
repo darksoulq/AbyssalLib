@@ -44,8 +44,8 @@ public class WaterloggedVegetationFeature extends Feature<WaterloggedVegetationF
         Location origin = context.origin();
         Config config = context.config();
 
-        int minHeight = context.level().getWorld().getMinHeight();
-        int maxHeight = context.level().getWorld().getMaxHeight();
+        int minHeight = context.level().world().getMinHeight();
+        int maxHeight = context.level().world().getMaxHeight();
 
         for (int i = 0; i < config.tries(); i++) {
             int dx = origin.getBlockX() + random.nextInt(config.xzSpread() * 2 + 1) - config.xzSpread();
@@ -56,7 +56,7 @@ public class WaterloggedVegetationFeature extends Feature<WaterloggedVegetationF
                 continue;
             }
 
-            Location target = new Location(context.level().getWorld(), dx, dy, dz);
+            Location target = new Location(context.level().world(), dx, dy, dz);
             Material currentMat = context.level().getType(target.getBlockX(), target.getBlockY(), target.getBlockZ());
 
             if (currentMat == Material.WATER) {
@@ -94,7 +94,8 @@ public class WaterloggedVegetationFeature extends Feature<WaterloggedVegetationF
      * @param ySpread       The maximum vertical offset from the origin on the Y axis.
      * @param stateProvider The dynamic provider supplying the aquatic plants to be scattered.
      */
-    public record Config(int tries, int xzSpread, int ySpread, BlockStateProvider stateProvider) implements FeatureConfig {
+    public record Config(int tries, int xzSpread, int ySpread,
+                         BlockStateProvider stateProvider) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

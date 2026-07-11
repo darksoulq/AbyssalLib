@@ -110,12 +110,12 @@ public class EntityPredicate implements Predicate<SavedEntity> {
                 return ops.createList(list);
             } else if (node.isNumber()) {
                 if (node.isFloatingPointNumber()) {
-                    return (D) Codecs.FLOAT.encode(ops, node.floatValue()).getOrThrow();
+                    return Codecs.FLOAT.encode(ops, node.floatValue()).getOrThrow();
                 } else {
-                    return (D) Codecs.INT.encode(ops, node.intValue()).getOrThrow();
+                    return Codecs.INT.encode(ops, node.intValue()).getOrThrow();
                 }
             } else if (node.isBoolean()) {
-                return (D) Codecs.BOOLEAN.encode(ops, node.booleanValue()).getOrThrow();
+                return Codecs.BOOLEAN.encode(ops, node.booleanValue()).getOrThrow();
             } else {
                 return ops.createString(node.asText());
             }
@@ -162,24 +162,27 @@ public class EntityPredicate implements Predicate<SavedEntity> {
      */
     public static final Codec<EntityPredicate> CODEC = Codec.fallback(REFERENCE_CODEC, INLINE_CODEC).describe("EntityPredicate");
 
-    /** The specific identity Key the entity must match, if defined. */
+    /**
+     * The specific identity Key the entity must match, if defined.
+     */
     private final Key id;
 
-    /** A list of conditions checking for exact data matches within the entity's JSON structure. */
+    /**
+     * A list of conditions checking for exact data matches within the entity's JSON structure.
+     */
     private final List<Condition<Map.Entry<String, JsonNode>>> data;
 
-    /** A list of nested predicate conditions to evaluate against the entity. */
+    /**
+     * A list of nested predicate conditions to evaluate against the entity.
+     */
     private final List<Condition<EntityPredicate>> predicates;
 
     /**
      * Constructs a new EntityPredicate with the specified conditional rules.
      *
-     * @param id
-     * The identity Key that must match (nullable for any entity).
-     * @param data
-     * The list of specific value-matching JSON data conditions.
-     * @param predicates
-     * The list of nested predicate conditions.
+     * @param id         The identity Key that must match (nullable for any entity).
+     * @param data       The list of specific value-matching JSON data conditions.
+     * @param predicates The list of nested predicate conditions.
      */
     public EntityPredicate(Key id, List<Condition<Map.Entry<String, JsonNode>>> data, List<Condition<EntityPredicate>> predicates) {
         this.id = id;
@@ -190,8 +193,7 @@ public class EntityPredicate implements Predicate<SavedEntity> {
     /**
      * Creates a new fluent builder instance for constructing an EntityPredicate.
      *
-     * @return
-     * A new {@link Builder} instance.
+     * @return A new {@link Builder} instance.
      */
     public static Builder builder() {
         return new Builder();
@@ -200,10 +202,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
     /**
      * Compares this predicate against another object for logical equivalence.
      *
-     * @param o
-     * The object to compare.
-     * @return
-     * True if the object is an identical EntityPredicate.
+     * @param o The object to compare.
+     * @return True if the object is an identical EntityPredicate.
      */
     @Override
     public boolean equals(Object o) {
@@ -221,8 +221,7 @@ public class EntityPredicate implements Predicate<SavedEntity> {
     /**
      * Generates a hash code based on the predicate's underlying conditions.
      *
-     * @return
-     * The integer hash code.
+     * @return The integer hash code.
      */
     @Override
     public int hashCode() {
@@ -232,10 +231,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
     /**
      * Evaluates a {@link SavedEntity} against all configured conditions within this predicate.
      *
-     * @param info
-     * The {@link SavedEntity} to test.
-     * @return
-     * True if the entity satisfies all identity, data, and nested rules; false otherwise.
+     * @param info The {@link SavedEntity} to test.
+     * @return True if the entity satisfies all identity, data, and nested rules; false otherwise.
      */
     @Override
     @SuppressWarnings("unchecked")
@@ -282,12 +279,9 @@ public class EntityPredicate implements Predicate<SavedEntity> {
      * Internal helper method to evaluate a parsed JSON node against a list of data conditions.
      * Handles fuzzy matching between numeric and textual representations.
      *
-     * @param node
-     * The root {@link JsonNode} representing the entity's data.
-     * @param conditions
-     * The list of conditions to evaluate against the node.
-     * @return
-     * True if the JSON node satisfies all data conditions, false otherwise.
+     * @param node       The root {@link JsonNode} representing the entity's data.
+     * @param conditions The list of conditions to evaluate against the node.
+     * @return True if the JSON node satisfies all data conditions, false otherwise.
      */
     private boolean checkNodes(JsonNode node, List<Condition<Map.Entry<String, JsonNode>>> conditions) {
         if (node == null || !node.isObject()) {
@@ -326,10 +320,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Mandates that the entity matches a specific identity Key.
          *
-         * @param id
-         * The {@link Key} to match.
-         * @return
-         * This builder instance.
+         * @param id The {@link Key} to match.
+         * @return This builder instance.
          */
         public Builder id(Key id) {
             this.id = id;
@@ -339,10 +331,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Adds an exact value-matching condition against the entity's serialized JSON data.
          *
-         * @param condition
-         * The {@link Condition} wrapping a JSON node entry.
-         * @return
-         * This builder instance.
+         * @param condition The {@link Condition} wrapping a JSON node entry.
+         * @return This builder instance.
          */
         public Builder data(Condition<Map.Entry<String, JsonNode>> condition) {
             this.data.add(condition);
@@ -352,10 +342,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Adds a nested predicate condition.
          *
-         * @param condition
-         * The {@link Condition} wrapping a nested entity predicate.
-         * @return
-         * This builder instance.
+         * @param condition The {@link Condition} wrapping a nested entity predicate.
+         * @return This builder instance.
          */
         public Builder check(Condition<EntityPredicate> condition) {
             this.predicates.add(condition);
@@ -365,12 +353,9 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Requires an exact match for a specific key-value pair within the entity's data.
          *
-         * @param key
-         * The JSON key to inspect.
-         * @param value
-         * The expected value object to match against.
-         * @return
-         * This builder instance.
+         * @param key   The JSON key to inspect.
+         * @param value The expected value object to match against.
+         * @return This builder instance.
          */
         public Builder data(String key, Object value) {
             return data(Condition.one(Map.entry(key, MAPPER.valueToTree(value))));
@@ -379,10 +364,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Evaluates a sub-predicate against the entity.
          *
-         * @param predicate
-         * The nested {@link EntityPredicate} to test.
-         * @return
-         * This builder instance.
+         * @param predicate The nested {@link EntityPredicate} to test.
+         * @return This builder instance.
          */
         public Builder check(EntityPredicate predicate) {
             return check(Condition.one(predicate));
@@ -391,10 +374,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Requires the entity to match at least one of the provided key-value data entries.
          *
-         * @param entries
-         * The varargs array of map entries to check.
-         * @return
-         * This builder instance.
+         * @param entries The varargs array of map entries to check.
+         * @return This builder instance.
          */
         @SafeVarargs
         public final Builder dataAny(Map.Entry<String, Object>... entries) {
@@ -408,10 +389,8 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Requires the entity to satisfy at least one of the provided sub-predicates.
          *
-         * @param predicates
-         * The varargs array of nested {@link EntityPredicate}s to check.
-         * @return
-         * This builder instance.
+         * @param predicates The varargs array of nested {@link EntityPredicate}s to check.
+         * @return This builder instance.
          */
         public Builder checkAny(EntityPredicate... predicates) {
             return check(Condition.anyOf(Arrays.stream(predicates).map(Condition::one).toList()));
@@ -420,8 +399,7 @@ public class EntityPredicate implements Predicate<SavedEntity> {
         /**
          * Finalizes construction and returns the built EntityPredicate.
          *
-         * @return
-         * The configured {@link EntityPredicate} instance.
+         * @return The configured {@link EntityPredicate} instance.
          */
         public EntityPredicate build() {
             return new EntityPredicate(id, data, predicates);

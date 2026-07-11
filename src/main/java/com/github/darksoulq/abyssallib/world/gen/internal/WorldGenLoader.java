@@ -31,16 +31,24 @@ import java.util.stream.Stream;
  */
 public class WorldGenLoader {
 
-    /** The Jackson mapper for JSON tree parsing. */
+    /**
+     * The Jackson mapper for JSON tree parsing.
+     */
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** The target directory for custom worldgen feature files. */
+    /**
+     * The target directory for custom worldgen feature files.
+     */
     private static final File FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "worldgen/features");
 
-    /** Cache of unparsed JSON files discovered during Pass 1. */
+    /**
+     * Cache of unparsed JSON files discovered during Pass 1.
+     */
     private static final Map<String, JsonNode> RAW_NODES = new HashMap<>();
 
-    /** Cache of fully decoded feature instances resolved during Pass 2. */
+    /**
+     * Cache of fully decoded feature instances resolved during Pass 2.
+     */
     private static final Map<String, PlacedFeature> RESOLVED_FEATURES = new HashMap<>();
 
     /**
@@ -73,7 +81,7 @@ public class WorldGenLoader {
 
                 if (root.has("worlds")) {
                     DataResult<List<String>> res = Codecs.STRING.list().decode(JsonOps.INSTANCE, root.get("worlds"));
-                    if(res.isSuccess()) {
+                    if (res.isSuccess()) {
                         for (String worldName : res.getOrThrow()) {
                             WorldGenManager.addFeature(worldName, feature);
                         }
@@ -98,7 +106,7 @@ public class WorldGenLoader {
         return Try.of(() -> {
             JsonNode root = MAPPER.readTree(path.toFile());
             DataResult<PlacedFeature> res = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, root);
-            if(res.isError()) {
+            if (res.isError()) {
                 AbyssalLib.LOGGER.warning("Failed to decode feature from " + path + ": " + res.error().get());
                 return null;
             }
@@ -122,7 +130,7 @@ public class WorldGenLoader {
                 }
                 JsonNode root = MAPPER.readTree(in);
                 DataResult<PlacedFeature> res = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, root);
-                if(res.isError()) {
+                if (res.isError()) {
                     AbyssalLib.LOGGER.warning("Failed to decode feature resource from " + resourcePath + ": " + res.error().get());
                     return null;
                 }
@@ -171,7 +179,7 @@ public class WorldGenLoader {
 
         try {
             DataResult<PlacedFeature> res = PlacedFeature.CODEC.decode(JsonOps.INSTANCE, node);
-            if(res.isError()) {
+            if (res.isError()) {
                 AbyssalLib.LOGGER.warning("Failed to decode referenced feature '" + id + "': " + res.error().get() + ". Skipping.");
                 return null;
             }
@@ -201,7 +209,7 @@ public class WorldGenLoader {
         StringBuilder pathBuilder = new StringBuilder();
         for (int i = 1; i < relative.getNameCount(); i++) {
             if (i > 1) pathBuilder.append("/");
-            pathBuilder.append(relative.getName(i).toString());
+            pathBuilder.append(relative.getName(i));
         }
 
         String fullPath = pathBuilder.toString();

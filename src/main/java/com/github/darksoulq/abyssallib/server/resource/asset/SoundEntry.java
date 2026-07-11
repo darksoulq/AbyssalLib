@@ -10,7 +10,7 @@ import java.util.Map;
  * Represents a single physical `.ogg` audio variant linked to a broader {@link SoundEvent}.
  * <p>
  * This class handles the specific logic and metadata configurations uniquely assigned
- * to an individual audio file, such as localized volume, weight probabilities, and 
+ * to an individual audio file, such as localized volume, weight probabilities, and
  * RAM streaming directives.
  * </p>
  */
@@ -179,7 +179,7 @@ public class SoundEntry {
     protected @NotNull JsonObject toJson() {
         JsonObject o = new JsonObject();
         o.addProperty("name", namespace + ":" + fileName);
-        
+
         if (volume != null && volume != 1.0f) o.addProperty("volume", volume);
         if (pitch != null && pitch != 1.0f) o.addProperty("pitch", pitch);
         if (weight != null && weight != 1) o.addProperty("weight", weight);
@@ -187,7 +187,7 @@ public class SoundEntry {
         if (attenuationDistance != null) o.addProperty("attenuation_distance", attenuationDistance);
         if (preload != null && preload) o.addProperty("preload", true);
         if (type != null) o.addProperty("type", type);
-        
+
         return o;
     }
 }

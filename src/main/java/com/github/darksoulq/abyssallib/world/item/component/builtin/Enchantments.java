@@ -12,8 +12,8 @@ import org.bukkit.inventory.ItemStack;
 @SuppressWarnings("UnstableApiUsage")
 public class Enchantments extends DataComponent<ItemEnchantments> implements Vanilla {
     public static final Codec<Enchantments> CODEC = ExtraCodecs.ITEM_ENCHANTMENTS.xmap(
-            Enchantments::new,
-            Enchantments::getValue
+        Enchantments::new,
+        Enchantments::getValue
     );
     public static final DataComponentType<Enchantments> TYPE = DataComponentType.valued(CODEC, Enchantments::new);
 

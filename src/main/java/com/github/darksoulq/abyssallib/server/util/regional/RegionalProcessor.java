@@ -29,26 +29,27 @@ public final class RegionalProcessor {
     static {
         if (RegionalCollections.IS_FOLIA) {
             ReflectClass<Bukkit> bukkitClass = Reflect.of(Bukkit.class);
-            
+
             isOwnedMethod = bukkitClass.method("isOwnedByCurrentRegion", Location.class)
-                    .map(ReflectMethod::<Boolean>unchecked)
-                    .getOrNull();
-                    
+                .map(ReflectMethod::<Boolean>unchecked)
+                .getOrNull();
+
             getRegionSchedulerMethod = bukkitClass.method("getRegionScheduler")
-                    .map(ReflectMethod::<Object>unchecked)
-                    .getOrNull();
+                .map(ReflectMethod::unchecked)
+                .getOrNull();
 
             if (getRegionSchedulerMethod != null) {
                 Class<?> schedulerClass = getRegionSchedulerMethod.getReturnType();
                 ReflectClass<?> schedulerReflect = Reflect.of(schedulerClass);
                 runMethod = schedulerReflect.method("run", Plugin.class, Location.class, Consumer.class)
-                        .map(ReflectMethod::<Object>unchecked)
-                        .getOrNull();
+                    .map(ReflectMethod::unchecked)
+                    .getOrNull();
             }
         }
     }
 
-    private RegionalProcessor() {}
+    private RegionalProcessor() {
+    }
 
     private static void executeOrSchedule(@NotNull Plugin plugin, @NotNull Location location, @NotNull Runnable task) {
         if (!RegionalCollections.IS_FOLIA) {
@@ -79,13 +80,13 @@ public final class RegionalProcessor {
     }
 
     public static void processLine(
-            @NotNull Plugin plugin,
-            @NotNull Location start,
-            @NotNull Vector direction,
-            double maxDistance,
-            double step,
-            @NotNull Function<Block, Boolean> processor,
-            @Nullable Runnable onComplete
+        @NotNull Plugin plugin,
+        @NotNull Location start,
+        @NotNull Vector direction,
+        double maxDistance,
+        double step,
+        @NotNull Function<Block, Boolean> processor,
+        @Nullable Runnable onComplete
     ) {
         Objects.requireNonNull(plugin);
         Objects.requireNonNull(start);
@@ -133,11 +134,11 @@ public final class RegionalProcessor {
     }
 
     private static void executeNextSegment(
-            @NotNull Plugin plugin,
-            @NotNull List<List<Location>> segments,
-            int index,
-            @NotNull Function<Block, Boolean> processor,
-            @Nullable Runnable onComplete
+        @NotNull Plugin plugin,
+        @NotNull List<List<Location>> segments,
+        int index,
+        @NotNull Function<Block, Boolean> processor,
+        @Nullable Runnable onComplete
     ) {
         if (index >= segments.size()) {
             if (onComplete != null) onComplete.run();
@@ -159,11 +160,11 @@ public final class RegionalProcessor {
     }
 
     public static void processVolume(
-            @NotNull Plugin plugin,
-            @NotNull Location corner1,
-            @NotNull Location corner2,
-            @NotNull Consumer<Block> processor,
-            @Nullable Runnable onComplete
+        @NotNull Plugin plugin,
+        @NotNull Location corner1,
+        @NotNull Location corner2,
+        @NotNull Consumer<Block> processor,
+        @Nullable Runnable onComplete
     ) {
         Objects.requireNonNull(plugin);
         Objects.requireNonNull(corner1);

@@ -33,6 +33,7 @@ public class KilledByPlayerCondition extends LootCondition {
     /**
      * Tests whether the killer in the provided context is an instance of a {@link Player}.
      * * @param context The {@link LootContext} providing the entity data for the kill event.
+     *
      * @return {@code true} if the killer is a player; {@code false} otherwise.
      */
     @Override

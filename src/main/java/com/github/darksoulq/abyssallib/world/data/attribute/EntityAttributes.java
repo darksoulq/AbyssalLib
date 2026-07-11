@@ -22,13 +22,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * Only supports attributes explicitly registered in {@link Registries#ATTRIBUTES}.
  */
 public class EntityAttributes {
-    /** Cache of loaded attribute containers indexed by entity UUID. */
+    /**
+     * Cache of loaded attribute containers indexed by entity UUID.
+     */
     private static final Map<UUID, EntityAttributes> CACHE = new ConcurrentHashMap<>();
-    /** The unique identifier of the entity being managed. */
+    /**
+     * The unique identifier of the entity being managed.
+     */
     private final UUID uuid;
-    /** Cache of active attribute instances for this entity. */
+    /**
+     * Cache of active attribute instances for this entity.
+     */
     private final Map<Key, AttributeInstance> instances = new ConcurrentHashMap<>();
-    /** Map of raw base values loaded from the database. */
+    /**
+     * Map of raw base values loaded from the database.
+     */
     private final Map<String, Double> rawBaseValues = new ConcurrentHashMap<>();
 
     private static final Database DATABASE = new Database(
@@ -233,7 +241,8 @@ public class EntityAttributes {
                     if (Registries.ATTRIBUTES.get(entry.getKey()) != null) {
                         try {
                             temp.put(entry.getKey(), Double.parseDouble(entry.getValue()));
-                        } catch (NumberFormatException ignored) {}
+                        } catch (NumberFormatException ignored) {
+                        }
                     }
                 }
                 rawBaseValues.clear();

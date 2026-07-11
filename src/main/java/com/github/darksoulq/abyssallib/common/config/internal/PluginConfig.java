@@ -110,10 +110,22 @@ public class PluginConfig {
 
     public static class Features {
         public Config.Value<Integer> structureBlocksPlacedPerTick;
+        public Config.Value<Integer> serverTranslationTickDelay;
+        public Config.Value<Boolean> tickServerTranslations;
+        public Config.Value<Boolean> enableItemTicking;
+        public Config.Value<Boolean> enableEnergyNetwork;
 
         public Features(Config cfg) {
             structureBlocksPlacedPerTick = cfg.value("features.structure_blocks_per_tick", 200)
                 .withComment("How many blocks should be placed per tick when using structure block");
+            serverTranslationTickDelay = cfg.value("features.server_translation_delay", 5)
+                .withComment("How frequently server translations should update", "Lower values may cause ghost items more frequently");
+            tickServerTranslations = cfg.value("features.tick_server_translations", true)
+                .withComment("Whether or not server side translations should be updated", "This is useful for item tooltips that need to update values each tick");
+            enableItemTicking = cfg.value("features.enable_item_ticking", true)
+                .withComment("Whether the Item#onTick method should be called, Disabling can increase performance", "DO NOT disable if a plugin is using it");
+            enableEnergyNetwork = cfg.value("features.enable_energy_network", true)
+                .withComment("Whether the Energy API should be enabled", "DO NOT disable it if using a plugin that depends on it");
         }
     }
 

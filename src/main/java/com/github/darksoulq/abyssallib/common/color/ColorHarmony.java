@@ -90,8 +90,6 @@ public final class ColorHarmony {
     /**
      * Generates a palette of shades by transitioning the base color toward black.
      *
-     *
-     *
      * @param base  The base {@link Color} to shade.
      * @param steps The number of steps (colors) in the resulting palette.
      * @return A {@link ColorPalette} representing the transition to black.

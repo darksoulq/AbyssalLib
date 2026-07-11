@@ -10,7 +10,7 @@ public class NMSGoalHandler {
         Mob nms = (Mob) ((CraftLivingEntity) entity).getHandle();
         //? if <=26.1.2 {
         /*nms.goalSelector.removeAllGoals(g -> true);
-        *///?} else {
+         *///?} else {
         nms.getGoalSelector().removeAllGoals(g -> true);
         //?}
         nms.targetSelector.removeAllGoals(g -> true);
@@ -20,10 +20,11 @@ public class NMSGoalHandler {
         Mob nms = (Mob) ((CraftLivingEntity) entity).getHandle();
         //? if <=26.1.2 {
         /*nms.goalSelector.addGoal(priority, goal);
-        *///?} else {
+         *///?} else {
         nms.getGoalSelector().addGoal(priority, goal);
         //?}
     }
+
     public static void addTargetGoal(LivingEntity entity, Goal goal, int priority) {
         Mob nms = (Mob) ((CraftLivingEntity) entity).getHandle();
         nms.targetSelector.addGoal(priority, goal);

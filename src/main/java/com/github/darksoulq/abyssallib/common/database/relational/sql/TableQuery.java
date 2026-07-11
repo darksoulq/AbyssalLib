@@ -33,13 +33,21 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
 
     /**
      * Returns the SQLite-specific verb for insertion.
+     *
      * @return {@code "INSERT INTO "}
      */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
 
     /**
      * Returns the SQLite-specific verb for replacement.
+     *
      * @return {@code "INSERT OR REPLACE INTO "}
      */
-    @Override protected String getReplaceVerb() { return "INSERT OR REPLACE INTO "; }
+    @Override
+    protected String getReplaceVerb() {
+        return "INSERT OR REPLACE INTO ";
+    }
 }

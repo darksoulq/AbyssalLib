@@ -9,7 +9,9 @@ import java.sql.SQLException;
  * A MariaDB-specific query handler for individual table operations.
  */
 public class TableQuery extends AbstractTableQuery<TableQuery> {
-    /** The source database. */
+    /**
+     * The source database.
+     */
     private final Database database;
 
     /**
@@ -27,7 +29,11 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
      * Helper to wrap connection retrieval.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -40,8 +46,19 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
         return new BatchQuery(database, table, columns);
     }
 
-    /** @return Standard {@code "INSERT INTO "} verb. */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
-    /** @return MariaDB-specific {@code "REPLACE INTO "} verb. */
-    @Override protected String getReplaceVerb() { return "REPLACE INTO "; }
+    /**
+     * @return Standard {@code "INSERT INTO "} verb.
+     */
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
+
+    /**
+     * @return MariaDB-specific {@code "REPLACE INTO "} verb.
+     */
+    @Override
+    protected String getReplaceVerb() {
+        return "REPLACE INTO ";
+    }
 }

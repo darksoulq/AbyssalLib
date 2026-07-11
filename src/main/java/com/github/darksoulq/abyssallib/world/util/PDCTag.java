@@ -14,7 +14,9 @@ import java.util.Optional;
  * for key management.
  */
 public class PDCTag {
-    /** The underlying Bukkit data container being wrapped. */
+    /**
+     * The underlying Bukkit data container being wrapped.
+     */
     private final PersistentDataContainer container;
 
     /**

@@ -5,15 +5,12 @@ import org.bukkit.attribute.AttributeModifier.Operation;
 
 /**
  * Represents a modifier applied to an attribute's base value.
+ *
+ * @param key       The unique identifier for this specific modifier.
+ * @param amount    The numeric value to apply as a modifier.
+ * @param operation The arithmetic operation logic to apply to the base value.
  */
-public class AttributeModifier {
-    /** The unique identifier for this specific modifier. */
-    private final Key key;
-    /** The numeric value to apply as a modifier. */
-    private final double amount;
-    /** The arithmetic operation logic to apply to the base value. */
-    private final Operation operation;
-
+public record AttributeModifier(Key key, double amount, Operation operation) {
     /**
      * Constructs a new attribute modifier.
      *
@@ -21,10 +18,7 @@ public class AttributeModifier {
      * @param amount    The numeric value to apply.
      * @param operation The {@link Operation} defining how the value interacts with the base.
      */
-    public AttributeModifier(Key key, double amount, Operation operation) {
-        this.key = key;
-        this.amount = amount;
-        this.operation = operation;
+    public AttributeModifier {
     }
 
     /**
@@ -32,7 +26,8 @@ public class AttributeModifier {
      *
      * @return The modifier key.
      */
-    public Key getKey() {
+    @Override
+    public Key key() {
         return key;
     }
 
@@ -41,7 +36,8 @@ public class AttributeModifier {
      *
      * @return The modifier amount.
      */
-    public double getAmount() {
+    @Override
+    public double amount() {
         return amount;
     }
 
@@ -50,7 +46,8 @@ public class AttributeModifier {
      *
      * @return The {@link Operation} representing the calculation type.
      */
-    public Operation getOperation() {
+    @Override
+    public Operation operation() {
         return operation;
     }
 }

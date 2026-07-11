@@ -15,23 +15,12 @@ import java.util.List;
 /**
  * Represents a complete loot table capable of synthesizing item collections and intelligently
  * populating external containers using context-driven probability logic.
+ *
+ * @param pools         The internal collection of configured loot pools dictating sequential evaluation phases.
+ * @param mergeStrategy The targeted configuration strategy resolving potential overlap when mirroring vanilla namespace identities.
+ * @param vanillaId     The optional designated string identifier establishing native parity overrides.
  */
-public class LootTable {
-
-    /**
-     * The internal collection of configured loot pools dictating sequential evaluation phases.
-     */
-    private final List<LootPool> pools;
-
-    /**
-     * The targeted configuration strategy resolving potential overlap when mirroring vanilla namespace identities.
-     */
-    private final MergeStrategy mergeStrategy;
-
-    /**
-     * The optional designated string identifier establishing native parity overrides.
-     */
-    private final String vanillaId;
+public record LootTable(List<LootPool> pools, MergeStrategy mergeStrategy, String vanillaId) {
 
     /**
      * Constructs a new LootTable incorporating probability pools and structural overrides.
@@ -51,7 +40,8 @@ public class LootTable {
      *
      * @return The list of functional pools generating drops.
      */
-    public List<LootPool> getPools() {
+    @Override
+    public List<LootPool> pools() {
         return pools;
     }
 
@@ -102,7 +92,8 @@ public class LootTable {
      *
      * @return The operational merge strategy configuration.
      */
-    public MergeStrategy getMergeStrategy() {
+    @Override
+    public MergeStrategy mergeStrategy() {
         return mergeStrategy;
     }
 
@@ -111,8 +102,9 @@ public class LootTable {
      *
      * @return The targeted string identifier, or null.
      */
+    @Override
     @Nullable
-    public String getVanillaId() {
+    public String vanillaId() {
         return vanillaId;
     }
 
@@ -120,8 +112,8 @@ public class LootTable {
      * The codec managing the serialization conversion linking active memory representations to storage payloads.
      */
     public static final Codec<LootTable> CODEC = RecordBuilder.create(instance -> instance.group(
-        LootPool.CODEC.list().fieldOf("pools").forGetter(LootTable.class, LootTable::getPools),
-        Codec.enumCodec(MergeStrategy.class).optionalFieldOf("merge_strategy", MergeStrategy.NONE).forGetter(LootTable.class, LootTable::getMergeStrategy),
-        Codecs.STRING.nullable().optionalFieldOf("vanilla_id", null).forGetter(LootTable.class, LootTable::getVanillaId)
+        LootPool.CODEC.list().fieldOf("pools").forGetter(LootTable.class, LootTable::pools),
+        Codec.enumCodec(MergeStrategy.class).optionalFieldOf("merge_strategy", MergeStrategy.NONE).forGetter(LootTable.class, LootTable::mergeStrategy),
+        Codecs.STRING.nullable().optionalFieldOf("vanilla_id", null).forGetter(LootTable.class, LootTable::vanillaId)
     ).apply(instance, LootTable::new)).describe("LootTable");
 }

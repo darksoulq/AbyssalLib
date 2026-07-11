@@ -8,6 +8,7 @@ import com.github.darksoulq.abyssallib.common.serialization.schema.CodecVisitor;
 public class DescribedCodec<T> implements Codec<T> {
     private final String description;
     private final Codec<T> self;
+
     public DescribedCodec(Codec<T> codec, String description) {
         self = codec;
         this.description = description;

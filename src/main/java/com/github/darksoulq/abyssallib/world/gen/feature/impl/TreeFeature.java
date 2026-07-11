@@ -76,7 +76,7 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
 
         int height = config.baseHeight() + random.nextInt(Math.max(1, config.heightRandA() + 1)) + random.nextInt(Math.max(1, config.heightRandB() + 1));
 
-        if (trunkOrigin.getBlockY() + height >= context.level().getWorld().getMaxHeight()) {
+        if (trunkOrigin.getBlockY() + height >= context.level().world().getMaxHeight()) {
             return false;
         }
 
@@ -94,7 +94,7 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
         int radius = config.foliageRadius() + random.nextInt(Math.max(1, config.foliageRadiusRand() + 1));
 
         for (Vector point : foliagePoints) {
-            Location attachment = new Location(context.level().getWorld(), point.getBlockX(), point.getBlockY(), point.getBlockZ());
+            Location attachment = new Location(context.level().world(), point.getBlockX(), point.getBlockY(), point.getBlockZ());
             config.foliagePlacer().placeFoliage(leafTracker, random, attachment, config.foliageProvider(), radius);
         }
 
@@ -148,7 +148,7 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z The Z coordinate.
          */
         private void record(int x, int y, int z) {
-            placed.add(new Location(delegate.getWorld(), x, y, z));
+            placed.add(new Location(delegate.world(), x, y, z));
         }
 
         /**
@@ -159,7 +159,11 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z        The Z coordinate.
          * @param material The material.
          */
-        @Override public void setBlock(int x, int y, int z, @NotNull Material material) { delegate.setBlock(x, y, z, material); record(x, y, z); }
+        @Override
+        public void setBlock(int x, int y, int z, @NotNull Material material) {
+            delegate.setBlock(x, y, z, material);
+            record(x, y, z);
+        }
 
         /**
          * Sets block data and records the coordinate.
@@ -169,7 +173,11 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z    The Z coordinate.
          * @param data The block data.
          */
-        @Override public void setBlock(int x, int y, int z, @NotNull BlockData data) { delegate.setBlock(x, y, z, data); record(x, y, z); }
+        @Override
+        public void setBlock(int x, int y, int z, @NotNull BlockData data) {
+            delegate.setBlock(x, y, z, data);
+            record(x, y, z);
+        }
 
         /**
          * Sets a custom block and records the coordinate.
@@ -179,7 +187,11 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z     The Z coordinate.
          * @param block The custom block.
          */
-        @Override public void setBlock(int x, int y, int z, @NotNull CustomBlock block) { delegate.setBlock(x, y, z, block); record(x, y, z); }
+        @Override
+        public void setBlock(int x, int y, int z, @NotNull CustomBlock block) {
+            delegate.setBlock(x, y, z, block);
+            record(x, y, z);
+        }
 
         /**
          * Sets a custom block with state and records the coordinate.
@@ -190,7 +202,11 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param block The custom block.
          * @param data  The specific block data.
          */
-        @Override public void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data) { delegate.setBlock(x, y, z, block, data); record(x, y, z); }
+        @Override
+        public void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data) {
+            delegate.setBlock(x, y, z, block, data);
+            record(x, y, z);
+        }
 
         /**
          * Spawns a standard entity unmodified by the tracker.
@@ -201,7 +217,10 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param type The entity type.
          * @return The spawned entity.
          */
-        @Override public @NotNull Entity addEntity(double x, double y, double z, @NotNull EntityType type) { return delegate.addEntity(x, y, z, type); }
+        @Override
+        public @NotNull Entity addEntity(double x, double y, double z, @NotNull EntityType type) {
+            return delegate.addEntity(x, y, z, type);
+        }
 
         /**
          * Spawns a custom entity unmodified by the tracker.
@@ -211,7 +230,10 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z      The Z coordinate.
          * @param entity The custom entity.
          */
-        @Override public void addEntity(double x, double y, double z, @NotNull CustomEntity<?> entity) { delegate.addEntity(x, y, z, entity); }
+        @Override
+        public void addEntity(double x, double y, double z, @NotNull CustomEntity<?> entity) {
+            delegate.addEntity(x, y, z, entity);
+        }
 
         @Override
         public @Nullable Entity addEntity(double x, double y, double z, @NotNull SavedEntity entity) {
@@ -226,7 +248,10 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z The Z coordinate.
          * @return The material.
          */
-        @Override public @NotNull Material getType(int x, int y, int z) { return delegate.getType(x, y, z); }
+        @Override
+        public @NotNull Material getType(int x, int y, int z) {
+            return delegate.getType(x, y, z);
+        }
 
         /**
          * Retrieves the block data at the coordinate unmodified by the tracker.
@@ -236,7 +261,10 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z The Z coordinate.
          * @return The block data.
          */
-        @Override public @NotNull BlockData getBlockData(int x, int y, int z) { return delegate.getBlockData(x, y, z); }
+        @Override
+        public @NotNull BlockData getBlockData(int x, int y, int z) {
+            return delegate.getBlockData(x, y, z);
+        }
 
         @Override
         public @NotNull BlockState getBlockState(int x, int y, int z) {
@@ -251,7 +279,10 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param z The Z coordinate.
          * @return The biome.
          */
-        @Override public @NotNull Biome getBiome(int x, int y, int z) { return delegate.getBiome(x, y, z); }
+        @Override
+        public @NotNull Biome getBiome(int x, int y, int z) {
+            return delegate.getBiome(x, y, z);
+        }
 
         /**
          * Retrieves the highest Y coordinate unmodified by the tracker.
@@ -261,21 +292,30 @@ public class TreeFeature extends Feature<TreeFeature.Config> {
          * @param heightMap The heightmap parameter.
          * @return The Y coordinate.
          */
-        @Override public int getHighestBlockY(int x, int z, HeightMap heightMap) { return delegate.getHighestBlockY(x, z, heightMap); }
+        @Override
+        public int getHighestBlockY(int x, int z, HeightMap heightMap) {
+            return delegate.getHighestBlockY(x, z, heightMap);
+        }
 
         /**
          * Retrieves the world context unmodified by the tracker.
          *
          * @return The Bukkit world.
          */
-        @Override public @NotNull World getWorld() { return delegate.getWorld(); }
+        @Override
+        public @NotNull World world() {
+            return delegate.world();
+        }
 
         /**
          * Retrieves the random source unmodified by the tracker.
          *
          * @return The random source.
          */
-        @Override public @NotNull Random getRandom() { return delegate.getRandom(); }
+        @Override
+        public @NotNull Random random() {
+            return delegate.random();
+        }
     }
 
     /**

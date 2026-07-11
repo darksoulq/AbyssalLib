@@ -10,7 +10,9 @@ import java.sql.SQLException;
  * Provides MySQL verbs and easy access to batch query operations.
  */
 public class TableQuery extends AbstractTableQuery<TableQuery> {
-    /** The MySQL database instance. */
+    /**
+     * The MySQL database instance.
+     */
     private final Database database;
 
     /**
@@ -31,7 +33,11 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
      * @return A valid connection.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -46,13 +52,21 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
 
     /**
      * Returns the MySQL insert verb.
+     *
      * @return {@code "INSERT INTO "}
      */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
 
     /**
      * Returns the MySQL replace verb.
+     *
      * @return {@code "REPLACE INTO "}
      */
-    @Override protected String getReplaceVerb() { return "REPLACE INTO "; }
+    @Override
+    protected String getReplaceVerb() {
+        return "REPLACE INTO ";
+    }
 }

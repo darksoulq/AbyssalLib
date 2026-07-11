@@ -63,11 +63,11 @@ public class LeaveVineDecorator extends TreeDecorator {
         for (Location leaf : leaves) {
             if (random.nextFloat() < probability) {
                 Location below = leaf.clone().add(0, -1, 0);
-                if (below.getBlockY() >= level.getWorld().getMinHeight() && level.getType(below.getBlockX(), below.getBlockY(), below.getBlockZ()).isAir()) {
+                if (below.getBlockY() >= level.world().getMinHeight() && level.getType(below.getBlockX(), below.getBlockY(), below.getBlockZ()).isAir()) {
                     level.setBlock(below.getBlockX(), below.getBlockY(), below.getBlockZ(), vineData);
 
                     Location trail = below.clone().add(0, -1, 0);
-                    while (random.nextBoolean() && trail.getBlockY() >= level.getWorld().getMinHeight() && level.getType(trail.getBlockX(), trail.getBlockY(), trail.getBlockZ()).isAir()) {
+                    while (random.nextBoolean() && trail.getBlockY() >= level.world().getMinHeight() && level.getType(trail.getBlockX(), trail.getBlockY(), trail.getBlockZ()).isAir()) {
                         level.setBlock(trail.getBlockX(), trail.getBlockY(), trail.getBlockZ(), vineData);
                         trail.add(0, -1, 0);
                     }

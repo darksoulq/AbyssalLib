@@ -30,7 +30,9 @@ public class CountModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<CountModifier> TYPE = () -> CODEC;
 
-    /** The number of times to duplicate the input positions. */
+    /**
+     * The number of times to duplicate the input positions.
+     */
     private final int count;
 
     /**

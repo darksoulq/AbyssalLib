@@ -13,14 +13,15 @@ import java.util.List;
 
 public class ChargedProjectile extends DataComponent<List<ItemStack>> implements Vanilla {
     public static final Codec<ChargedProjectile> CODEC = Codecs.ITEM_STACK.list().xmap(
-            ChargedProjectile::new,
-            ChargedProjectile::getValue
+        ChargedProjectile::new,
+        ChargedProjectile::getValue
     );
     public static final DataComponentType<ChargedProjectile> TYPE = DataComponentType.valued(CODEC, v -> new ChargedProjectile((ChargedProjectiles) v));
 
     public ChargedProjectile(ChargedProjectiles projectiles) {
         super(projectiles.projectiles());
     }
+
     public ChargedProjectile(List<ItemStack> projectiles) {
         super(projectiles);
     }

@@ -12,8 +12,8 @@ import org.bukkit.inventory.ItemStack;
 @SuppressWarnings("UnstableApiUsage")
 public class Firework extends DataComponent<Fireworks> implements Vanilla {
     public static final Codec<Firework> CODEC = ExtraCodecs.FIREWORKS.xmap(
-            Firework::new,
-            Firework::getValue
+        Firework::new,
+        Firework::getValue
     );
     public static final DataComponentType<Firework> TYPE = DataComponentType.valued(CODEC, Firework::new);
 

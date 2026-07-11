@@ -13,14 +13,15 @@ import org.bukkit.inventory.meta.trim.ArmorTrim;
 @SuppressWarnings("UnstableApiUsage")
 public class Trim extends DataComponent<ArmorTrim> implements Vanilla {
     public static final Codec<Trim> CODEC = ExtraCodecs.ARMOR_TRIM.xmap(
-            Trim::new,
-            Trim::getValue
+        Trim::new,
+        Trim::getValue
     );
     public static final DataComponentType<Trim> TYPE = DataComponentType.valued(CODEC, v -> new Trim((ItemArmorTrim) v));
 
     public Trim(ItemArmorTrim trim) {
         super(trim.armorTrim());
     }
+
     public Trim(ArmorTrim trim) {
         super(trim);
     }

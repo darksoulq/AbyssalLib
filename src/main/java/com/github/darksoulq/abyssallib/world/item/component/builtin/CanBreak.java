@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class CanBreak extends DataComponent<ItemAdventurePredicate> implements Vanilla {
     public static final Codec<CanBreak> CODEC = ExtraCodecs.ITEM_ADV_PREDICATE.xmap(
-            CanBreak::new,
-            CanBreak::getValue
+        CanBreak::new,
+        CanBreak::getValue
     );
     public static final DataComponentType<CanBreak> TYPE = DataComponentType.valued(CODEC, CanBreak::new);
 

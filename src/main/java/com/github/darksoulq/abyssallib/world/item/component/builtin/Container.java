@@ -13,14 +13,15 @@ import java.util.List;
 
 public class Container extends DataComponent<List<ItemStack>> implements Vanilla {
     public static final Codec<Container> CODEC = Codecs.ITEM_STACK.list().xmap(
-            Container::new,
-            Container::getValue
+        Container::new,
+        Container::getValue
     );
     public static final DataComponentType<Container> TYPE = DataComponentType.valued(CODEC, v -> new Container((ItemContainerContents) v));
 
     public Container(ItemContainerContents contents) {
         super(contents.contents());
     }
+
     public Container(List<ItemStack> contents) {
         super(contents);
     }

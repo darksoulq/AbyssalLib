@@ -386,7 +386,7 @@ public class Font implements Asset {
         list.add(g);
         glyphGroups.add(list);
         occupied.add(c);
-        NAMED_GLYPHS.put(namespace + ":" + String.valueOf(c), g.toComponent());
+        NAMED_GLYPHS.put(namespace + ":" + c, g.toComponent());
     }
 
     /**
@@ -411,7 +411,7 @@ public class Font implements Asset {
         try {
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageData));
             if (image == null) throw new IllegalArgumentException("Invalid image data.");
-            return new int[]{ image.getWidth(), image.getHeight() };
+            return new int[]{image.getWidth(), image.getHeight()};
         } catch (Exception e) {
             throw new RuntimeException("Failed to read image dimensions", e);
         }
@@ -467,7 +467,8 @@ public class Font implements Asset {
     /**
      * Represents a font glyph.
      */
-    public sealed interface Glyph permits TextureGlyph, OffsetGlyph, TtfFont, UnihexFont {}
+    public sealed interface Glyph permits TextureGlyph, OffsetGlyph, TtfFont, UnihexFont {
+    }
 
     /**
      * Represents a unique bitmap provider group.
@@ -476,7 +477,8 @@ public class Font implements Asset {
      * @param height  The pixel height applied to the group.
      * @param ascent  The pixel ascent applied to the group.
      */
-    private record BitmapKey(Texture texture, int height, int ascent) {}
+    private record BitmapKey(Texture texture, int height, int ascent) {
+    }
 
     /**
      * A glyph from a bitmap texture.
@@ -488,7 +490,8 @@ public class Font implements Asset {
      * @param height    The pixel height.
      * @param ascent    The pixel ascent.
      */
-    public record TextureGlyph(@Nullable String name, Key fontId, @NotNull Texture texture, char character, int height, int ascent) implements Glyph {
+    public record TextureGlyph(@Nullable String name, Key fontId, @NotNull Texture texture, char character, int height,
+                               int ascent) implements Glyph {
 
         /**
          * Converts this glyph to a TextComponent.
@@ -585,7 +588,8 @@ public class Font implements Asset {
          * @param left  Left spacing pixel amount.
          * @param right Right spacing pixel amount.
          */
-        public record Override(int from, int to, int left, int right) {}
+        public record Override(int from, int to, int left, int right) {
+        }
 
         /**
          * Serializes the provider into a JSON object representation.

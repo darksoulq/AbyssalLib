@@ -11,6 +11,7 @@ import java.util.Random;
 
 /**
  * Immutable record containing the environment and entity data for loot generation.
+ *
  * @param location The {@link Location} where loot is being generated.
  * @param looter   The {@link Entity} (usually a Player) receiving the loot.
  * @param killer   The {@link Entity} that caused a death (if applicable).
@@ -19,7 +20,8 @@ import java.util.Random;
  * @param luck     The calculated luck value used for bonus rolls and quality.
  * @param random   The {@link Random} instance used for selections.
  */
-public record LootContext(Location location, @Nullable Entity looter, @Nullable Entity killer, @Nullable Entity victim, @Nullable ItemStack tool, float luck, Random random) {
+public record LootContext(Location location, @Nullable Entity looter, @Nullable Entity killer, @Nullable Entity victim,
+                          @Nullable ItemStack tool, float luck, Random random) {
     /**
      * Initializes a builder for a LootContext.
      *
@@ -30,7 +32,9 @@ public record LootContext(Location location, @Nullable Entity looter, @Nullable 
         return new Builder(loc);
     }
 
-    /** Builder class for constructing {@link LootContext} instances. */
+    /**
+     * Builder class for constructing {@link LootContext} instances.
+     */
     public static class Builder {
         private final Location location;
         private Entity looter;
@@ -40,13 +44,17 @@ public record LootContext(Location location, @Nullable Entity looter, @Nullable 
         private float luck;
         private Random random;
 
-        /** @param location The world location. */
+        /**
+         * @param location The world location.
+         */
         public Builder(Location location) {
             this.location = location;
             this.random = new Random();
         }
 
-        /** @param looter The entity collecting loot. @return This builder. */
+        /**
+         * @param looter The entity collecting loot. @return This builder.
+         */
         public Builder looter(Entity looter) {
             this.looter = looter;
             if (looter instanceof Player p) {
@@ -55,37 +63,49 @@ public record LootContext(Location location, @Nullable Entity looter, @Nullable 
             return this;
         }
 
-        /** @param killer The attacker entity. @return This builder. */
+        /**
+         * @param killer The attacker entity. @return This builder.
+         */
         public Builder killer(Entity killer) {
             this.killer = killer;
             return this;
         }
 
-        /** @param victim The slain entity. @return This builder. */
+        /**
+         * @param victim The slain entity. @return This builder.
+         */
         public Builder victim(Entity victim) {
             this.victim = victim;
             return this;
         }
 
-        /** @param tool The tool stack. @return This builder. */
+        /**
+         * @param tool The tool stack. @return This builder.
+         */
         public Builder tool(ItemStack tool) {
             this.tool = tool;
             return this;
         }
 
-        /** @param luck Manual luck value. @return This builder. */
+        /**
+         * @param luck Manual luck value. @return This builder.
+         */
         public Builder luck(float luck) {
             this.luck = luck;
             return this;
         }
 
-        /** @param random Custom random source. @return This builder. */
+        /**
+         * @param random Custom random source. @return This builder.
+         */
         public Builder random(Random random) {
             this.random = random;
             return this;
         }
 
-        /** @return A new {@link LootContext} instance. */
+        /**
+         * @return A new {@link LootContext} instance.
+         */
         public LootContext build() {
             return new LootContext(location, looter, killer, victim, tool, luck, random);
         }

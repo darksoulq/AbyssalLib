@@ -48,12 +48,14 @@ public abstract class AbstractPropertyEntity<T> {
     /**
      * Called when the entity is loaded into the world.
      */
-    public void onLoad() {}
+    public void onLoad() {
+    }
 
     /**
      * Called before the entity is saved to the world data.
      */
-    public void onSave() {}
+    public void onSave() {
+    }
 
     /**
      * Serializes all discovered properties into a dynamic map.

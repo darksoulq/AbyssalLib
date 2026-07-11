@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class MapPostProcess extends DataComponent<MapPostProcessing> implements Vanilla {
     public static final Codec<MapPostProcess> CODEC = Codec.enumCodec(MapPostProcessing.class).xmap(
-            MapPostProcess::new,
-            MapPostProcess::getValue
+        MapPostProcess::new,
+        MapPostProcess::getValue
     );
     public static final DataComponentType<MapPostProcess> TYPE = DataComponentType.valued(CODEC, MapPostProcess::new);
 

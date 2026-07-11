@@ -15,10 +15,11 @@ import java.util.function.Consumer;
  * <p>
  * A pool determines how many "rolls" it performs. During each roll, weights are
  * calculated for valid entries to determine which item is selected.
- * @param rolls       The base number of times to roll this pool.
- * @param bonusRolls  Additional rolls scaled by the {@link LootContext#luck()} value.
- * @param entries     The list of {@link LootEntry} objects to choose from.
- * @param conditions  A list of {@link LootCondition}s that must pass for the pool to execute.
+ *
+ * @param rolls      The base number of times to roll this pool.
+ * @param bonusRolls Additional rolls scaled by the {@link LootContext#luck()} value.
+ * @param entries    The list of {@link LootEntry} objects to choose from.
+ * @param conditions A list of {@link LootCondition}s that must pass for the pool to execute.
  */
 public record LootPool(int rolls, int bonusRolls, List<LootEntry> entries, List<LootCondition> conditions) {
 
@@ -33,7 +34,7 @@ public record LootPool(int rolls, int bonusRolls, List<LootEntry> entries, List<
             if (!condition.test(context)) return;
         }
 
-        int totalRolls = rolls + (int)(bonusRolls * context.luck());
+        int totalRolls = rolls + (int) (bonusRolls * context.luck());
 
         for (int i = 0; i < totalRolls; i++) {
             List<LootEntry> valid = new ArrayList<>();
@@ -61,7 +62,9 @@ public record LootPool(int rolls, int bonusRolls, List<LootEntry> entries, List<
         }
     }
 
-    /** Codec for serializing and deserializing {@link LootPool} instances. */
+    /**
+     * Codec for serializing and deserializing {@link LootPool} instances.
+     */
     public static final Codec<LootPool> CODEC = RecordBuilder.create(instance -> instance.group(
         Codecs.INT.fieldOf("rolls").forGetter(LootPool.class, LootPool::rolls),
         Codecs.INT.optionalFieldOf("bonus_rolls", 0).forGetter(LootPool.class, LootPool::bonusRolls),

@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class RepairCost extends DataComponent<Integer> implements Vanilla {
     public static final Codec<RepairCost> CODEC = Codecs.INT.xmap(
-            RepairCost::new,
-            RepairCost::getValue
+        RepairCost::new,
+        RepairCost::getValue
     );
     public static final DataComponentType<RepairCost> TYPE = DataComponentType.valued(CODEC, RepairCost::new);
 

@@ -70,7 +70,7 @@ public class Components {
     //? if >26.1.2 {
     public static DataComponentType<?> DYE = register("dye", Dye.TYPE);
     /*public static DataComponentType<?> SULFUR_CUBE_CONTENT = register("sulfur_cube_content", SulfurCubeItem.TYPE);
-    *///?}
+     *///?}
     public static DataComponentType<?> SUSPICIOUS_STEW_EFFECTS = register("suspicious_stew_effects", SuspiciousStewEffect.TYPE);
     public static DataComponentType<?> TOOL = register("tool", ToolComponent.TYPE);
     public static DataComponentType<?> TOOLTIP_STYLE = register("tooltip_style", TooltipStyle.TYPE);
@@ -85,6 +85,7 @@ public class Components {
     private static DataComponentType<?> registerCustom(String name, DataComponentType<?> type) {
         return DATA_COMPONENTS.register(name, (id) -> type);
     }
+
     private static DataComponentType<?> register(String name, DataComponentType<?> type) {
         return DATA_COMPONENTS_VANILLA.register(name, (id) -> type);
     }

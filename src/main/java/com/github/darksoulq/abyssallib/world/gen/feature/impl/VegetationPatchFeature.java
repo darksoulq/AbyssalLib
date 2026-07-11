@@ -105,12 +105,12 @@ public class VegetationPatchFeature extends Feature<VegetationPatchFeature.Confi
     /**
      * Configuration record for the vegetation patch feature.
      *
-     * @param groundProvider      The block state provider defining the new ground terrain.
-     * @param vegetationProvider  The block state provider defining the plants scattered on top.
-     * @param radius              The horizontal radius of the terrain alteration patch.
-     * @param depth               The vertical depth to which the ground will be replaced.
-     * @param vegetationChance    The 1-in-X probability of placing a plant on an altered surface column.
-     * @param replaceableGround   The list of blocks that are allowed to be converted into the new ground.
+     * @param groundProvider     The block state provider defining the new ground terrain.
+     * @param vegetationProvider The block state provider defining the plants scattered on top.
+     * @param radius             The horizontal radius of the terrain alteration patch.
+     * @param depth              The vertical depth to which the ground will be replaced.
+     * @param vegetationChance   The 1-in-X probability of placing a plant on an altered surface column.
+     * @param replaceableGround  The list of blocks that are allowed to be converted into the new ground.
      */
     public record Config(
         BlockStateProvider groundProvider,

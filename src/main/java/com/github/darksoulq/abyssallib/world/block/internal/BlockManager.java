@@ -36,11 +36,11 @@ public class BlockManager {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof BlockPos blockPos)) return false;
-            return location.getWorld().getUID().equals(blockPos.location.getWorld().getUID()) &&
-                location.getBlockX() == blockPos.location.getBlockX() &&
-                location.getBlockY() == blockPos.location.getBlockY() &&
-                location.getBlockZ() == blockPos.location.getBlockZ();
+            if (!(o instanceof BlockPos(Location location1))) return false;
+            return location.getWorld().getUID().equals(location1.getWorld().getUID()) &&
+                location.getBlockX() == location1.getBlockX() &&
+                location.getBlockY() == location1.getBlockY() &&
+                location.getBlockZ() == location1.getBlockZ();
         }
 
         @Override
@@ -255,5 +255,6 @@ public class BlockManager {
         return new ArrayList<>(BLOCKS.getRegion(key).values());
     }
 
-    private record BlockRow(String world, int x, int y, int z, String blockId, String dataJson) { }
+    private record BlockRow(String world, int x, int y, int z, String blockId, String dataJson) {
+    }
 }

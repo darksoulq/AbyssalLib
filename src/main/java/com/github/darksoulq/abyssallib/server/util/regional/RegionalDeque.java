@@ -1,4 +1,3 @@
-
 package com.github.darksoulq.abyssallib.server.util.regional;
 
 import org.jetbrains.annotations.NotNull;

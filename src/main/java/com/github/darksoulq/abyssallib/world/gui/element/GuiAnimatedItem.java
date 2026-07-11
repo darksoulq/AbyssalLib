@@ -20,7 +20,9 @@ import java.util.function.BiFunction;
  */
 public class GuiAnimatedItem implements GuiElement {
 
-    /** The function responsible for determining the item to render based on ticks. */
+    /**
+     * The function responsible for determining the item to render based on ticks.
+     */
     private final BiFunction<GuiView, Integer, ItemStack> renderer;
 
     /**

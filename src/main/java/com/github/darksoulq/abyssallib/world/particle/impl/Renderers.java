@@ -66,13 +66,21 @@ public class Renderers {
      * Supports both static points and velocity-based points via {@link MotionVector}.
      */
     public static class Standard implements ParticleRenderer {
-        /** The Bukkit particle type to spawn. */
+        /**
+         * The Bukkit particle type to spawn.
+         */
         private final Particle particle;
-        /** The number of particles to spawn per point. */
+        /**
+         * The number of particles to spawn per point.
+         */
         private final int count;
-        /** The speed/extra data for the particle. */
+        /**
+         * The speed/extra data for the particle.
+         */
         private final double speed;
-        /** Optional extra data for specific particles (e.g., BlockData). */
+        /**
+         * Optional extra data for specific particles (e.g., BlockData).
+         */
         private final Object data;
 
         /**
@@ -120,7 +128,9 @@ public class Renderers {
      * to create high-fidelity colored effects.
      */
     public static class DustRenderer implements ParticleRenderer {
-        /** The size scale of the dust particles. */
+        /**
+         * The size scale of the dust particles.
+         */
         private final float size;
 
         /**
@@ -233,7 +243,7 @@ public class Renderers {
             while (pool.size() < points.size()) {
                 //? if <=26.1.2 {
                 /*Display.ItemDisplay nms = new Display.ItemDisplay(EntityType.ITEM_DISPLAY, level);
-                *///?} else {
+                 *///?} else {
                 Display.ItemDisplay nms = new Display.ItemDisplay(EntityTypes.ITEM_DISPLAY, level);
                 //?}
                 nms.setPos(center.getX(), center.getY(), center.getZ());

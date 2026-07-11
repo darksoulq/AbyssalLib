@@ -38,16 +38,24 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
      */
     public static final BlockStateProviderType<RotatedBlockStateProvider> TYPE = () -> CODEC;
 
-    /** The underlying provider supplying the base block. */
+    /**
+     * The underlying provider supplying the base block.
+     */
     private final BlockStateProvider baseProvider;
 
-    /** The forced axis alignment (e.g., for logs). */
+    /**
+     * The forced axis alignment (e.g., for logs).
+     */
     private final Axis axis;
 
-    /** The forced directional facing (e.g., for stairs, chests, vines). */
+    /**
+     * The forced directional facing (e.g., for stairs, chests, vines).
+     */
     private final BlockFace facing;
 
-    /** The forced 16-point rotation (e.g., for signs, banners, skulls). */
+    /**
+     * The forced 16-point rotation (e.g., for signs, banners, skulls).
+     */
     private final Integer rotation;
 
     /**

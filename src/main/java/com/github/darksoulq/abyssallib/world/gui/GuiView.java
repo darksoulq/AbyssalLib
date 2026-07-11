@@ -17,16 +17,24 @@ public class GuiView {
      * Defines the target inventory segment for rendering or interaction.
      */
     public enum Segment {
-        /** The custom GUI inventory. */
+        /**
+         * The custom GUI inventory.
+         */
         TOP,
-        /** The viewing player's inventory. */
+        /**
+         * The viewing player's inventory.
+         */
         BOTTOM
     }
 
-    /** The underlying configuration for this view. */
+    /**
+     * The underlying configuration for this view.
+     */
     private final Gui gui;
 
-    /** The Bukkit InventoryView connecting the player to the inventories. */
+    /**
+     * The Bukkit InventoryView connecting the player to the inventories.
+     */
     private final InventoryView view;
 
     /**
@@ -60,6 +68,7 @@ public class GuiView {
 
     /**
      * Gets the Player viewing this GUI
+     *
      * @return The player
      */
     public Player getPlayer() {

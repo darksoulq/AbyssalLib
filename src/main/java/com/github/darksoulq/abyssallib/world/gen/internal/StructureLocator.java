@@ -17,7 +17,9 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class StructureLocator {
-    public record StructureLocation(int x, int y, int z, String id, StructureRotation rotation, Mirror mirror) {}
+    public record StructureLocation(int x, int y, int z, String id, StructureRotation rotation, Mirror mirror) {
+    }
+
     private static final Map<String, Map<Long, List<StructureLocation>>> CACHE = new ConcurrentHashMap<>();
     private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
 
@@ -97,7 +99,8 @@ public class StructureLocator {
                 Mirror mirror = Mirror.valueOf(in.readUTF());
                 list.add(new StructureLocation(x, y, z, id, rot, mirror));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private static void saveRegion(String world, long key) {
@@ -141,7 +144,8 @@ public class StructureLocator {
                         out.writeUTF(loc.rotation().name());
                         out.writeUTF(loc.mirror().name());
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
     }

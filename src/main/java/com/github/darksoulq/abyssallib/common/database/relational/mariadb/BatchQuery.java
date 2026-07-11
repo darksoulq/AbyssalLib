@@ -25,13 +25,34 @@ public class BatchQuery extends AbstractBatchQuery<BatchQuery> {
      * Helper to wrap connection retrieval.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /** @return Standard {@code "INSERT INTO "} verb. */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
-    /** @return MariaDB {@code "REPLACE INTO "} verb. */
-    @Override protected String getReplaceVerb() { return "REPLACE INTO "; }
-    /** @return MariaDB {@code "INSERT IGNORE INTO "} verb. */
-    @Override protected String getInsertIgnoreVerb() { return "INSERT IGNORE INTO "; }
+    /**
+     * @return Standard {@code "INSERT INTO "} verb.
+     */
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
+
+    /**
+     * @return MariaDB {@code "REPLACE INTO "} verb.
+     */
+    @Override
+    protected String getReplaceVerb() {
+        return "REPLACE INTO ";
+    }
+
+    /**
+     * @return MariaDB {@code "INSERT IGNORE INTO "} verb.
+     */
+    @Override
+    protected String getInsertIgnoreVerb() {
+        return "INSERT IGNORE INTO ";
+    }
 }

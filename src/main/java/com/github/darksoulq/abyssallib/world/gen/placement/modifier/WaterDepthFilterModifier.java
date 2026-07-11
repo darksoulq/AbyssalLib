@@ -32,7 +32,9 @@ public class WaterDepthFilterModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<WaterDepthFilterModifier> TYPE = () -> CODEC;
 
-    /** The maximum allowed number of contiguous water blocks directly above the position. */
+    /**
+     * The maximum allowed number of contiguous water blocks directly above the position.
+     */
     private final int maxDepth;
 
     /**

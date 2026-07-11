@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class BannerPatterns extends DataComponent<BannerPatternLayers> implements Vanilla {
     public static final Codec<BannerPatterns> CODEC = ExtraCodecs.BANNER_PATTERN_LAYERS.xmap(
-            BannerPatterns::new,
-            BannerPatterns::getValue
+        BannerPatterns::new,
+        BannerPatterns::getValue
     );
 
     public static final DataComponentType<BannerPatterns> TYPE = DataComponentType.valued(CODEC, BannerPatterns::new);

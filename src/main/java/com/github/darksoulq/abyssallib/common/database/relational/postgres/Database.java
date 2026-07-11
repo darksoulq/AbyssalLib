@@ -19,20 +19,34 @@ import java.util.function.Function;
  * thread-safe connection retrieval.
  */
 public class Database extends AbstractDatabase {
-    /** The hostname or IP address of the PostgreSQL server. */
+    /**
+     * The hostname or IP address of the PostgreSQL server.
+     */
     private final String host;
-    /** The port number the PostgreSQL server is listening on. */
+    /**
+     * The port number the PostgreSQL server is listening on.
+     */
     private final int port;
-    /** The name of the specific database to connect to. */
+    /**
+     * The name of the specific database to connect to.
+     */
     private final String database;
-    /** The username for authentication. */
+    /**
+     * The username for authentication.
+     */
     private final String user;
-    /** The password for authentication. */
+    /**
+     * The password for authentication.
+     */
     private final String password;
 
-    /** The active JDBC connection to the PostgreSQL server. */
+    /**
+     * The active JDBC connection to the PostgreSQL server.
+     */
     private Connection connection;
-    /** A single-threaded scheduler used for periodic keep-alive checks. */
+    /**
+     * A single-threaded scheduler used for periodic keep-alive checks.
+     */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     /**
@@ -72,7 +86,8 @@ public class Database extends AbstractDatabase {
             if (connection != null && !connection.isValid(2)) {
                 connect();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     /**

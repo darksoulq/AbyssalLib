@@ -42,7 +42,8 @@ public class EventBus {
     public void register(Object listenerObject) {
         if (!registeredObjects.add(listenerObject)) return;
 
-        Listener dynamicListener = new Listener() {}; // dynamic listener
+        Listener dynamicListener = new Listener() {
+        }; // dynamic listener
 
         for (Method method : listenerObject.getClass().getDeclaredMethods()) {
             if (!method.isAnnotationPresent(SubscribeEvent.class)) continue;
@@ -70,20 +71,20 @@ public class EventBus {
             }
 
             Bukkit.getPluginManager().registerEvent(
-                    (Class<? extends Event>) eventClass,
-                    dynamicListener,
-                    priority,
-                    (listener, event) -> {
-                        if (eventClass.isAssignableFrom(event.getClass())) {
-                            try {
-                                handle.invokeWithArguments(event);
-                            } catch (Throwable t) {
-                                plugin.getLogger().log(Level.SEVERE, "Failed to invoke event handler", t);
-                            }
+                (Class<? extends Event>) eventClass,
+                dynamicListener,
+                priority,
+                (listener, event) -> {
+                    if (eventClass.isAssignableFrom(event.getClass())) {
+                        try {
+                            handle.invokeWithArguments(event);
+                        } catch (Throwable t) {
+                            plugin.getLogger().log(Level.SEVERE, "Failed to invoke event handler", t);
                         }
-                    },
-                    plugin,
-                    ignoreCancelled
+                    }
+                },
+                plugin,
+                ignoreCancelled
             );
         }
     }

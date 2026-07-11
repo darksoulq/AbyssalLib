@@ -6,7 +6,9 @@ import java.sql.Statement;
  * A bridge for executing queries and builders against an H2 database.
  */
 public class QueryExecutor {
-    /** The parent H2 database instance. */
+    /**
+     * The parent H2 database instance.
+     */
     private final Database database;
 
     /**

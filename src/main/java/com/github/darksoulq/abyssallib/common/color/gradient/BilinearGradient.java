@@ -9,17 +9,29 @@ import org.bukkit.util.Vector;
  * A color provider that performs bilinear interpolation between four corner colors on a 2D plane.
  */
 public class BilinearGradient implements ColorProvider {
-    /** Top-left corner color. */
+    /**
+     * Top-left corner color.
+     */
     private final Color c00;
-    /** Top-right corner color. */
+    /**
+     * Top-right corner color.
+     */
     private final Color c10;
-    /** Bottom-left corner color. */
+    /**
+     * Bottom-left corner color.
+     */
     private final Color c01;
-    /** Bottom-right corner color. */
+    /**
+     * Bottom-right corner color.
+     */
     private final Color c11;
-    /** The repeating scale of the gradient on the X axis. */
+    /**
+     * The repeating scale of the gradient on the X axis.
+     */
     private final double scaleX;
-    /** The repeating scale of the gradient on the Z axis. */
+    /**
+     * The repeating scale of the gradient on the Z axis.
+     */
     private final double scaleZ;
 
     /**

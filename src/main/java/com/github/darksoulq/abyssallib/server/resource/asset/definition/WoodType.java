@@ -5,39 +5,63 @@ package com.github.darksoulq.abyssallib.server.resource.asset.definition;
  */
 public enum WoodType {
 
-    /** Oak */
+    /**
+     * Oak
+     */
     OAK,
 
-    /** Spruce */
+    /**
+     * Spruce
+     */
     SPRUCE,
 
-    /** Birch */
+    /**
+     * Birch
+     */
     BIRCH,
 
-    /** Acacia */
+    /**
+     * Acacia
+     */
     ACACIA,
 
-    /** Cherry */
+    /**
+     * Cherry
+     */
     CHERRY,
 
-    /** Jungle */
+    /**
+     * Jungle
+     */
     JUNGLE,
 
-    /** Dark Oak */
+    /**
+     * Dark Oak
+     */
     DARK_OAK,
 
-    /** Pale Oak */
+    /**
+     * Pale Oak
+     */
     PALE_OAK,
 
-    /** Mangrove */
+    /**
+     * Mangrove
+     */
     MANGROVE,
 
-    /** Bamboo */
+    /**
+     * Bamboo
+     */
     BAMBOO,
 
-    /** Crimson */
+    /**
+     * Crimson
+     */
     CRIMSON,
 
-    /** Warped */
+    /**
+     * Warped
+     */
     WARPED
 }

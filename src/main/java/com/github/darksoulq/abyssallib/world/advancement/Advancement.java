@@ -48,30 +48,44 @@ public class Advancement {
         AdvancementReward.CODEC.list().optionalFieldOf("rewards", Collections.emptyList()).forGetter(Advancement.class, Advancement::getRewards)
     ).apply(instance, Advancement::new)).describe("Advancement");
 
-    /** The unique key for this advancement. */
+    /**
+     * The unique key for this advancement.
+     */
     private final Key id;
-    /** The key of the parent advancement, or null if root. */
+    /**
+     * The key of the parent advancement, or null if root.
+     */
     private final Key parent;
-    /** Visual configuration for the advancement menu. */
+    /**
+     * Visual configuration for the advancement menu.
+     */
     private final AdvancementDisplay display;
-    /** Map of logical criteria required to complete this advancement. */
+    /**
+     * Map of logical criteria required to complete this advancement.
+     */
     private final Map<String, AdvancementCriterion> criteria;
-    /** List of rewards granted upon completion. */
+    /**
+     * List of rewards granted upon completion.
+     */
     private final List<AdvancementReward> rewards;
 
-    /** Cached Bukkit representation. */
+    /**
+     * Cached Bukkit representation.
+     */
     private transient org.bukkit.advancement.Advancement cachedBukkitAdvancement;
-    /** Flag to prevent repeated failed cache lookups. */
+    /**
+     * Flag to prevent repeated failed cache lookups.
+     */
     private transient boolean cacheAttempted = false;
 
     /**
      * Constructs a new Advancement.
      *
-     * @param id The unique identifier.
-     * @param parent The parent identifier (nullable).
-     * @param display The display info (nullable).
+     * @param id       The unique identifier.
+     * @param parent   The parent identifier (nullable).
+     * @param display  The display info (nullable).
      * @param criteria The criteria map.
-     * @param rewards The rewards list.
+     * @param rewards  The rewards list.
      */
     public Advancement(Key id, Key parent, AdvancementDisplay display, Map<String, AdvancementCriterion> criteria, List<AdvancementReward> rewards) {
         this.id = id;
@@ -107,16 +121,40 @@ public class Advancement {
         return new CustomAdvancementProgress(this, player, player.getAdvancementProgress(cachedBukkitAdvancement));
     }
 
-    /** @return The unique identifier Key. */
-    public Key getId() { return id; }
-    /** @return The parent identifier Key. */
-    public Key getParent() { return parent; }
-    /** @return The display configuration. */
-    public AdvancementDisplay getDisplay() { return display; }
-    /** @return The map of criteria. */
-    public Map<String, AdvancementCriterion> getCriteria() { return criteria; }
-    /** @return The list of rewards. */
-    public List<AdvancementReward> getRewards() { return rewards; }
+    /**
+     * @return The unique identifier Key.
+     */
+    public Key getId() {
+        return id;
+    }
+
+    /**
+     * @return The parent identifier Key.
+     */
+    public Key getParent() {
+        return parent;
+    }
+
+    /**
+     * @return The display configuration.
+     */
+    public AdvancementDisplay getDisplay() {
+        return display;
+    }
+
+    /**
+     * @return The map of criteria.
+     */
+    public Map<String, AdvancementCriterion> getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * @return The list of rewards.
+     */
+    public List<AdvancementReward> getRewards() {
+        return rewards;
+    }
 
     /**
      * Evaluates all criteria for a player without a specific event.
@@ -131,7 +169,7 @@ public class Advancement {
      * Evaluates criteria for a player, optionally filtered by a triggering event.
      *
      * @param player The player to evaluate.
-     * @param event The triggering event, or null for general evaluation.
+     * @param event  The triggering event, or null for general evaluation.
      */
     public void evaluate(Player player, Event event) {
         CustomAdvancementProgress progress = getProgress(player);
@@ -174,7 +212,7 @@ public class Advancement {
                 ItemStackTemplate.fromNonEmptyStack(CraftItemStack.asNMSCopy(display.getIcon())),
                 //?} else {
                 /*CraftItemStack.asNMSCopy(display.getIcon()),
-                *///?}
+                 *///?}
                 PaperAdventure.asVanilla(display.getTitle()),
                 PaperAdventure.asVanilla(display.getDescription()),
                 background,
@@ -225,7 +263,9 @@ public class Advancement {
      * @param id The identifier for the advancement.
      * @return A new Builder instance.
      */
-    public static Builder builder(Key id) { return new Builder(id); }
+    public static Builder builder(Key id) {
+        return new Builder(id);
+    }
 
     /**
      * Builder class for creating Advancement instances.
@@ -237,29 +277,54 @@ public class Advancement {
         private final Map<String, AdvancementCriterion> criteria = new HashMap<>();
         private final List<AdvancementReward> rewards = new ArrayList<>();
 
-        /** @param id The advancement unique key. */
-        public Builder(Key id) { this.id = id; }
+        /**
+         * @param id The advancement unique key.
+         */
+        public Builder(Key id) {
+            this.id = id;
+        }
+
         /**
          * @param parent The parent key.
          * @return builder.
          **/
-        public Builder parent(Key parent) { this.parent = parent; return this; }
+        public Builder parent(Key parent) {
+            this.parent = parent;
+            return this;
+        }
+
         /**
          * @param display Visual info.
          * @return builder.
          **/
-        public Builder display(AdvancementDisplay display) { this.display = display; return this; }
+        public Builder display(AdvancementDisplay display) {
+            this.display = display;
+            return this;
+        }
+
         /**
          * @param name Criterion name. @param criterion Logic.
          * @return builder.
          **/
-        public Builder criterion(String name, AdvancementCriterion criterion) { this.criteria.put(name, criterion); return this; }
+        public Builder criterion(String name, AdvancementCriterion criterion) {
+            this.criteria.put(name, criterion);
+            return this;
+        }
+
         /**
          * @param reward Award to grant.
          * @return builder.
          **/
-        public Builder reward(AdvancementReward reward) { this.rewards.add(reward); return this; }
-        /** @return New Advancement. */
-        public Advancement build() { return new Advancement(id, parent, display, criteria, rewards); }
+        public Builder reward(AdvancementReward reward) {
+            this.rewards.add(reward);
+            return this;
+        }
+
+        /**
+         * @return New Advancement.
+         */
+        public Advancement build() {
+            return new Advancement(id, parent, display, criteria, rewards);
+        }
     }
 }

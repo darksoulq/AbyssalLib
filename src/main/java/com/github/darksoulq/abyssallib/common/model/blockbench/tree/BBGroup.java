@@ -34,17 +34,55 @@ public class BBGroup {
         this.rotation = rotation;
     }
 
-    public String getUuid() { return uuid; }
-    public String getName() { return name; }
-    public boolean isExport() { return export; }
-    public boolean isLocked() { return locked; }
-    public int getColor() { return color; }
-    public boolean isShade() { return shade; }
-    public boolean isMirrorUv() { return mirrorUv; }
-    public boolean isVisibility() { return visibility; }
-    public int getAutouv() { return autouv; }
-    public Vector3f getOrigin() { return origin; }
-    public Vector3f getRotation() { return rotation; }
-    public List<BBGroup> getChildren() { return children; }
-    public List<String> getChildElements() { return childElements; }
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isExport() {
+        return export;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    public boolean isShade() {
+        return shade;
+    }
+
+    public boolean isMirrorUv() {
+        return mirrorUv;
+    }
+
+    public boolean isVisibility() {
+        return visibility;
+    }
+
+    public int getAutouv() {
+        return autouv;
+    }
+
+    public Vector3f getOrigin() {
+        return origin;
+    }
+
+    public Vector3f getRotation() {
+        return rotation;
+    }
+
+    public List<BBGroup> getChildren() {
+        return children;
+    }
+
+    public List<String> getChildElements() {
+        return childElements;
+    }
 }

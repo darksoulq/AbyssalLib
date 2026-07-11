@@ -98,6 +98,6 @@ public class Lang implements Asset {
 
         String prettyJson = gson.toJson(json);
         files.put("assets/" + namespace + "/lang/" + lang + ".json",
-                prettyJson.getBytes(StandardCharsets.UTF_8));
+            prettyJson.getBytes(StandardCharsets.UTF_8));
     }
 }

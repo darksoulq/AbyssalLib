@@ -116,7 +116,8 @@ public final class ServerTranslator {
         resolvers.add(TagResolver.resolver(Set.of("tr_or", "translate_or", "lang_or"), (queue, ctx) -> {
             if (!queue.hasNext()) return Tag.inserting(Component.empty());
             String nestedKey = queue.pop().value();
-            if (!queue.hasNext()) return Tag.inserting(resolveComponent(Component.translatable(nestedKey), player, locale, null, null));
+            if (!queue.hasNext())
+                return Tag.inserting(resolveComponent(Component.translatable(nestedKey), player, locale, null, null));
             String fallback = queue.pop().value();
             return Tag.inserting(resolveComponent(Component.translatable(nestedKey).fallback(fallback), player, locale, null, null));
         }));
@@ -326,7 +327,7 @@ public final class ServerTranslator {
 
         //? if <=26.1.2 {
         /*extracted.addAll(translatable.args());
-        *///?} else {
+         *///?} else {
         for (TranslationArgument arg : translatable.arguments()) {
             if (arg.value() instanceof Component comp) {
                 extracted.add(comp);

@@ -37,17 +37,49 @@ public abstract class ReflectMember<M extends AccessibleObject & Member> {
         return modifiers;
     }
 
-    public boolean isPublic() { return Modifier.isPublic(modifiers); }
-    public boolean isPrivate() { return Modifier.isPrivate(modifiers); }
-    public boolean isProtected() { return Modifier.isProtected(modifiers); }
-    public boolean isStatic() { return Modifier.isStatic(modifiers); }
-    public boolean isFinal() { return Modifier.isFinal(modifiers); }
-    public boolean isAbstract() { return Modifier.isAbstract(modifiers); }
-    public boolean isTransient() { return Modifier.isTransient(modifiers); }
-    public boolean isVolatile() { return Modifier.isVolatile(modifiers); }
-    public boolean isSynchronized() { return Modifier.isSynchronized(modifiers); }
-    public boolean isNative() { return Modifier.isNative(modifiers); }
-    public boolean isStrict() { return Modifier.isStrict(modifiers); }
+    public boolean isPublic() {
+        return Modifier.isPublic(modifiers);
+    }
+
+    public boolean isPrivate() {
+        return Modifier.isPrivate(modifiers);
+    }
+
+    public boolean isProtected() {
+        return Modifier.isProtected(modifiers);
+    }
+
+    public boolean isStatic() {
+        return Modifier.isStatic(modifiers);
+    }
+
+    public boolean isFinal() {
+        return Modifier.isFinal(modifiers);
+    }
+
+    public boolean isAbstract() {
+        return Modifier.isAbstract(modifiers);
+    }
+
+    public boolean isTransient() {
+        return Modifier.isTransient(modifiers);
+    }
+
+    public boolean isVolatile() {
+        return Modifier.isVolatile(modifiers);
+    }
+
+    public boolean isSynchronized() {
+        return Modifier.isSynchronized(modifiers);
+    }
+
+    public boolean isNative() {
+        return Modifier.isNative(modifiers);
+    }
+
+    public boolean isStrict() {
+        return Modifier.isStrict(modifiers);
+    }
 
     public <A extends Annotation> Result<A> getAnnotation(Class<A> annotationClass) {
         A annotation = member.getAnnotation(annotationClass);

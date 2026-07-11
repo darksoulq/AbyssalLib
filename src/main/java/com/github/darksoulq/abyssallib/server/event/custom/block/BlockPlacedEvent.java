@@ -111,5 +111,7 @@ public class BlockPlacedEvent extends Event implements Cancellable {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

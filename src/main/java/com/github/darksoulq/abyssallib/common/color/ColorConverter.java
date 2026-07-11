@@ -210,7 +210,7 @@ public final class ColorConverter {
         double g = -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s;
         double blue = -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s;
 
-        return Color.fromRGB(clamp((int)(r * 255)), clamp((int)(g * 255)), clamp((int)(blue * 255)));
+        return Color.fromRGB(clamp((int) (r * 255)), clamp((int) (g * 255)), clamp((int) (blue * 255)));
     }
 
     /**
@@ -273,7 +273,7 @@ public final class ColorConverter {
      * @return Pivoted value.
      */
     private static double pivotXYZ(double n) {
-        return (n > 0.008856) ? Math.pow(n, 1.0/3.0) : (7.787 * n) + (16.0 / 116.0);
+        return (n > 0.008856) ? Math.pow(n, 1.0 / 3.0) : (7.787 * n) + (16.0 / 116.0);
     }
 
     /**

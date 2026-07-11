@@ -97,8 +97,8 @@ public class DataPath {
                     sb.append(".");
                 }
                 sb.append(value);
-            } else if (seg instanceof Index idx) {
-                sb.append("[").append(idx.value()).append("]");
+            } else if (seg instanceof Index(int value)) {
+                sb.append("[").append(value).append("]");
             }
         }
         return sb.toString();

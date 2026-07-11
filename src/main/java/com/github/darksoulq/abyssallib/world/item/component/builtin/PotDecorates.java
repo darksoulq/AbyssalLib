@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class PotDecorates extends DataComponent<PotDecorations> implements Vanilla {
     public static final Codec<PotDecorates> CODEC = ExtraCodecs.POT_DECORATIONS.xmap(
-            PotDecorates::new,
-            PotDecorates::getValue
+        PotDecorates::new,
+        PotDecorates::getValue
     );
     public static final DataComponentType<PotDecorates> TYPE = DataComponentType.valued(CODEC, PotDecorates::new);
 

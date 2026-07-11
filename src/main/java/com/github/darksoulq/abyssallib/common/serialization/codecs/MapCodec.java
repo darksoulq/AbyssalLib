@@ -29,10 +29,10 @@ public class MapCodec<K, V, M extends Map<K, V>> implements Codec<M> {
     /**
      * Creates a map codec.
      *
-     * @param keyCodec Codec used for keys.
+     * @param keyCodec   Codec used for keys.
      * @param valueCodec Codec used for values.
-     * @param factory Supplier used to create map instances.
-     * @param wrapper Function applied before returning decoded maps.
+     * @param factory    Supplier used to create map instances.
+     * @param wrapper    Function applied before returning decoded maps.
      */
     public MapCodec(Codec<K> keyCodec, Codec<V> valueCodec, Supplier<M> factory, Function<M, M> wrapper) {
         this.keyCodec = keyCodec;
@@ -44,9 +44,9 @@ public class MapCodec<K, V, M extends Map<K, V>> implements Codec<M> {
     /**
      * Creates a mutable map codec.
      *
-     * @param keyCodec Codec used for keys.
+     * @param keyCodec   Codec used for keys.
      * @param valueCodec Codec used for values.
-     * @param factory Supplier used to create map instances.
+     * @param factory    Supplier used to create map instances.
      */
     public MapCodec(Codec<K> keyCodec, Codec<V> valueCodec, Supplier<M> factory) {
         this(keyCodec, valueCodec, factory, Function.identity());
@@ -66,7 +66,8 @@ public class MapCodec<K, V, M extends Map<K, V>> implements Codec<M> {
                     if (keyRes.isPartial()) warnings.addAll(keyRes.warnings());
 
                     DataResult<V> valRes = valueCodec.decode(ops, e.getValue()).prependPath("[" + keyRes.getOrThrow() + "]");
-                    if (valRes.isError()) return DataResult.<M>error(valRes.dataError().get()).prependPath("[" + keyRes.getOrThrow() + "]");
+                    if (valRes.isError())
+                        return DataResult.<M>error(valRes.dataError().get()).prependPath("[" + keyRes.getOrThrow() + "]");
                     if (valRes.isPartial()) warnings.addAll(valRes.warnings());
 
                     result.put(keyRes.getOrThrow(), valRes.getOrThrow());
@@ -85,7 +86,8 @@ public class MapCodec<K, V, M extends Map<K, V>> implements Codec<M> {
             if (keyRes.isPartial()) warnings.addAll(keyRes.warnings());
 
             DataResult<D> valRes = valueCodec.encode(ops, e.getValue()).prependPath("[" + e.getKey() + "]");
-            if (valRes.isError()) return DataResult.<D>error(valRes.dataError().get()).prependPath("[" + e.getKey() + "]");
+            if (valRes.isError())
+                return DataResult.<D>error(valRes.dataError().get()).prependPath("[" + e.getKey() + "]");
             if (valRes.isPartial()) warnings.addAll(valRes.warnings());
 
             result.put(keyRes.getOrThrow(), valRes.getOrThrow());

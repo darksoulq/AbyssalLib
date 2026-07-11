@@ -72,8 +72,8 @@ public class BendingTrunkPlacer extends TrunkPlacer {
         int currentZ = origin.getBlockZ();
 
         for (int i = 0; i < height; i++) {
-            Location target = new Location(level.getWorld(), currentX, currentY, currentZ);
-            if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
+            Location target = new Location(level.world(), currentX, currentY, currentZ);
+            if (target.getBlockY() >= level.world().getMaxHeight()) break;
 
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {
@@ -91,8 +91,8 @@ public class BendingTrunkPlacer extends TrunkPlacer {
             }
             currentZ += bendDirection.getModZ();
 
-            Location target = new Location(level.getWorld(), currentX, currentY, currentZ);
-            if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
+            Location target = new Location(level.world(), currentX, currentY, currentZ);
+            if (target.getBlockY() >= level.world().getMaxHeight()) break;
 
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {

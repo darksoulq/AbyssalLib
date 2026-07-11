@@ -5,22 +5,18 @@ import net.kyori.adventure.key.Key;
 /**
  * Represents a definition for a custom numeric attribute.
  * Attributes define a base system for calculating dynamic entity stats.
+ *
+ * @param key          The unique key identifying this attribute definition.
+ * @param defaultValue The default base value used if no data is stored for this attribute.
  */
-public final class Attribute {
-    /** The unique key identifying this attribute definition. */
-    private final Key key;
-    /** The default base value used if no data is stored for this attribute. */
-    private final double defaultValue;
-
+public record Attribute(Key key, double defaultValue) {
     /**
      * Constructs a new attribute definition.
      *
      * @param key          The unique key for this attribute.
      * @param defaultValue The fallback base value when not explicitly set.
      */
-    public Attribute(Key key, double defaultValue) {
-        this.key = key;
-        this.defaultValue = defaultValue;
+    public Attribute {
     }
 
     /**
@@ -28,6 +24,7 @@ public final class Attribute {
      *
      * @return The attribute key.
      */
+    @Override
     public Key key() {
         return key;
     }
@@ -37,6 +34,7 @@ public final class Attribute {
      *
      * @return The default value.
      */
+    @Override
     public double defaultValue() {
         return defaultValue;
     }

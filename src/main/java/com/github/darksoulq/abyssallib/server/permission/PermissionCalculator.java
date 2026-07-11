@@ -26,7 +26,7 @@ public class PermissionCalculator {
 
         for (Node parentNode : holder.getParentNodes()) {
             if (parentNode.hasExpired()) continue;
-            PermissionGroup group = Registries.PERMISSION_GROUPS.get(parentNode.getKey());
+            PermissionGroup group = Registries.PERMISSION_GROUPS.get(parentNode.key());
             if (group != null) {
                 collectGroups(group, collectedGroups);
             }
@@ -40,14 +40,14 @@ public class PermissionCalculator {
         for (PermissionGroup group : sortedGroups) {
             for (Node node : group.getNodes()) {
                 if (!node.hasExpired()) {
-                    effective.put(node.getKey(), node.getValue());
+                    effective.put(node.key(), node.value());
                 }
             }
         }
 
         for (Node node : holder.getNodes()) {
             if (!node.hasExpired()) {
-                effective.put(node.getKey(), node.getValue());
+                effective.put(node.key(), node.value());
             }
         }
 
@@ -66,7 +66,7 @@ public class PermissionCalculator {
 
         for (Node parentNode : group.getParentNodes()) {
             if (parentNode.hasExpired()) continue;
-            PermissionGroup parent = Registries.PERMISSION_GROUPS.get(parentNode.getKey());
+            PermissionGroup parent = Registries.PERMISSION_GROUPS.get(parentNode.key());
             if (parent != null) {
                 collectGroups(parent, collected);
             }

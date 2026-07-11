@@ -9,6 +9,7 @@ import org.bukkit.util.Vector;
 public class SweepGradient extends AbstractGradient {
     /**
      * Constructs a SweepGradient.
+     *
      * @param colors The varargs {@link Color} stops.
      */
     public SweepGradient(Color... colors) {

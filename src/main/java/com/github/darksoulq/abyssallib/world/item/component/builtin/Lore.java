@@ -15,14 +15,15 @@ import java.util.List;
 @SuppressWarnings("UnstableApiUsage")
 public class Lore extends DataComponent<List<Component>> implements Vanilla {
     public static final Codec<Lore> CODEC = Codecs.TEXT_COMPONENT.list().xmap(
-            Lore::new,
-            Lore::getValue
+        Lore::new,
+        Lore::getValue
     );
     public static final DataComponentType<Lore> TYPE = DataComponentType.valued(CODEC, v -> new Lore((ItemLore) v));
 
     public Lore(ItemLore lore) {
         super(lore.lines());
     }
+
     public Lore(List<Component> lore) {
         super(lore);
     }

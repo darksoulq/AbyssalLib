@@ -111,15 +111,15 @@ public class PermissionMenu {
         return new GuiElement() {
             @Override
             public ItemStack render(GuiView view, int slot) {
-                ItemStack item = new ItemStack(node.getValue() ? Material.LIME_DYE : Material.RED_DYE);
-                item.setData(DataComponentTypes.ITEM_NAME, Component.text(node.getKey(), node.getValue() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                ItemStack item = new ItemStack(node.value() ? Material.LIME_DYE : Material.RED_DYE);
+                item.setData(DataComponentTypes.ITEM_NAME, Component.text(node.key(), node.value() ? NamedTextColor.GREEN : NamedTextColor.RED));
 
                 String desc = "";
-                PermissionNode pNode = Registries.PERMISSIONS.get(node.getKey());
+                PermissionNode pNode = Registries.PERMISSIONS.get(node.key());
                 if (pNode != null && pNode.getDescription() != null && !pNode.getDescription().isEmpty()) {
                     desc = pNode.getDescription();
                 } else {
-                    Permission bkPerm = Bukkit.getPluginManager().getPermission(node.getKey());
+                    Permission bkPerm = Bukkit.getPluginManager().getPermission(node.key());
                     if (bkPerm != null && !bkPerm.getDescription().isEmpty()) {
                         desc = bkPerm.getDescription();
                     }
@@ -127,7 +127,7 @@ public class PermissionMenu {
 
                 List<Component> lore = new ArrayList<>();
                 if (!desc.isEmpty()) lore.add(Component.text(desc, NamedTextColor.GRAY));
-                lore.add(TextUtil.parse("<!i><gold>Expiry: " + formatExpiry(node.getExpiry())));
+                lore.add(TextUtil.parse("<!i><gold>Expiry: " + formatExpiry(node.expiry())));
                 lore.add(TextUtil.parse("<!i><white><left_click></white> <yellow>to Toggle Value",
                     Placeholder.parsed("left_click", GuiTextures.MOUSE_LEFT.toMiniMessageString())));
                 lore.add(TextUtil.parse("<!i><yellow>Shift-Click to Set Expiry"));
@@ -140,18 +140,18 @@ public class PermissionMenu {
             @Override
             public ActionResult onClick(GuiClickContext ctx) {
                 if (ctx.clickType().isRightClick() && !ctx.clickType().isShiftClick()) {
-                    holder.unsetPermission(node.getKey());
+                    holder.unsetPermission(node.key());
                     holder.save();
                     reopener.run();
                 } else if (ctx.clickType().isLeftClick() && !ctx.clickType().isShiftClick()) {
-                    holder.setPermission(new Node(node.getKey(), !node.getValue(), node.getExpiry()));
+                    holder.setPermission(new Node(node.key(), !node.value(), node.expiry()));
                     holder.save();
                     reopener.run();
                 } else if (ctx.clickType().isShiftClick()) {
                     GuiManager.close(player);
                     ChatInputHandler.await(player, input -> {
                         long exp = parseDuration(input.trim());
-                        holder.setPermission(new Node(node.getKey(), node.getValue(), exp));
+                        holder.setPermission(new Node(node.key(), node.value(), exp));
                         holder.save();
                         reopener.run();
                     }, TextUtil.parse("<yellow>Enter duration (e.g., 1w 2d 5h, or 0 for permanent):</yellow>"));
@@ -171,9 +171,9 @@ public class PermissionMenu {
             @Override
             public ItemStack render(GuiView view, int slot) {
                 ItemStack item = new ItemStack(Material.BOOK);
-                item.setData(DataComponentTypes.ITEM_NAME, Component.text("Parent: " + parent.getKey(), NamedTextColor.GOLD));
+                item.setData(DataComponentTypes.ITEM_NAME, Component.text("Parent: " + parent.key(), NamedTextColor.GOLD));
                 item.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
-                    TextUtil.parse("<!i><gold>Expiry: " + formatExpiry(parent.getExpiry())),
+                    TextUtil.parse("<!i><gold>Expiry: " + formatExpiry(parent.expiry())),
                     TextUtil.parse("<!i><yellow>Shift-Click to Set Expiry"),
                     TextUtil.parse("<!i><white><right_click></white> <red>to Remove",
                         Placeholder.parsed("right_click", GuiTextures.MOUSE_RIGHT.toMiniMessageString()))
@@ -184,14 +184,14 @@ public class PermissionMenu {
             @Override
             public ActionResult onClick(GuiClickContext ctx) {
                 if (ctx.clickType().isRightClick() && !ctx.clickType().isShiftClick()) {
-                    holder.removeParent(parent.getKey());
+                    holder.removeParent(parent.key());
                     holder.save();
                     reopener.run();
                 } else if (ctx.clickType().isShiftClick()) {
                     GuiManager.close(player);
                     ChatInputHandler.await(player, input -> {
                         long exp = parseDuration(input.trim());
-                        holder.addParent(new Node(parent.getKey(), true, exp));
+                        holder.addParent(new Node(parent.key(), true, exp));
                         holder.save();
                         reopener.run();
                     }, TextUtil.parse("<yellow>Enter duration (e.g., 1w 2d 5h, or 0 for permanent):</yellow>"));
@@ -211,7 +211,7 @@ public class PermissionMenu {
             Placeholder.parsed("texture", GuiTextures.PERMISSION_MAIN_MENU.toMiniMessageString()),
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-8)),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
-            ));
+        ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack groupItem = Items.PERMISSION_GROUP.getStack().clone();
@@ -350,7 +350,7 @@ public class PermissionMenu {
         List<GuiElement> elements = new ArrayList<>();
 
         List<Node> sortedNodes = group.getNodes().stream()
-            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.getKey(), n2.getKey()))
+            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.key(), n2.key()))
             .toList();
 
         for (Node node : sortedNodes) {
@@ -358,7 +358,7 @@ public class PermissionMenu {
         }
 
         List<Node> sortedParents = group.getParentNodes().stream()
-            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.getKey(), n2.getKey()))
+            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.key(), n2.key()))
             .toList();
 
         for (Node parent : sortedParents) {
@@ -438,7 +438,7 @@ public class PermissionMenu {
         List<GuiElement> elements = new ArrayList<>();
 
         List<Node> sortedNodes = user.getNodes().stream()
-            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.getKey(), n2.getKey()))
+            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.key(), n2.key()))
             .toList();
 
         for (Node node : sortedNodes) {
@@ -446,7 +446,7 @@ public class PermissionMenu {
         }
 
         List<Node> sortedParents = user.getParentNodes().stream()
-            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.getKey(), n2.getKey()))
+            .sorted((n1, n2) -> NODE_COMPARATOR.compare(n1.key(), n2.key()))
             .toList();
 
         for (Node group : sortedParents) {
@@ -480,7 +480,7 @@ public class PermissionMenu {
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-60)),
             Placeholder.parsed("texture", GuiTextures.PERMISSION_SEARCH_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
-            ));
+        ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack invisibleFiller = Items.INVISIBLE_ITEM.getStack();
@@ -531,7 +531,9 @@ public class PermissionMenu {
 
         PagedLayer<GuiElement> layer = PagedLayer.of(allElements, BOTTOM_SLOTS, GuiView.Segment.BOTTOM);
 
-        class SearchState { String lastQuery = ""; }
+        class SearchState {
+            String lastQuery = "";
+        }
         SearchState state = new SearchState();
 
         gui.onOpen(view -> {
@@ -559,13 +561,16 @@ public class PermissionMenu {
 
                         for (String token : tokens) {
                             if (token.isEmpty()) continue;
-                            if (token.equals("@_custom")) { if (!isCustom) return false; }
-                            else if (token.equals("@_bukkit")) { if (isCustom) return false; }
-                            else if (token.startsWith("@")) {
+                            if (token.equals("@_custom")) {
+                                if (!isCustom) return false;
+                            } else if (token.equals("@_bukkit")) {
+                                if (isCustom) return false;
+                            } else if (token.startsWith("@")) {
                                 String targetNs = token.substring(1);
                                 if (!lowerNode.contains(targetNs)) return false;
+                            } else {
+                                if (!lowerNode.contains(token)) return false;
                             }
-                            else { if (!lowerNode.contains(token)) return false; }
                         }
                         return true;
                     });
@@ -614,7 +619,7 @@ public class PermissionMenu {
             Placeholder.parsed("offset", TextOffset.getOffsetMinimessage(-60)),
             Placeholder.parsed("texture", GuiTextures.PERMISSION_SEARCH_MENU.toMiniMessageString()),
             Placeholder.parsed("re_offset", TextOffset.getOffsetMinimessage(-170))
-            ));
+        ));
         gui.addFlags(GuiFlag.DISABLE_ITEM_PICKUP, GuiFlag.DISABLE_ADVANCEMENTS);
 
         ItemStack invisibleFiller = Items.INVISIBLE_ITEM.getStack();
@@ -641,7 +646,9 @@ public class PermissionMenu {
 
         PagedLayer<GuiElement> layer = PagedLayer.of(allElements, BOTTOM_SLOTS, GuiView.Segment.BOTTOM);
 
-        class SearchState { String lastQuery = ""; }
+        class SearchState {
+            String lastQuery = "";
+        }
         SearchState state = new SearchState();
 
         gui.onOpen(view -> {

@@ -186,8 +186,23 @@ public abstract class AbstractDoublePlaceholder extends Placeholder<Double> impl
         return val != null ? PlaceholderResult.success(res.getValue() <= val) : PlaceholderResult.empty();
     }
 
-    @Override public PlaceholderResult<Boolean> and(PlaceholderContext ctx, PlaceholderArgument other) { return PlaceholderResult.empty(); }
-    @Override public PlaceholderResult<Boolean> or(PlaceholderContext ctx, PlaceholderArgument other) { return PlaceholderResult.empty(); }
-    @Override public PlaceholderResult<Boolean> xor(PlaceholderContext ctx, PlaceholderArgument other) { return PlaceholderResult.empty(); }
-    @Override public PlaceholderResult<Boolean> not(PlaceholderContext ctx) { return PlaceholderResult.empty(); }
+    @Override
+    public PlaceholderResult<Boolean> and(PlaceholderContext ctx, PlaceholderArgument other) {
+        return PlaceholderResult.empty();
+    }
+
+    @Override
+    public PlaceholderResult<Boolean> or(PlaceholderContext ctx, PlaceholderArgument other) {
+        return PlaceholderResult.empty();
+    }
+
+    @Override
+    public PlaceholderResult<Boolean> xor(PlaceholderContext ctx, PlaceholderArgument other) {
+        return PlaceholderResult.empty();
+    }
+
+    @Override
+    public PlaceholderResult<Boolean> not(PlaceholderContext ctx) {
+        return PlaceholderResult.empty();
+    }
 }

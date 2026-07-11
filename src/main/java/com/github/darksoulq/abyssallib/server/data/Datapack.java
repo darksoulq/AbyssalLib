@@ -168,11 +168,11 @@ public class Datapack {
      */
     private @NotNull String generatePackMeta() {
         return "{\n" +
-                "  \"pack\": {\n" +
-                "    \"pack_format\": 40,\n" +
-                "    \"description\": \"" + pluginID + " internal Datapack\"\n" +
-                "  }\n" +
-                "}";
+            "  \"pack\": {\n" +
+            "    \"pack_format\": 40,\n" +
+            "    \"description\": \"" + pluginID + " internal Datapack\"\n" +
+            "  }\n" +
+            "}";
     }
 
     /**

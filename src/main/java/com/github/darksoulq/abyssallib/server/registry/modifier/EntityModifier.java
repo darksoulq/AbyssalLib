@@ -6,7 +6,7 @@ import com.github.darksoulq.abyssallib.world.entity.EntityPredicate;
 import net.kyori.adventure.key.Key;
 
 public class EntityModifier implements DeferredRegistryModifier {
-    
+
     @Override
     public void onRegister(String id, Object value) {
         if (value instanceof CustomEntity<?>) {

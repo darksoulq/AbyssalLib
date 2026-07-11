@@ -14,15 +14,25 @@ import java.util.concurrent.Executors;
  * and maintains an internal thread pool for executing non-blocking asynchronous commands.
  */
 public class Database {
-    /** The hostname of the Redis server. */
+    /**
+     * The hostname of the Redis server.
+     */
     private final String host;
-    /** The port of the Redis server. */
+    /**
+     * The port of the Redis server.
+     */
     private final int port;
-    /** The authentication password for the Redis server. */
+    /**
+     * The authentication password for the Redis server.
+     */
     private final String password;
-    /** The thread pool used for asynchronous database operations. */
+    /**
+     * The thread pool used for asynchronous database operations.
+     */
     private final ExecutorService asyncPool;
-    /** The underlying Jedis connection pool. */
+    /**
+     * The underlying Jedis connection pool.
+     */
     private JedisPool pool;
 
     /**

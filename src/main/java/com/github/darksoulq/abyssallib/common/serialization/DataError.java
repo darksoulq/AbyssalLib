@@ -15,7 +15,8 @@ public interface DataError {
      *
      * @param message The raw error message.
      */
-    record Custom(String message) implements DataError {}
+    record Custom(String message) implements DataError {
+    }
 
     /**
      * Represents an error where a parsed type conflicts with the expected schema format.

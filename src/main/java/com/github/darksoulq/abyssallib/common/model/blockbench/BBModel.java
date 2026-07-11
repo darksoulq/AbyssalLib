@@ -27,25 +27,67 @@ public class BBModel {
     private final Map<String, BBTexture> textures = new HashMap<>();
     private final Map<String, BBAnimation> animations = new HashMap<>();
 
-    public BBMeta getMeta() { return meta; }
-    public void setMeta(BBMeta meta) { this.meta = meta; }
+    public BBMeta getMeta() {
+        return meta;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setMeta(BBMeta meta) {
+        this.meta = meta;
+    }
 
-    public String getModelIdentifier() { return modelIdentifier; }
-    public void setModelIdentifier(String modelIdentifier) { this.modelIdentifier = modelIdentifier; }
+    public String getName() {
+        return name;
+    }
 
-    public Vector3f getVisibleBox() { return visibleBox; }
-    public void setVisibleBox(Vector3f visibleBox) { this.visibleBox = visibleBox; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public BBResolution getResolution() { return resolution; }
-    public void setResolution(BBResolution resolution) { this.resolution = resolution; }
+    public String getModelIdentifier() {
+        return modelIdentifier;
+    }
 
-    public List<String> getRootElements() { return rootElements; }
-    public List<BBGroup> getRootGroups() { return rootGroups; }
-    public Map<String, BBGroup> getGroupCache() { return groupCache; }
-    public Map<String, BBElement> getElements() { return elements; }
-    public Map<String, BBTexture> getTextures() { return textures; }
-    public Map<String, BBAnimation> getAnimations() { return animations; }
+    public void setModelIdentifier(String modelIdentifier) {
+        this.modelIdentifier = modelIdentifier;
+    }
+
+    public Vector3f getVisibleBox() {
+        return visibleBox;
+    }
+
+    public void setVisibleBox(Vector3f visibleBox) {
+        this.visibleBox = visibleBox;
+    }
+
+    public BBResolution getResolution() {
+        return resolution;
+    }
+
+    public void setResolution(BBResolution resolution) {
+        this.resolution = resolution;
+    }
+
+    public List<String> getRootElements() {
+        return rootElements;
+    }
+
+    public List<BBGroup> getRootGroups() {
+        return rootGroups;
+    }
+
+    public Map<String, BBGroup> getGroupCache() {
+        return groupCache;
+    }
+
+    public Map<String, BBElement> getElements() {
+        return elements;
+    }
+
+    public Map<String, BBTexture> getTextures() {
+        return textures;
+    }
+
+    public Map<String, BBAnimation> getAnimations() {
+        return animations;
+    }
 }

@@ -15,19 +15,21 @@ import org.bukkit.inventory.ItemStack;
 
 public class PlayableJukebox extends DataComponent<JukeboxPlayable> implements Vanilla {
     public static final Codec<PlayableJukebox> CODEC = Codecs.KEY.xmap(
-            PlayableJukebox::new,
-            p -> p.value.jukeboxSong().getKey()
+        PlayableJukebox::new,
+        p -> p.value.jukeboxSong().getKey()
     );
     public static final DataComponentType<PlayableJukebox> TYPE = DataComponentType.valued(CODEC, v -> new PlayableJukebox((JukeboxPlayable) v));
 
     public PlayableJukebox(JukeboxPlayable song) {
         super(song);
     }
+
     public PlayableJukebox(JukeboxSong song) {
         super(JukeboxPlayable.jukeboxPlayable(song).build());
     }
+
     public PlayableJukebox(Key songId) {
-        super(JukeboxPlayable.jukeboxPlayable( RegistryAccess.registryAccess().getRegistry(RegistryKey.JUKEBOX_SONG).getOrThrow(songId)).build());
+        super(JukeboxPlayable.jukeboxPlayable(RegistryAccess.registryAccess().getRegistry(RegistryKey.JUKEBOX_SONG).getOrThrow(songId)).build());
     }
 
     @Override

@@ -33,7 +33,11 @@ public class BatchQuery extends AbstractBatchQuery<BatchQuery> {
      * @throws RuntimeException If a database access error occurs.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -41,7 +45,9 @@ public class BatchQuery extends AbstractBatchQuery<BatchQuery> {
      * * @return {@code "INSERT INTO "}
      */
     @Override
-    protected String getInsertVerb() { return "INSERT INTO "; }
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
 
     /**
      * PostgreSQL does not support {@code REPLACE INTO}.
@@ -60,5 +66,7 @@ public class BatchQuery extends AbstractBatchQuery<BatchQuery> {
      * * @return {@code "INSERT INTO "}
      */
     @Override
-    protected String getInsertIgnoreVerb() { return "INSERT INTO "; }
+    protected String getInsertIgnoreVerb() {
+        return "INSERT INTO ";
+    }
 }

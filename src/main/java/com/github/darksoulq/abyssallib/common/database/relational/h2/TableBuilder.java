@@ -28,11 +28,26 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      * @throws RuntimeException if connection fails.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /** @return The {@code AUTO_INCREMENT} keyword. */
-    @Override protected String getAutoIncrementKeyword() { return "AUTO_INCREMENT"; }
-    /** @return An empty string, as H2 doesn't require extra engine options. */
-    @Override protected String getTableOptionsSuffix() { return ""; }
+    /**
+     * @return The {@code AUTO_INCREMENT} keyword.
+     */
+    @Override
+    protected String getAutoIncrementKeyword() {
+        return "AUTO_INCREMENT";
+    }
+
+    /**
+     * @return An empty string, as H2 doesn't require extra engine options.
+     */
+    @Override
+    protected String getTableOptionsSuffix() {
+        return "";
+    }
 }

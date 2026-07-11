@@ -14,25 +14,31 @@ import org.bukkit.Color;
  * </ol>
  */
 public enum ColorBlindness {
-    /** Standard human vision with no color deficiency. */
+    /**
+     * Standard human vision with no color deficiency.
+     */
     NORMAL,
 
-    /** * Red-blindness; the inability to perceive red light.
+    /**
+     * Red-blindness; the inability to perceive red light.
      * Resulting vision consists primarily of blues and yellows.
      */
     PROTANOPIA,
 
-    /** * Green-blindness; the inability to perceive green light.
+    /**
+     * Green-blindness; the inability to perceive green light.
      * This is the most common form of color blindness.
      */
     DEUTERANOPIA,
 
-    /** * Blue-blindness; the inability to perceive blue light.
+    /**
+     * Blue-blindness; the inability to perceive blue light.
      * A rare condition where colors are mostly seen as reds and greens.
      */
     TRITANOPIA,
 
-    /** * Total color blindness; the inability to perceive any color.
+    /**
+     * Total color blindness; the inability to perceive any color.
      * Vision is restricted to shades of gray (luminance only).
      */
     ACHROMATOPSIA;

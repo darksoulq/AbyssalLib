@@ -183,7 +183,8 @@ public class PermissionManager {
         if (attachment != null) {
             try {
                 attachment.remove();
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException ignored) {
+            }
         }
     }
 

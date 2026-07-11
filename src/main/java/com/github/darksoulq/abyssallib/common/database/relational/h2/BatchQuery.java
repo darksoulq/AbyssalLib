@@ -22,13 +22,34 @@ public class BatchQuery extends AbstractBatchQuery<BatchQuery> {
     }
 
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /** @return {@code "INSERT INTO "} */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
-    /** @return {@code "REPLACE INTO "} */
-    @Override protected String getReplaceVerb() { return "REPLACE INTO "; }
-    /** @return {@code "INSERT IGNORE INTO "} */
-    @Override protected String getInsertIgnoreVerb() { return "INSERT IGNORE INTO "; }
+    /**
+     * @return {@code "INSERT INTO "}
+     */
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
+
+    /**
+     * @return {@code "REPLACE INTO "}
+     */
+    @Override
+    protected String getReplaceVerb() {
+        return "REPLACE INTO ";
+    }
+
+    /**
+     * @return {@code "INSERT IGNORE INTO "}
+     */
+    @Override
+    protected String getInsertIgnoreVerb() {
+        return "INSERT IGNORE INTO ";
+    }
 }

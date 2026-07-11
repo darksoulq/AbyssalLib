@@ -74,10 +74,25 @@ public interface Codec<T> {
     default Codec<T> withSchema(SchemaNode schema) {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) { return self.decode(ops, input); }
-            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) { return self.encode(ops, value); }
-            @Override public String describe() { return self.describe(); }
-            @Override public <R> R accept(CodecVisitor<R> visitor) { return visitor.visitCustom(schema); }
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                return self.encode(ops, value);
+            }
+
+            @Override
+            public String describe() {
+                return self.describe();
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return visitor.visitCustom(schema);
+            }
         };
     }
 
@@ -124,10 +139,25 @@ public interface Codec<T> {
     default Codec<T> describe(String description) {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) { return self.decode(ops, input); }
-            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) { return self.encode(ops, value); }
-            @Override public String describe() { return description; }
-            @Override public <R> R accept(CodecVisitor<R> visitor) { return self.accept(visitor); }
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                return self.decode(ops, input);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                return self.encode(ops, value);
+            }
+
+            @Override
+            public String describe() {
+                return description;
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return self.accept(visitor);
+            }
         };
     }
 
@@ -183,29 +213,44 @@ public interface Codec<T> {
     /**
      * Creates a tagged union codec using an enum discriminator field.
      *
-     * @param typeKey The field containing the discriminator.
-     * @param keyCodec Codec for the discriminator type.
-     * @param typeGetter Function extracting the discriminator from a value.
+     * @param typeKey     The field containing the discriminator.
+     * @param keyCodec    Codec for the discriminator type.
+     * @param typeGetter  Function extracting the discriminator from a value.
      * @param codecGetter Function providing the codec for a discriminator.
      * @return A tagged union codec.
      */
     static <K extends Enum<K>, V> Codec<V> taggedUnion(String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {
         Codec<V> base = dispatch(typeKey, keyCodec, typeGetter, codecGetter);
         return new Codec<>() {
-            @Override public <D> DataResult<V> decode(DynamicOps<D> ops, D input) { return base.decode(ops, input); }
-            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, V value) { return base.encode(ops, value); }
-            @Override public String describe() { return "TaggedUnion[" + typeKey + "]"; }
-            @Override public <R> R accept(CodecVisitor<R> visitor) { return visitor.visitDispatch(typeKey); }
+            @Override
+            public <D> DataResult<V> decode(DynamicOps<D> ops, D input) {
+                return base.decode(ops, input);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, V value) {
+                return base.encode(ops, value);
+            }
+
+            @Override
+            public String describe() {
+                return "TaggedUnion[" + typeKey + "]";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return visitor.visitDispatch(typeKey);
+            }
         };
     }
 
     /**
      * Creates a tagged union codec using an enum discriminator field.
      *
-     * @param type The base type.
-     * @param typeKey The field containing the discriminator.
-     * @param keyCodec Codec for the discriminator type.
-     * @param typeGetter Function extracting the discriminator from a value.
+     * @param type        The base type.
+     * @param typeKey     The field containing the discriminator.
+     * @param keyCodec    Codec for the discriminator type.
+     * @param typeGetter  Function extracting the discriminator from a value.
      * @param codecGetter Function providing the codec for a discriminator.
      * @return A tagged union codec.
      */
@@ -219,7 +264,8 @@ public interface Codec<T> {
      * @param <A> The type of the first element.
      * @param <B> The type of the second element.
      */
-    record Pair<A, B>(A first, B second) {}
+    record Pair<A, B>(A first, B second) {
+    }
 
     /**
      * Internal definition for an immutable sequence of three values.
@@ -228,7 +274,8 @@ public interface Codec<T> {
      * @param <B> Type of the second element.
      * @param <C> Type of the third element.
      */
-    record Tuple3<A, B, C>(A first, B second, C third) {}
+    record Tuple3<A, B, C>(A first, B second, C third) {
+    }
 
     /**
      * Internal definition for an immutable sequence of four values.
@@ -238,7 +285,8 @@ public interface Codec<T> {
      * @param <C> Type of the third element.
      * @param <D> Type of the fourth element.
      */
-    record Tuple4<A, B, C, D>(A first, B second, C third, D fourth) {}
+    record Tuple4<A, B, C, D>(A first, B second, C third, D fourth) {
+    }
 
     /**
      * Creates a codec capable of handling a two-element ordered sequence.
@@ -271,14 +319,14 @@ public interface Codec<T> {
     /**
      * Creates a codec handling a four-element ordered sequence.
      *
-     * @param <A>    The type of the first value.
-     * @param <B>    The type of the second value.
-     * @param <C>    The type of the third value.
-     * @param <D_TYPE>    The type of the fourth value.
-     * @param first  Codec for the first branch.
-     * @param second Codec for the second branch.
-     * @param third  Codec for the third branch.
-     * @param fourth Codec for the fourth branch.
+     * @param <A>      The type of the first value.
+     * @param <B>      The type of the second value.
+     * @param <C>      The type of the third value.
+     * @param <D_TYPE> The type of the fourth value.
+     * @param first    Codec for the first branch.
+     * @param second   Codec for the second branch.
+     * @param third    Codec for the third branch.
+     * @param fourth   Codec for the fourth branch.
      * @return A codec for a Tuple4 structure.
      */
     static <A, B, C, D_TYPE> Codec<Tuple4<A, B, C, D_TYPE>> tuple(Codec<A> first, Codec<B> second, Codec<C> third, Codec<D_TYPE> fourth) {
@@ -312,7 +360,7 @@ public interface Codec<T> {
      * Creates a codec that operates on a nested path within the input structure.
      *
      * @param codec The codec used to read and write the nested value.
-     * @param path The target path.
+     * @param path  The target path.
      * @return A path-constrained codec.
      */
     static <T> Codec<T> query(Codec<T> codec, String path) {
@@ -322,8 +370,8 @@ public interface Codec<T> {
     /**
      * Creates a codec that selects between two codecs based on a condition.
      *
-     * @param condition The condition used to choose a codec.
-     * @param trueCodec Codec used when the condition is true.
+     * @param condition  The condition used to choose a codec.
+     * @param trueCodec  Codec used when the condition is true.
      * @param falseCodec Codec used when the condition is false.
      * @return A conditional codec.
      */
@@ -374,10 +422,25 @@ public interface Codec<T> {
      */
     static <T> Codec<T> error(String message) {
         return new Codec<>() {
-            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) { return DataResult.error(message); }
-            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) { return DataResult.error(message); }
-            @Override public String describe() { return "Error[" + message + "]"; }
-            @Override public <R> R accept(CodecVisitor<R> visitor) { return visitor.visitPrimitive("Error"); }
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+                return DataResult.error(message);
+            }
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+                return DataResult.error(message);
+            }
+
+            @Override
+            public String describe() {
+                return "Error[" + message + "]";
+            }
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
+                return visitor.visitPrimitive("Error");
+            }
         };
     }
 
@@ -418,14 +481,17 @@ public interface Codec<T> {
      */
     static <T> Codec<T> of(Function<Object, T> decoder, Function<T, Object> encoder) {
         return new Codec<>() {
-            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 try {
                     return DataResult.success(decoder.apply(input));
                 } catch (Exception e) {
                     return DataResult.error(DataError.custom("Failed to decode: " + e.getMessage()));
                 }
             }
-            @Override @SuppressWarnings("unchecked")
+
+            @Override
+            @SuppressWarnings("unchecked")
             public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
                 try {
                     return DataResult.success((D) encoder.apply(value));
@@ -556,9 +622,9 @@ public interface Codec<T> {
     /**
      * Creates a dispatch codec that selects a subtype codec using a discriminator field.
      *
-     * @param typeKey The discriminator field name.
-     * @param keyCodec Codec for the discriminator type.
-     * @param typeGetter Function extracting the discriminator from a value.
+     * @param typeKey     The discriminator field name.
+     * @param keyCodec    Codec for the discriminator type.
+     * @param typeGetter  Function extracting the discriminator from a value.
      * @param codecGetter Function providing the codec for a discriminator.
      * @return A dispatch codec.
      */
@@ -569,10 +635,10 @@ public interface Codec<T> {
     /**
      * Creates a dispatch codec that selects a subtype codec using a discriminator field.
      *
-     * @param type The base type.
-     * @param typeKey The discriminator field name.
-     * @param keyCodec Codec for the discriminator type.
-     * @param typeGetter Function extracting the discriminator from a value.
+     * @param type        The base type.
+     * @param typeKey     The discriminator field name.
+     * @param keyCodec    Codec for the discriminator type.
+     * @param typeGetter  Function extracting the discriminator from a value.
      * @param codecGetter Function providing the codec for a discriminator.
      * @return A dispatch codec.
      */
@@ -636,7 +702,7 @@ public interface Codec<T> {
             @SuppressWarnings("unchecked")
             @Override
             public <D> DataResult<D> encode(DynamicOps<D> ops, R value) {
-                return ((DataResult<T>) from.apply(value)).flatMap(t -> self.encode(ops, t));
+                return from.apply(value).flatMap(t -> self.encode(ops, t));
             }
 
             @Override
@@ -707,7 +773,7 @@ public interface Codec<T> {
             @SuppressWarnings("unchecked")
             @Override
             public <D> DataResult<D> encode(DynamicOps<D> ops, R value) {
-                return ((DataResult<T>) from.apply(value)).flatMap(t -> self.encode(ops, t));
+                return from.apply(value).flatMap(t -> self.encode(ops, t));
             }
 
             @Override
@@ -744,7 +810,8 @@ public interface Codec<T> {
             @Override
             public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 DataResult<D> schemaRes = applySchema(ops, input);
-                if (schemaRes.isError()) return DataResult.<T>error(schemaRes.dataError().get()).prependPath(schemaRes.error().map(s -> s.split(":")[0].trim()).orElse(""));
+                if (schemaRes.isError())
+                    return DataResult.<T>error(schemaRes.dataError().get()).prependPath(schemaRes.error().map(s -> s.split(":")[0].trim()).orElse(""));
                 return self.decode(ops, input);
             }
 
@@ -753,7 +820,8 @@ public interface Codec<T> {
                 DataResult<D> encodedRes = self.encode(ops, value);
                 if (encodedRes.isError()) return encodedRes;
                 DataResult<D> schemaRes = applySchema(ops, encodedRes.getOrThrow());
-                if (schemaRes.isError()) return DataResult.<D>error(schemaRes.dataError().get()).prependPath(schemaRes.error().map(s -> s.split(":")[0].trim()).orElse(""));
+                if (schemaRes.isError())
+                    return DataResult.<D>error(schemaRes.dataError().get()).prependPath(schemaRes.error().map(s -> s.split(":")[0].trim()).orElse(""));
                 return encodedRes;
             }
 
@@ -796,7 +864,7 @@ public interface Codec<T> {
             @SuppressWarnings("unchecked")
             @Override
             public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
-                return ((DataResult<T>) validator.apply(value)).flatMap(v -> self.encode(ops, v));
+                return validator.apply(value).flatMap(v -> self.encode(ops, v));
             }
 
             @Override
@@ -892,20 +960,27 @@ public interface Codec<T> {
     default Codec<T> orElse(T defaultValue) {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 if (input == null || input.equals(ops.empty())) {
                     return DataResult.success(defaultValue);
                 }
                 DataResult<T> res = self.decode(ops, input);
                 return res.isSuccess() ? res : DataResult.success(defaultValue);
             }
-            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
                 return self.encode(ops, value != null ? value : defaultValue);
             }
-            @Override public String describe() {
+
+            @Override
+            public String describe() {
                 return self.describe() + "[defaulted]";
             }
-            @Override public <R> R accept(CodecVisitor<R> visitor) {
+
+            @Override
+            public <R> R accept(CodecVisitor<R> visitor) {
                 return self.accept(visitor);
             }
         };
@@ -1011,13 +1086,15 @@ public interface Codec<T> {
     default Codec<T> nullable() {
         Codec<T> self = this;
         return new Codec<>() {
-            @Override public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
+            @Override
+            public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
                 D empty = ops.empty();
                 if (input == null || Objects.equals(input, empty)) return DataResult.success(null);
                 return self.decode(ops, input);
             }
 
-            @Override public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
+            @Override
+            public <D> DataResult<D> encode(DynamicOps<D> ops, T value) {
                 return value == null ? DataResult.success(ops.empty()) : self.encode(ops, value);
             }
 

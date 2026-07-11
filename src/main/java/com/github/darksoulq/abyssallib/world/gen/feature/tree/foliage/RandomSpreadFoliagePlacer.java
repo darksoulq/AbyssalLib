@@ -34,10 +34,14 @@ public class RandomSpreadFoliagePlacer extends FoliagePlacer {
      */
     public static final FoliagePlacerType<RandomSpreadFoliagePlacer> TYPE = () -> CODEC;
 
-    /** The vertical boundary (in layers below the attachment point) where leaves can spawn. */
+    /**
+     * The vertical boundary (in layers below the attachment point) where leaves can spawn.
+     */
     private final int height;
 
-    /** The number of times the algorithm will attempt to place a leaf block. */
+    /**
+     * The number of times the algorithm will attempt to place a leaf block.
+     */
     private final int attempts;
 
     /**
@@ -68,7 +72,7 @@ public class RandomSpreadFoliagePlacer extends FoliagePlacer {
             int dz = random.nextInt(radius * 2 + 1) - radius;
 
             Location target = attachmentPoint.clone().add(dx, dy, dz);
-            if (target.getBlockY() >= level.getWorld().getMaxHeight()) continue;
+            if (target.getBlockY() >= level.world().getMaxHeight()) continue;
 
             if (level.getType(target.getBlockX(), target.getBlockY(), target.getBlockZ()).isAir()) {
                 BlockInfo stateToPlace = foliageProvider.getState(random, target);

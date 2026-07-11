@@ -19,7 +19,9 @@ import java.util.Map;
  */
 public final class Registry<T> {
 
-    /** The internal bidirectional map storing ID-to-Object relationships. */
+    /**
+     * The internal bidirectional map storing ID-to-Object relationships.
+     */
     private final BiMap<String, T> entries = HashBiMap.create();
 
     /**

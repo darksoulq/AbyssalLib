@@ -8,6 +8,9 @@ package com.github.darksoulq.abyssallib.world.gen.feature;
  * </p>
  */
 public interface FeatureConfig {
-    /** A default empty configuration for features that require no parameters. */
-    FeatureConfig NONE = new FeatureConfig() {};
+    /**
+     * A default empty configuration for features that require no parameters.
+     */
+    FeatureConfig NONE = new FeatureConfig() {
+    };
 }

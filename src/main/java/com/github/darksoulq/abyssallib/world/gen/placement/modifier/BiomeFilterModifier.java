@@ -32,7 +32,9 @@ public class BiomeFilterModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<BiomeFilterModifier> TYPE = () -> CODEC;
 
-    /** The list of acceptable biome identifiers (e.g., "minecraft:plains"). */
+    /**
+     * The list of acceptable biome identifiers (e.g., "minecraft:plains").
+     */
     private final List<String> allowedBiomes;
 
     /**

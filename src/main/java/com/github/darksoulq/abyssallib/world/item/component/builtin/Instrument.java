@@ -14,14 +14,15 @@ import org.bukkit.inventory.ItemStack;
 
 public class Instrument extends DataComponent<Key> implements Vanilla {
     public static final Codec<Instrument> CODEC = Codecs.KEY.xmap(
-            v -> new Instrument(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(v)),
-            Instrument::getValue
+        v -> new Instrument(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(v)),
+        Instrument::getValue
     );
     public static final DataComponentType<Instrument> TYPE = DataComponentType.valued(CODEC, v -> new Instrument((MusicInstrument) v));
 
     public Instrument(MusicInstrument instrument) {
         super(RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getKeyOrThrow(instrument));
     }
+
     public Instrument(Key instrument) {
         super(instrument);
     }
@@ -34,7 +35,7 @@ public class Instrument extends DataComponent<Key> implements Vanilla {
     @Override
     public void apply(ItemStack stack) {
         stack.setData(DataComponentTypes.INSTRUMENT,
-                RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(value));
+            RegistryAccess.registryAccess().getRegistry(RegistryKey.INSTRUMENT).getOrThrow(value));
     }
 
     @Override

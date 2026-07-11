@@ -19,16 +19,24 @@ import java.util.function.Consumer;
  */
 public class ToggleElement implements GuiElement {
 
-    /** The item stack to display when the state is {@code true}. */
+    /**
+     * The item stack to display when the state is {@code true}.
+     */
     private final ItemStack onIcon;
 
-    /** The item stack to display when the state is {@code false}. */
+    /**
+     * The item stack to display when the state is {@code false}.
+     */
     private final ItemStack offIcon;
 
-    /** The callback executed whenever the state is changed. */
+    /**
+     * The callback executed whenever the state is changed.
+     */
     private final Consumer<Boolean> onToggle;
 
-    /** The current binary state of the element. */
+    /**
+     * The current binary state of the element.
+     */
     private boolean state;
 
     /**

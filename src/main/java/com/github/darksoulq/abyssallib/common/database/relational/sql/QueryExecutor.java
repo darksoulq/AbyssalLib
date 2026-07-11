@@ -9,9 +9,13 @@ import java.util.concurrent.ExecutorService;
  * This class simplifies access to table-specific operations using the provided connection and pool.
  */
 public class QueryExecutor {
-    /** The connection used for all operations spawned by this executor. */
+    /**
+     * The connection used for all operations spawned by this executor.
+     */
     private final Connection connection;
-    /** The thread pool used for any asynchronous tasks spawned by the queries. */
+    /**
+     * The thread pool used for any asynchronous tasks spawned by the queries.
+     */
     private final ExecutorService asyncPool;
 
     /**

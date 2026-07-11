@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ContainerLoot extends DataComponent<SeededContainerLoot> implements Vanilla {
     public static final Codec<ContainerLoot> CODEC = ExtraCodecs.SEEDED_CONTAINER_LOOT.xmap(
-            ContainerLoot::new,
-            ContainerLoot::getValue
+        ContainerLoot::new,
+        ContainerLoot::getValue
     );
     public static final DataComponentType<ContainerLoot> TYPE = DataComponentType.valued(CODEC, ContainerLoot::new);
 

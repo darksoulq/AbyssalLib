@@ -45,13 +45,17 @@ public class BlockState implements Asset {
         }
     }
 
-    /** Adds a variant mapping for a variant key (e.g. "", "axis=x") */
+    /**
+     * Adds a variant mapping for a variant key (e.g. "", "axis=x")
+     */
     public BlockState variant(@NotNull String variantKey, Variant variant) {
         variants.computeIfAbsent(variantKey, k -> new ArrayList<>()).add(variant);
         return this;
     }
 
-    /** Adds a multipart condition+model object */
+    /**
+     * Adds a multipart condition+model object
+     */
     public BlockState multipart(@NotNull Multipart multipart) {
         this.multiparts.add(multipart);
         return this;
@@ -92,12 +96,29 @@ public class BlockState implements Asset {
         private Integer x, y, weight;
         private Boolean uvlock;
 
-        public Variant(@NotNull Model model) { this.model = model; }
+        public Variant(@NotNull Model model) {
+            this.model = model;
+        }
 
-        public Variant x(int x) { this.x = x; return this; }
-        public Variant y(int y) { this.y = y; return this; }
-        public Variant weight(int w) { this.weight = w; return this; }
-        public Variant uvlock(boolean b) { this.uvlock = b; return this; }
+        public Variant x(int x) {
+            this.x = x;
+            return this;
+        }
+
+        public Variant y(int y) {
+            this.y = y;
+            return this;
+        }
+
+        public Variant weight(int w) {
+            this.weight = w;
+            return this;
+        }
+
+        public Variant uvlock(boolean b) {
+            this.uvlock = b;
+            return this;
+        }
 
         public JsonObject toJson() {
             JsonObject o = new JsonObject();

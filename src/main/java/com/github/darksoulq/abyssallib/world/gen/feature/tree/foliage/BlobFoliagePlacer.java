@@ -30,7 +30,9 @@ public class BlobFoliagePlacer extends FoliagePlacer {
      */
     public static final FoliagePlacerType<BlobFoliagePlacer> TYPE = () -> CODEC;
 
-    /** The vertical height (layers) of the foliage blob. */
+    /**
+     * The vertical height (layers) of the foliage blob.
+     */
     private final int height;
 
     /**
@@ -63,7 +65,7 @@ public class BlobFoliagePlacer extends FoliagePlacer {
                     }
 
                     Location target = attachmentPoint.clone().add(dx, yOffset, dz);
-                    if (target.getBlockY() >= level.getWorld().getMaxHeight()) continue;
+                    if (target.getBlockY() >= level.world().getMaxHeight()) continue;
 
                     if (level.getType(target.getBlockX(), target.getBlockY(), target.getBlockZ()).isAir()) {
                         BlockInfo stateToPlace = foliageProvider.getState(random, target);

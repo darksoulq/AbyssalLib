@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 @SuppressWarnings("UnstableApiUsage")
 public class EnchantmentGlintOverride extends DataComponent<Boolean> implements Vanilla {
     public static final Codec<EnchantmentGlintOverride> CODEC = Codecs.BOOLEAN.xmap(
-            EnchantmentGlintOverride::new,
-            EnchantmentGlintOverride::getValue
+        EnchantmentGlintOverride::new,
+        EnchantmentGlintOverride::getValue
     );
     public static final DataComponentType<EnchantmentGlintOverride> TYPE = DataComponentType.valued(CODEC, EnchantmentGlintOverride::new);
 

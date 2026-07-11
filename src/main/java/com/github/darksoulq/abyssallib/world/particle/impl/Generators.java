@@ -59,7 +59,7 @@ public final class Generators {
      * @param size     The world-space width/height of the rendered text.
      * @return A {@link Generator} representing the text.
      */
-    public static Generator text(String text, String fontName, @MagicConstant(flags = {Font.PLAIN,Font.BOLD,Font.ITALIC}) int style, ColorProvider color, int fontSize, double size) {
+    public static Generator text(String text, String fontName, @MagicConstant(flags = {Font.PLAIN, Font.BOLD, Font.ITALIC}) int style, ColorProvider color, int fontSize, double size) {
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         Font f = new Font(fontName, style, fontSize);
@@ -102,7 +102,7 @@ public final class Generators {
      * @param size     The world size.
      * @return A {@link Generator} for plain text.
      */
-    public static Generator text(String text, String fontName, @MagicConstant(flags = {Font.PLAIN,Font.BOLD,Font.ITALIC}) int style, int fontSize, double size) {
+    public static Generator text(String text, String fontName, @MagicConstant(flags = {Font.PLAIN, Font.BOLD, Font.ITALIC}) int style, int fontSize, double size) {
         return text(text, fontName, style, ColorProvider.fixed(Color.WHITE), fontSize, size);
     }
 

@@ -70,7 +70,8 @@ public class BlockAttachedFeature extends Feature<BlockAttachedFeature.Config> {
      * @param canAttachTo   The list of block info targets that are considered valid structural support.
      * @param directions    The list of block faces to check for structural support relative to the origin.
      */
-    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, List<BlockInfo> canAttachTo, List<BlockFace> directions) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, List<BlockInfo> canAttachTo,
+                         List<BlockFace> directions) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

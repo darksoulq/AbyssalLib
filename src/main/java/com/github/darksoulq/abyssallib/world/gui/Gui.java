@@ -15,22 +15,34 @@ import java.util.function.Consumer;
  * be constructed via its {@link Builder}.
  */
 public class Gui {
-    /** The Bukkit MenuType defining the inventory size and shape. */
+    /**
+     * The Bukkit MenuType defining the inventory size and shape.
+     */
     private final MenuType menuType;
 
-    /** The display title of the inventory. */
+    /**
+     * The display title of the inventory.
+     */
     private final Component title;
 
-    /** A map of positions to the elements rendered at those locations. */
+    /**
+     * A map of positions to the elements rendered at those locations.
+     */
     private final Map<SlotPosition, GuiElement> elements = new HashMap<>();
 
-    /** A list of visual layers that render across the inventory. */
+    /**
+     * A list of visual layers that render across the inventory.
+     */
     private final List<GuiLayer> layers = new ArrayList<>();
 
-    /** A list of consumers executed every tick for active views. */
+    /**
+     * A list of consumers executed every tick for active views.
+     */
     private final List<Consumer<GuiView>> tickers = new ArrayList<>();
 
-    /** A set of configuration flags affecting GUI behavior. */
+    /**
+     * A set of configuration flags affecting GUI behavior.
+     */
     private final EnumSet<GuiFlag> flags;
 
     /**
@@ -39,10 +51,14 @@ public class Gui {
      */
     private final int tickInterval;
 
-    /** Logic executed when the GUI is opened. */
+    /**
+     * Logic executed when the GUI is opened.
+     */
     Consumer<GuiView> onOpen;
 
-    /** Logic executed when the GUI is closed. */
+    /**
+     * Logic executed when the GUI is closed.
+     */
     Consumer<GuiView> onClose;
 
     /**
@@ -152,7 +168,8 @@ public class Gui {
     /**
      * Gets the interval between each {@code GuiView#render} call.
      *
-     * @return The interval between render calls    */
+     * @return The interval between render calls
+     */
     public int getTickInterval() {
         return tickInterval;
     }
@@ -188,8 +205,10 @@ public class Gui {
         private final List<Consumer<GuiView>> tickers = new ArrayList<>();
         private final EnumSet<GuiFlag> flags = EnumSet.noneOf(GuiFlag.class);
         private int tickInterval = 1;
-        private Consumer<GuiView> onOpen = v -> {};
-        private Consumer<GuiView> onClose = v -> {};
+        private Consumer<GuiView> onOpen = v -> {
+        };
+        private Consumer<GuiView> onClose = v -> {
+        };
 
         /**
          * Constructs the builder with required fields.

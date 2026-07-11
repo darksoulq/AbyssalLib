@@ -44,6 +44,7 @@ public interface Tint {
             return json;
         }
     }
+
     class CustomModelData implements Tint {
         public String type = "int";
         public int index;
@@ -82,6 +83,7 @@ public interface Tint {
             return json;
         }
     }
+
     class Dye implements Tint {
         public String type = "int";
         public int value = 0;
@@ -117,6 +119,7 @@ public interface Tint {
             return json;
         }
     }
+
     class Firework implements Tint {
         public String type = "int";
         public int value = 0;
@@ -152,6 +155,7 @@ public interface Tint {
             return json;
         }
     }
+
     class MapColor implements Tint {
         public String type = "int";
         public int value = 0;
@@ -187,6 +191,7 @@ public interface Tint {
             return json;
         }
     }
+
     class Potion implements Tint {
         public String type = "int";
         public int value = 0;
@@ -222,6 +227,7 @@ public interface Tint {
             return json;
         }
     }
+
     class Team implements Tint {
         public String type = "int";
         public int value = 0;
@@ -257,6 +263,7 @@ public interface Tint {
             return json;
         }
     }
+
     class Grass implements Tint {
         public int temperature = 0;
         public int downfall = 0;

@@ -12,7 +12,7 @@ public interface Easing {
      * Applies the easing transformation to the given input.
      *
      * @param t The input value, typically normalized between 0.0 and 1.0,
-     * representing the percentage of completion.
+     *          representing the percentage of completion.
      * @return The transformed value, usually between 0.0 and 1.0 (though some
      * functions like Back or Elastic may exceed these bounds).
      */

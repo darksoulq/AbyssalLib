@@ -16,20 +16,34 @@ import java.util.function.Function;
  * and a keep-alive scheduler to prevent connection timeouts.
  */
 public class Database extends AbstractDatabase {
-    /** The hostname or IP address of the MySQL server. */
+    /**
+     * The hostname or IP address of the MySQL server.
+     */
     private final String host;
-    /** The port number of the MySQL server (typically 3306). */
+    /**
+     * The port number of the MySQL server (typically 3306).
+     */
     private final int port;
-    /** The name of the specific database/schema. */
+    /**
+     * The name of the specific database/schema.
+     */
     private final String database;
-    /** The username for authentication. */
+    /**
+     * The username for authentication.
+     */
     private final String user;
-    /** The password for authentication. */
+    /**
+     * The password for authentication.
+     */
     private final String password;
 
-    /** The active JDBC connection. */
+    /**
+     * The active JDBC connection.
+     */
     private Connection connection;
-    /** A single-threaded scheduler used to run periodic keep-alive checks. */
+    /**
+     * A single-threaded scheduler used to run periodic keep-alive checks.
+     */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     /**
@@ -73,7 +87,8 @@ public class Database extends AbstractDatabase {
             if (connection != null && !connection.isValid(2)) {
                 connect();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -110,6 +125,7 @@ public class Database extends AbstractDatabase {
 
     /**
      * Creates a {@link QueryExecutor} for this database.
+     *
      * @return A new executor instance.
      */
     public QueryExecutor executor() {
@@ -118,6 +134,7 @@ public class Database extends AbstractDatabase {
 
     /**
      * Executes a transaction using a {@link QueryExecutor}.
+     *
      * @param action The consumer logic.
      */
     public void transaction(Consumer<QueryExecutor> action) {

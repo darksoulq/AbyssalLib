@@ -127,10 +127,10 @@ public class ServerEvents {
         String key = e.getLootTable().getKey().toString();
 
         for (LootTable table : Registries.LOOT_TABLES.getAll().values()) {
-            if (table.getVanillaId() != null && table.getVanillaId().equals(key)) {
-                if (table.getMergeStrategy() == MergeStrategy.NONE) continue;
+            if (table.vanillaId() != null && table.vanillaId().equals(key)) {
+                if (table.mergeStrategy() == MergeStrategy.NONE) continue;
 
-                if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
+                if (table.mergeStrategy() == MergeStrategy.REPLACE) {
                     e.getLoot().clear();
                 }
 
@@ -157,7 +157,7 @@ public class ServerEvents {
             String tableId = entity.getPersistentDataContainer().get(customTableKey, PersistentDataType.STRING);
             LootTable table = Registries.LOOT_TABLES.get(tableId);
 
-            if (table != null && table.getMergeStrategy() == MergeStrategy.NONE) {
+            if (table != null && table.mergeStrategy() == MergeStrategy.NONE) {
                 e.getDrops().clear();
 
                 EntityDamageEvent damageEvent = entity.getLastDamageCause();
@@ -184,10 +184,10 @@ public class ServerEvents {
             String vanillaTableKey = "minecraft:entities/" + entityKey.getKey();
 
             for (LootTable table : Registries.LOOT_TABLES.getAll().values()) {
-                if (table.getVanillaId() != null && table.getVanillaId().equals(vanillaTableKey)) {
-                    if (table.getMergeStrategy() == MergeStrategy.NONE) continue;
+                if (table.vanillaId() != null && table.vanillaId().equals(vanillaTableKey)) {
+                    if (table.mergeStrategy() == MergeStrategy.NONE) continue;
 
-                    if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
+                    if (table.mergeStrategy() == MergeStrategy.REPLACE) {
                         e.getDrops().clear();
                     }
 
@@ -200,7 +200,8 @@ public class ServerEvents {
 
                     if (killer != null) {
                         builder.looter(killer).killer(killer);
-                        if (killer instanceof LivingEntity livingEntity) builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
+                        if (killer instanceof LivingEntity livingEntity)
+                            builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
                     }
 
                     List<ItemStack> generated = table.generate(builder.build());

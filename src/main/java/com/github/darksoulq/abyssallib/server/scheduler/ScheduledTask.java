@@ -6,9 +6,14 @@ import java.util.concurrent.CompletionStage;
 
 public interface ScheduledTask {
     void cancel();
+
     boolean isCancelled();
+
     boolean isRunning();
+
     Instant nextExecution();
+
     Optional<Throwable> failure();
+
     CompletionStage<Void> completion();
 }

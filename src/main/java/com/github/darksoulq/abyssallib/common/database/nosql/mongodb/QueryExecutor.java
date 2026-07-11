@@ -4,7 +4,9 @@ package com.github.darksoulq.abyssallib.common.database.nosql.mongodb;
  * A bridge class for accessing MongoDB collection-specific operations.
  */
 public class QueryExecutor {
-    /** The parent database instance. */
+    /**
+     * The parent database instance.
+     */
     private final Database database;
 
     /**

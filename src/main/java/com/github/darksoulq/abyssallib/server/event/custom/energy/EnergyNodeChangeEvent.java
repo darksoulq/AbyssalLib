@@ -15,17 +15,29 @@ import org.bukkit.event.HandlerList;
  */
 public final class EnergyNodeChangeEvent extends Event implements Cancellable {
 
-    /** The list of handlers for this event. */
+    /**
+     * The list of handlers for this event.
+     */
     private static final HandlerList HANDLERS = new HandlerList();
-    /** The node whose energy level changed. */
+    /**
+     * The node whose energy level changed.
+     */
     private final EnergyNode node;
-    /** The unit associated with the energy values. */
+    /**
+     * The unit associated with the energy values.
+     */
     private final EnergyUnit unit;
-    /** The energy level before the change. */
+    /**
+     * The energy level before the change.
+     */
     private final double previous;
-    /** The new energy level. */
+    /**
+     * The new energy level.
+     */
     private final double current;
-    /** The cancellation state of the event. */
+    /**
+     * The cancellation state of the event.
+     */
     private boolean cancelled;
 
     /**
@@ -45,30 +57,62 @@ public final class EnergyNodeChangeEvent extends Event implements Cancellable {
         this.current = current;
     }
 
-    /** @return The {@link EnergyNode} that underwent a change. */
-    public EnergyNode getNode() { return node; }
+    /**
+     * @return The {@link EnergyNode} that underwent a change.
+     */
+    public EnergyNode getNode() {
+        return node;
+    }
 
-    /** @return The {@link EnergyUnit} the change is measured in. */
-    public EnergyUnit getUnit() { return unit; }
+    /**
+     * @return The {@link EnergyUnit} the change is measured in.
+     */
+    public EnergyUnit getUnit() {
+        return unit;
+    }
 
-    /** @return The energy value before the operation. */
-    public double getPrevious() { return previous; }
+    /**
+     * @return The energy value before the operation.
+     */
+    public double getPrevious() {
+        return previous;
+    }
 
-    /** @return The energy value after the operation. */
-    public double getCurrent() { return current; }
+    /**
+     * @return The energy value after the operation.
+     */
+    public double getCurrent() {
+        return current;
+    }
 
-    /** @return True if the change event is cancelled. */
+    /**
+     * @return True if the change event is cancelled.
+     */
     @Override
-    public boolean isCancelled() { return cancelled; }
+    public boolean isCancelled() {
+        return cancelled;
+    }
 
-    /** @param cancel True to signal that this change should be ignored or reverted. */
+    /**
+     * @param cancel True to signal that this change should be ignored or reverted.
+     */
     @Override
-    public void setCancelled(boolean cancel) { this.cancelled = cancel; }
+    public void setCancelled(boolean cancel) {
+        this.cancelled = cancel;
+    }
 
-    /** @return The specific {@link HandlerList} for this event. */
+    /**
+     * @return The specific {@link HandlerList} for this event.
+     */
     @Override
-    public HandlerList getHandlers() { return HANDLERS; }
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
 
-    /** @return The static {@link HandlerList} required for Bukkit events. */
-    public static HandlerList getHandlerList() { return HANDLERS; }
+    /**
+     * @return The static {@link HandlerList} required for Bukkit events.
+     */
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
 }

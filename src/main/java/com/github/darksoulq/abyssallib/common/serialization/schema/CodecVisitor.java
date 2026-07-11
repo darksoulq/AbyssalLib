@@ -39,7 +39,7 @@ public interface CodecVisitor<R> {
     /**
      * Visits a map codec.
      *
-     * @param keyCodec codec describing map keys
+     * @param keyCodec   codec describing map keys
      * @param valueCodec codec describing map values
      * @return visitor result
      */
@@ -64,7 +64,7 @@ public interface CodecVisitor<R> {
     /**
      * Visits a codec representing one of two possible types.
      *
-     * @param left left codec
+     * @param left  left codec
      * @param right right codec
      * @return visitor result
      */

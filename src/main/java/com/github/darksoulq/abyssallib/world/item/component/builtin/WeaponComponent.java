@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class WeaponComponent extends DataComponent<Weapon> implements Vanilla {
     public static final Codec<WeaponComponent> CODEC = ExtraCodecs.WEAPON.xmap(
-            WeaponComponent::new,
-            WeaponComponent::getValue
+        WeaponComponent::new,
+        WeaponComponent::getValue
     );
     public static final DataComponentType<WeaponComponent> TYPE = DataComponentType.valued(CODEC, WeaponComponent::new);
 

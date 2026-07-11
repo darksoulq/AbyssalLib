@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ItemAttributeModifier extends DataComponent<ItemAttributeModifiers> implements Vanilla {
     public static final Codec<ItemAttributeModifier> CODEC = ExtraCodecs.ITEM_ATTRIBUTE_MODIFIERS.xmap(
-            ItemAttributeModifier::new,
-            ItemAttributeModifier::getValue
+        ItemAttributeModifier::new,
+        ItemAttributeModifier::getValue
     );
     public static final DataComponentType<ItemAttributeModifier> TYPE = DataComponentType.valued(CODEC, ItemAttributeModifier::new);
 

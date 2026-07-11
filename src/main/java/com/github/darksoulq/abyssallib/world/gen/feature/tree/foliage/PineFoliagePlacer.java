@@ -32,7 +32,9 @@ public class PineFoliagePlacer extends FoliagePlacer {
      */
     public static final FoliagePlacerType<PineFoliagePlacer> TYPE = () -> CODEC;
 
-    /** The vertical height (layers) of the conical foliage section. */
+    /**
+     * The vertical height (layers) of the conical foliage section.
+     */
     private final int height;
 
     /**
@@ -65,7 +67,7 @@ public class PineFoliagePlacer extends FoliagePlacer {
                     }
 
                     Location target = attachmentPoint.clone().add(dx, yOffset, dz);
-                    if (target.getBlockY() >= level.getWorld().getMaxHeight()) continue;
+                    if (target.getBlockY() >= level.world().getMaxHeight()) continue;
 
                     if (level.getType(target.getBlockX(), target.getBlockY(), target.getBlockZ()).isAir()) {
                         BlockInfo stateToPlace = foliageProvider.getState(random, target);

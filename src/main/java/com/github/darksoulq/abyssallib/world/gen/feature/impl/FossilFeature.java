@@ -39,7 +39,7 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
     public boolean place(FeaturePlaceContext<Config> context) {
         Location origin = context.origin();
         Config config = context.config();
-        SimplexNoiseGenerator noiseGen = new SimplexNoiseGenerator(context.level().getWorld());
+        SimplexNoiseGenerator noiseGen = new SimplexNoiseGenerator(context.level().world());
 
         int placedCount = 0;
         int radius = config.radius();
@@ -47,8 +47,8 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
         double frequency = config.noiseFrequency();
         double threshold = config.noiseThreshold();
 
-        int minHeight = context.level().getWorld().getMinHeight();
-        int maxHeight = context.level().getWorld().getMaxHeight();
+        int minHeight = context.level().world().getMinHeight();
+        int maxHeight = context.level().world().getMaxHeight();
 
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {
@@ -105,7 +105,8 @@ public class FossilFeature extends Feature<FossilFeature.Config> {
      * @param noiseFrequency The multiplier applied to coordinates before sampling the noise field.
      * @param noiseThreshold The breakpoint value that the 3D noise must exceed to place a block.
      */
-    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, int radius, double noiseFrequency, double noiseThreshold) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, int radius, double noiseFrequency,
+                         double noiseThreshold) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

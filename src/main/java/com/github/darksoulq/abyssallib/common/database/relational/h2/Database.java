@@ -17,9 +17,13 @@ import java.util.function.Function;
  * directory creation and filename sanitization for the MVStore format.
  */
 public class Database extends AbstractDatabase {
-    /** The base file for the H2 database. */
+    /**
+     * The base file for the H2 database.
+     */
     private final File file;
-    /** The active JDBC connection. */
+    /**
+     * The active JDBC connection.
+     */
     private Connection connection;
 
     /**

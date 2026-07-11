@@ -21,10 +21,14 @@ import java.util.List;
  * {@link ColorProvider}.
  */
 public class MiniMessageBridge {
-    /** Internal instance of the MiniMessage parser. */
+    /**
+     * Internal instance of the MiniMessage parser.
+     */
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    /** Serializer for converting Adventure Components to legacy Bukkit strings with Hex support. */
+    /**
+     * Serializer for converting Adventure Components to legacy Bukkit strings with Hex support.
+     */
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
         .hexColors()
         .useUnusualXRepeatedCharacterHexFormat()
@@ -201,7 +205,8 @@ public class MiniMessageBridge {
                     if (named != null) colors.add(named);
                     else colors.add(Color.WHITE);
                 }
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException ignored) {
+            }
         }
         if (colors.isEmpty()) return ColorProvider.fixed(Color.WHITE);
         return ColorProvider.linear(colors);
@@ -211,15 +216,25 @@ public class MiniMessageBridge {
      * A utility class for handling stateful text color animations.
      */
     public static class Animator {
-        /** The text content being animated. */
+        /**
+         * The text content being animated.
+         */
         private String text;
-        /** The color source for the animation. */
+        /**
+         * The color source for the animation.
+         */
         private ColorProvider provider;
-        /** The rate at which the phase advances. */
+        /**
+         * The rate at which the phase advances.
+         */
         private double speed;
-        /** The current temporal phase (0.0 to 1.0). */
+        /**
+         * The current temporal phase (0.0 to 1.0).
+         */
         private double phase;
-        /** The spatial frequency across the text. */
+        /**
+         * The spatial frequency across the text.
+         */
         private double frequency = 1.0;
 
         /**
@@ -234,25 +249,33 @@ public class MiniMessageBridge {
             this.phase = 0;
         }
 
-        /** @param speed The new phase increment value. @return This animator. */
+        /**
+         * @param speed The new phase increment value. @return This animator.
+         */
         public Animator setSpeed(double speed) {
             this.speed = speed;
             return this;
         }
 
-        /** @param frequency The new spatial frequency. @return This animator. */
+        /**
+         * @param frequency The new spatial frequency. @return This animator.
+         */
         public Animator setFrequency(double frequency) {
             this.frequency = frequency;
             return this;
         }
 
-        /** @param text The new string content. @return This animator. */
+        /**
+         * @param text The new string content. @return This animator.
+         */
         public Animator setText(String text) {
             this.text = text;
             return this;
         }
 
-        /** @param provider The new color source. @return This animator. */
+        /**
+         * @param provider The new color source. @return This animator.
+         */
         public Animator setProvider(ColorProvider provider) {
             this.provider = provider;
             return this;

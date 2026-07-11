@@ -20,9 +20,9 @@ public class SchemaValidator {
         /**
          * Validates the supplied input.
          *
-         * @param ops operations used to inspect the input
+         * @param ops       operations used to inspect the input
          * @param rootInput root value being validated
-         * @param <D> dynamic data type
+         * @param <D>       dynamic data type
          * @return validation result
          */
         <D> DataResult<D> check(DynamicOps<D> ops, D rootInput);
@@ -69,10 +69,12 @@ public class SchemaValidator {
                 D val = target.get();
                 if (ops.getDoubleValue(val).isPresent()) {
                     double d = ops.getDoubleValue(val).get();
-                    if (d < min || d > max) return DataResult.<D>error(DataError.outOfBounds(d, min, max)).prependPath(p);
+                    if (d < min || d > max)
+                        return DataResult.<D>error(DataError.outOfBounds(d, min, max)).prependPath(p);
                 } else if (ops.getIntValue(val).isPresent()) {
                     double d = ops.getIntValue(val).get();
-                    if (d < min || d > max) return DataResult.<D>error(DataError.outOfBounds(d, min, max)).prependPath(p);
+                    if (d < min || d > max)
+                        return DataResult.<D>error(DataError.outOfBounds(d, min, max)).prependPath(p);
                 }
                 return DataResult.success(rootInput);
             }
@@ -99,7 +101,8 @@ public class SchemaValidator {
                 else if (ops.getList(val).isPresent()) len = ops.getList(val).get().size();
                 else if (ops.getMap(val).isPresent()) len = ops.getMap(val).get().size();
 
-                if (len != -1 && len < length) return DataResult.<D>error(DataError.custom("Length/size is less than minimum " + length)).prependPath(p);
+                if (len != -1 && len < length)
+                    return DataResult.<D>error(DataError.custom("Length/size is less than minimum " + length)).prependPath(p);
                 return DataResult.success(rootInput);
             }
         });
@@ -125,7 +128,8 @@ public class SchemaValidator {
                 else if (ops.getList(val).isPresent()) len = ops.getList(val).get().size();
                 else if (ops.getMap(val).isPresent()) len = ops.getMap(val).get().size();
 
-                if (len != -1 && len > length) return DataResult.<D>error(DataError.custom("Length/size exceeds maximum " + length)).prependPath(p);
+                if (len != -1 && len > length)
+                    return DataResult.<D>error(DataError.custom("Length/size exceeds maximum " + length)).prependPath(p);
                 return DataResult.success(rootInput);
             }
         });
@@ -207,11 +211,13 @@ public class SchemaValidator {
                     if (parsed instanceof Number num) {
                         for (Object o : set) {
                             if (o instanceof Number n && n.doubleValue() == num.doubleValue()) {
-                                found = true; break;
+                                found = true;
+                                break;
                             }
                         }
                     }
-                    if (!found) return DataResult.<D>error(DataError.custom("Value is not one of allowed values: " + set)).prependPath(p);
+                    if (!found)
+                        return DataResult.<D>error(DataError.custom("Value is not one of allowed values: " + set)).prependPath(p);
                 }
                 return DataResult.success(rootInput);
             }

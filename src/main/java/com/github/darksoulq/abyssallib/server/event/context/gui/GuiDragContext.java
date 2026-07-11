@@ -17,13 +17,13 @@ import java.util.Set;
  * This class encapsulates all relevant data when a player drags an item across inventory slots,
  * including the items being distributed, the slots affected, and the type of drag operation.
  *
- * @param source        The entity (player) who performed the drag.
- * @param view          The Gui View currently open.
- * @param newCursor     The item that will remain on the cursor after the drag completes.
- * @param oldCursor     The item that was on the cursor before the drag started.
- * @param type          The type of drag performed (e.g., SINGLE/Right-click drag or EVEN/Left-click drag).
- * @param newItems      A map of raw slot IDs to the ItemStacks that will be placed in them.
- * @param rawSlots      The set of raw slot IDs involved in the drag.
+ * @param source         The entity (player) who performed the drag.
+ * @param view           The Gui View currently open.
+ * @param newCursor      The item that will remain on the cursor after the drag completes.
+ * @param oldCursor      The item that was on the cursor before the drag started.
+ * @param type           The type of drag performed (e.g., SINGLE/Right-click drag or EVEN/Left-click drag).
+ * @param newItems       A map of raw slot IDs to the ItemStacks that will be placed in them.
+ * @param rawSlots       The set of raw slot IDs involved in the drag.
  * @param inventorySlots The set of converted slot IDs (relative to the specific inventory) involved.
  */
 public record GuiDragContext(HumanEntity source, GuiView view,

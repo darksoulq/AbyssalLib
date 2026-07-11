@@ -14,8 +14,8 @@ public class PacketSendEvent extends PacketEvent {
     /**
      * Constructs a new PacketSendEvent.
      *
-     * @param player the Bukkit player to whom the packet is being sent
-     * @param packet the NMS packet being sent
+     * @param player  the Bukkit player to whom the packet is being sent
+     * @param packet  the NMS packet being sent
      * @param isAsync whether the event is Async
      */
     public PacketSendEvent(Player player, Packet<?> packet, boolean isAsync) {

@@ -23,7 +23,8 @@ import java.util.Map;
 
 public final class BBModelLoader {
 
-    private BBModelLoader() {}
+    private BBModelLoader() {
+    }
 
     public static BBModel load(Plugin plugin, String namespace, String path) {
         String resourcePath = "resourcepack/" + namespace + "/models/" + path + ".bbmodel";
@@ -181,7 +182,8 @@ public final class BBModelLoader {
                 model.getGroupCache().put(fallbackGroup.getUuid(), fallbackGroup);
                 if (parent == null) model.getRootGroups().add(fallbackGroup);
                 else parent.getChildren().add(fallbackGroup);
-                for (JsonNode child : node.get("children")) buildOutlinerTree(child, model, parsedGroups, fallbackGroup);
+                for (JsonNode child : node.get("children"))
+                    buildOutlinerTree(child, model, parsedGroups, fallbackGroup);
             }
         }
     }
@@ -213,7 +215,10 @@ public final class BBModelLoader {
         JsonNode val = node.get(key);
         if (val.isNumber()) return val.asDouble();
         if (val.isTextual()) {
-            try { return Double.parseDouble(val.asText()); } catch (NumberFormatException ignored) {}
+            try {
+                return Double.parseDouble(val.asText());
+            } catch (NumberFormatException ignored) {
+            }
         }
         return def;
     }

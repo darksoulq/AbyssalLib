@@ -17,13 +17,20 @@ public final class Permissions {
             String type = AbyssalLib.CONFIG.permissions.storageType.get().toLowerCase(Locale.ROOT);
 
             storage = switch (type) {
-                case "mysql" -> new MysqlPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.mysql.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
-                case "mariadb" -> new MariadbPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.mariadb.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
-                case "postgres", "postgresql" -> new PostgresPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.postgres.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
-                case "h2" -> new H2PermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.h2.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
-                case "sqlite" -> new SqlitePermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.sql.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
-                case "mongodb" -> new MongoPermissionStorage(DatabaseLoader.loadMongo(AbyssalLib.CONFIG.cfg, "permissions.nosql"));
-                case "redis" -> new RedisPermissionStorage(DatabaseLoader.loadRedis(AbyssalLib.CONFIG.cfg, "permissions.nosql"));
+                case "mysql" ->
+                    new MysqlPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.mysql.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
+                case "mariadb" ->
+                    new MariadbPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.mariadb.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
+                case "postgres", "postgresql" ->
+                    new PostgresPermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.postgres.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
+                case "h2" ->
+                    new H2PermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.h2.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
+                case "sqlite" ->
+                    new SqlitePermissionStorage((com.github.darksoulq.abyssallib.common.database.relational.sql.Database) DatabaseLoader.loadRelational(AbyssalLib.CONFIG.cfg, "permissions", type));
+                case "mongodb" ->
+                    new MongoPermissionStorage(DatabaseLoader.loadMongo(AbyssalLib.CONFIG.cfg, "permissions.nosql"));
+                case "redis" ->
+                    new RedisPermissionStorage(DatabaseLoader.loadRedis(AbyssalLib.CONFIG.cfg, "permissions.nosql"));
                 default -> storage;
             };
 

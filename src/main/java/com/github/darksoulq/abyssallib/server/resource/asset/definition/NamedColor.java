@@ -5,51 +5,83 @@ package com.github.darksoulq.abyssallib.server.resource.asset.definition;
  */
 public enum NamedColor {
 
-    /** White */
+    /**
+     * White
+     */
     WHITE,
 
-    /** Orange */
+    /**
+     * Orange
+     */
     ORANGE,
 
-    /** Magenta */
+    /**
+     * Magenta
+     */
     MAGENTA,
 
-    /** Light blue */
+    /**
+     * Light blue
+     */
     LIGHT_BLUE,
 
-    /** Yellow */
+    /**
+     * Yellow
+     */
     YELLOW,
 
-    /** Lime */
+    /**
+     * Lime
+     */
     LIME,
 
-    /** Pink */
+    /**
+     * Pink
+     */
     PINK,
 
-    /** Gray */
+    /**
+     * Gray
+     */
     GRAY,
 
-    /** Light gray */
+    /**
+     * Light gray
+     */
     LIGHT_GRAY,
 
-    /** Cyan */
+    /**
+     * Cyan
+     */
     CYAN,
 
-    /** Purple */
+    /**
+     * Purple
+     */
     PURPLE,
 
-    /** Blue */
+    /**
+     * Blue
+     */
     BLUE,
 
-    /** Brown */
+    /**
+     * Brown
+     */
     BROWN,
 
-    /** Green */
+    /**
+     * Green
+     */
     GREEN,
 
-    /** Red */
+    /**
+     * Red
+     */
     RED,
 
-    /** Black */
+    /**
+     * Black
+     */
     BLACK
 }

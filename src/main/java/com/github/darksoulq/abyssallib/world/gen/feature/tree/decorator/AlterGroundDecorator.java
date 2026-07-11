@@ -27,7 +27,9 @@ public class AlterGroundDecorator extends TreeDecorator {
      */
     public static final TreeDecoratorType<AlterGroundDecorator> TYPE = () -> CODEC;
 
-    /** The provider supplying the altered ground blocks. */
+    /**
+     * The provider supplying the altered ground blocks.
+     */
     private final BlockStateProvider provider;
 
     /**

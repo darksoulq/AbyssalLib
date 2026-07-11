@@ -33,7 +33,8 @@ public class StraightTrunkPlacer extends TrunkPlacer {
     /**
      * Constructs a new StraightTrunkPlacer.
      */
-    public StraightTrunkPlacer() {}
+    public StraightTrunkPlacer() {
+    }
 
     /**
      * Places a vertical column of blocks up to the specified height.
@@ -49,7 +50,7 @@ public class StraightTrunkPlacer extends TrunkPlacer {
     public List<Vector> placeTrunk(WorldGenAccess level, Random random, Location origin, BlockStateProvider trunkProvider, int height) {
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, i, 0);
-            if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
+            if (target.getBlockY() >= level.world().getMaxHeight()) break;
 
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {

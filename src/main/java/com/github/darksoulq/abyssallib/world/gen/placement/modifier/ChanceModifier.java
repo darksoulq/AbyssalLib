@@ -31,7 +31,9 @@ public class ChanceModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<ChanceModifier> TYPE = () -> CODEC;
 
-    /** The denominator for the 1-in-X probability. Must be >= 1. */
+    /**
+     * The denominator for the 1-in-X probability. Must be >= 1.
+     */
     private final int chance;
 
     /**

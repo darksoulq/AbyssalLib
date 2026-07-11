@@ -11,14 +11,15 @@ import org.bukkit.inventory.ItemStack;
 
 public class MapID extends DataComponent<Integer> implements Vanilla {
     public static final Codec<MapID> CODEC = Codecs.INT.xmap(
-            MapID::new,
-            MapID::getValue
+        MapID::new,
+        MapID::getValue
     );
     public static final DataComponentType<MapID> TYPE = DataComponentType.valued(CODEC, v -> new MapID((MapId) v));
 
     public MapID(MapId id) {
         super(id.id());
     }
+
     public MapID(int id) {
         super(id);
     }

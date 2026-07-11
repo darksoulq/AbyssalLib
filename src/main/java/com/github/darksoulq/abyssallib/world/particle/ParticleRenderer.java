@@ -19,7 +19,8 @@ public interface ParticleRenderer {
      *
      * @param origin The starting world {@link Location}.
      */
-    default void start(Location origin) {}
+    default void start(Location origin) {
+    }
 
     /**
      * Executes the visual rendering of the particle frame.
@@ -27,7 +28,7 @@ public interface ParticleRenderer {
      * @param center  The central {@link Location} to offset the points from.
      * @param points  The list of processed {@link Vector} coordinates.
      * @param viewers The list of players who should receive the display,
-     * or {@code null} for global visibility.
+     *                or {@code null} for global visibility.
      */
     void render(Location center, List<Vector> points, List<Player> viewers);
 
@@ -35,5 +36,6 @@ public interface ParticleRenderer {
      * Called when the effect stops.
      * Useful for removing persistent entities or cleaning up temporary visual resources.
      */
-    default void stop() {}
+    default void stop() {
+    }
 }

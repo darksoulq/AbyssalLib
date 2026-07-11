@@ -25,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class PacketInterceptor {
 
-    /** The unique identifier for the abyssal packet listener in the Netty pipeline. */
+    /**
+     * The unique identifier for the abyssal packet listener in the Netty pipeline.
+     */
     private static final @NotNull String HANDLER = "abyssal_packet_listener";
 
     /**

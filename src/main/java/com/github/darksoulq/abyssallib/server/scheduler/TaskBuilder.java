@@ -77,7 +77,7 @@ public class TaskBuilder {
         if (clock == Clock.REALTIME) this.async = true;
         return scheduler.getDispatcher().dispatch(action, async, entity, location, delay, delayClock, period, clock, untilCondition, whileCondition);
     }
-    
+
     public ScheduledTask repeatEvery(long time, Clock clock) {
         return repeatEvery(time, clock.unit(), clock);
     }

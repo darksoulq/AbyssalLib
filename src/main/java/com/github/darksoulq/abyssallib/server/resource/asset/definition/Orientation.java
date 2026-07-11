@@ -5,21 +5,33 @@ package com.github.darksoulq.abyssallib.server.resource.asset.definition;
  */
 public enum Orientation {
 
-    /** Down */
+    /**
+     * Down
+     */
     DOWN,
 
-    /** Up */
+    /**
+     * Up
+     */
     UP,
 
-    /** North */
+    /**
+     * North
+     */
     NORTH,
 
-    /** East */
+    /**
+     * East
+     */
     EAST,
 
-    /** South */
+    /**
+     * South
+     */
     SOUTH,
 
-    /** West */
+    /**
+     * West
+     */
     WEST
 }

@@ -21,7 +21,7 @@ public class QueryCodec<T> implements Codec<T> {
      * Creates a query codec.
      *
      * @param codec Codec used to decode the resolved value.
-     * @param path Path used to locate the value.
+     * @param path  Path used to locate the value.
      */
     public QueryCodec(Codec<T> codec, String path) {
         this.codec = codec;
@@ -31,7 +31,7 @@ public class QueryCodec<T> implements Codec<T> {
     @Override
     public <D> DataResult<T> decode(DynamicOps<D> ops, D input) {
         Optional<D> target = ops.query(input, path);
-        return target.isPresent() ? codec.decode(ops, target.get()).prependPath(path) : DataResult.<T>error(DataError.missingField(path));
+        return target.isPresent() ? codec.decode(ops, target.get()).prependPath(path) : DataResult.error(DataError.missingField(path));
     }
 
     @Override

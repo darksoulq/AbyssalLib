@@ -4,7 +4,8 @@ import java.lang.reflect.Array;
 
 public final class ReflectArray {
 
-    private ReflectArray() {}
+    private ReflectArray() {
+    }
 
     public static Result<Object> newInstance(Class<?> componentType, int length) {
         try {

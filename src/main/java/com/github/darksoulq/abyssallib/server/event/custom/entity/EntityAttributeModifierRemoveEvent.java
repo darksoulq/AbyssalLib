@@ -43,12 +43,9 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Constructs a new EntityAttributeModifierRemoveEvent.
      *
-     * @param entity
-     * The {@link Entity} losing the modifier.
-     * @param attribute
-     * The {@link Attribute} instance being updated.
-     * @param modifier
-     * The {@link AttributeModifier} instance that was found and is being removed.
+     * @param entity    The {@link Entity} losing the modifier.
+     * @param attribute The {@link Attribute} instance being updated.
+     * @param modifier  The {@link AttributeModifier} instance that was found and is being removed.
      */
     public EntityAttributeModifierRemoveEvent(@NotNull Entity entity, @NotNull Attribute attribute, @NotNull AttributeModifier modifier) {
         this.entity = entity;
@@ -59,8 +56,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Retrieves the entity involved in this event.
      *
-     * @return
-     * The {@link Entity} whose attribute is being updated.
+     * @return The {@link Entity} whose attribute is being updated.
      */
     public @NotNull Entity getEntity() {
         return entity;
@@ -69,8 +65,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Retrieves the specific attribute that the modifier is currently influencing.
      *
-     * @return
-     * The {@link Attribute} definition.
+     * @return The {@link Attribute} definition.
      */
     public @NotNull Attribute getAttribute() {
         return attribute;
@@ -79,8 +74,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Retrieves the modifier instance that is being removed.
      *
-     * @return
-     * The {@link AttributeModifier} instance.
+     * @return The {@link AttributeModifier} instance.
      */
     public @NotNull AttributeModifier getModifier() {
         return modifier;
@@ -89,8 +83,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Checks whether the removal of this modifier has been cancelled.
      *
-     * @return
-     * True if the removal is prevented.
+     * @return True if the removal is prevented.
      */
     @Override
     public boolean isCancelled() {
@@ -100,8 +93,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Sets the cancellation state of the event.
      *
-     * @param v
-     * True to cancel the removal, keeping the modifier active.
+     * @param v True to cancel the removal, keeping the modifier active.
      */
     @Override
     public void setCancelled(boolean v) {
@@ -111,8 +103,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Retrieves the list of handlers listening to this event instance.
      *
-     * @return
-     * The {@link HandlerList} for this event.
+     * @return The {@link HandlerList} for this event.
      */
     @Override
     public @NotNull HandlerList getHandlers() {
@@ -122,8 +113,7 @@ public class EntityAttributeModifierRemoveEvent extends Event implements Cancell
     /**
      * Provides a static method to retrieve the handler list, required by Bukkit.
      *
-     * @return
-     * The static {@link HandlerList} for this event type.
+     * @return The static {@link HandlerList} for this event type.
      */
     public static HandlerList getHandlerList() {
         return handlers;

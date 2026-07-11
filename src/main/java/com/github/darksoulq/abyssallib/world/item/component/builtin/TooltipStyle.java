@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class TooltipStyle extends DataComponent<Key> implements Vanilla {
     public static final Codec<TooltipStyle> CODEC = Codecs.KEY.xmap(
-            TooltipStyle::new,
-            TooltipStyle::getValue
+        TooltipStyle::new,
+        TooltipStyle::getValue
     );
     public static final DataComponentType<TooltipStyle> TYPE = DataComponentType.valued(CODEC, TooltipStyle::new);
 

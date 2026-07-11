@@ -33,34 +33,54 @@ public class AdvancementDisplay {
         Codecs.FLOAT.optionalFieldOf("y", Float.NaN).forGetter(AdvancementDisplay.class, AdvancementDisplay::getY)
     ).apply(instance, AdvancementDisplay::new)).describe("AdvancementDisplay");
 
-    /** The display title component. */
+    /**
+     * The display title component.
+     */
     private final Component title;
 
-    /** The description component providing detail about the advancement. */
+    /**
+     * The description component providing detail about the advancement.
+     */
     private final Component description;
 
-    /** The ItemStack used as the visual icon in the GUI. */
+    /**
+     * The ItemStack used as the visual icon in the GUI.
+     */
     private final ItemStack icon;
 
-    /** The background texture key used if this is a root advancement. */
+    /**
+     * The background texture key used if this is a root advancement.
+     */
     private final Key background;
 
-    /** The visual border style (Task, Goal, or Challenge). */
+    /**
+     * The visual border style (Task, Goal, or Challenge).
+     */
     private final AdvancementFrame frame;
 
-    /** Flag determining if a toast notification appears on completion. */
+    /**
+     * Flag determining if a toast notification appears on completion.
+     */
     private final boolean showToast;
 
-    /** Flag determining if completion is broadcasted to the server chat. */
+    /**
+     * Flag determining if completion is broadcasted to the server chat.
+     */
     private final boolean announceToChat;
 
-    /** Flag determining if the advancement is invisible until completed. */
+    /**
+     * Flag determining if the advancement is invisible until completed.
+     */
     private final boolean hidden;
 
-    /** The horizontal position in the advancement tree GUI. */
+    /**
+     * The horizontal position in the advancement tree GUI.
+     */
     private float x;
 
-    /** The vertical position in the advancement tree GUI. */
+    /**
+     * The vertical position in the advancement tree GUI.
+     */
     private float y;
 
     /**

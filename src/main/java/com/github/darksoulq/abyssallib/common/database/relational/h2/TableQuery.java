@@ -9,7 +9,9 @@ import java.sql.SQLException;
  * H2-specific query handler for single table operations.
  */
 public class TableQuery extends AbstractTableQuery<TableQuery> {
-    /** The parent database. */
+    /**
+     * The parent database.
+     */
     private final Database database;
 
     /**
@@ -24,7 +26,11 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
     }
 
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -37,8 +43,19 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
         return new BatchQuery(database, table, columns);
     }
 
-    /** @return {@code "INSERT INTO "} */
-    @Override protected String getInsertVerb() { return "INSERT INTO "; }
-    /** @return {@code "REPLACE INTO "} (Supported in H2 MySQL mode). */
-    @Override protected String getReplaceVerb() { return "REPLACE INTO "; }
+    /**
+     * @return {@code "INSERT INTO "}
+     */
+    @Override
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
+
+    /**
+     * @return {@code "REPLACE INTO "} (Supported in H2 MySQL mode).
+     */
+    @Override
+    protected String getReplaceVerb() {
+        return "REPLACE INTO ";
+    }
 }

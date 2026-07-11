@@ -18,28 +18,44 @@ import java.util.function.Predicate;
  */
 public class PagedLayer<T> implements GuiLayer {
 
-    /** The master source of data to be paginated. */
+    /**
+     * The master source of data to be paginated.
+     */
     protected final List<T> source;
 
-    /** Function to map data objects to interactive GUI elements. */
+    /**
+     * Function to map data objects to interactive GUI elements.
+     */
     protected final BiFunction<T, Integer, GuiElement> mapper;
 
-    /** The specific slot indices available for content rendering. */
+    /**
+     * The specific slot indices available for content rendering.
+     */
     protected final int[] slots;
 
-    /** The inventory segment target (TOP or BOTTOM). */
+    /**
+     * The inventory segment target (TOP or BOTTOM).
+     */
     protected final GuiView.Segment segment;
 
-    /** The current subset of data passing the active filter. */
+    /**
+     * The current subset of data passing the active filter.
+     */
     protected List<T> filtered;
 
-    /** The active filter for data visibility. */
+    /**
+     * The active filter for data visibility.
+     */
     protected Predicate<T> filter = t -> true;
 
-    /** The current page index (0-based). */
+    /**
+     * The current page index (0-based).
+     */
     protected int page = 0;
 
-    /** Tracks the last rendered page index. */
+    /**
+     * Tracks the last rendered page index.
+     */
     protected int lastRenderedPage = -1;
 
     /**

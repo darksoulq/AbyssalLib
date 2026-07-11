@@ -34,13 +34,19 @@ public class SurfaceRelativeThresholdModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<SurfaceRelativeThresholdModifier> TYPE = () -> CODEC;
 
-    /** The heightmap criteria used to locate the surface block. */
+    /**
+     * The heightmap criteria used to locate the surface block.
+     */
     private final HeightMap heightmap;
 
-    /** The minimum allowed relative offset from the surface (inclusive). */
+    /**
+     * The minimum allowed relative offset from the surface (inclusive).
+     */
     private final int minInclusive;
 
-    /** The maximum allowed relative offset from the surface (inclusive). */
+    /**
+     * The maximum allowed relative offset from the surface (inclusive).
+     */
     private final int maxInclusive;
 
     /**

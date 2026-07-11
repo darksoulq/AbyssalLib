@@ -100,7 +100,7 @@ public class ItemPacketModifier {
                     states.remove(-1);
                 }
             }
-        }).after(5L, Clock.TICKS).repeatEvery(5L, Clock.TICKS);
+        }).after(AbyssalLib.CONFIG.features.serverTranslationTickDelay.get(), Clock.TICKS).repeatEvery(AbyssalLib.CONFIG.features.serverTranslationTickDelay.get(), Clock.TICKS);
     }
 
     private static String getTranslationState(ItemStack stack) {
@@ -284,7 +284,8 @@ public class ItemPacketModifier {
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return packet;
     }
 
@@ -298,18 +299,27 @@ public class ItemPacketModifier {
     private static Dialog translateDialog(Dialog dialog, Player player) {
         if (dialog instanceof NoticeDialog(CommonDialogData common, ActionButton action)) {
             return new NoticeDialog(translateCommonDialogData(common, player), translateActionButton(action, player));
-        } else if (dialog instanceof ConfirmationDialog(CommonDialogData common, ActionButton yesButton, ActionButton noButton)) {
+        } else if (dialog instanceof ConfirmationDialog(
+            CommonDialogData common, ActionButton yesButton, ActionButton noButton
+        )) {
             return new ConfirmationDialog(translateCommonDialogData(common, player), translateActionButton(yesButton, player), translateActionButton(noButton, player));
-        } else if (dialog instanceof DialogListDialog(CommonDialogData common, HolderSet<Dialog> dialogs, Optional<ActionButton> exitAction, int columns, int buttonWidth)) {
+        } else if (dialog instanceof DialogListDialog(
+            CommonDialogData common, HolderSet<Dialog> dialogs, Optional<ActionButton> exitAction, int columns,
+            int buttonWidth
+        )) {
             List<Holder<Dialog>> newDialogs = new ArrayList<>();
             for (Holder<Dialog> h : dialogs) {
                 newDialogs.add(Holder.direct(translateDialog(h.value(), player)));
             }
             return new DialogListDialog(translateCommonDialogData(common, player), HolderSet.direct(newDialogs), exitAction.map(a -> translateActionButton(a, player)), columns, buttonWidth);
-        } else if (dialog instanceof MultiActionDialog(CommonDialogData common, List<ActionButton> actions, Optional<ActionButton> exitAction, int columns)) {
+        } else if (dialog instanceof MultiActionDialog(
+            CommonDialogData common, List<ActionButton> actions, Optional<ActionButton> exitAction, int columns
+        )) {
             List<ActionButton> newActions = actions.stream().map(a -> translateActionButton(a, player)).toList();
             return new MultiActionDialog(translateCommonDialogData(common, player), newActions, exitAction.map(a -> translateActionButton(a, player)), columns);
-        } else if (dialog instanceof ServerLinksDialog(CommonDialogData common, Optional<ActionButton> exitAction, int columns, int buttonWidth)) {
+        } else if (dialog instanceof ServerLinksDialog(
+            CommonDialogData common, Optional<ActionButton> exitAction, int columns, int buttonWidth
+        )) {
             return new ServerLinksDialog(translateCommonDialogData(common, player), exitAction.map(a -> translateActionButton(a, player)), columns, buttonWidth);
         }
         return dialog;
@@ -375,7 +385,8 @@ public class ItemPacketModifier {
         for (SynchedEntityData.DataValue<?> entry : packed) {
             Object val = entry.value();
             switch (val) {
-                case Optional<?> opt when opt.isPresent() && opt.get() instanceof net.minecraft.network.chat.Component c -> {
+                case
+                    Optional<?> opt when opt.isPresent() && opt.get() instanceof net.minecraft.network.chat.Component c -> {
                     net.minecraft.network.chat.Component translated = translateNMS(c, player);
                     EntityDataSerializer<Optional<net.minecraft.network.chat.Component>> serializer = (EntityDataSerializer<Optional<net.minecraft.network.chat.Component>>) entry.serializer();
                     newValues.add(new SynchedEntityData.DataValue<>(entry.id(), serializer, Optional.of(translated)));
@@ -524,7 +535,8 @@ public class ItemPacketModifier {
                 try {
                     org.bukkit.inventory.ItemStack restoredBukkit = org.bukkit.inventory.ItemStack.deserializeBytes(optBytes.get());
                     return CraftItemStack.asNMSCopy(restoredBukkit);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
 

@@ -5,24 +5,38 @@ package com.github.darksoulq.abyssallib.server.resource.asset.definition;
  */
 public enum HeadType {
 
-    /** Creeper */
+    /**
+     * Creeper
+     */
     CREEPER,
 
-    /** Dragon */
+    /**
+     * Dragon
+     */
     DRAGON,
 
-    /** Piglin */
+    /**
+     * Piglin
+     */
     PIGLIN,
 
-    /** Player */
+    /**
+     * Player
+     */
     PLAYER,
 
-    /** Skeleton */
+    /**
+     * Skeleton
+     */
     SKELETON,
 
-    /** Wither Skeleton */
+    /**
+     * Wither Skeleton
+     */
     WITHER_SKELETON,
 
-    /** Zombie */
+    /**
+     * Zombie
+     */
     ZOMBIE
 }

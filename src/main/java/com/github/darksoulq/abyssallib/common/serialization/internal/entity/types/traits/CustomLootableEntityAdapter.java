@@ -35,7 +35,7 @@ public class CustomLootableEntityAdapter extends EntityAdapter<Entity> {
 
         ctx.readOptional("custom_loot_table", Codecs.STRING, opt -> opt.ifPresent(id -> {
             LootTable table = Registries.LOOT_TABLES.get(id);
-            if (table != null && table.getMergeStrategy() == MergeStrategy.NONE) {
+            if (table != null && table.mergeStrategy() == MergeStrategy.NONE) {
                 base.getPersistentDataContainer().set(new NamespacedKey("abyssallib", "custom_loot_table"), PersistentDataType.STRING, id);
             }
         }));

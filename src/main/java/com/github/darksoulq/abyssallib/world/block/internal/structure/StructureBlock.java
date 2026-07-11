@@ -43,7 +43,7 @@ public class StructureBlock extends CustomBlock {
 
     @Override
     public void onUnLoad() {
-         if (getEntity() instanceof StructureBlockEntity sbe && sbe.particles != null) {
+        if (getEntity() instanceof StructureBlockEntity sbe && sbe.particles != null) {
             sbe.particles.stop();
         }
     }

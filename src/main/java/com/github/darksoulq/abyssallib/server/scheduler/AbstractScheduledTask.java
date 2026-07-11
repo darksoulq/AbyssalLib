@@ -64,13 +64,23 @@ public class AbstractScheduledTask {
         if (!completion.isDone()) completion.complete(null);
     }
 
-    public boolean isCancelled() { return cancelled; }
-    public boolean isRunning() { return running; }
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
 
     public Instant nextExecution() {
         return nextExecutionMillis == -1 ? Instant.now() : Instant.ofEpochMilli(nextExecutionMillis);
     }
 
-    public Optional<Throwable> failure() { return Optional.ofNullable(failure); }
-    public CompletionStage<Void> completion() { return completion; }
+    public Optional<Throwable> failure() {
+        return Optional.ofNullable(failure);
+    }
+
+    public CompletionStage<Void> completion() {
+        return completion;
+    }
 }

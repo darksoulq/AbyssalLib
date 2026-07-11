@@ -29,10 +29,14 @@ public class HeightRangeModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<HeightRangeModifier> TYPE = () -> CODEC;
 
-    /** The minimum allowed Y coordinate (inclusive). */
+    /**
+     * The minimum allowed Y coordinate (inclusive).
+     */
     private final int minInclusive;
 
-    /** The maximum allowed Y coordinate (inclusive). */
+    /**
+     * The maximum allowed Y coordinate (inclusive).
+     */
     private final int maxInclusive;
 
     /**

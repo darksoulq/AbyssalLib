@@ -33,14 +33,10 @@ public class WorldGenUtils {
      * based on a list of allowed {@link BlockInfo} targets.
      * If the target list is null or empty, this method assumes no restrictions exist.
      *
-     * @param level
-     * The {@link WorldGenAccess} context for reading chunk data. Can be null for live world access.
-     * @param loc
-     * The target {@link Location} to validate.
-     * @param validTargets
-     * A list of allowed block definitions.
-     * @return
-     * True if the block matches any valid target or if no restrictions exist.
+     * @param level        The {@link WorldGenAccess} context for reading chunk data. Can be null for live world access.
+     * @param loc          The target {@link Location} to validate.
+     * @param validTargets A list of allowed block definitions.
+     * @return True if the block matches any valid target or if no restrictions exist.
      */
     public static boolean isValidBlock(WorldGenAccess level, Location loc, List<BlockInfo> validTargets) {
         if (validTargets == null || validTargets.isEmpty()) {
@@ -60,14 +56,10 @@ public class WorldGenUtils {
      * Internal logic to verify if a location currently contains a specific block definition.
      * This method evaluates both base block types (vanilla/custom) and optional states.
      *
-     * @param level
-     * The {@link WorldGenAccess} instance.
-     * @param loc
-     * The target {@link Location}.
-     * @param target
-     * The {@link BlockInfo} definition to compare against.
-     * @return
-     * True if the location strictly matches the target properties.
+     * @param level  The {@link WorldGenAccess} instance.
+     * @param loc    The target {@link Location}.
+     * @param target The {@link BlockInfo} definition to compare against.
+     * @return True if the location strictly matches the target properties.
      */
     private static boolean matchesTarget(WorldGenAccess level, Location loc, BlockInfo target) {
         Material mat = level != null
@@ -100,14 +92,10 @@ public class WorldGenUtils {
      * Pre-calculates the Bukkit BlockData for a specific block definition, applying
      * deserialized JSON states, mirroring, and rotational transforms.
      *
-     * @param info
-     * The {@link BlockInfo} detailing the block type and JSON states.
-     * @param rotation
-     * The {@link StructureRotation} to apply to directional properties.
-     * @param mirror
-     * The {@link Mirror} transform to apply.
-     * @return
-     * A finalized {@link BlockData} instance ready for placement.
+     * @param info     The {@link BlockInfo} detailing the block type and JSON states.
+     * @param rotation The {@link StructureRotation} to apply to directional properties.
+     * @param mirror   The {@link Mirror} transform to apply.
+     * @return A finalized {@link BlockData} instance ready for placement.
      */
     public static BlockData bakeData(BlockInfo info, StructureRotation rotation, Mirror mirror) {
         BlockData bd = null;
@@ -142,12 +130,9 @@ public class WorldGenUtils {
     /**
      * Convenience method to place a block without applying any rotation or mirroring.
      *
-     * @param level
-     * The generation context.
-     * @param location
-     * The target coordinates.
-     * @param info
-     * The block definition.
+     * @param level    The generation context.
+     * @param location The target coordinates.
+     * @param info     The block definition.
      */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info) {
         BlockData bakedData = bakeData(info, StructureRotation.NONE, Mirror.NONE);
@@ -160,16 +145,11 @@ public class WorldGenUtils {
      * This method handles the assignment of pre-baked BlockData, instantiation of
      * custom block logic, restoration of NBT/TileEntity data, and waterlogging physics.
      *
-     * @param level
-     * The {@link WorldGenAccess} context for fast/async placement. Null for live Bukkit edits.
-     * @param location
-     * The absolute {@link Location} where the block should be placed.
-     * @param info
-     * The {@link BlockInfo} containing the original serialized state and NBT.
-     * @param bakedData
-     * The pre-processed {@link BlockData} containing rotational adjustments.
-     * @param bakedCustom
-     * The pre-processed {@link CustomBlock} instance, or null if vanilla.
+     * @param level       The {@link WorldGenAccess} context for fast/async placement. Null for live Bukkit edits.
+     * @param location    The absolute {@link Location} where the block should be placed.
+     * @param info        The {@link BlockInfo} containing the original serialized state and NBT.
+     * @param bakedData   The pre-processed {@link BlockData} containing rotational adjustments.
+     * @param bakedCustom The pre-processed {@link CustomBlock} instance, or null if vanilla.
      */
     public static void placeBlock(WorldGenAccess level, Location location, BlockInfo info, BlockData bakedData, CustomBlock bakedCustom) {
         if (location.getBlockY() < location.getWorld().getMinHeight() || location.getBlockY() >= location.getWorld().getMaxHeight()) {

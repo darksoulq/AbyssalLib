@@ -12,8 +12,8 @@ import org.checkerframework.common.value.qual.IntRange;
 
 public class OminousAmplifier extends DataComponent<Integer> implements Vanilla {
     public static final Codec<OminousAmplifier> CODEC = Codecs.INT.xmap(
-            OminousAmplifier::new,
-            OminousAmplifier::getValue
+        OminousAmplifier::new,
+        OminousAmplifier::getValue
     );
     public static final DataComponentType<OminousAmplifier> TYPE = DataComponentType.valued(CODEC, amplifier -> new OminousAmplifier((OminousBottleAmplifier) amplifier));
 

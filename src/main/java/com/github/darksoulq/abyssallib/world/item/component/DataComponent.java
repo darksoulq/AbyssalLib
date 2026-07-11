@@ -13,7 +13,8 @@ import java.util.Objects;
  * @param <T> The type of the value stored within this component.
  */
 public abstract class DataComponent<T> {
-    /** * The internal value held by this component.
+    /**
+     * The internal value held by this component.
      * This may represent a primitive, a complex object, or an Adventure Component.
      */
     protected final T value;

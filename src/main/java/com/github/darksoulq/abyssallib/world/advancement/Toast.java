@@ -24,29 +24,33 @@ import java.util.UUID;
  */
 public class Toast {
 
-    /** The first line of text displayed in the toast. */
+    /**
+     * The first line of text displayed in the toast.
+     */
     private final Component title;
 
-    /** The second line of text displayed in the toast (nullable). */
+    /**
+     * The second line of text displayed in the toast (nullable).
+     */
     private final Component subtitle;
 
-    /** The item stack used as the visual icon for the notification. */
+    /**
+     * The item stack used as the visual icon for the notification.
+     */
     private final ItemStack icon;
 
-    /** The border frame style used for the notification. */
+    /**
+     * The border frame style used for the notification.
+     */
     private final AdvancementFrame frame;
 
     /**
      * Constructs a new Toast notification.
      *
-     * @param title
-     * The primary header text.
-     * @param subtitle
-     * The sub-header text.
-     * @param icon
-     * The icon to display.
-     * @param frame
-     * The visual {@link AdvancementFrame}.
+     * @param title    The primary header text.
+     * @param subtitle The sub-header text.
+     * @param icon     The icon to display.
+     * @param frame    The visual {@link AdvancementFrame}.
      */
     public Toast(Component title, Component subtitle, ItemStack icon, AdvancementFrame frame) {
         this.title = title;
@@ -60,8 +64,7 @@ public class Toast {
      * This method generates a temporary "fake" advancement, sends completion packets
      * to trigger the UI toast, and schedules a removal packet to clean up the client state.
      *
-     * @param player
-     * The {@link Player} who should receive the toast.
+     * @param player The {@link Player} who should receive the toast.
      */
     public void send(Player player) {
         Key toastKey = Key.key(AbyssalLib.PLUGIN_ID, "toast_" + UUID.randomUUID().toString().replace("-", ""));
@@ -130,8 +133,7 @@ public class Toast {
     /**
      * Creates a new builder instance for constructing Toasts.
      *
-     * @return
-     * A new {@link Builder} instance.
+     * @return A new {@link Builder} instance.
      */
     public static Builder builder() {
         return new Builder();
@@ -152,7 +154,10 @@ public class Toast {
          * @param line1 Primary header.
          * @return This builder.
          */
-        public Builder titlle(Component line1) { this.title = line1; return this; }
+        public Builder titlle(Component line1) {
+            this.title = line1;
+            return this;
+        }
 
         /**
          * Sets the second line of text.
@@ -160,7 +165,10 @@ public class Toast {
          * @param line2 Sub-header.
          * @return This builder.
          */
-        public Builder subtitle(Component line2) { this.subtitle = line2; return this; }
+        public Builder subtitle(Component line2) {
+            this.subtitle = line2;
+            return this;
+        }
 
         /**
          * Sets the icon for the toast.
@@ -168,7 +176,10 @@ public class Toast {
          * @param icon The {@link ItemStack} icon.
          * @return This builder.
          */
-        public Builder icon(ItemStack icon) { this.icon = icon; return this; }
+        public Builder icon(ItemStack icon) {
+            this.icon = icon;
+            return this;
+        }
 
         /**
          * Sets the frame border style.
@@ -176,14 +187,18 @@ public class Toast {
          * @param frame Visual frame.
          * @return This builder.
          */
-        public Builder frame(AdvancementFrame frame) { this.frame = frame; return this; }
+        public Builder frame(AdvancementFrame frame) {
+            this.frame = frame;
+            return this;
+        }
 
         /**
          * Finalizes the construction of the Toast.
          *
-         * @return
-         * A new {@link Toast} instance.
+         * @return A new {@link Toast} instance.
          */
-        public Toast build() { return new Toast(title, subtitle, icon, frame); }
+        public Toast build() {
+            return new Toast(title, subtitle, icon, frame);
+        }
     }
 }

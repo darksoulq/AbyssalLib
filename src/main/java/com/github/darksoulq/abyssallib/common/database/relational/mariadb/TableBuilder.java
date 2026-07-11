@@ -28,20 +28,30 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      * @throws RuntimeException If connection retrieval fails.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Returns the MariaDB auto-increment keyword.
+     *
      * @return {@code "AUTO_INCREMENT"}
      */
     @Override
-    protected String getAutoIncrementKeyword() { return "AUTO_INCREMENT"; }
+    protected String getAutoIncrementKeyword() {
+        return "AUTO_INCREMENT";
+    }
 
     /**
      * Returns the InnoDB engine specification used by MariaDB for ACID compliance.
+     *
      * @return {@code " ENGINE=InnoDB"}
      */
     @Override
-    protected String getTableOptionsSuffix() { return " ENGINE=InnoDB"; }
+    protected String getTableOptionsSuffix() {
+        return " ENGINE=InnoDB";
+    }
 }

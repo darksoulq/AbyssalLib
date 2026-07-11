@@ -27,7 +27,9 @@ public class SimpleBlockStateProvider extends BlockStateProvider {
      */
     public static final BlockStateProviderType<SimpleBlockStateProvider> TYPE = () -> CODEC;
 
-    /** The constant block state to return. */
+    /**
+     * The constant block state to return.
+     */
     private final BlockInfo state;
 
     /**

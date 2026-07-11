@@ -145,8 +145,8 @@ public class PermissionWebServer {
                         JsonArray parents = new JsonArray();
                         group.getParentNodes().forEach(n -> {
                             JsonObject pObj = new JsonObject();
-                            pObj.addProperty("key", n.getKey());
-                            pObj.addProperty("expiry", n.getExpiry());
+                            pObj.addProperty("key", n.key());
+                            pObj.addProperty("expiry", n.expiry());
                             parents.add(pObj);
                         });
                         obj.add("parents", parents);
@@ -154,9 +154,9 @@ public class PermissionWebServer {
                         JsonArray nodes = new JsonArray();
                         group.getNodes().forEach(n -> {
                             JsonObject nObj = new JsonObject();
-                            nObj.addProperty("key", n.getKey());
-                            nObj.addProperty("value", n.getValue());
-                            nObj.addProperty("expiry", n.getExpiry());
+                            nObj.addProperty("key", n.key());
+                            nObj.addProperty("value", n.value());
+                            nObj.addProperty("expiry", n.expiry());
                             nodes.add(nObj);
                         });
                         obj.add("nodes", nodes);
@@ -179,8 +179,8 @@ public class PermissionWebServer {
                             JsonArray parents = new JsonArray();
                             user.getParentNodes().forEach(n -> {
                                 JsonObject pObj = new JsonObject();
-                                pObj.addProperty("key", n.getKey());
-                                pObj.addProperty("expiry", n.getExpiry());
+                                pObj.addProperty("key", n.key());
+                                pObj.addProperty("expiry", n.expiry());
                                 parents.add(pObj);
                             });
                             obj.add("parents", parents);
@@ -188,9 +188,9 @@ public class PermissionWebServer {
                             JsonArray nodes = new JsonArray();
                             user.getNodes().forEach(n -> {
                                 JsonObject nObj = new JsonObject();
-                                nObj.addProperty("key", n.getKey());
-                                nObj.addProperty("value", n.getValue());
-                                nObj.addProperty("expiry", n.getExpiry());
+                                nObj.addProperty("key", n.key());
+                                nObj.addProperty("value", n.value());
+                                nObj.addProperty("expiry", n.expiry());
                                 nodes.add(nObj);
                             });
                             obj.add("nodes", nodes);

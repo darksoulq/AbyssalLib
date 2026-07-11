@@ -35,7 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class EnergyNetwork {
 
-    private EnergyNetwork() {}
+    private EnergyNetwork() {
+    }
 
     /**
      * Shared JSON mapper used for persistence.

@@ -33,22 +33,38 @@ public class BarModels {
      * A fluent builder class used to configure and register bar models into a {@link Namespace}.
      */
     public static class Builder {
-        /** The namespace for asset registration. */
+        /**
+         * The namespace for asset registration.
+         */
         private final Namespace ns;
-        /** The base identifier for the bar asset. */
+        /**
+         * The base identifier for the bar asset.
+         */
         private final String name;
-        /** The visual axis of the bar. */
+        /**
+         * The visual axis of the bar.
+         */
         private final Axis axis;
-        /** The number of discrete visual increments. */
+        /**
+         * The number of discrete visual increments.
+         */
         private int steps = 8;
-        /** Whether to automatically register .mcmeta files for fill layers. */
+        /**
+         * Whether to automatically register .mcmeta files for fill layers.
+         */
         private boolean animatedFill = false;
 
-        /** The fallback branch for rendering. */
+        /**
+         * The fallback branch for rendering.
+         */
         private Branch defaultBranch;
-        /** Conditional branches for state-based rendering. */
+        /**
+         * Conditional branches for state-based rendering.
+         */
         private final Map<List<String>, Branch> branches = new LinkedHashMap<>();
-        /** Cache for reusable model selectors. */
+        /**
+         * Cache for reusable model selectors.
+         */
         private final Map<String, Selector.Model> modelCache = new HashMap<>();
 
         /**
@@ -218,11 +234,17 @@ public class BarModels {
      * Internal container for texture configuration of a single bar style.
      */
     private static class Branch {
-        /** Background texture. */
+        /**
+         * Background texture.
+         */
         String underlay;
-        /** Incremental fill texture base. */
+        /**
+         * Incremental fill texture base.
+         */
         String fillBase;
-        /** Foreground texture. */
+        /**
+         * Foreground texture.
+         */
         String overlay;
 
         /**
@@ -243,9 +265,13 @@ public class BarModels {
      * Internal node for building nested selector logic trees.
      */
     private static class Node {
-        /** Map of child nodes based on metadata strings. */
+        /**
+         * Map of child nodes based on metadata strings.
+         */
         Map<String, Node> children = new LinkedHashMap<>();
-        /** The leaf selector at this node. */
+        /**
+         * The leaf selector at this node.
+         */
         Selector leaf;
 
         /**

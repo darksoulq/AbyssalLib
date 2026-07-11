@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ItemModel extends DataComponent<Key> implements Vanilla {
     public static final Codec<ItemModel> CODEC = Codecs.KEY.xmap(
-            ItemModel::new,
-            ItemModel::getValue
+        ItemModel::new,
+        ItemModel::getValue
     );
     public static final DataComponentType<ItemModel> TYPE = DataComponentType.valued(CODEC, ItemModel::new);
 

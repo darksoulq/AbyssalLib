@@ -12,7 +12,9 @@ import java.util.function.Function;
  * transaction handling with automatic rollback capability.
  */
 public abstract class AbstractDatabase {
-    /** The thread pool used for executing asynchronous database queries. */
+    /**
+     * The thread pool used for executing asynchronous database queries.
+     */
     protected final ExecutorService asyncPool;
 
     /**

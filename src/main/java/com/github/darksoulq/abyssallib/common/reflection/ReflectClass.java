@@ -15,8 +15,11 @@ public class ReflectClass<T> {
     private final Map<MethodKey, ReflectMethod<?>> methodCache = new ConcurrentHashMap<>();
     private final Map<ConstructorKey, ReflectConstructor<T>> constructorCache = new ConcurrentHashMap<>();
 
-    private record MethodKey(String name, List<Class<?>> paramTypes) {}
-    private record ConstructorKey(List<Class<?>> paramTypes) {}
+    private record MethodKey(String name, List<Class<?>> paramTypes) {
+    }
+
+    private record ConstructorKey(List<Class<?>> paramTypes) {
+    }
 
     protected ReflectClass(Class<T> clazz) {
         this.clazz = clazz;
@@ -35,17 +38,49 @@ public class ReflectClass<T> {
         return clazz.getSimpleName();
     }
 
-    public boolean isPublic() { return Modifier.isPublic(modifiers); }
-    public boolean isPrivate() { return Modifier.isPrivate(modifiers); }
-    public boolean isProtected() { return Modifier.isProtected(modifiers); }
-    public boolean isStatic() { return Modifier.isStatic(modifiers); }
-    public boolean isFinal() { return Modifier.isFinal(modifiers); }
-    public boolean isAbstract() { return Modifier.isAbstract(modifiers); }
-    public boolean isInterface() { return Modifier.isInterface(modifiers); }
-    public boolean isEnum() { return clazz.isEnum(); }
-    public boolean isArray() { return clazz.isArray(); }
-    public boolean isAnnotation() { return clazz.isAnnotation(); }
-    public boolean isRecord() { return clazz.isRecord(); }
+    public boolean isPublic() {
+        return Modifier.isPublic(modifiers);
+    }
+
+    public boolean isPrivate() {
+        return Modifier.isPrivate(modifiers);
+    }
+
+    public boolean isProtected() {
+        return Modifier.isProtected(modifiers);
+    }
+
+    public boolean isStatic() {
+        return Modifier.isStatic(modifiers);
+    }
+
+    public boolean isFinal() {
+        return Modifier.isFinal(modifiers);
+    }
+
+    public boolean isAbstract() {
+        return Modifier.isAbstract(modifiers);
+    }
+
+    public boolean isInterface() {
+        return Modifier.isInterface(modifiers);
+    }
+
+    public boolean isEnum() {
+        return clazz.isEnum();
+    }
+
+    public boolean isArray() {
+        return clazz.isArray();
+    }
+
+    public boolean isAnnotation() {
+        return clazz.isAnnotation();
+    }
+
+    public boolean isRecord() {
+        return clazz.isRecord();
+    }
 
     public Result<ReflectClass<?>> getSuperclass() {
         Class<?> superclass = clazz.getSuperclass();

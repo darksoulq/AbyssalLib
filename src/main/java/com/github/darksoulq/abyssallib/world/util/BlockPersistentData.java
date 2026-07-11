@@ -13,7 +13,8 @@ import org.bukkit.persistence.PersistentDataType;
 public final class BlockPersistentData {
     private static final String PREFIX = "abyssallib_block_";
 
-    private BlockPersistentData() {}
+    private BlockPersistentData() {
+    }
 
     /**
      * Returns the persistent data container associated with the block.
@@ -27,12 +28,12 @@ public final class BlockPersistentData {
         NamespacedKey key = keyFor(block);
 
         PersistentDataContainer existing =
-                chunkPDC.get(key, PersistentDataType.TAG_CONTAINER);
+            chunkPDC.get(key, PersistentDataType.TAG_CONTAINER);
 
         if (existing != null) return existing;
 
         PersistentDataContainer created =
-                chunkPDC.getAdapterContext().newPersistentDataContainer();
+            chunkPDC.getAdapterContext().newPersistentDataContainer();
 
         chunkPDC.set(key, PersistentDataType.TAG_CONTAINER, created);
 
@@ -46,7 +47,7 @@ public final class BlockPersistentData {
      */
     public static void remove(Block block) {
         block.getChunk().getPersistentDataContainer()
-                .remove(keyFor(block));
+            .remove(keyFor(block));
     }
 
     private static NamespacedKey keyFor(Block block) {

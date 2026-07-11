@@ -94,7 +94,9 @@ public class CustomEntitySpawnEvent extends Event implements Cancellable {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 
     /**
      * The reason why a custom entity is being spawned.

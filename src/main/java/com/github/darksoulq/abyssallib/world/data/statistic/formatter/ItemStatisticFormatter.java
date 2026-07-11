@@ -30,7 +30,7 @@ public class ItemStatisticFormatter implements StatisticFormatter {
         String catKey = "<lang:stat_type.%s.%s>".formatted(stat.type().id().namespace(), stat.type().id().value());
         String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase()).isBlock() ? "block" : "item";
         String langKey = "<lang:%s.%s.%s>".formatted(type, stat.target().namespace(), stat.target().value());
-        
+
         ItemStack stack = getItem(stat);
         if (stack == null || stack.getType().isAir()) {
             return new DefaultStatisticFormatter().formatChat(stat, value);

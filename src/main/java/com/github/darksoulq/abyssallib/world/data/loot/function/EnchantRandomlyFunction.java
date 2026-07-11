@@ -31,15 +31,21 @@ import java.util.List;
 @SuppressWarnings("UnstableApiUsage")
 public class EnchantRandomlyFunction extends LootFunction {
 
-    /** The codec used for serializing and deserializing this function's configuration. */
+    /**
+     * The codec used for serializing and deserializing this function's configuration.
+     */
     public static final Codec<EnchantRandomlyFunction> CODEC = RecordBuilder.create(instance -> instance.group(
         Codecs.STRING.list().optionalFieldOf("enchantments", Collections.emptyList()).forGetter(EnchantRandomlyFunction.class, p -> p.enchantments)
     ).apply(instance, EnchantRandomlyFunction::new)).describe("EnchantRandomlyFunction");
 
-    /** The registered type definition for this loot function. */
+    /**
+     * The registered type definition for this loot function.
+     */
     public static final LootFunctionType<EnchantRandomlyFunction> TYPE = () -> CODEC;
 
-    /** The list of potential enchantment IDs to choose from. */
+    /**
+     * The list of potential enchantment IDs to choose from.
+     */
     private final List<String> enchantments;
 
     /**

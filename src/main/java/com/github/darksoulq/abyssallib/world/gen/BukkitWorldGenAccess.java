@@ -26,14 +26,11 @@ import java.util.Random;
  *
  * <p>Unlike {@link NMSWorldGenAccess}, this class does not rely on internal
  * server mechanics and instead operates directly on live world data.</p>
+ *
+ * @param world  Target Bukkit world.
+ * @param random Random instance for generation logic.
  */
-public class BukkitWorldGenAccess implements WorldGenAccess {
-
-    /** Target Bukkit world. */
-    private final World world;
-
-    /** Random instance for generation logic. */
-    private final Random random;
+public record BukkitWorldGenAccess(World world, Random random) implements WorldGenAccess {
 
     /**
      * Creates a new Bukkit-based world access wrapper.
@@ -215,7 +212,7 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
      * @return World instance
      */
     @Override
-    public @NotNull World getWorld() {
+    public @NotNull World world() {
         return world;
     }
 
@@ -225,7 +222,7 @@ public class BukkitWorldGenAccess implements WorldGenAccess {
      * @return Random instance
      */
     @Override
-    public @NotNull Random getRandom() {
+    public @NotNull Random random() {
         return random;
     }
 }

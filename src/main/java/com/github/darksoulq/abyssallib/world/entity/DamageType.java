@@ -24,24 +24,34 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Experimental
 public class DamageType {
 
-    /** Unique identifier of the damage type. */
-    private Key id;
+    /**
+     * Unique identifier of the damage type.
+     */
+    private final Key id;
 
-    /** Visual/audio effect applied when this damage is dealt. */
+    /**
+     * Visual/audio effect applied when this damage is dealt.
+     */
     private DamageEffect effect = DamageEffect.HURT;
 
-    /** Scaling behavior for the damage amount. */
+    /**
+     * Scaling behavior for the damage amount.
+     */
     private DamageScaling scaling = DamageScaling.NEVER;
 
-    /** The type of death message displayed if this damage causes death. */
-    private DeathMessageType messageType = DeathMessageType.DEFAULT;
+    /**
+     * The type of death message displayed if this damage causes death.
+     */
+    private final DeathMessageType messageType = DeathMessageType.DEFAULT;
 
     /**
      * The ID of the Death Message (e.g death.attack.<message_id>). Only effective if DeathMessageType is DEFAULT
      */
     private String messageId = "";
 
-    /** The amount of hunger exhaustion this damage produces. */
+    /**
+     * The amount of hunger exhaustion this damage produces.
+     */
     private float exhaustion = 0;
 
     /**
@@ -57,10 +67,12 @@ public class DamageType {
         org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(id);
         return DamageSource.builder(dmg).withCausingEntity(cause).build();
     }
+
     public DamageSource withDirect(Entity direct) {
         org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(id);
         return DamageSource.builder(dmg).withDirectEntity(direct).build();
     }
+
     public DamageSource withLocation(Location loc) {
         org.bukkit.damage.DamageType dmg = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE).getOrThrow(id);
         return DamageSource.builder(dmg).withDamageLocation(loc).build();
@@ -86,7 +98,7 @@ public class DamageType {
     }
 
     protected static class Builder {
-        private Key id;
+        private final Key id;
         private DamageEffect effect = DamageEffect.HURT;
         private DamageScaling scaling = DamageScaling.NEVER;
         private DeathMessageType messageType = DeathMessageType.DEFAULT;
@@ -159,7 +171,7 @@ public class DamageType {
             dmg.scaling = scaling;
             dmg.effect = effect;
             dmg.exhaustion = exhaustion;
-            dmg.messageId =messageId;
+            dmg.messageId = messageId;
             return dmg;
         }
     }

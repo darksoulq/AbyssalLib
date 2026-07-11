@@ -11,9 +11,10 @@ import java.util.*;
 
 public interface Selector {
     String id();
+
     Map<String, Object> toJson();
 
-    public interface Transformation {
+    interface Transformation {
         Object toJson();
 
         record Matrix(Matrix4f matrix) implements Transformation {
@@ -38,10 +39,13 @@ public interface Selector {
             @Override
             public Object toJson() {
                 Map<String, Object> map = new LinkedHashMap<>();
-                if (leftRotation != null) map.put("left_rotation", List.of(leftRotation.x(), leftRotation.y(), leftRotation.z(), leftRotation.w()));
-                if (rightRotation != null) map.put("right_rotation", List.of(rightRotation.x(), rightRotation.y(), rightRotation.z(), rightRotation.w()));
+                if (leftRotation != null)
+                    map.put("left_rotation", List.of(leftRotation.x(), leftRotation.y(), leftRotation.z(), leftRotation.w()));
+                if (rightRotation != null)
+                    map.put("right_rotation", List.of(rightRotation.x(), rightRotation.y(), rightRotation.z(), rightRotation.w()));
                 if (scale != null) map.put("scale", List.of(scale.x(), scale.y(), scale.z()));
-                if (translation != null) map.put("translation", List.of(translation.x(), translation.y(), translation.z()));
+                if (translation != null)
+                    map.put("translation", List.of(translation.x(), translation.y(), translation.z()));
                 return map;
             }
         }
@@ -189,6 +193,7 @@ public interface Selector {
 
             List<Case> getCases();
         }
+
         public interface Case {
             Map<String, Object> toJson();
         }
@@ -247,6 +252,7 @@ public interface Selector {
                 }
             }
         }
+
         public static class CustomModelData implements Property {
             private final int index;
             private final List<Case> cases = new ArrayList<>();
@@ -306,6 +312,7 @@ public interface Selector {
                 }
             }
         }
+
         public static class ChargeType implements Property {
             private final List<Case> cases = new ArrayList<>();
 
@@ -358,6 +365,7 @@ public interface Selector {
                 NONE, ARROW, ROCKET
             }
         }
+
         public static class ContextDimension implements Property {
             private final List<Case> cases = new ArrayList<>();
 
@@ -406,6 +414,7 @@ public interface Selector {
                 }
             }
         }
+
         public static class ContextEntityType implements Property {
             private final List<Case> cases = new ArrayList<>();
 
@@ -454,6 +463,7 @@ public interface Selector {
                 }
             }
         }
+
         public static class DisplayContext implements Property {
             private final List<Case> cases = new ArrayList<>();
 
@@ -507,6 +517,7 @@ public interface Selector {
                 GUI, HEAD, GROUND, FIXED, ON_SHELF, NONE
             }
         }
+
         public static class LocalTime implements Property {
             private final List<Case> cases = new ArrayList<>();
             private String pattern = null;
@@ -610,6 +621,7 @@ public interface Selector {
                 }
             }
         }
+
         public static class MainHand implements Property {
             private final List<Case> cases = new ArrayList<>();
 
@@ -662,6 +674,7 @@ public interface Selector {
                 LEFT, RIGHT
             }
         }
+
         public static class TrimMaterial implements Property {
             private final List<Case> cases = new ArrayList<>();
 
@@ -712,7 +725,8 @@ public interface Selector {
         }
     }
 
-    record Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse, @Nullable Transformation transformation) implements Selector {
+    record Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse,
+                     @Nullable Transformation transformation) implements Selector {
         public Condition(Selector.Condition.Property property, Selector onTrue, Selector onFalse) {
             this(property, onTrue, onFalse, null);
         }
@@ -749,137 +763,140 @@ public interface Selector {
             return json;
         }
 
-            public interface Property {
-                String id();
+        public interface Property {
+            String id();
+        }
+
+        public static class Broken implements Property {
+            @Override
+            public String id() {
+                return "minecraft:broken";
+            }
+        }
+
+        public static class BundleHasSelectedItem implements Property {
+            @Override
+            public String id() {
+                return "minecraft:bundle/has_selected_item";
+            }
+        }
+
+        public static class Carried implements Property {
+            @Override
+            public String id() {
+                return "minecraft:carried";
+            }
+        }
+
+        public record CustomModelData(int index) implements Property {
+            @Override
+            public String id() {
+                return "minecraft:custom_model_data";
+            }
+        }
+
+        public record Component(ValueComponent component) implements Property {
+            @Override
+            public String id() {
+                return "minecraft:component";
+            }
+        }
+
+        public static class Damaged implements Property {
+            @Override
+            public String id() {
+                return "minecraft:damaged";
+            }
+        }
+
+        public static class ExtendedView implements Property {
+            @Override
+            public String id() {
+                return "minecraft:extended_view";
+            }
+        }
+
+        public static class FishingRodCast implements Property {
+            @Override
+            public String id() {
+                return "minecraft:fishing_rod/cast";
+            }
+        }
+
+        public record HasComponent(ContainedComponent component, boolean ignoreDefault) implements Property {
+            @Override
+            public String id() {
+                return "minecraft:has_component";
+            }
+        }
+
+        public record KeybindDown(Condition.KeybindDown.Keybind keybind) implements Property {
+
+            @Override
+            public String id() {
+                return "minecraft:keybind_down";
             }
 
-            public static class Broken implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:broken";
-                }
-            }
-            public static class BundleHasSelectedItem implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:bundle/has_selected_item";
-                }
-            }
-            public static class Carried implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:carried";
-                }
-            }
-            public record CustomModelData(int index) implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:custom_model_data";
-                }
-            }
+            public enum Keybind {
+                ADVANCEMENTS("key.advancements"),
+                ATTACK("key.attack"),
+                BACK("key.back"),
+                CHAT("key.chat"),
+                COMMAND("key.command"),
+                DROP("key.drop"),
+                FORWARD("key.forward"),
+                FULLSCREEN("key.fullscreen"),
+                HOTBAR_1("key.hotbar.1"),
+                HOTBAR_2("key.hotbar.2"),
+                HOTBAR_3("key.hotbar.3"),
+                HOTBAR_4("key.hotbar.4"),
+                HOTBAR_5("key.hotbar.5"),
+                HOTBAR_6("key.hotbar.6"),
+                HOTBAR_7("key.hotbar.7"),
+                HOTBAR_8("key.hotbar.8"),
+                HOTBAR_9("key.hotbar.9"),
+                INVENTORY("key.inventory"),
+                JUMP("key.jump"),
+                LEFT("key.left"),
+                LOAD_TOOLBAR_ACTIVATOR("key.loadToolbarActivator"),
+                SCREENSHOT("key.screenshot"),
+                SMOOTH_CAMERA("key.smoothCamera"),
+                SNEAK("key.sneak"),
+                SPECTATOR_OUTLINES("key.spectatorOutlines"),
+                SPRINT("key.sprint"),
+                SWAP_OFFHAND("key.swapOffhand"),
+                TOGGLE_PERSPECTIVE("key.togglePerspective"),
+                USE("key.use");
 
-            public record Component(ValueComponent component) implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:component";
-                }
-            }
+                public final String type;
 
-            public static class Damaged implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:damaged";
-                }
-            }
-
-            public static class ExtendedView implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:extended_view";
-                }
-            }
-
-            public static class FishingRodCast implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:fishing_rod/cast";
-                }
-            }
-
-            public record HasComponent(ContainedComponent component, boolean ignoreDefault) implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:has_component";
-                }
-            }
-
-            public record KeybindDown(Condition.KeybindDown.Keybind keybind) implements Property {
-
-                @Override
-                public String id() {
-                    return "minecraft:keybind_down";
-                }
-
-                public enum Keybind {
-                    ADVANCEMENTS("key.advancements"),
-                    ATTACK("key.attack"),
-                    BACK("key.back"),
-                    CHAT("key.chat"),
-                    COMMAND("key.command"),
-                    DROP("key.drop"),
-                    FORWARD("key.forward"),
-                    FULLSCREEN("key.fullscreen"),
-                    HOTBAR_1("key.hotbar.1"),
-                    HOTBAR_2("key.hotbar.2"),
-                    HOTBAR_3("key.hotbar.3"),
-                    HOTBAR_4("key.hotbar.4"),
-                    HOTBAR_5("key.hotbar.5"),
-                    HOTBAR_6("key.hotbar.6"),
-                    HOTBAR_7("key.hotbar.7"),
-                    HOTBAR_8("key.hotbar.8"),
-                    HOTBAR_9("key.hotbar.9"),
-                    INVENTORY("key.inventory"),
-                    JUMP("key.jump"),
-                    LEFT("key.left"),
-                    LOAD_TOOLBAR_ACTIVATOR("key.loadToolbarActivator"),
-                    SCREENSHOT("key.screenshot"),
-                    SMOOTH_CAMERA("key.smoothCamera"),
-                    SNEAK("key.sneak"),
-                    SPECTATOR_OUTLINES("key.spectatorOutlines"),
-                    SPRINT("key.sprint"),
-                    SWAP_OFFHAND("key.swapOffhand"),
-                    TOGGLE_PERSPECTIVE("key.togglePerspective"),
-                    USE("key.use");
-
-                    public final String type;
-
-                    Keybind(String type) {
-                        this.type = type;
-                    }
-                }
-            }
-
-            public static class Selected implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:selected";
-                }
-            }
-
-            public static class UsingItem implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:using_item";
-                }
-            }
-
-            public static class ViewEntity implements Property {
-                @Override
-                public String id() {
-                    return "minecraft:view_entity";
+                Keybind(String type) {
+                    this.type = type;
                 }
             }
         }
+
+        public static class Selected implements Property {
+            @Override
+            public String id() {
+                return "minecraft:selected";
+            }
+        }
+
+        public static class UsingItem implements Property {
+            @Override
+            public String id() {
+                return "minecraft:using_item";
+            }
+        }
+
+        public static class ViewEntity implements Property {
+            @Override
+            public String id() {
+                return "minecraft:view_entity";
+            }
+        }
+    }
 
     class Composite implements Selector {
         private final List<Selector> selectors = new LinkedList<>();
@@ -1131,7 +1148,8 @@ public interface Selector {
         }
     }
 
-    record Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base, Selector.Special.Type type, @Nullable Transformation transformation) implements Selector {
+    record Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base, Selector.Special.Type type,
+                   @Nullable Transformation transformation) implements Selector {
 
         public Special(com.github.darksoulq.abyssallib.server.resource.asset.Model base, Selector.Special.Type type) {
             this(base, type, null);
@@ -1300,6 +1318,7 @@ public interface Selector {
                 WALL, GROUND
             }
         }
+
         public static class Bell implements Type {
             @Override
             public String id() {
@@ -1311,6 +1330,7 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
+
         public record Book(float openAngle, float page1, float page2) implements Type {
             @Override
             public String id() {
@@ -1327,6 +1347,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Conduit implements Type {
             @Override
             public String id() {
@@ -1338,6 +1359,7 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
+
         public record Chest(Texture texture, int openness, @Nullable ChestType chestType) implements Type {
             public Chest(Texture texture, int openness) {
                 this(texture, openness, null);
@@ -1362,6 +1384,7 @@ public interface Selector {
                 SINGLE, LEFT, RIGHT
             }
         }
+
         public static class DecoratedPot implements Type {
             @Override
             public String id() {
@@ -1373,6 +1396,7 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
+
         public record EndCube(Effect effect) implements Type {
             @Override
             public String id() {
@@ -1391,6 +1415,7 @@ public interface Selector {
                 PORTAL, GATEWAY
             }
         }
+
         public record Head(HeadType kind, Texture texture, int animationTime) implements Type {
             public Head(HeadType kind, @Nullable Texture texture, int animationTime) {
                 this.kind = kind;
@@ -1422,6 +1447,7 @@ public interface Selector {
                 return json;
             }
         }
+
         public static class Shield implements Type {
             @Override
             public String id() {
@@ -1433,37 +1459,24 @@ public interface Selector {
                 return Map.of("type", id());
             }
         }
-        public static class ShulkerBox implements Type {
-            private final Texture texture;
-            private final int openness;
 
-            public ShulkerBox(Texture texture, int openness) {
-                this.texture = texture;
-                this.openness = openness;
-            }
-
-            public Texture getTexture() {
-                return texture;
-            }
-
-            public int getOpenness() {
-                return openness;
-            }
+        public record ShulkerBox(Texture texture, int openness) implements Type {
 
             @Override
-            public String id() {
-                return "minecraft:shulker_box";
-            }
+                    public String id() {
+                        return "minecraft:shulker_box";
+                    }
 
-            @Override
-            public Map<String, Object> toJson() {
-                Map<String, Object> json = new LinkedHashMap<>();
-                json.put("type", id());
-                json.put("texture", texture.file());
-                json.put("openness", openness);
-                return json;
-            }
-        }
+                    @Override
+                    public Map<String, Object> toJson() {
+                        Map<String, Object> json = new LinkedHashMap<>();
+                        json.put("type", id());
+                        json.put("texture", texture.file());
+                        json.put("openness", openness);
+                        return json;
+                    }
+                }
+
         public static class Trident implements Type {
             @Override
             public String id() {

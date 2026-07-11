@@ -179,7 +179,8 @@ public class StructureBlockMenu {
         gui.getElements().put(SlotPosition.top(49), makeButton(Items.CHECKMARK,
             Component.text("LOAD", NamedTextColor.GREEN, TextDecoration.BOLD),
             ignored -> {
-                if (tile.load()) player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));
+                if (tile.load())
+                    player.sendMessage(Component.text("Structure loaded successfully!", NamedTextColor.GREEN));
                 else player.sendMessage(Component.text("Structure load failed. Check name.", NamedTextColor.RED));
             },
             Component.text("Click to load structure", NamedTextColor.GRAY)

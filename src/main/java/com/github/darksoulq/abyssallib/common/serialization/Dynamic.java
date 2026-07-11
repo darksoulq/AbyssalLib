@@ -19,10 +19,11 @@ public record Dynamic<T>(DynamicOps<T> ops, T value) {
     /**
      * Creates a new dynamic wrapper.
      *
-     * @param ops the operations implementation associated with the value
+     * @param ops   the operations implementation associated with the value
      * @param value the wrapped serialized value
      */
-    public Dynamic {}
+    public Dynamic {
+    }
 
     /**
      * Returns the operations implementation associated with this value.
@@ -67,7 +68,7 @@ public record Dynamic<T>(DynamicOps<T> ops, T value) {
     /**
      * Sets a value at the specified path.
      *
-     * @param path the destination path
+     * @param path  the destination path
      * @param value the value to store
      * @return a new dynamic instance containing the updated structure
      */
@@ -78,7 +79,7 @@ public record Dynamic<T>(DynamicOps<T> ops, T value) {
     /**
      * Sets a value at the specified path using another dynamic wrapper.
      *
-     * @param path the destination path
+     * @param path    the destination path
      * @param dynamic the dynamic containing the value to store
      * @return a new dynamic instance containing the updated structure
      */
@@ -89,7 +90,7 @@ public record Dynamic<T>(DynamicOps<T> ops, T value) {
     /**
      * Applies a transformation to the value located at the specified path.
      *
-     * @param path the target path
+     * @param path   the target path
      * @param editor the function used to transform the value
      * @return a new dynamic instance containing the updated structure
      */
@@ -111,7 +112,7 @@ public record Dynamic<T>(DynamicOps<T> ops, T value) {
      * Converts the wrapped value to a different serialized format.
      *
      * @param outOps the target operations implementation
-     * @param <R> the target serialized value type
+     * @param <R>    the target serialized value type
      * @return a dynamic wrapper containing the converted value
      */
     public <R> Dynamic<R> convert(DynamicOps<R> outOps) {

@@ -15,7 +15,9 @@ import java.util.function.Consumer;
  */
 public class GuiButton extends GuiItem {
 
-    /** The action to execute upon clicking the button. */
+    /**
+     * The action to execute upon clicking the button.
+     */
     private final Consumer<GuiClickContext> action;
 
     /**

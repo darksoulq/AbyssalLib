@@ -187,7 +187,7 @@ public interface WorldGenAccess {
      *
      * @return The world associated with this generation access
      */
-    @NotNull World getWorld();
+    @NotNull World world();
 
     /**
      * Returns the {@link Random} instance used for this generation pass.
@@ -197,5 +197,5 @@ public interface WorldGenAccess {
      *
      * @return The random source
      */
-    @NotNull Random getRandom();
+    @NotNull Random random();
 }

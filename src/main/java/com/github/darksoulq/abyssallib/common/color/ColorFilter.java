@@ -68,7 +68,7 @@ public interface ColorFilter extends UnaryOperator<Color> {
      * Creates a filter that adjusts the brightness of a color.
      *
      * @param factor The brightness multiplier. Values {@code > 1.0} brighten,
-     * values {@code < 1.0} darken.
+     *               values {@code < 1.0} darken.
      * @return A brightness adjustment {@link ColorFilter}.
      */
     static ColorFilter brightness(float factor) {
@@ -79,7 +79,7 @@ public interface ColorFilter extends UnaryOperator<Color> {
      * Creates a filter that adjusts the saturation of a color.
      *
      * @param factor The saturation multiplier. Values {@code > 1.0} increase intensity,
-     * values {@code < 1.0} desaturate.
+     *               values {@code < 1.0} desaturate.
      * @return A saturation adjustment {@link ColorFilter}.
      */
     static ColorFilter saturation(float factor) {
@@ -94,7 +94,7 @@ public interface ColorFilter extends UnaryOperator<Color> {
      * </p>
      *
      * @param factor The contrast factor. Values {@code > 1.0} increase contrast,
-     * values {@code < 1.0} decrease it.
+     *               values {@code < 1.0} decrease it.
      * @return A contrast adjustment {@link ColorFilter}.
      */
     static ColorFilter contrast(float factor) {
@@ -104,7 +104,7 @@ public interface ColorFilter extends UnaryOperator<Color> {
                 rgb[i] = ((rgb[i] - 0.5f) * factor) + 0.5f;
                 rgb[i] = Math.max(0, Math.min(1, rgb[i]));
             }
-            return Color.fromRGB((int)(rgb[0] * 255), (int)(rgb[1] * 255), (int)(rgb[2] * 255));
+            return Color.fromRGB((int) (rgb[0] * 255), (int) (rgb[1] * 255), (int) (rgb[2] * 255));
         };
     }
 

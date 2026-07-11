@@ -19,19 +19,29 @@ import java.util.Map;
  */
 public class Namespace {
 
-    /** The Bukkit {@link Plugin} that owns this namespace. */
+    /**
+     * The Bukkit {@link Plugin} that owns this namespace.
+     */
     private final Plugin plugin;
 
-    /** The string ID of the namespace (e.g., "myplugin"). */
+    /**
+     * The string ID of the namespace (e.g., "myplugin").
+     */
     private final String namespace;
 
-    /** The parent {@link ResourcePack} this namespace belongs to. */
+    /**
+     * The parent {@link ResourcePack} this namespace belongs to.
+     */
     private final ResourcePack pack;
 
-    /** The list of all {@link Asset} objects registered under this namespace. */
+    /**
+     * The list of all {@link Asset} objects registered under this namespace.
+     */
     private final List<Asset> assets = new ArrayList<>();
 
-    /** An optional {@link Texture} used as a visual icon for this namespace in library menus. */
+    /**
+     * An optional {@link Texture} used as a visual icon for this namespace in library menus.
+     */
     private Texture icon = null;
 
     /**
@@ -482,22 +492,30 @@ public class Namespace {
         return namespace + ":" + path;
     }
 
-    /** @return The Bukkit {@link Plugin} associated with this namespace. */
+    /**
+     * @return The Bukkit {@link Plugin} associated with this namespace.
+     */
     public @NotNull Plugin getPlugin() {
         return plugin;
     }
 
-    /** @return The ID of this namespace. */
+    /**
+     * @return The ID of this namespace.
+     */
     public @NotNull String getNamespace() {
         return namespace;
     }
 
-    /** @return The parent {@link ResourcePack}. */
+    /**
+     * @return The parent {@link ResourcePack}.
+     */
     public @NotNull ResourcePack getPack() {
         return pack;
     }
 
-    /** @return The {@link Texture} used as an icon for this namespace, or null. */
+    /**
+     * @return The {@link Texture} used as an icon for this namespace, or null.
+     */
     public Texture getIcon() {
         return icon;
     }

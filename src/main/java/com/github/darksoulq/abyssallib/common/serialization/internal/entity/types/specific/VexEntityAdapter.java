@@ -53,7 +53,7 @@ public class VexEntityAdapter extends EntityAdapter<Vex> {
                 Entity summoner = Bukkit.getEntity(uuid);
                 //? if <=26.1.2 {
                 /*if (summoner instanceof Mob mob) vex.setSummoner(mob);
-                *///?} else {
+                 *///?} else {
                 if (summoner instanceof LivingEntity livingOwner) vex.setOwner(livingOwner);
                 //?}
             }));

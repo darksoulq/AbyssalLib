@@ -31,10 +31,10 @@ public class CoreShader implements Asset {
 
     public CoreShader(String namespace, String name, String vsh, String fsh, String json) {
         this(
-            namespace, 
-            name, 
-            vsh != null ? vsh.getBytes(StandardCharsets.UTF_8) : null, 
-            fsh != null ? fsh.getBytes(StandardCharsets.UTF_8) : null, 
+            namespace,
+            name,
+            vsh != null ? vsh.getBytes(StandardCharsets.UTF_8) : null,
+            fsh != null ? fsh.getBytes(StandardCharsets.UTF_8) : null,
             json != null ? json.getBytes(StandardCharsets.UTF_8) : null
         );
     }

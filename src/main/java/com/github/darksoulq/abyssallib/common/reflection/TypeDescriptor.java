@@ -16,11 +16,25 @@ public class TypeDescriptor {
         return type;
     }
 
-    public boolean isClass() { return type instanceof Class<?>; }
-    public boolean isParameterized() { return type instanceof ParameterizedType; }
-    public boolean isWildcard() { return type instanceof WildcardType; }
-    public boolean isGenericArray() { return type instanceof GenericArrayType; }
-    public boolean isTypeVariable() { return type instanceof TypeVariable<?>; }
+    public boolean isClass() {
+        return type instanceof Class<?>;
+    }
+
+    public boolean isParameterized() {
+        return type instanceof ParameterizedType;
+    }
+
+    public boolean isWildcard() {
+        return type instanceof WildcardType;
+    }
+
+    public boolean isGenericArray() {
+        return type instanceof GenericArrayType;
+    }
+
+    public boolean isTypeVariable() {
+        return type instanceof TypeVariable<?>;
+    }
 
     public Result<ReflectClass<?>> rawType() {
         if (type instanceof ParameterizedType pt) {

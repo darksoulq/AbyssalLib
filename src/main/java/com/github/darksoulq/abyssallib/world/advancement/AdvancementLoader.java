@@ -219,7 +219,7 @@ public class AdvancementLoader {
         StringBuilder pathBuilder = new StringBuilder();
         for (int i = 1; i < relative.getNameCount(); i++) {
             if (i > 1) pathBuilder.append("/");
-            pathBuilder.append(relative.getName(i).toString());
+            pathBuilder.append(relative.getName(i));
         }
 
         String fullPath = pathBuilder.toString();

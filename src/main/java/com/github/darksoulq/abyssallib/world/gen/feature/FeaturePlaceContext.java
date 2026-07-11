@@ -19,4 +19,5 @@ public record FeaturePlaceContext<C extends FeatureConfig>(
     Location origin,
     Random random,
     C config
-) {}
+) {
+}

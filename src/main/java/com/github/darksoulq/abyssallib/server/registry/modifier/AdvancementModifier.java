@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AdvancementModifier implements DeferredRegistryModifier {
-    
+
     private final List<AdvancementHolder> newAdvancements = new ArrayList<>();
     private final Map<AdvancementHolder, Advancement> customAdvancementMap = new HashMap<>();
 

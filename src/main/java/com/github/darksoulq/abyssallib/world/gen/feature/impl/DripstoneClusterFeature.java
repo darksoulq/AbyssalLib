@@ -66,8 +66,8 @@ public class DripstoneClusterFeature extends Feature<DripstoneClusterFeature.Con
                 for (int y = 0; y < localHeight; y++) {
                     Location target = currentOrigin.clone().add(0, config.upward() ? y : -y, 0);
 
-                    if (target.getBlockY() < context.level().getWorld().getMinHeight() ||
-                        target.getBlockY() >= context.level().getWorld().getMaxHeight()) {
+                    if (target.getBlockY() < context.level().world().getMinHeight() ||
+                        target.getBlockY() >= context.level().world().getMaxHeight()) {
                         break;
                     }
 
@@ -110,7 +110,8 @@ public class DripstoneClusterFeature extends Feature<DripstoneClusterFeature.Con
      * @param maxHeight     The maximum possible block length for the central columns.
      * @param upward        True to generate the cluster growing upwards, false for downwards.
      */
-    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, int radius, int maxHeight, boolean upward) implements FeatureConfig {
+    public record Config(BlockStateProvider stateProvider, List<BlockInfo> targets, int radius, int maxHeight,
+                         boolean upward) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the configuration.

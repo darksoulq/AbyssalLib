@@ -302,7 +302,7 @@ public class Model implements Asset {
         public JsonObject toJson() {
             JsonObject obj = new JsonObject();
             if (rotation != null) obj.add("rotation", toArray(rotation));
-            if (translation != null)obj.add("translation", toArray(translation));
+            if (translation != null) obj.add("translation", toArray(translation));
             if (scale != null) obj.add("scale", toArray(scale));
             return obj;
         }

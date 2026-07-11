@@ -31,7 +31,9 @@ public class RandomChanceCondition extends LootCondition {
      */
     public static final LootConditionType<RandomChanceCondition> TYPE = () -> CODEC;
 
-    /** The probability threshold for the condition to pass (0.0 to 1.0). */
+    /**
+     * The probability threshold for the condition to pass (0.0 to 1.0).
+     */
     private final float chance;
 
     /**

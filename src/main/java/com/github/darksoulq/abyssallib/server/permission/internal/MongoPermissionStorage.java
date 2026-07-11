@@ -26,17 +26,17 @@ public class MongoPermissionStorage implements PermissionStorage {
         db.executor().collection("permission_groups").select(doc -> {
             PermissionGroup group = new PermissionGroup(doc.getString("_id"));
             group.setWeight(doc.getInteger("weight", 0));
-            
+
             List<Document> parents = doc.getList("parents", Document.class, new ArrayList<>());
             for (Document pDoc : parents) {
                 group.parents.put(pDoc.getString("key"), new Node(pDoc.getString("key"), true, pDoc.getLong("expiry")));
             }
-            
+
             List<Document> nodes = doc.getList("nodes", Document.class, new ArrayList<>());
             for (Document nDoc : nodes) {
                 group.permissions.put(nDoc.getString("key"), new Node(nDoc.getString("key"), nDoc.getBoolean("val"), nDoc.getLong("expiry")));
             }
-            
+
             Registries.PERMISSION_GROUPS.register(group.getId(), group);
             return null;
         });
@@ -47,12 +47,12 @@ public class MongoPermissionStorage implements PermissionStorage {
         PermissionUser user = new PermissionUser(uuid);
         db.executor().collection("permission_users").filter("_id", uuid.toString()).select(doc -> {
             user.setName(doc.getString("name"));
-            
+
             List<Document> parents = doc.getList("parents", Document.class, new ArrayList<>());
             for (Document pDoc : parents) {
                 user.parents.put(pDoc.getString("key"), new Node(pDoc.getString("key"), true, pDoc.getLong("expiry")));
             }
-            
+
             List<Document> nodes = doc.getList("nodes", Document.class, new ArrayList<>());
             for (Document nDoc : nodes) {
                 user.permissions.put(nDoc.getString("key"), new Node(nDoc.getString("key"), nDoc.getBoolean("val"), nDoc.getLong("expiry")));
@@ -84,17 +84,17 @@ public class MongoPermissionStorage implements PermissionStorage {
     @Override
     public void saveGroup(PermissionGroup group) {
         Document doc = new Document("_id", group.getId())
-                .append("weight", group.getWeight());
-                
+            .append("weight", group.getWeight());
+
         List<Document> parents = new ArrayList<>();
         for (Node p : group.getParentNodes()) {
-            parents.add(new Document("key", p.getKey()).append("expiry", p.getExpiry()));
+            parents.add(new Document("key", p.key()).append("expiry", p.expiry()));
         }
         doc.append("parents", parents);
-        
+
         List<Document> nodes = new ArrayList<>();
         for (Node n : group.getNodes()) {
-            nodes.add(new Document("key", n.getKey()).append("val", n.getValue()).append("expiry", n.getExpiry()));
+            nodes.add(new Document("key", n.key()).append("val", n.value()).append("expiry", n.expiry()));
         }
         doc.append("nodes", nodes);
 
@@ -104,17 +104,17 @@ public class MongoPermissionStorage implements PermissionStorage {
     @Override
     public void saveUser(PermissionUser user) {
         Document doc = new Document("_id", user.getUuid().toString())
-                .append("name", user.getName());
-                
+            .append("name", user.getName());
+
         List<Document> parents = new ArrayList<>();
         for (Node p : user.getParentNodes()) {
-            parents.add(new Document("key", p.getKey()).append("expiry", p.getExpiry()));
+            parents.add(new Document("key", p.key()).append("expiry", p.expiry()));
         }
         doc.append("parents", parents);
-        
+
         List<Document> nodes = new ArrayList<>();
         for (Node n : user.getNodes()) {
-            nodes.add(new Document("key", n.getKey()).append("val", n.getValue()).append("expiry", n.getExpiry()));
+            nodes.add(new Document("key", n.key()).append("val", n.value()).append("expiry", n.expiry()));
         }
         doc.append("nodes", nodes);
 
@@ -145,6 +145,7 @@ public class MongoPermissionStorage implements PermissionStorage {
     public void shutdown() {
         try {
             db.disconnect();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

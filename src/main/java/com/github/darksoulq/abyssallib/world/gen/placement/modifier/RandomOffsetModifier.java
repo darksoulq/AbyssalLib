@@ -32,10 +32,14 @@ public class RandomOffsetModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<RandomOffsetModifier> TYPE = () -> CODEC;
 
-    /** The maximum horizontal distance (positive or negative) to offset the position. */
+    /**
+     * The maximum horizontal distance (positive or negative) to offset the position.
+     */
     private final int xzSpread;
 
-    /** The maximum vertical distance (positive or negative) to offset the position. */
+    /**
+     * The maximum vertical distance (positive or negative) to offset the position.
+     */
     private final int ySpread;
 
     /**

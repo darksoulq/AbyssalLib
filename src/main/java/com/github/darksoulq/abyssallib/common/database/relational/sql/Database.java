@@ -14,9 +14,13 @@ import java.util.function.Function;
  * It uses a cached thread pool for asynchronous operations and enforces foreign key constraints by default.
  */
 public class Database extends AbstractDatabase {
-    /** The SQLite database file on the local file system. */
+    /**
+     * The SQLite database file on the local file system.
+     */
     private final File file;
-    /** The active JDBC connection to the SQLite database. */
+    /**
+     * The active JDBC connection to the SQLite database.
+     */
     private Connection connection;
 
     /**

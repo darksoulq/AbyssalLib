@@ -15,12 +15,36 @@ public class RealtimeTaskDispatcher {
             : EXECUTOR.schedule(wrapped, delayMillis, TimeUnit.MILLISECONDS);
 
         return new ScheduledTask() {
-            @Override public void cancel() { abstractTask.cancel(); future.cancel(false); }
-            @Override public boolean isCancelled() { return abstractTask.isCancelled(); }
-            @Override public boolean isRunning() { return abstractTask.isRunning(); }
-            @Override public Instant nextExecution() { return abstractTask.nextExecution(); }
-            @Override public Optional<Throwable> failure() { return abstractTask.failure(); }
-            @Override public CompletionStage<Void> completion() { return abstractTask.completion(); }
+            @Override
+            public void cancel() {
+                abstractTask.cancel();
+                future.cancel(false);
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return abstractTask.isCancelled();
+            }
+
+            @Override
+            public boolean isRunning() {
+                return abstractTask.isRunning();
+            }
+
+            @Override
+            public Instant nextExecution() {
+                return abstractTask.nextExecution();
+            }
+
+            @Override
+            public Optional<Throwable> failure() {
+                return abstractTask.failure();
+            }
+
+            @Override
+            public CompletionStage<Void> completion() {
+                return abstractTask.completion();
+            }
         };
     }
 }

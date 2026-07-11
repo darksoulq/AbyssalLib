@@ -11,8 +11,8 @@ import org.bukkit.inventory.meta.trim.TrimMaterial;
 
 public class ProvidesTrimMaterial extends DataComponent<TrimMaterial> implements Vanilla {
     public static final Codec<ProvidesTrimMaterial> CODEC = ExtraCodecs.TRIM_MATERIAL.xmap(
-            ProvidesTrimMaterial::new,
-            ProvidesTrimMaterial::getValue
+        ProvidesTrimMaterial::new,
+        ProvidesTrimMaterial::getValue
     );
     public static final DataComponentType<ProvidesTrimMaterial> TYPE = DataComponentType.valued(CODEC, ProvidesTrimMaterial::new);
 

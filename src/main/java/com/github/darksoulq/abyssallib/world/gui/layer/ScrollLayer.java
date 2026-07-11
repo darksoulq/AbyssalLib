@@ -18,25 +18,39 @@ import java.util.function.BiFunction;
  */
 public class ScrollLayer<T> implements GuiLayer {
 
-    /** The master list of data objects to be displayed. */
+    /**
+     * The master list of data objects to be displayed.
+     */
     protected final List<T> source;
 
-    /** Function to map data objects to interactive GUI elements based on their global index. */
+    /**
+     * Function to map data objects to interactive GUI elements based on their global index.
+     */
     protected final BiFunction<T, Integer, GuiElement> mapper;
 
-    /** The specific inventory slot indices available for the scrollable content. */
+    /**
+     * The specific inventory slot indices available for the scrollable content.
+     */
     protected final int[] slots;
 
-    /** The target inventory segment (TOP or BOTTOM). */
+    /**
+     * The target inventory segment (TOP or BOTTOM).
+     */
     protected final GuiView.Segment segment;
 
-    /** The number of elements to jump forward or backward during a scroll action. */
+    /**
+     * The number of elements to jump forward or backward during a scroll action.
+     */
     protected final int scrollStep;
 
-    /** The current starting index in the source list for rendering. */
+    /**
+     * The current starting index in the source list for rendering.
+     */
     protected int scrollOffset = 0;
 
-    /** Tracks the last rendered offset to optimize updates and prevent redundant logic. */
+    /**
+     * Tracks the last rendered offset to optimize updates and prevent redundant logic.
+     */
     protected int lastRenderedOffset = -1;
 
     /**

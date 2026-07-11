@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class MaxStackSize extends DataComponent<Integer> implements Vanilla {
     public static final Codec<MaxStackSize> CODEC = Codecs.INT.xmap(
-            MaxStackSize::new,
-            MaxStackSize::getValue
+        MaxStackSize::new,
+        MaxStackSize::getValue
     );
     public static final DataComponentType<MaxStackSize> TYPE = DataComponentType.valued(CODEC, MaxStackSize::new);
 

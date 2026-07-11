@@ -14,7 +14,8 @@ public final class SlotUtil {
     /**
      * Private constructor to prevent instantiation.
      */
-    private SlotUtil() {}
+    private SlotUtil() {
+    }
 
     /**
      * Generates a list of positions forming the border of a rectangular area.

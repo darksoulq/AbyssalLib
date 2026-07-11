@@ -17,11 +17,17 @@ import java.util.List;
  */
 public class Timeline implements Transformer {
 
-    /** The total length of the timeline in server ticks. */
+    /**
+     * The total length of the timeline in server ticks.
+     */
     private final long totalDuration;
-    /** Whether the timeline should restart from zero once {@link #totalDuration} is reached. */
+    /**
+     * Whether the timeline should restart from zero once {@link #totalDuration} is reached.
+     */
     private final boolean loop;
-    /** The sorted list of keyframes defining the animation sequence. */
+    /**
+     * The sorted list of keyframes defining the animation sequence.
+     */
     private final List<Keyframe> keyframes;
 
     /**
@@ -84,11 +90,17 @@ public class Timeline implements Transformer {
      * Internal representation of a specific animation segment.
      */
     private static class Keyframe {
-        /** The tick at which this transformation begins. */
+        /**
+         * The tick at which this transformation begins.
+         */
         final long startTime;
-        /** The tick at which this transformation ends (exclusive). */
+        /**
+         * The tick at which this transformation ends (exclusive).
+         */
         final long endTime;
-        /** The underlying logic to apply during this window. */
+        /**
+         * The underlying logic to apply during this window.
+         */
         final Transformer transformer;
 
         /**
@@ -107,11 +119,17 @@ public class Timeline implements Transformer {
      * Fluent builder for the {@link Timeline} class.
      */
     public static class Builder {
-        /** The calculated or explicit duration of the total timeline. */
+        /**
+         * The calculated or explicit duration of the total timeline.
+         */
         private long duration = 0;
-        /** The looping state. Defaults to true. */
+        /**
+         * The looping state. Defaults to true.
+         */
         private boolean loop = true;
-        /** The staging list for keyframes. */
+        /**
+         * The staging list for keyframes.
+         */
         private final List<Keyframe> keyframes = new ArrayList<>();
 
         /**

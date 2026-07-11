@@ -42,12 +42,12 @@ public abstract class AbstractEnergyNode implements EnergyNode {
     /**
      * The maximum amount of energy that can be inserted per operation.
      */
-    private double maxInsert;
+    private final double maxInsert;
 
     /**
      * The maximum amount of energy that can be extracted per operation.
      */
-    private double maxExtract;
+    private final double maxExtract;
 
     /**
      * Creates a new energy node with explicit configuration.

@@ -18,30 +18,48 @@ import java.util.concurrent.ExecutorService;
  * @param <T> The specific implementation type, allowing for fluent method chaining.
  */
 public abstract class AbstractBatchQuery<T extends AbstractBatchQuery<T>> {
-    /** The active JDBC connection used to execute the statements. */
+    /**
+     * The active JDBC connection used to execute the statements.
+     */
     protected final Connection connection;
-    /** The name of the database table where the records will be added. */
+    /**
+     * The name of the database table where the records will be added.
+     */
     protected final String table;
-    /** The thread pool used to handle asynchronous execution via {@link CompletableFuture}. */
+    /**
+     * The thread pool used to handle asynchronous execution via {@link CompletableFuture}.
+     */
     protected final ExecutorService asyncPool;
-    /** An array of column names that define the structure of the batch query. */
+    /**
+     * An array of column names that define the structure of the batch query.
+     */
     protected final String[] columns;
-    /** A list containing the rows of data, where each {@code Object[]} matches the length of {@link #columns}. */
+    /**
+     * A list containing the rows of data, where each {@code Object[]} matches the length of {@link #columns}.
+     */
     protected final List<Object[]> records = new ArrayList<>();
 
     /**
      * Enumeration of supported SQL batch operation types.
      */
     protected enum Type {
-        /** Standard SQL INSERT operation. */
+        /**
+         * Standard SQL INSERT operation.
+         */
         INSERT,
-        /** SQL REPLACE operation (typically used in MySQL/SQLite). */
+        /**
+         * SQL REPLACE operation (typically used in MySQL/SQLite).
+         */
         REPLACE,
-        /** SQL INSERT IGNORE operation to skip duplicate key errors. */
+        /**
+         * SQL INSERT IGNORE operation to skip duplicate key errors.
+         */
         INSERT_IGNORE
     }
 
-    /** The current operation type for this query instance, defaults to {@link Type#INSERT}. */
+    /**
+     * The current operation type for this query instance, defaults to {@link Type#INSERT}.
+     */
     protected Type type = Type.INSERT;
 
     /**
@@ -61,24 +79,36 @@ public abstract class AbstractBatchQuery<T extends AbstractBatchQuery<T>> {
 
     /**
      * Sets the batch operation mode to standard INSERT.
+     *
      * @return The current instance cast to type {@code T} for chaining.
      */
     @SuppressWarnings("unchecked")
-    public T insert() { this.type = Type.INSERT; return (T) this; }
+    public T insert() {
+        this.type = Type.INSERT;
+        return (T) this;
+    }
 
     /**
      * Sets the batch operation mode to REPLACE.
+     *
      * @return The current instance cast to type {@code T} for chaining.
      */
     @SuppressWarnings("unchecked")
-    public T replace() { this.type = Type.REPLACE; return (T) this; }
+    public T replace() {
+        this.type = Type.REPLACE;
+        return (T) this;
+    }
 
     /**
      * Sets the batch operation mode to INSERT IGNORE.
+     *
      * @return The current instance cast to type {@code T} for chaining.
      */
     @SuppressWarnings("unchecked")
-    public T insertIgnore() { this.type = Type.INSERT_IGNORE; return (T) this; }
+    public T insertIgnore() {
+        this.type = Type.INSERT_IGNORE;
+        return (T) this;
+    }
 
     /**
      * Adds a single row of data to the internal batch list.
@@ -98,18 +128,21 @@ public abstract class AbstractBatchQuery<T extends AbstractBatchQuery<T>> {
 
     /**
      * Returns the database-specific SQL verb for an INSERT operation.
+     *
      * @return A string such as "INSERT INTO ".
      */
     protected abstract String getInsertVerb();
 
     /**
      * Returns the database-specific SQL verb for a REPLACE operation.
+     *
      * @return A string such as "REPLACE INTO ".
      */
     protected abstract String getReplaceVerb();
 
     /**
      * Returns the database-specific SQL verb for an INSERT IGNORE operation.
+     *
      * @return A string such as "INSERT IGNORE INTO ".
      */
     protected abstract String getInsertIgnoreVerb();

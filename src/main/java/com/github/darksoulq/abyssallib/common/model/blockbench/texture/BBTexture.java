@@ -56,25 +56,87 @@ public class BBTexture {
         }
     }
 
-    public String getUuid() { return uuid; }
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public String getPath() { return path; }
-    public String getFolder() { return folder; }
-    public String getNamespace() { return namespace; }
-    public String getGroup() { return group; }
-    public boolean isParticle() { return particle; }
-    public String getRenderMode() { return renderMode; }
-    public String getRenderSides() { return renderSides; }
-    public int getFps() { return fps; }
-    public String getFrameOrderType() { return frameOrderType; }
-    public boolean isVisible() { return visible; }
-    public byte[] getData() { return data; }
-    public int getWidth() { return width; }
-    public int getHeight() { return height; }
-    public int getUvWidth() { return uvWidth; }
-    public int getUvHeight() { return uvHeight; }
-    public int getFrameTime() { return frameTime; }
-    public boolean isFrameInterpolate() { return frameInterpolate; }
-    public int[] getFrames() { return frames; }
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getFolder() {
+        return folder;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public boolean isParticle() {
+        return particle;
+    }
+
+    public String getRenderMode() {
+        return renderMode;
+    }
+
+    public String getRenderSides() {
+        return renderSides;
+    }
+
+    public int getFps() {
+        return fps;
+    }
+
+    public String getFrameOrderType() {
+        return frameOrderType;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int getUvWidth() {
+        return uvWidth;
+    }
+
+    public int getUvHeight() {
+        return uvHeight;
+    }
+
+    public int getFrameTime() {
+        return frameTime;
+    }
+
+    public boolean isFrameInterpolate() {
+        return frameInterpolate;
+    }
+
+    public int[] getFrames() {
+        return frames;
+    }
 }

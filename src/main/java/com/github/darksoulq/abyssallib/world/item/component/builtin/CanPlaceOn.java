@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class CanPlaceOn extends DataComponent<ItemAdventurePredicate> implements Vanilla {
     public static final Codec<CanPlaceOn> CODEC = ExtraCodecs.ITEM_ADV_PREDICATE.xmap(
-            CanPlaceOn::new,
-            CanPlaceOn::getValue
+        CanPlaceOn::new,
+        CanPlaceOn::getValue
     );
     public static final DataComponentType<CanPlaceOn> TYPE = DataComponentType.valued(CODEC, CanPlaceOn::new);
 

@@ -13,8 +13,8 @@ import java.util.List;
 
 public class Recipes extends DataComponent<List<Key>> implements Vanilla {
     public static final Codec<Recipes> CODEC = Codecs.KEY.list().xmap(
-            Recipes::new,
-            Recipes::getValue
+        Recipes::new,
+        Recipes::getValue
     );
     public static final DataComponentType<Recipes> TYPE = DataComponentType.valued(CODEC, Recipes::new);
 

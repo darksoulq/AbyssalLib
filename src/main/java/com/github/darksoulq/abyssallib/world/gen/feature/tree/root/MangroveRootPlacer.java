@@ -29,7 +29,8 @@ public class MangroveRootPlacer extends RootPlacer {
     /**
      * Constructs a new MangroveRootPlacer.
      */
-    public MangroveRootPlacer() {}
+    public MangroveRootPlacer() {
+    }
 
     /**
      * Generates a sprawling root structure and elevates the central trunk origin.
@@ -57,7 +58,7 @@ public class MangroveRootPlacer extends RootPlacer {
             int currentZ = trunkOrigin.getBlockZ();
 
             while (currentY >= rootEnd.getBlockY()) {
-                Location pos = new Location(level.getWorld(), currentX, currentY, currentZ);
+                Location pos = new Location(level.world(), currentX, currentY, currentZ);
 
                 if (level.getType(currentX, currentY, currentZ).isAir()) {
                     WorldGenUtils.placeBlock(level, pos, rootProvider.getState(random, pos));
@@ -72,7 +73,7 @@ public class MangroveRootPlacer extends RootPlacer {
                     else if (currentZ > rootEnd.getBlockZ()) currentZ--;
                 }
             }
-            WorldGenUtils.placeBlock(level, new Location(level.getWorld(), currentX, currentY, currentZ), dirtProvider.getState(random, rootEnd));
+            WorldGenUtils.placeBlock(level, new Location(level.world(), currentX, currentY, currentZ), dirtProvider.getState(random, rootEnd));
         }
 
         return trunkOrigin;

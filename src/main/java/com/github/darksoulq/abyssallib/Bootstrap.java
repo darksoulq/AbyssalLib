@@ -9,8 +9,8 @@ public class Bootstrap implements PluginBootstrap {
     @Override
     public void bootstrap(BootstrapContext context) {
         context.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
-                commands -> {
-            CommandBus.init(commands.registrar().getDispatcher());
-        });
+            commands -> {
+                CommandBus.init(commands.registrar().getDispatcher());
+            });
     }
 }

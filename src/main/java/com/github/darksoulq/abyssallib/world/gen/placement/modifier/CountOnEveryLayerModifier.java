@@ -32,7 +32,9 @@ public class CountOnEveryLayerModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<CountOnEveryLayerModifier> TYPE = () -> CODEC;
 
-    /** The number of placement attempts to make per Y-layer. */
+    /**
+     * The number of placement attempts to make per Y-layer.
+     */
     private final int count;
 
     /**

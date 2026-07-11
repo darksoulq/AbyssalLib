@@ -53,7 +53,7 @@ public class ResistantDamage extends DataComponent</*? if >=26.1.2 {*/List<Key>/
         super(resolveKeys(resists.types()));
         //?} else {
         /*super(resists.types().key());
-        *///?}
+         *///?}
     }
 
     public ResistantDamage(Key resists) {
@@ -61,7 +61,7 @@ public class ResistantDamage extends DataComponent</*? if >=26.1.2 {*/List<Key>/
         super(List.of(resists));
         //?} else {
         /*super(resists);
-        *///?}
+         *///?}
     }
 
     //? if >=26.1.2 {
@@ -95,7 +95,7 @@ public class ResistantDamage extends DataComponent</*? if >=26.1.2 {*/List<Key>/
         stack.setData(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(RegistrySet.keySet(RegistryKey.DAMAGE_TYPE, keys)));
         //?} else {
         /*stack.setData(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(TagKey.create(RegistryKey.DAMAGE_TYPE, value)));
-        *///?}
+         *///?}
     }
 
     @Override

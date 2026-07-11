@@ -215,7 +215,7 @@ public class SoundEvent {
             soundsArr.add(e.toJson());
         }
         obj.add("sounds", soundsArr);
-        
+
         return obj;
     }
 }

@@ -29,10 +29,14 @@ public class BlockFilterModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<BlockFilterModifier> TYPE = () -> CODEC;
 
-    /** The list of allowed block info targets. */
+    /**
+     * The list of allowed block info targets.
+     */
     private final List<BlockInfo> targets;
 
-    /** The coordinate offset to check relative to the current placement position. */
+    /**
+     * The coordinate offset to check relative to the current placement position.
+     */
     private final Vector offset;
 
     /**

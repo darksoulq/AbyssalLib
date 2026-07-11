@@ -180,7 +180,8 @@ public class Codecs {
                 .map(DataResult::success)
                 .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
                 .flatMap(list -> {
-                    if (list.size() < 3) return DataResult.error(DataError.custom("Vector3f list requires 3 elements, found " + list.size()));
+                    if (list.size() < 3)
+                        return DataResult.error(DataError.custom("Vector3f list requires 3 elements, found " + list.size()));
                     try {
                         return DataResult.success(new Vector3f(
                             ops.getFloatValue(list.get(0)).orElseThrow(),
@@ -192,6 +193,7 @@ public class Codecs {
                     }
                 });
         }
+
         @Override
         public <D> DataResult<D> encode(DynamicOps<D> ops, Vector3f value) {
             return DataResult.success(ops.createList(List.of(
@@ -212,7 +214,8 @@ public class Codecs {
                 .map(DataResult::success)
                 .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
                 .flatMap(list -> {
-                    if (list.size() < 4) return DataResult.error(DataError.custom("Quaternionf list requires 4 elements, found " + list.size()));
+                    if (list.size() < 4)
+                        return DataResult.error(DataError.custom("Quaternionf list requires 4 elements, found " + list.size()));
                     try {
                         return DataResult.success(new Quaternionf(
                             ops.getFloatValue(list.get(0)).orElseThrow(),
@@ -225,6 +228,7 @@ public class Codecs {
                     }
                 });
         }
+
         @Override
         public <D> DataResult<D> encode(DynamicOps<D> ops, Quaternionf value) {
             return DataResult.success(ops.createList(List.of(
@@ -246,7 +250,8 @@ public class Codecs {
                 .map(DataResult::success)
                 .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
                 .flatMap(list -> {
-                    if (list.size() < 16) return DataResult.error(DataError.custom("Matrix4f list requires 16 elements, found " + list.size()));
+                    if (list.size() < 16)
+                        return DataResult.error(DataError.custom("Matrix4f list requires 16 elements, found " + list.size()));
                     try {
                         return DataResult.success(new Matrix4f(
                             ops.getFloatValue(list.get(0)).orElseThrow(), ops.getFloatValue(list.get(1)).orElseThrow(), ops.getFloatValue(list.get(2)).orElseThrow(), ops.getFloatValue(list.get(3)).orElseThrow(),
@@ -259,6 +264,7 @@ public class Codecs {
                     }
                 });
         }
+
         @Override
         public <D> DataResult<D> encode(DynamicOps<D> ops, Matrix4f value) {
             return DataResult.success(ops.createList(List.of(
@@ -298,7 +304,8 @@ public class Codecs {
                 .map(DataResult::success)
                 .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
                 .flatMap(vector -> {
-                    if (vector.size() != 3) return DataResult.error(DataError.custom("Integer Vector list requires 3 elements, found " + vector.size()));
+                    if (vector.size() != 3)
+                        return DataResult.error(DataError.custom("Integer Vector list requires 3 elements, found " + vector.size()));
                     try {
                         return DataResult.success(new Vector(
                             ops.getIntValue(vector.get(0)).orElseThrow(),
@@ -310,6 +317,7 @@ public class Codecs {
                     }
                 });
         }
+
         @Override
         public <D> DataResult<D> encode(DynamicOps<D> ops, Vector value) {
             return DataResult.success(ops.createList(List.of(
@@ -332,7 +340,8 @@ public class Codecs {
                 .map(DataResult::success)
                 .orElseGet(() -> DataResult.error(DataError.typeMismatch("List", "Unknown")))
                 .flatMap(vector -> {
-                    if (vector.size() != 3) return DataResult.error(DataError.custom("Float Vector list requires 3 elements, found " + vector.size()));
+                    if (vector.size() != 3)
+                        return DataResult.error(DataError.custom("Float Vector list requires 3 elements, found " + vector.size()));
                     try {
                         return DataResult.success(new Vector(
                             ops.getDoubleValue(vector.get(0)).orElseThrow(),
@@ -344,6 +353,7 @@ public class Codecs {
                     }
                 });
         }
+
         @Override
         public <D> DataResult<D> encode(DynamicOps<D> ops, Vector value) {
             return DataResult.success(ops.createList(List.of(
@@ -361,27 +371,39 @@ public class Codecs {
 
     public static final Codec<UUID> UUID = STRING.comapFlatMap(
         str -> {
-            try { return DataResult.success(java.util.UUID.fromString(str)); }
-            catch (IllegalArgumentException e) { return DataResult.error(DataError.invalidFormat(str, "UUID")); }
+            try {
+                return DataResult.success(java.util.UUID.fromString(str));
+            } catch (IllegalArgumentException e) {
+                return DataResult.error(DataError.invalidFormat(str, "UUID"));
+            }
         },
         java.util.UUID::toString
     ).describe("UUID");
 
     public static final Codec<Component> TEXT_COMPONENT = STRING.flatXmap(
         str -> {
-            try { return DataResult.success(MiniMessage.miniMessage().deserialize(str)); }
-            catch (Exception e) { return DataResult.error(DataError.custom("Failed to parse MiniMessage content")); }
+            try {
+                return DataResult.success(MiniMessage.miniMessage().deserialize(str));
+            } catch (Exception e) {
+                return DataResult.error(DataError.custom("Failed to parse MiniMessage content"));
+            }
         },
         comp -> {
-            try { return DataResult.success(MiniMessage.miniMessage().serialize(comp)); }
-            catch (Exception e) { return DataResult.error(DataError.custom("Failed to serialize MiniMessage content")); }
+            try {
+                return DataResult.success(MiniMessage.miniMessage().serialize(comp));
+            } catch (Exception e) {
+                return DataResult.error(DataError.custom("Failed to serialize MiniMessage content"));
+            }
         }
     ).describe("TextComponent");
 
     public static final Codec<Key> KEY = STRING.comapFlatMap(
         str -> {
-            try { return DataResult.success(Key.key(str)); }
-            catch (Exception e) { return DataResult.error(DataError.invalidFormat(str, "Namespace:Key")); }
+            try {
+                return DataResult.success(Key.key(str));
+            } catch (Exception e) {
+                return DataResult.error(DataError.invalidFormat(str, "Namespace:Key"));
+            }
         },
         Key::asString
     ).describe("Key");
@@ -391,7 +413,9 @@ public class Codecs {
             try {
                 NamespacedKey key = NamespacedKey.fromString(str);
                 return key != null ? DataResult.success(key) : DataResult.error(DataError.invalidFormat(str, "NamespacedKey"));
-            } catch (Exception e) { return DataResult.error(DataError.custom(e.getMessage())); }
+            } catch (Exception e) {
+                return DataResult.error(DataError.custom(e.getMessage()));
+            }
         },
         NamespacedKey::toString
     ).describe("NamespacedKey");
@@ -418,13 +442,17 @@ public class Codecs {
             try {
                 DataComponentType type = RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE).get(key);
                 return type != null ? DataResult.success(type) : DataResult.error(DataError.custom("Unknown DataComponentType definition: " + key));
-            } catch (Exception e) { return DataResult.error(DataError.custom(e.getMessage())); }
+            } catch (Exception e) {
+                return DataResult.error(DataError.custom(e.getMessage()));
+            }
         },
         type -> {
             try {
                 Key key = RegistryAccess.registryAccess().getRegistry(RegistryKey.DATA_COMPONENT_TYPE).getKey(type);
                 return key != null ? DataResult.success(key) : DataResult.error(DataError.custom("Unregistered DataComponentType execution"));
-            } catch (Exception e) { return DataResult.error(DataError.custom(e.getMessage())); }
+            } catch (Exception e) {
+                return DataResult.error(DataError.custom(e.getMessage()));
+            }
         }
     ).describe("DataComponentType");
 
@@ -512,6 +540,7 @@ public class Codecs {
     }.withSchema(new SchemaNode.MapSchema(new SchemaNode.PrimitiveSchema("String"), new SchemaNode.PrimitiveSchema("Any")));
 
     private static final Map<String, SchemaNode.FieldSchema> ITEM_STACK_FIELDS = new LinkedHashMap<>();
+
     static {
         ITEM_STACK_FIELDS.put("id", new SchemaNode.FieldSchema("id", KEY.schema(), false, null, "Item Identifier"));
         ITEM_STACK_FIELDS.put("amount", new SchemaNode.FieldSchema("amount", INT.schema(), true, 1, "Item Amount"));

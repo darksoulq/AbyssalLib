@@ -32,6 +32,7 @@ public class WorldGenManager implements Listener {
 
     /**
      * Returns the map storing worlds mapped to enum map of generation phases
+     *
      * @return the feature map
      */
     public static Map<String, Map<GenerationPhase, List<PlacedFeature>>> getFeatures() {
@@ -84,7 +85,7 @@ public class WorldGenManager implements Listener {
 
                 StructureLocator.clearChunk(world.getName(), chunkX, chunkZ);
 
-                long seed = level.getWorld().getSeed();
+                long seed = level.world().getSeed();
                 long chunkSeed = (seed ^ (chunkX * 341873128712L)) + (chunkZ * 132897987541L);
                 Random chunkRandom = new Random(chunkSeed);
 

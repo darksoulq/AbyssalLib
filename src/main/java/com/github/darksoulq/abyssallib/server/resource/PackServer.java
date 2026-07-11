@@ -90,11 +90,11 @@ public class PackServer {
             String packId = "external_" + loaded;
             Path path = Path.of(value);
             if (!Files.exists(path) || !Files.isRegularFile(path)) {
-                AbyssalLib.LOGGER.warning( String.format("Skipping external resource pack (not found or not a file): %s", value));
+                AbyssalLib.LOGGER.warning(String.format("Skipping external resource pack (not found or not a file): %s", value));
                 continue;
             }
             if (!value.toLowerCase().endsWith(".zip")) {
-                AbyssalLib.LOGGER.warning( String.format("Skipping external resource pack (not a zip): %s", value));
+                AbyssalLib.LOGGER.warning(String.format("Skipping external resource pack (not a zip): %s", value));
                 continue;
             }
             try (ZipFile ignored = new ZipFile(path.toFile())) {
@@ -126,6 +126,7 @@ public class PackServer {
         registeredPaths.put(pluginid, resourcePackFile);
         AbyssalLib.getInstance().getLogger().info("Registered resource pack for /" + pluginid + "/resourcepack.zip");
     }
+
     public void unregisterResourcePack(String pluginid) {
         registeredPaths.remove(pluginid);
         AbyssalLib.getInstance().getLogger().info("Unregistered resource pack for /" + pluginid + "/resourcepack.zip");
@@ -134,6 +135,7 @@ public class PackServer {
     public String getUrl(String pluginId) {
         return protocol + "://" + host + ":" + port + "/" + pluginId + "/resourcepack.zip";
     }
+
     public Path getPath(String pluginId) {
         return registeredPaths.get(pluginId);
     }

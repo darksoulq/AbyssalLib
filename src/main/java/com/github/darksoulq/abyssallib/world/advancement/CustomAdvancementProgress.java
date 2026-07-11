@@ -13,24 +13,27 @@ import java.util.Date;
  */
 public class CustomAdvancementProgress {
 
-    /** The custom advancement associated with this progress. */
+    /**
+     * The custom advancement associated with this progress.
+     */
     private final Advancement advancement;
 
-    /** The underlying Bukkit progress tracker. */
+    /**
+     * The underlying Bukkit progress tracker.
+     */
     private final AdvancementProgress bukkitProgress;
 
-    /** The player whom this progress belongs to. */
+    /**
+     * The player whom this progress belongs to.
+     */
     private final Player player;
 
     /**
      * Constructs a new CustomAdvancementProgress wrapper.
      *
-     * @param advancement
-     * The custom {@link Advancement} instance.
-     * @param player
-     * The {@link Player} making progress.
-     * @param bukkitProgress
-     * The actual Bukkit progress object.
+     * @param advancement    The custom {@link Advancement} instance.
+     * @param player         The {@link Player} making progress.
+     * @param bukkitProgress The actual Bukkit progress object.
      */
     public CustomAdvancementProgress(Advancement advancement, Player player, AdvancementProgress bukkitProgress) {
         this.advancement = advancement;
@@ -41,8 +44,7 @@ public class CustomAdvancementProgress {
     /**
      * Retrieves the custom advancement instance.
      *
-     * @return
-     * The associated {@link Advancement}.
+     * @return The associated {@link Advancement}.
      */
     public Advancement getAdvancement() {
         return advancement;
@@ -51,8 +53,7 @@ public class CustomAdvancementProgress {
     /**
      * Retrieves the player whose progress is being tracked.
      *
-     * @return
-     * The {@link Player} instance.
+     * @return The {@link Player} instance.
      */
     public Player getPlayer() {
         return player;
@@ -61,8 +62,7 @@ public class CustomAdvancementProgress {
     /**
      * Checks if all criteria for this advancement have been met.
      *
-     * @return
-     * True if the advancement is fully completed.
+     * @return True if the advancement is fully completed.
      */
     public boolean isDone() {
         return bukkitProgress.isDone();
@@ -71,8 +71,7 @@ public class CustomAdvancementProgress {
     /**
      * Retrieves a collection of all criteria identifiers already awarded to the player.
      *
-     * @return
-     * A {@link Collection} of awarded criterion names.
+     * @return A {@link Collection} of awarded criterion names.
      */
     public Collection<String> getAwardedCriteria() {
         return bukkitProgress.getAwardedCriteria();
@@ -81,8 +80,7 @@ public class CustomAdvancementProgress {
     /**
      * Retrieves a collection of criteria identifiers still required for completion.
      *
-     * @return
-     * A {@link Collection} of remaining criterion names.
+     * @return A {@link Collection} of remaining criterion names.
      */
     public Collection<String> getRemainingCriteria() {
         return bukkitProgress.getRemainingCriteria();
@@ -91,10 +89,8 @@ public class CustomAdvancementProgress {
     /**
      * Retrieves the date and time a specific criterion was awarded.
      *
-     * @param criterion
-     * The name of the criterion to check.
-     * @return
-     * The {@link Date} of award, or null if not yet awarded.
+     * @param criterion The name of the criterion to check.
+     * @return The {@link Date} of award, or null if not yet awarded.
      */
     public Date getDateAwarded(String criterion) {
         return bukkitProgress.getDateAwarded(criterion);
@@ -104,8 +100,7 @@ public class CustomAdvancementProgress {
      * Awards a specific criterion to the player.
      * If this award completes the advancement, all registered rewards are granted automatically.
      *
-     * @param criterion
-     * The name of the criterion to award.
+     * @param criterion The name of the criterion to award.
      */
     public void awardCriterion(String criterion) {
         bukkitProgress.awardCriteria(criterion);
@@ -117,8 +112,7 @@ public class CustomAdvancementProgress {
     /**
      * Revokes a specific criterion from the player, effectively resetting that part of the progress.
      *
-     * @param criterion
-     * The name of the criterion to revoke.
+     * @param criterion The name of the criterion to revoke.
      */
     public void revokeCriterion(String criterion) {
         bukkitProgress.revokeCriteria(criterion);

@@ -200,7 +200,7 @@ public class RegionalMultiMap<K extends Locatable, V> {
         Objects.requireNonNull(key);
         Map<K, Collection<V>> map = regions.get(key);
         if (map == null) return Collections.emptyMap();
-        
+
         Map<K, Collection<V>> result = new HashMap<>();
         for (Map.Entry<K, Collection<V>> entry : map.entrySet()) {
             result.put(entry.getKey(), unmodifiableCollection(entry.getValue()));

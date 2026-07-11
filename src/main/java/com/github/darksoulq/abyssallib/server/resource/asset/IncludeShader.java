@@ -25,8 +25,8 @@ public class IncludeShader implements Asset {
 
     public IncludeShader(String namespace, String name, String glsl) {
         this(
-            namespace, 
-            name, 
+            namespace,
+            name,
             glsl != null ? glsl.getBytes(StandardCharsets.UTF_8) : null
         );
     }

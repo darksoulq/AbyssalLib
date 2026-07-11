@@ -12,9 +12,13 @@ import java.util.function.Supplier;
  * @param <T> The type of object held.
  */
 public class Holder<T> {
-    /** The supplier used to instantiate the object. */
+    /**
+     * The supplier used to instantiate the object.
+     */
     private final Supplier<T> supplier;
-    /** The cached instance of the object. */
+    /**
+     * The cached instance of the object.
+     */
     private T cached;
 
     /**

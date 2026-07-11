@@ -47,14 +47,10 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Constructs a new EntityAttributeChangeEvent.
      *
-     * @param entity
-     * The {@link Entity} instance whose attribute is changing.
-     * @param attribute
-     * The {@link Attribute} definition being updated.
-     * @param oldValue
-     * The previous base value.
-     * @param newValue
-     * The proposed new base value.
+     * @param entity    The {@link Entity} instance whose attribute is changing.
+     * @param attribute The {@link Attribute} definition being updated.
+     * @param oldValue  The previous base value.
+     * @param newValue  The proposed new base value.
      */
     public EntityAttributeChangeEvent(@NotNull Entity entity, @NotNull Attribute attribute, double oldValue, double newValue) {
         this.entity = entity;
@@ -66,8 +62,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Retrieves the entity involved in this attribute change.
      *
-     * @return
-     * The {@link Entity} instance.
+     * @return The {@link Entity} instance.
      */
     public @NotNull Entity getEntity() {
         return entity;
@@ -76,8 +71,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Retrieves the specific attribute that is being modified.
      *
-     * @return
-     * The {@link Attribute} definition.
+     * @return The {@link Attribute} definition.
      */
     public @NotNull Attribute getAttribute() {
         return attribute;
@@ -86,8 +80,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Retrieves the value of the attribute prior to this change event.
      *
-     * @return
-     * The old base value.
+     * @return The old base value.
      */
     public double getOldValue() {
         return oldValue;
@@ -96,8 +89,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Retrieves the proposed new value for the attribute.
      *
-     * @return
-     * The proposed new base value.
+     * @return The proposed new base value.
      */
     public double getNewValue() {
         return newValue;
@@ -106,8 +98,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Overrides the proposed new value with a different one.
      *
-     * @param newValue
-     * The new base value to apply to the entity.
+     * @param newValue The new base value to apply to the entity.
      */
     public void setNewValue(double newValue) {
         this.newValue = newValue;
@@ -116,8 +107,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Checks if the attribute change has been cancelled.
      *
-     * @return
-     * True if the event is cancelled, preventing the value update.
+     * @return True if the event is cancelled, preventing the value update.
      */
     @Override
     public boolean isCancelled() {
@@ -127,8 +117,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Sets the cancellation state of the event.
      *
-     * @param v
-     * True to cancel the change, false to allow it to proceed.
+     * @param v True to cancel the change, false to allow it to proceed.
      */
     @Override
     public void setCancelled(boolean v) {
@@ -138,8 +127,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Retrieves the list of handlers listening to this event instance.
      *
-     * @return
-     * The {@link HandlerList} for this event.
+     * @return The {@link HandlerList} for this event.
      */
     @Override
     public @NotNull HandlerList getHandlers() {
@@ -149,8 +137,7 @@ public class EntityAttributeChangeEvent extends Event implements Cancellable {
     /**
      * Provides a static method to retrieve the handler list, required by Bukkit.
      *
-     * @return
-     * The static {@link HandlerList} for this event type.
+     * @return The static {@link HandlerList} for this event type.
      */
     public static HandlerList getHandlerList() {
         return handlers;

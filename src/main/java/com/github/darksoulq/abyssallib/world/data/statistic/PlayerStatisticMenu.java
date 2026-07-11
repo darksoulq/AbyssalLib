@@ -20,13 +20,13 @@ public class PlayerStatisticMenu {
 
     private static void openCategoryMenu(Player viewer, Player target) {
         var multiAction = Dialogs.multiAction(TextUtil.parse("<gold>Statistics - " + target.getName() + "</gold>"));
-        
+
         for (StatisticType type : Registries.STATISTIC_TYPES.getAll().values()) {
             String catKey = "<lang:stat_type.%s.%s>".formatted(type.id().namespace(), type.id().value());
-            multiAction.action(DialogContent.button(TextUtil.parse("<aqua>" + catKey + "</aqua>"), 
+            multiAction.action(DialogContent.button(TextUtil.parse("<aqua>" + catKey + "</aqua>"),
                 (response, audience) -> openStatList(viewer, target, type)));
         }
-        
+
         viewer.showDialog(multiAction.build());
     }
 

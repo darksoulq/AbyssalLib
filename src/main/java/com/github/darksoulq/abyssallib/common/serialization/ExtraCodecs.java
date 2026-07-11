@@ -265,7 +265,8 @@ public class ExtraCodecs {
         Codecs.KEY.optionalFieldOf("shear_sound", null).forGetter(Equippable::shearSound)
     ).apply(instance, (slot, equipSound, assetId, cameraOverlay, allowedEntities, dispensable, swappable, damageOnHurt, canBeSheared, shearSound) -> {
         Equippable.Builder builder = Equippable.equippable(slot).equipSound(equipSound).assetId(assetId).cameraOverlay(cameraOverlay);
-        if (allowedEntities != null) builder.allowedEntities(RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, allowedEntities));
+        if (allowedEntities != null)
+            builder.allowedEntities(RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, allowedEntities));
         return builder.dispensable(dispensable).swappable(swappable).damageOnHurt(damageOnHurt).canBeSheared(canBeSheared).shearSound(shearSound).build();
     })).describe("Equippable");
 
@@ -361,7 +362,7 @@ public class ExtraCodecs {
         s -> s.resolve(Registry.POTION_EFFECT_TYPE).stream().toList()
     ).describe("PotionEffectTypes");
 
-    public static Codec<PotionEffect> POTION_EFFECT = RecordBuilder.<PotionEffect>create(instance -> instance.group(
+    public static Codec<PotionEffect> POTION_EFFECT = RecordBuilder.create(instance -> instance.group(
         Codecs.INT.fieldOf("amplifier").forGetter(PotionEffect::getAmplifier),
         Codecs.INT.fieldOf("duration").forGetter(PotionEffect::getDuration),
         POTION_EFFECT_TYPE.fieldOf("type").forGetter(PotionEffect::getType),
@@ -389,7 +390,7 @@ public class ExtraCodecs {
 
     public static final Codec<ConsumeEffect.ApplyStatusEffects> CONSUME_APPLY_STATUS_EFFECTS = RecordBuilder.create(instance -> instance.group(
         POTION_EFFECT.list().fieldOf("effects").forGetter(ConsumeEffect.ApplyStatusEffects::effects),
-        Codecs.DOUBLE.<Float>xmap(Double::floatValue, Float::doubleValue).fieldOf("probability").forGetter(ConsumeEffect.ApplyStatusEffects::probability)
+        Codecs.DOUBLE.xmap(Double::floatValue, Float::doubleValue).fieldOf("probability").forGetter(ConsumeEffect.ApplyStatusEffects::probability)
     ).apply(instance, ConsumeEffect::applyStatusEffects)).describe("ConsumeEffect.ApplyStatusEffects");
 
     public static final Codec<ConsumeEffect> CONSUME_EFFECT = new Codec<>() {
@@ -558,7 +559,7 @@ public class ExtraCodecs {
             builder.bypassedBy(bypassedBy);
             //?} else {
             /*builder.bypassedBy(TagKey.create(RegistryKey.DAMAGE_TYPE, bypassedBy.key()));
-            *///?}
+             *///?}
         }
         return builder.build();
     })).describe("BlocksAttacks");
@@ -568,7 +569,9 @@ public class ExtraCodecs {
             try {
                 EquipmentSlotGroup group = EquipmentSlotGroup.getByName(str);
                 return group != null ? DataResult.success(group) : DataResult.error(DataError.custom("Unknown EquipmentSlotGroup target: " + str));
-            } catch (Exception e) { return DataResult.error(DataError.custom(e.getMessage())); }
+            } catch (Exception e) {
+                return DataResult.error(DataError.custom(e.getMessage()));
+            }
         },
         group -> DataResult.success(group != null ? group.toString() : EquipmentSlotGroup.ANY.toString())
     ).describe("EquipmentSlotGroup");
@@ -635,7 +638,8 @@ public class ExtraCodecs {
                             blockObject = mat.createBlockData();
                         } else {
                             CustomBlock base = Registries.BLOCKS.get(id);
-                            if (base == null) return DataResult.error(DataError.custom("Unknown custom block identity: " + id));
+                            if (base == null)
+                                return DataResult.error(DataError.custom("Unknown custom block identity: " + id));
                             blockObject = base.clone();
                         }
 

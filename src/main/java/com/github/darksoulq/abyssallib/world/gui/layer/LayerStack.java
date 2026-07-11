@@ -15,13 +15,19 @@ import java.util.List;
  */
 public class LayerStack implements GuiLayer {
 
-    /** The internal list of managed GUI layers. */
+    /**
+     * The internal list of managed GUI layers.
+     */
     protected final List<GuiLayer> layers = new ArrayList<>();
 
-    /** The index of the currently active layer. */
+    /**
+     * The index of the currently active layer.
+     */
     protected int index = 0;
 
-    /** Tracks the last rendered index to optimize rendering updates. */
+    /**
+     * Tracks the last rendered index to optimize rendering updates.
+     */
     protected int lastRenderedIndex = -1;
 
     /**

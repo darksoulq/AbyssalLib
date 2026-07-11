@@ -33,7 +33,8 @@ public class BiomeTransitionModifier extends PlacementModifier {
     /**
      * Constructs a new BiomeTransitionModifier.
      */
-    public BiomeTransitionModifier() {}
+    public BiomeTransitionModifier() {
+    }
 
     /**
      * Filters the incoming positions by ensuring their exact biome matches the

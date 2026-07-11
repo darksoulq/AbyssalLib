@@ -97,5 +97,7 @@ public class CustomEntityDeathEvent extends Event implements Cancellable {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

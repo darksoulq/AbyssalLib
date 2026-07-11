@@ -15,7 +15,8 @@ public final class Integrations {
 
     private static final Map<String, Consumer<Plugin>> PENDING_HOOKS = new ConcurrentHashMap<>();
 
-    private Integrations() {}
+    private Integrations() {
+    }
 
     public static void when(String pluginName, Consumer<Plugin> action) {
         Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
@@ -27,7 +28,7 @@ public final class Integrations {
     }
 
     public static void resolve(Plugin plugin) {
-        if (!plugin.isEnabled()) return; 
+        if (!plugin.isEnabled()) return;
 
         String name = plugin.getName();
         Consumer<Plugin> action = PENDING_HOOKS.remove(name);
@@ -38,6 +39,6 @@ public final class Integrations {
 
     private static void execute(String name, Plugin plugin, Consumer<Plugin> action) {
         Try.run(() -> action.accept(plugin))
-           .onFailure(e -> AbyssalLib.LOGGER.severe("Failed to hook into integration '" + name + "': " + e.getMessage()));
+            .onFailure(e -> AbyssalLib.LOGGER.severe("Failed to hook into integration '" + name + "': " + e.getMessage()));
     }
 }

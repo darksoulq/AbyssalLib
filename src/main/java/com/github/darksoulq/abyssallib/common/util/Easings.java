@@ -7,28 +7,43 @@ package com.github.darksoulq.abyssallib.common.util;
  * smooth transitions.
  */
 public enum Easings implements Easing {
-    /** A simple linear transition where the rate of change is constant. */
+    /**
+     * A simple linear transition where the rate of change is constant.
+     */
     LINEAR(t -> t),
 
-    /** Quadratic acceleration; starts slow and speeds up. */
+    /**
+     * Quadratic acceleration; starts slow and speeds up.
+     */
     IN_QUAD(t -> t * t),
 
-    /** Quadratic deceleration; starts fast and slows down. */
+    /**
+     * Quadratic deceleration; starts fast and slows down.
+     */
     OUT_QUAD(t -> t * (2 - t)),
 
-    /** Quadratic acceleration/deceleration; slow start and end, fast in the middle. */
+    /**
+     * Quadratic acceleration/deceleration; slow start and end, fast in the middle.
+     */
     IN_OUT_QUAD(t -> t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
 
-    /** Cubic acceleration; starts very slow and speeds up rapidly. */
+    /**
+     * Cubic acceleration; starts very slow and speeds up rapidly.
+     */
     IN_CUBIC(t -> t * t * t),
 
-    /** Cubic deceleration; starts very fast and slows down heavily. */
+    /**
+     * Cubic deceleration; starts very fast and slows down heavily.
+     */
     OUT_CUBIC(t -> (--t) * t * t + 1),
 
-    /** Cubic acceleration/deceleration; more pronounced than Quadratic In-Out. */
+    /**
+     * Cubic acceleration/deceleration; more pronounced than Quadratic In-Out.
+     */
     IN_OUT_CUBIC(t -> t < .5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1),
 
-    /** * Starts by moving slightly backward before accelerating forward.
+    /**
+     * Starts by moving slightly backward before accelerating forward.
      * Uses a standard overshoot constant of 1.70158.
      */
     IN_BACK(t -> {
@@ -36,14 +51,16 @@ public enum Easings implements Easing {
         return t * t * ((s + 1) * t - s);
     }),
 
-    /** * Overshoots the target value slightly before settling back to 1.0.
+    /**
+     * Overshoots the target value slightly before settling back to 1.0.
      */
     OUT_BACK(t -> {
         double s = 1.70158;
         return --t * t * ((s + 1) * t + s) + 1;
     }),
 
-    /** * An oscillating transition that simulates an elastic rubber band effect,
+    /**
+     * An oscillating transition that simulates an elastic rubber band effect,
      * bouncing past the end point before settling.
      */
     OUT_ELASTIC(t -> {
@@ -53,7 +70,9 @@ public enum Easings implements Easing {
         return Math.pow(2, -10 * t) * Math.sin((t - p / 4) * (2 * Math.PI) / p) + 1;
     });
 
-    /** The internal easing function logic. */
+    /**
+     * The internal easing function logic.
+     */
     private final Easing function;
 
     /**

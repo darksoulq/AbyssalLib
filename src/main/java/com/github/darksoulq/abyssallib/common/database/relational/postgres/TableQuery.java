@@ -13,7 +13,9 @@ import java.sql.SQLException;
  */
 public class TableQuery extends AbstractTableQuery<TableQuery> {
 
-    /** The parent database instance providing connection and pool access. */
+    /**
+     * The parent database instance providing connection and pool access.
+     */
     private final Database database;
 
     /**
@@ -35,7 +37,11 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
      * @throws RuntimeException If a database access error occurs.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -53,7 +59,9 @@ public class TableQuery extends AbstractTableQuery<TableQuery> {
      * * @return {@code "INSERT INTO "}
      */
     @Override
-    protected String getInsertVerb() { return "INSERT INTO "; }
+    protected String getInsertVerb() {
+        return "INSERT INTO ";
+    }
 
     /**
      * PostgreSQL does not support {@code REPLACE INTO}.

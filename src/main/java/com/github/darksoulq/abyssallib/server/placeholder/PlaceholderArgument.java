@@ -46,8 +46,10 @@ public class PlaceholderArgument {
                 PlaceholderResult<?> res = p.resolve(context);
                 if (!res.isEmpty() && !res.isError()) {
                     if (res.getValue() instanceof Number n) return Result.success(n.intValue());
-                    try { return Result.success(Integer.parseInt(String.valueOf(res.getValue()))); }
-                    catch (NumberFormatException ignored) {}
+                    try {
+                        return Result.success(Integer.parseInt(String.valueOf(res.getValue())));
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
             return Result.failure(e1);
@@ -63,8 +65,10 @@ public class PlaceholderArgument {
                 PlaceholderResult<?> res = p.resolve(context);
                 if (!res.isEmpty() && !res.isError()) {
                     if (res.getValue() instanceof Number n) return Result.success(n.doubleValue());
-                    try { return Result.success(Double.parseDouble(String.valueOf(res.getValue()))); }
-                    catch (NumberFormatException ignored) {}
+                    try {
+                        return Result.success(Double.parseDouble(String.valueOf(res.getValue())));
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
             return Result.failure(e1);

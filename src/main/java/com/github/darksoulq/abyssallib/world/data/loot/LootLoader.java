@@ -25,10 +25,14 @@ import java.util.stream.Stream;
  * </p>
  */
 public class LootLoader {
-    /** The Jackson {@link ObjectMapper} used for parsing JSON data into tree structures. */
+    /**
+     * The Jackson {@link ObjectMapper} used for parsing JSON data into tree structures.
+     */
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** The directory path where external loot table files are stored. */
+    /**
+     * The directory path where external loot table files are stored.
+     */
     private static final File FOLDER = new File(AbyssalLib.getInstance().getDataFolder(), "loot_tables");
 
     /**
@@ -72,17 +76,17 @@ public class LootLoader {
 
             LootTable table = load(path);
             if (table != null) {
-                String targetId = table.getVanillaId() != null ? table.getVanillaId() : id;
+                String targetId = table.vanillaId() != null ? table.vanillaId() : id;
                 LootTable existing = Registries.LOOT_TABLES.get(targetId);
 
-                if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
+                if (table.mergeStrategy() == MergeStrategy.REPLACE) {
                     if (existing != null) {
                         Registries.LOOT_TABLES.remove(targetId);
                     }
                     Registries.LOOT_TABLES.register(targetId, table);
-                } else if (table.getMergeStrategy() == MergeStrategy.MERGE) {
+                } else if (table.mergeStrategy() == MergeStrategy.MERGE) {
                     if (existing != null) {
-                        existing.getPools().addAll(table.getPools());
+                        existing.pools().addAll(table.pools());
                     } else {
                         Registries.LOOT_TABLES.register(targetId, table);
                     }

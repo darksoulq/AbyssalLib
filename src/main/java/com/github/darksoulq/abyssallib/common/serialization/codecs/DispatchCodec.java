@@ -25,9 +25,9 @@ public class DispatchCodec<K, V> implements Codec<V> {
     /**
      * Creates a dispatch codec.
      *
-     * @param typeKey Name of the discriminator field.
-     * @param keyCodec Codec used for discriminator values.
-     * @param typeGetter Extracts the discriminator from a value.
+     * @param typeKey     Name of the discriminator field.
+     * @param keyCodec    Codec used for discriminator values.
+     * @param typeGetter  Extracts the discriminator from a value.
      * @param codecGetter Resolves a codec from a discriminator value.
      */
     public DispatchCodec(String typeKey, Codec<K> keyCodec, Function<? super V, ? extends K> typeGetter, Function<? super K, ? extends Codec<? extends V>> codecGetter) {

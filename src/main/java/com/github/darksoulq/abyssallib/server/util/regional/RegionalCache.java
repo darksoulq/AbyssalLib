@@ -13,19 +13,16 @@ import java.util.function.Function;
 
 public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
 
-    private static final class CacheNode<V> {
-        final V value;
-        final long expiryTime;
+    private record CacheNode<V>(V value, long expiryTime) {
+            private CacheNode(@NotNull V value, long expiryTime) {
+                this.value = value;
+                this.expiryTime = expiryTime;
+            }
 
-        CacheNode(@NotNull V value, long expiryTime) {
-            this.value = value;
-            this.expiryTime = expiryTime;
+            boolean isExpired(long now) {
+                return now >= expiryTime;
+            }
         }
-
-        boolean isExpired(long now) {
-            return now >= expiryTime;
-        }
-    }
 
     private final Map<RegionKey, Map<K, CacheNode<V>>> regions;
     private final boolean concurrent;
@@ -91,11 +88,11 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
         RegionKey rKey = RegionKey.of(locatable);
         Map<K, CacheNode<V>> map = regions.get(rKey);
         if (map == null) return false;
-        
+
         long now = System.currentTimeMillis();
         CacheNode<V> node = map.get(key);
         if (node == null) return false;
-        
+
         if (node.isExpired(now)) {
             map.remove(key);
             totalSize.decrementAndGet();
@@ -149,15 +146,15 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
         Objects.requireNonNull(unit);
-        
+
         long now = System.currentTimeMillis();
         long expiry = now + unit.toMillis(duration);
         CacheNode<V> newNode = new CacheNode<>(value, expiry);
-        
+
         RegionKey rKey = RegionKey.of(key);
         Map<K, CacheNode<V>> map = getOrCreateRegionMap(rKey);
         CacheNode<V> oldNode = map.put(key, newNode);
-        
+
         if (oldNode == null) {
             totalSize.incrementAndGet();
             return null;
@@ -195,11 +192,11 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
             V value = entry.getValue();
             Objects.requireNonNull(key);
             Objects.requireNonNull(value);
-            
+
             CacheNode<V> newNode = new CacheNode<>(value, expiry);
             RegionKey rKey = RegionKey.of(key);
             Map<K, CacheNode<V>> map = getOrCreateRegionMap(rKey);
-            
+
             if (map.put(key, newNode) == null) {
                 totalSize.incrementAndGet();
             }
@@ -274,7 +271,7 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
         long now = System.currentTimeMillis();
         long expiry = now + defaultDurationMillis;
         pruneAll(now);
-        
+
         for (Map<K, CacheNode<V>> map : regions.values()) {
             for (Entry<K, CacheNode<V>> entry : map.entrySet()) {
                 K key = entry.getKey();
@@ -319,7 +316,7 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
         Objects.requireNonNull(key);
         Objects.requireNonNull(oldValue);
         Objects.requireNonNull(newValue);
-        
+
         RegionKey rKey = RegionKey.of(key);
         Map<K, CacheNode<V>> map = regions.get(rKey);
         if (map != null) {
@@ -338,7 +335,7 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
     public V replace(@NotNull K key, @NotNull V value) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
-        
+
         RegionKey rKey = RegionKey.of(key);
         Map<K, CacheNode<V>> map = regions.get(rKey);
         if (map != null) {
@@ -373,10 +370,10 @@ public class RegionalCache<K extends Locatable, V> implements Map<K, V> {
         Objects.requireNonNull(key);
         Map<K, CacheNode<V>> map = regions.get(key);
         if (map == null) return Collections.emptyMap();
-        
+
         long now = System.currentTimeMillis();
         pruneRegion(key, map, now);
-        
+
         Map<K, V> result = new HashMap<>();
         for (Entry<K, CacheNode<V>> entry : map.entrySet()) {
             result.put(entry.getKey(), entry.getValue().value);

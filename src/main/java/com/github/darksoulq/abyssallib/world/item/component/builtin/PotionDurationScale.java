@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class PotionDurationScale extends DataComponent<Float> implements Vanilla {
     public static final Codec<PotionDurationScale> CODEC = Codecs.FLOAT.xmap(
-            PotionDurationScale::new,
-            PotionDurationScale::getValue
+        PotionDurationScale::new,
+        PotionDurationScale::getValue
     );
     public static final DataComponentType<PotionDurationScale> TYPE = DataComponentType.valued(CODEC, PotionDurationScale::new);
 

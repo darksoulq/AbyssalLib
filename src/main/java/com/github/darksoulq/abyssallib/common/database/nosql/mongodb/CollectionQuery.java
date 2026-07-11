@@ -14,27 +14,48 @@ import java.util.concurrent.CompletableFuture;
  * A fluent builder for executing CRUD operations on a single MongoDB collection.
  */
 public class CollectionQuery {
-    /** The parent database instance. */
+    /**
+     * The parent database instance.
+     */
     private final Database database;
-    /** The name of the collection being queried. */
+    /**
+     * The name of the collection being queried.
+     */
     private final String collectionName;
 
-    /** Supported operation types. */
-    private enum Type { INSERT, REPLACE, UPDATE, DELETE }
-    /** The current operation type, defaults to INSERT. */
+    /**
+     * Supported operation types.
+     */
+    private enum Type {INSERT, REPLACE, UPDATE, DELETE}
+
+    /**
+     * The current operation type, defaults to INSERT.
+     */
     private Type type = Type.INSERT;
 
-    /** The values/data to be written to the database. */
+    /**
+     * The values/data to be written to the database.
+     */
     private final Document values = new Document();
-    /** The filter criteria used to select documents. */
+    /**
+     * The filter criteria used to select documents.
+     */
     private final Document filter = new Document();
-    /** The sorting criteria. */
+    /**
+     * The sorting criteria.
+     */
     private Document sort = null;
-    /** Maximum number of documents to return. */
+    /**
+     * Maximum number of documents to return.
+     */
     private Integer limit = null;
-    /** Number of documents to skip in the result set. */
+    /**
+     * Number of documents to skip in the result set.
+     */
     private Integer skip = null;
-    /** Whether to perform an upsert (insert if not found) during update/replace. */
+    /**
+     * Whether to perform an upsert (insert if not found) during update/replace.
+     */
     private boolean upsert = false;
 
     /**
@@ -48,28 +69,74 @@ public class CollectionQuery {
         this.collectionName = collectionName;
     }
 
-    /** Sets operation type to INSERT. @return this. */
-    public CollectionQuery insert() { this.type = Type.INSERT; return this; }
-    /** Sets operation type to REPLACE. @return this. */
-    public CollectionQuery replace() { this.type = Type.REPLACE; return this; }
-    /** Sets operation type to UPDATE. @return this. */
-    public CollectionQuery update() { this.type = Type.UPDATE; return this; }
-    /** Sets operation type to DELETE. @return this. */
-    public CollectionQuery delete() { this.type = Type.DELETE; return this; }
+    /**
+     * Sets operation type to INSERT. @return this.
+     */
+    public CollectionQuery insert() {
+        this.type = Type.INSERT;
+        return this;
+    }
 
-    /** Adds a key-value pair to the write payload. @return this. */
-    public CollectionQuery value(String key, Object value) { this.values.put(key, value); return this; }
-    /** Adds all fields from a document to the write payload. @return this. */
-    public CollectionQuery values(Document doc) { this.values.putAll(doc); return this; }
+    /**
+     * Sets operation type to REPLACE. @return this.
+     */
+    public CollectionQuery replace() {
+        this.type = Type.REPLACE;
+        return this;
+    }
 
-    /** Adds a filter criterion. @return this. */
-    public CollectionQuery filter(String key, Object value) { this.filter.put(key, value); return this; }
-    /** Adds multiple filter criteria. @return this. */
-    public CollectionQuery filter(Document doc) { this.filter.putAll(doc); return this; }
+    /**
+     * Sets operation type to UPDATE. @return this.
+     */
+    public CollectionQuery update() {
+        this.type = Type.UPDATE;
+        return this;
+    }
+
+    /**
+     * Sets operation type to DELETE. @return this.
+     */
+    public CollectionQuery delete() {
+        this.type = Type.DELETE;
+        return this;
+    }
+
+    /**
+     * Adds a key-value pair to the write payload. @return this.
+     */
+    public CollectionQuery value(String key, Object value) {
+        this.values.put(key, value);
+        return this;
+    }
+
+    /**
+     * Adds all fields from a document to the write payload. @return this.
+     */
+    public CollectionQuery values(Document doc) {
+        this.values.putAll(doc);
+        return this;
+    }
+
+    /**
+     * Adds a filter criterion. @return this.
+     */
+    public CollectionQuery filter(String key, Object value) {
+        this.filter.put(key, value);
+        return this;
+    }
+
+    /**
+     * Adds multiple filter criteria. @return this.
+     */
+    public CollectionQuery filter(Document doc) {
+        this.filter.putAll(doc);
+        return this;
+    }
 
     /**
      * Sets the sort order.
-     * @param key The field to sort by.
+     *
+     * @param key       The field to sort by.
      * @param ascending True for 1, false for -1.
      * @return this.
      */
@@ -79,12 +146,29 @@ public class CollectionQuery {
         return this;
     }
 
-    /** Sets the result limit. @return this. */
-    public CollectionQuery limit(int limit) { this.limit = limit; return this; }
-    /** Sets the result skip count. @return this. */
-    public CollectionQuery skip(int skip) { this.skip = skip; return this; }
-    /** Sets the upsert flag. @return this. */
-    public CollectionQuery upsert(boolean upsert) { this.upsert = upsert; return this; }
+    /**
+     * Sets the result limit. @return this.
+     */
+    public CollectionQuery limit(int limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+     * Sets the result skip count. @return this.
+     */
+    public CollectionQuery skip(int skip) {
+        this.skip = skip;
+        return this;
+    }
+
+    /**
+     * Sets the upsert flag. @return this.
+     */
+    public CollectionQuery upsert(boolean upsert) {
+        this.upsert = upsert;
+        return this;
+    }
 
     /**
      * Transitions into a batch operation for bulk writes.

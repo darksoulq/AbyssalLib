@@ -25,11 +25,16 @@ import java.util.stream.Collectors;
  */
 public final class StringOps extends DynamicOps<String> {
 
-    /** Singleton instance. */
+    /**
+     * Singleton instance.
+     */
     public static final StringOps INSTANCE = new StringOps();
 
-    /** Private constructor for singleton usage. */
-    private StringOps() {}
+    /**
+     * Private constructor for singleton usage.
+     */
+    private StringOps() {
+    }
 
     /**
      * Serializes a string with escaping and quotes.

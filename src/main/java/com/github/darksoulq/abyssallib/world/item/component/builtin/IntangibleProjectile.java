@@ -12,8 +12,8 @@ import java.util.Optional;
 
 public class IntangibleProjectile extends DataComponent<Boolean> implements Vanilla {
     public static final Codec<IntangibleProjectile> CODEC = Codecs.STRING.optional().xmap(
-            b -> new IntangibleProjectile(),
-            d -> Optional.empty()
+        b -> new IntangibleProjectile(),
+        d -> Optional.empty()
     );
     public static final DataComponentType<IntangibleProjectile> TYPE = DataComponentType.valued(CODEC, v -> new IntangibleProjectile());
 

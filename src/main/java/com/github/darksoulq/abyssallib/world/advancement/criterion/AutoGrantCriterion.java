@@ -22,7 +22,8 @@ public class AutoGrantCriterion implements AdvancementCriterion {
     /**
      * Constructs a new AutoGrantCriterion.
      */
-    public AutoGrantCriterion() {}
+    public AutoGrantCriterion() {
+    }
 
     @Override
     public CriterionType<?> getType() {

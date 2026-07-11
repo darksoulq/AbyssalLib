@@ -41,7 +41,7 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        
+
         INSTANCE = this;
         LOGGER = getLogger();
         SCHEDULER = new Scheduler(this);

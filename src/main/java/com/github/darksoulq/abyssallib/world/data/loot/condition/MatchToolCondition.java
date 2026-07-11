@@ -34,7 +34,9 @@ public class MatchToolCondition extends LootCondition {
      */
     public static final LootConditionType<MatchToolCondition> TYPE = () -> CODEC;
 
-    /** The {@link Material} required for the tool to satisfy this condition. */
+    /**
+     * The {@link Material} required for the tool to satisfy this condition.
+     */
     private final ItemPredicate item;
 
     /**

@@ -48,6 +48,7 @@ public class Equipment implements Asset {
         this.id = id;
         this.rawData = null;
     }
+
     public Equipment(@NotNull String namespace, @NotNull String id, byte[] data) {
         this.namespace = namespace;
         this.id = id;
@@ -116,11 +117,11 @@ public class Equipment implements Asset {
             return this;
         }
 
-        public String texture() { return texture.file(); }
+        public String texture() {
+            return texture.file();
+        }
     }
 
-    private static class Dyeable {
-        final Integer colorWhenUndyed;
-        Dyeable(Integer c) { this.colorWhenUndyed = c; }
+    private record Dyeable(Integer colorWhenUndyed) {
     }
 }

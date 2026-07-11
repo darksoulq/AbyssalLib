@@ -32,7 +32,9 @@ public class FixedPlacementModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<FixedPlacementModifier> TYPE = () -> CODEC;
 
-    /** The static list of absolute world coordinates. */
+    /**
+     * The static list of absolute world coordinates.
+     */
     private final List<Vector> positions;
 
     /**

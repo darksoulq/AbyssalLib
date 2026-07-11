@@ -37,19 +37,29 @@ import java.util.Random;
  */
 public class NMSWorldGenAccess implements WorldGenAccess {
 
-    /** Underlying NMS world generation level. */
+    /**
+     * Underlying NMS world generation level.
+     */
     private final WorldGenLevel level;
 
-    /** Thread-safe region representing the currently generating chunk. */
+    /**
+     * Thread-safe region representing the currently generating chunk.
+     */
     private final LimitedRegion region;
 
-    /** Bukkit world reference. */
+    /**
+     * Bukkit world reference.
+     */
     private final World world;
 
-    /** Random instance tied to this generation pass. */
+    /**
+     * Random instance tied to this generation pass.
+     */
     private final Random random;
 
-    /** Reusable mutable position to reduce object allocation. */
+    /**
+     * Reusable mutable position to reduce object allocation.
+     */
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
     /**
@@ -69,10 +79,10 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     /**
      * Checks if the given coordinate is within this generation region
      *
-     * @param x        X coordinate
-     * @param y        Y Coordinate
-     * @param z        Z Coordinate
-     * @return         Whether the coordinate is in region or not
+     * @param x X coordinate
+     * @param y Y Coordinate
+     * @param z Z Coordinate
+     * @return Whether the coordinate is in region or not
      */
     public boolean isInRegion(int x, int y, int z) {
         return region.isInRegion(x, y, z);
@@ -134,7 +144,7 @@ public class NMSWorldGenAccess implements WorldGenAccess {
     @Override
     public void setBlock(int x, int y, int z, @NotNull CustomBlock block, @NotNull BlockData data) {
         setBlock(x, y, z, data);
-        VirtualBlock virtual = new VirtualBlock(this.getWorld(), x, y, z, data.getMaterial());
+        VirtualBlock virtual = new VirtualBlock(this.world(), x, y, z, data.getMaterial());
         block.placeForWorldGen(virtual);
     }
 
@@ -265,7 +275,7 @@ public class NMSWorldGenAccess implements WorldGenAccess {
      * @return World instance
      */
     @Override
-    public @NotNull World getWorld() {
+    public @NotNull World world() {
         return world;
     }
 
@@ -275,7 +285,7 @@ public class NMSWorldGenAccess implements WorldGenAccess {
      * @return Random instance
      */
     @Override
-    public @NotNull Random getRandom() {
+    public @NotNull Random random() {
         return random;
     }
 }

@@ -22,7 +22,7 @@ public record PlacementContext(WorldGenAccess level, int chunkX, int chunkZ, Ran
      * @return The minimum build height.
      */
     public int getMinBuildHeight() {
-        return level.getWorld().getMinHeight();
+        return level.world().getMinHeight();
     }
 
     /**
@@ -31,7 +31,7 @@ public record PlacementContext(WorldGenAccess level, int chunkX, int chunkZ, Ran
      * @return The maximum build height.
      */
     public int getHeight() {
-        return level.getWorld().getMaxHeight();
+        return level.world().getMaxHeight();
     }
 
     /**
@@ -41,6 +41,6 @@ public record PlacementContext(WorldGenAccess level, int chunkX, int chunkZ, Ran
      * @return A standard Bukkit Location.
      */
     public Location toLocation(Vector pos) {
-        return new Location(level.getWorld(), pos.getX(), pos.getY(), pos.getZ());
+        return new Location(level.world(), pos.getX(), pos.getY(), pos.getZ());
     }
 }

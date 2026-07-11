@@ -27,7 +27,8 @@ public class InSquareModifier extends PlacementModifier {
     /**
      * Constructs a new InSquareModifier.
      */
-    public InSquareModifier() {}
+    public InSquareModifier() {
+    }
 
     /**
      * Applies a random horizontal offset to each incoming position.

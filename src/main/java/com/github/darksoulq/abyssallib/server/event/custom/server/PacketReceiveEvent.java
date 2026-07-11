@@ -14,8 +14,8 @@ public class PacketReceiveEvent extends PacketEvent {
     /**
      * Constructs a new PacketReceiveEvent.
      *
-     * @param player the Bukkit player who sent the packet
-     * @param packet the NMS packet being receive
+     * @param player  the Bukkit player who sent the packet
+     * @param packet  the NMS packet being receive
      * @param isAsync whether the event is Async
      */
     public PacketReceiveEvent(Player player, Packet<?> packet, boolean isAsync) {

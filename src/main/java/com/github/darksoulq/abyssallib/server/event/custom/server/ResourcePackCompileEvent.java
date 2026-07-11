@@ -24,6 +24,7 @@ public class ResourcePackCompileEvent extends Event {
     public @NotNull String pluginId() {
         return pluginId;
     }
+
     public @NotNull ResourcePack pack() {
         return pack;
     }
@@ -38,5 +39,7 @@ public class ResourcePackCompileEvent extends Event {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() { return handlers; }
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }

@@ -20,7 +20,7 @@ public class EitherCodec<A, B> implements Codec<Either<A, B>> {
     /**
      * Creates an either codec.
      *
-     * @param left Left branch codec.
+     * @param left  Left branch codec.
      * @param right Right branch codec.
      */
     public EitherCodec(Codec<A> left, Codec<B> right) {

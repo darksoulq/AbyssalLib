@@ -46,7 +46,8 @@ public sealed interface CooldownResult permits CooldownResult.Ready, CooldownRes
         }
     }
 
-    record Cooling(long remaining, TimeUnit unit, CooldownScope scope, Key id, Cooldown cooldown, Scheduler scheduler) implements CooldownResult {
+    record Cooling(long remaining, TimeUnit unit, CooldownScope scope, Key id, Cooldown cooldown,
+                   Scheduler scheduler) implements CooldownResult {
         @Override
         public boolean isReady() {
             return false;
@@ -79,13 +80,13 @@ public sealed interface CooldownResult permits CooldownResult.Ready, CooldownRes
         @Override
         public CooldownResult onTick(long interval, TimeUnit tickUnit, BiConsumer<Long, TimeUnit> action) {
             scheduler.schedule(() -> {
-                CooldownResult current = cooldown.test(scope, id);
-                if (current instanceof Cooling c) {
-                    action.accept(c.remaining(), c.unit());
-                }
-            })
-            .repeatWhile(() -> !cooldown.test(scope, id).isReady())
-            .repeatEvery(interval, tickUnit, cooldown.getClock());
+                    CooldownResult current = cooldown.test(scope, id);
+                    if (current instanceof Cooling c) {
+                        action.accept(c.remaining(), c.unit());
+                    }
+                })
+                .repeatWhile(() -> !cooldown.test(scope, id).isReady())
+                .repeatEvery(interval, tickUnit, cooldown.getClock());
             return this;
         }
     }

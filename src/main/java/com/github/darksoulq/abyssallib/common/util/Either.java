@@ -19,7 +19,8 @@ public abstract class Either<L, R> {
     /**
      * Private constructor to prevent external instantiation and maintain the algebraic data type.
      */
-    private Either() {}
+    private Either() {
+    }
 
     /**
      * Creates an instance of Either containing a Left value.
@@ -188,7 +189,9 @@ public abstract class Either<L, R> {
      * @param <R> The Right type.
      */
     public static final class Left<L, R> extends Either<L, R> {
-        /** The wrapped value. */
+        /**
+         * The wrapped value.
+         */
         private final L value;
 
         /**
@@ -198,7 +201,9 @@ public abstract class Either<L, R> {
             this.value = Objects.requireNonNull(value);
         }
 
-        /** @return The wrapped value. */
+        /**
+         * @return The wrapped value.
+         */
         public L value() {
             return value;
         }
@@ -249,7 +254,8 @@ public abstract class Either<L, R> {
         }
 
         @Override
-        public void ifRight(Consumer<? super R> c) {}
+        public void ifRight(Consumer<? super R> c) {
+        }
 
         @Override
         public <T> T fold(Function<? super L, ? extends T> lf,
@@ -270,7 +276,9 @@ public abstract class Either<L, R> {
      * @param <R> The Right type.
      */
     public static final class Right<L, R> extends Either<L, R> {
-        /** The wrapped value. */
+        /**
+         * The wrapped value.
+         */
         private final R value;
 
         /**
@@ -280,7 +288,9 @@ public abstract class Either<L, R> {
             this.value = Objects.requireNonNull(value);
         }
 
-        /** @return The wrapped value. */
+        /**
+         * @return The wrapped value.
+         */
         public R value() {
             return value;
         }
@@ -326,7 +336,8 @@ public abstract class Either<L, R> {
         }
 
         @Override
-        public void ifLeft(Consumer<? super L> c) {}
+        public void ifLeft(Consumer<? super L> c) {
+        }
 
         @Override
         public void ifRight(Consumer<? super R> c) {

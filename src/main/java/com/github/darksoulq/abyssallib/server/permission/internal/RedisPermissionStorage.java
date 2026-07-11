@@ -37,7 +37,7 @@ public class RedisPermissionStorage implements PermissionStorage {
                 PermissionGroup group = new PermissionGroup(id);
                 JsonObject obj = gson.fromJson(json, JsonObject.class);
                 group.setWeight(obj.has("weight") ? obj.get("weight").getAsInt() : 0);
-                
+
                 if (obj.has("parents")) {
                     JsonArray parents = obj.getAsJsonArray("parents");
                     for (int i = 0; i < parents.size(); i++) {
@@ -45,7 +45,7 @@ public class RedisPermissionStorage implements PermissionStorage {
                         group.parents.put(pObj.get("key").getAsString(), new Node(pObj.get("key").getAsString(), true, pObj.get("expiry").getAsLong()));
                     }
                 }
-                
+
                 if (obj.has("nodes")) {
                     JsonArray nodes = obj.getAsJsonArray("nodes");
                     for (int i = 0; i < nodes.size(); i++) {
@@ -53,7 +53,7 @@ public class RedisPermissionStorage implements PermissionStorage {
                         group.permissions.put(nObj.get("key").getAsString(), new Node(nObj.get("key").getAsString(), nObj.get("val").getAsBoolean(), nObj.get("expiry").getAsLong()));
                     }
                 }
-                
+
                 Registries.PERMISSION_GROUPS.register(id, group);
             }
         }
@@ -66,7 +66,7 @@ public class RedisPermissionStorage implements PermissionStorage {
         if (json != null) {
             JsonObject obj = gson.fromJson(json, JsonObject.class);
             user.setName(obj.has("name") ? obj.get("name").getAsString() : null);
-            
+
             if (obj.has("parents")) {
                 JsonArray parents = obj.getAsJsonArray("parents");
                 for (int i = 0; i < parents.size(); i++) {
@@ -74,7 +74,7 @@ public class RedisPermissionStorage implements PermissionStorage {
                     user.parents.put(pObj.get("key").getAsString(), new Node(pObj.get("key").getAsString(), true, pObj.get("expiry").getAsLong()));
                 }
             }
-            
+
             if (obj.has("nodes")) {
                 JsonArray nodes = obj.getAsJsonArray("nodes");
                 for (int i = 0; i < nodes.size(); i++) {
@@ -109,22 +109,22 @@ public class RedisPermissionStorage implements PermissionStorage {
     public void saveGroup(PermissionGroup group) {
         JsonObject obj = new JsonObject();
         obj.addProperty("weight", group.getWeight());
-        
+
         JsonArray parents = new JsonArray();
         for (Node p : group.getParentNodes()) {
             JsonObject pObj = new JsonObject();
-            pObj.addProperty("key", p.getKey());
-            pObj.addProperty("expiry", p.getExpiry());
+            pObj.addProperty("key", p.key());
+            pObj.addProperty("expiry", p.expiry());
             parents.add(pObj);
         }
         obj.add("parents", parents);
-        
+
         JsonArray nodes = new JsonArray();
         for (Node n : group.getNodes()) {
             JsonObject nObj = new JsonObject();
-            nObj.addProperty("key", n.getKey());
-            nObj.addProperty("val", n.getValue());
-            nObj.addProperty("expiry", n.getExpiry());
+            nObj.addProperty("key", n.key());
+            nObj.addProperty("val", n.value());
+            nObj.addProperty("expiry", n.expiry());
             nodes.add(nObj);
         }
         obj.add("nodes", nodes);
@@ -141,22 +141,22 @@ public class RedisPermissionStorage implements PermissionStorage {
         if (user.getName() != null) {
             obj.addProperty("name", user.getName());
         }
-        
+
         JsonArray parents = new JsonArray();
         for (Node p : user.getParentNodes()) {
             JsonObject pObj = new JsonObject();
-            pObj.addProperty("key", p.getKey());
-            pObj.addProperty("expiry", p.getExpiry());
+            pObj.addProperty("key", p.key());
+            pObj.addProperty("expiry", p.expiry());
             parents.add(pObj);
         }
         obj.add("parents", parents);
-        
+
         JsonArray nodes = new JsonArray();
         for (Node n : user.getNodes()) {
             JsonObject nObj = new JsonObject();
-            nObj.addProperty("key", n.getKey());
-            nObj.addProperty("val", n.getValue());
-            nObj.addProperty("expiry", n.getExpiry());
+            nObj.addProperty("key", n.key());
+            nObj.addProperty("val", n.value());
+            nObj.addProperty("expiry", n.expiry());
             nodes.add(nObj);
         }
         obj.add("nodes", nodes);
@@ -196,6 +196,7 @@ public class RedisPermissionStorage implements PermissionStorage {
     public void shutdown() {
         try {
             db.disconnect();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -14,10 +14,13 @@ import java.util.stream.Collectors;
  * It also includes advanced blending, mixing, and color theory palette generation.
  */
 public final class ColorUtils {
-    /** Internal {@link Random} instance used for generating unpredictable colors. */
+    /**
+     * Internal {@link Random} instance used for generating unpredictable colors.
+     */
     private static final Random RANDOM = new Random();
 
-    /** * A thread-safe mapping of lowercase color names to their respective Bukkit
+    /**
+     * A thread-safe mapping of lowercase color names to their respective Bukkit
      * {@link Color} constants.
      */
     private static final Map<String, Color> NAMED_COLORS = new HashMap<>();
@@ -104,8 +107,6 @@ public final class ColorUtils {
 
     /**
      * Creates a Color using the HSB (Hue, Saturation, Brightness) color model.
-     *
-     *
      *
      * @param hue        The hue component (0.0 to 1.0).
      * @param saturation The saturation component (0.0 to 1.0).
@@ -238,8 +239,6 @@ public final class ColorUtils {
      * <p>
      * This provides perceptually linear transitions that avoid the desaturation
      * common in standard RGB mixing.
-     *
-     *
      *
      * @param c1    The starting color.
      * @param c2    The target color.

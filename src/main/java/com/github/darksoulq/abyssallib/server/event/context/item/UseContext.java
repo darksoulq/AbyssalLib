@@ -33,7 +33,8 @@ public record UseContext(LivingEntity source, @Nullable Block targetBlock, @Null
      * @param type         The {@link ClickType} used for this interaction.
      * @param hand         The {@link EquipmentSlot} representing the hand used.
      */
-    public UseContext {}
+    public UseContext {
+    }
 
     /**
      * Gets the entity that used the item.

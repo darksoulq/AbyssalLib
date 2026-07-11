@@ -50,11 +50,11 @@ public interface SchemaNode {
     /**
      * Describes a field within a record schema.
      *
-     * @param name field name
-     * @param type field schema
-     * @param optional whether the field is optional
+     * @param name         field name
+     * @param type         field schema
+     * @param optional     whether the field is optional
      * @param defaultValue default value for the field
-     * @param description field description
+     * @param description  field description
      */
     record FieldSchema(String name, SchemaNode type, boolean optional, Object defaultValue, String description) {
         /**
@@ -97,7 +97,7 @@ public interface SchemaNode {
     /**
      * Represents a map schema.
      *
-     * @param keyType schema of map keys
+     * @param keyType   schema of map keys
      * @param valueType schema of map values
      */
     record MapSchema(SchemaNode keyType, SchemaNode valueType) implements SchemaNode {
@@ -133,7 +133,7 @@ public interface SchemaNode {
      * Represents a polymorphic schema selected by a discriminator field.
      *
      * @param discriminator field used to select a variant
-     * @param variants available schema variants
+     * @param variants      available schema variants
      */
     record DispatchSchema(String discriminator, Map<String, SchemaNode> variants) implements SchemaNode {
         @Override
@@ -168,7 +168,7 @@ public interface SchemaNode {
     /**
      * Represents a schema that may be one of two types.
      *
-     * @param left left schema
+     * @param left  left schema
      * @param right right schema
      */
     record EitherSchema(SchemaNode left, SchemaNode right) implements SchemaNode {

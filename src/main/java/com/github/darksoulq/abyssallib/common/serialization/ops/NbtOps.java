@@ -22,7 +22,8 @@ public class NbtOps extends DynamicOps<Tag> {
     /**
      * Creates a new {@code NbtOps} instance.
      */
-    private NbtOps() {}
+    private NbtOps() {
+    }
 
     /**
      * Creates a string tag.

@@ -7,7 +7,9 @@ import org.bukkit.util.Vector;
  * A gradient that radiates outward from the origin (0,0) on the XZ plane.
  */
 public class RadialGradient extends AbstractGradient {
-    /** The distance from the origin at which the gradient reaches the final color stop. */
+    /**
+     * The distance from the origin at which the gradient reaches the final color stop.
+     */
     private final double radius;
 
     /**

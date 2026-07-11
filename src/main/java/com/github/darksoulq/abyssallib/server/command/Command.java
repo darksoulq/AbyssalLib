@@ -36,5 +36,6 @@ public @interface Command {
      * @return the command name
      */
     String name();
+
     String[] aliases() default {};
 }

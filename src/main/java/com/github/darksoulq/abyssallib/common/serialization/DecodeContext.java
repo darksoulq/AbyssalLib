@@ -48,7 +48,11 @@ public class DecodeContext<D> {
     public <T> DecodeContext<D> readNullable(String key, Codec<T> codec, Consumer<T> action) {
         D data = map.get(ops.createString(key));
         if (data == null) {
-            try { action.accept(null); } catch (Exception e) { errors.add(DataError.custom(e.getMessage())); }
+            try {
+                action.accept(null);
+            } catch (Exception e) {
+                errors.add(DataError.custom(e.getMessage()));
+            }
             return this;
         }
 
@@ -56,7 +60,11 @@ public class DecodeContext<D> {
         if (res.isError()) {
             errors.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
         } else {
-            try { action.accept(res.getOrThrow()); } catch (Exception e) { errors.add(DataError.custom(e.getMessage())); }
+            try {
+                action.accept(res.getOrThrow());
+            } catch (Exception e) {
+                errors.add(DataError.custom(e.getMessage()));
+            }
             if (res.isPartial()) warnings.addAll(res.warnings());
         }
         return this;
@@ -65,7 +73,11 @@ public class DecodeContext<D> {
     public <T> DecodeContext<D> readOptional(String key, Codec<T> codec, Consumer<Optional<T>> action) {
         D data = map.get(ops.createString(key));
         if (data == null) {
-            try { action.accept(Optional.empty()); } catch (Exception e) { errors.add(DataError.custom(e.getMessage())); }
+            try {
+                action.accept(Optional.empty());
+            } catch (Exception e) {
+                errors.add(DataError.custom(e.getMessage()));
+            }
             return this;
         }
 
@@ -73,7 +85,11 @@ public class DecodeContext<D> {
         if (res.isError()) {
             errors.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
         } else {
-            try { action.accept(Optional.of(res.getOrThrow())); } catch (Exception e) { errors.add(DataError.custom(e.getMessage())); }
+            try {
+                action.accept(Optional.of(res.getOrThrow()));
+            } catch (Exception e) {
+                errors.add(DataError.custom(e.getMessage()));
+            }
             if (res.isPartial()) warnings.addAll(res.warnings());
         }
         return this;
@@ -82,7 +98,11 @@ public class DecodeContext<D> {
     public <T> DecodeContext<D> readOrElse(String key, Codec<T> codec, T defaultValue, Consumer<T> action) {
         D data = map.get(ops.createString(key));
         if (data == null) {
-            try { action.accept(defaultValue); } catch (Exception e) { errors.add(DataError.custom(e.getMessage())); }
+            try {
+                action.accept(defaultValue);
+            } catch (Exception e) {
+                errors.add(DataError.custom(e.getMessage()));
+            }
             return this;
         }
 
@@ -90,7 +110,11 @@ public class DecodeContext<D> {
         if (res.isError()) {
             errors.add(res.dataError().orElseGet(() -> DataError.custom(res.error().get())));
         } else {
-            try { action.accept(res.getOrThrow()); } catch (Exception e) { errors.add(DataError.custom(e.getMessage())); }
+            try {
+                action.accept(res.getOrThrow());
+            } catch (Exception e) {
+                errors.add(DataError.custom(e.getMessage()));
+            }
             if (res.isPartial()) warnings.addAll(res.warnings());
         }
         return this;

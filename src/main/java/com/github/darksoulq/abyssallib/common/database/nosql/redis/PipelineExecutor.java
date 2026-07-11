@@ -16,9 +16,13 @@ import java.util.function.Consumer;
  * the server without waiting for individual replies.
  */
 public class PipelineExecutor {
-    /** The parent database instance. */
+    /**
+     * The parent database instance.
+     */
     private final Database database;
-    /** The list of queued operations to be executed on the pipeline. */
+    /**
+     * The list of queued operations to be executed on the pipeline.
+     */
     private final List<Consumer<Pipeline>> operations = new ArrayList<>();
 
     /**

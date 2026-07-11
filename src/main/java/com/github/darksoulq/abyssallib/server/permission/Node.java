@@ -8,25 +8,14 @@ import java.util.Objects;
  * A Node can be permanent or temporary. When used in a {@link PermissionHolder},
  * it determines whether a specific permission string is granted or denied,
  * or whether a group is inherited as a parent.
+ *
+ * @param key    The unique key identifying the permission or group (e.g., "minecraft.command.tp").
+ * @param value  The boolean value of the node. If {@code true}, the permission is granted;
+ *               if {@code false}, it is explicitly denied.
+ * @param expiry The Unix timestamp (in milliseconds) at which this node expires.
+ *               A value of {@code 0L} indicates a permanent node.
  */
-public class Node {
-
-    /**
-     * The unique key identifying the permission or group (e.g., "minecraft.command.tp").
-     */
-    private final String key;
-
-    /**
-     * The boolean value of the node. If {@code true}, the permission is granted;
-     * if {@code false}, it is explicitly denied.
-     */
-    private final boolean value;
-
-    /**
-     * The Unix timestamp (in milliseconds) at which this node expires.
-     * A value of {@code 0L} indicates a permanent node.
-     */
-    private final long expiry;
+public record Node(String key, boolean value, long expiry) {
 
     /**
      * Constructs a Node with a specific key, value, and expiry.
@@ -35,10 +24,7 @@ public class Node {
      * @param value  The boolean state of the node.
      * @param expiry The expiration timestamp in milliseconds.
      */
-    public Node(String key, boolean value, long expiry) {
-        this.key = key;
-        this.value = value;
-        this.expiry = expiry;
+    public Node {
     }
 
     /**
@@ -65,7 +51,8 @@ public class Node {
      *
      * @return The key string.
      */
-    public String getKey() {
+    @Override
+    public String key() {
         return key;
     }
 
@@ -74,7 +61,8 @@ public class Node {
      *
      * @return {@code true} if granted/active, {@code false} if denied.
      */
-    public boolean getValue() {
+    @Override
+    public boolean value() {
         return value;
     }
 
@@ -83,7 +71,8 @@ public class Node {
      *
      * @return The expiry time in milliseconds, or {@code 0L} if permanent.
      */
-    public long getExpiry() {
+    @Override
+    public long expiry() {
         return expiry;
     }
 

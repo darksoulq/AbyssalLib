@@ -25,7 +25,8 @@ public class DatabaseLoader {
      * @param username The database username.
      * @param password The database password.
      */
-    private record RelationalCredentials(String host, int port, String database, String username, String password) {}
+    private record RelationalCredentials(String host, int port, String database, String username, String password) {
+    }
 
     /**
      * Retrieves relational database credentials from the provided configuration.

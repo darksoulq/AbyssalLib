@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class Rarity extends DataComponent<ItemRarity> implements Vanilla {
     public static final Codec<Rarity> CODEC = Codec.enumCodec(ItemRarity.class).xmap(
-            Rarity::new,
-            Rarity::getValue
+        Rarity::new,
+        Rarity::getValue
     );
     public static final DataComponentType<Rarity> TYPE = DataComponentType.valued(CODEC, Rarity::new);
 

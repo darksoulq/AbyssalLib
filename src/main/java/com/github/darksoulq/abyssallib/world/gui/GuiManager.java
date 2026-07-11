@@ -17,7 +17,9 @@ import java.util.Map;
  */
 public class GuiManager {
 
-    /** A map of active Bukkit InventoryViews to their corresponding AbyssalLib GuiViews. */
+    /**
+     * A map of active Bukkit InventoryViews to their corresponding AbyssalLib GuiViews.
+     */
     public static final Map<InventoryView, GuiView> OPEN_VIEWS = new HashMap<>();
     /**
      * A map of active BukkitTasks to their corresponding GUiViews.
@@ -74,7 +76,7 @@ public class GuiManager {
     /**
      * Starts a ticking tasks for a GuiView.
      *
-     * @param view THe guiView to tick.
+     * @param view     THe guiView to tick.
      * @param interval The interval between ticks.
      * @return The BukkitTask that can be cancelled whenever needed.
      */

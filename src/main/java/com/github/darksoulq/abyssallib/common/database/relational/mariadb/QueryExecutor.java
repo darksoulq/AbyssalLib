@@ -7,7 +7,9 @@ import java.sql.Statement;
  * builder initialization.
  */
 public class QueryExecutor {
-    /** The parent database instance. */
+    /**
+     * The parent database instance.
+     */
     private final Database database;
 
     /**

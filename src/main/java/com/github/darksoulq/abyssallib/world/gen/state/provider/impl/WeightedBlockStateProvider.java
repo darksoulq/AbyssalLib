@@ -26,10 +26,14 @@ public class WeightedBlockStateProvider extends BlockStateProvider {
      */
     public static final BlockStateProviderType<WeightedBlockStateProvider> TYPE = () -> CODEC;
 
-    /** The pool of weighted block states. */
+    /**
+     * The pool of weighted block states.
+     */
     private final List<Entry> entries;
 
-    /** The cached sum of all entry weights. */
+    /**
+     * The cached sum of all entry weights.
+     */
     private final int totalWeight;
 
     /**

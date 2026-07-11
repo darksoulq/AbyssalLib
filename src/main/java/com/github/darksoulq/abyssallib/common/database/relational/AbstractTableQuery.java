@@ -13,8 +13,7 @@ import java.util.concurrent.ExecutorService;
  * It supports standard INSERT, REPLACE, UPDATE, and DELETE operations, as well as complex
  * SELECT queries with mapping, ordering, and pagination.
  *
- * @param <T>
- * The implementation type used for fluent chaining, allowing methods to return the specific subclass type.
+ * @param <T> The implementation type used for fluent chaining, allowing methods to return the specific subclass type.
  */
 public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
 
@@ -37,13 +36,21 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
      * Internal enumeration representing the intended SQL operation mode.
      */
     protected enum Type {
-        /** Represents a standard SQL INSERT operation. */
+        /**
+         * Represents a standard SQL INSERT operation.
+         */
         INSERT,
-        /** Represents a dialect-specific SQL REPLACE or UPSERT operation. */
+        /**
+         * Represents a dialect-specific SQL REPLACE or UPSERT operation.
+         */
         REPLACE,
-        /** Represents a standard SQL UPDATE operation. */
+        /**
+         * Represents a standard SQL UPDATE operation.
+         */
         UPDATE,
-        /** Represents a standard SQL DELETE operation. */
+        /**
+         * Represents a standard SQL DELETE operation.
+         */
         DELETE
     }
 
@@ -90,12 +97,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Constructs a new AbstractTableQuery with the required execution context.
      *
-     * @param connection
-     * The JDBC connection to be used for executing SQL statements.
-     * @param table
-     * The name of the target database table.
-     * @param asyncPool
-     * The executor service for handling asynchronous tasks.
+     * @param connection The JDBC connection to be used for executing SQL statements.
+     * @param table      The name of the target database table.
+     * @param asyncPool  The executor service for handling asynchronous tasks.
      */
     public AbstractTableQuery(Connection connection, String table, ExecutorService asyncPool) {
         this.connection = connection;
@@ -106,8 +110,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the query operation mode to INSERT.
      *
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T insert() {
@@ -118,8 +121,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the query operation mode to REPLACE.
      *
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T replace() {
@@ -130,8 +132,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the query operation mode to UPDATE.
      *
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T update() {
@@ -142,8 +143,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the query operation mode to DELETE.
      *
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T delete() {
@@ -154,12 +154,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Adds a column-value pair to be used for INSERT, REPLACE, or UPDATE operations.
      *
-     * @param column
-     * The name of the target column.
-     * @param value
-     * The value to be set for the specified column.
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @param column The name of the target column.
+     * @param value  The value to be set for the specified column.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T value(String column, Object value) {
@@ -170,12 +167,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Configures the filtering criteria for the query using a WHERE clause.
      *
-     * @param clause
-     * The SQL string for the where clause, using '?' for parameter placeholders.
-     * @param params
-     * The objects to bind to the placeholders in the provided clause.
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @param clause The SQL string for the where clause, using '?' for parameter placeholders.
+     * @param params The objects to bind to the placeholders in the provided clause.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T where(String clause, Object... params) {
@@ -187,12 +181,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the ordering criteria for the resulting data set.
      *
-     * @param column
-     * The column name to sort by.
-     * @param ascending
-     * Set to true for ascending order, false for descending.
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @param column    The column name to sort by.
+     * @param ascending Set to true for ascending order, false for descending.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T orderBy(String column, boolean ascending) {
@@ -204,10 +195,8 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the maximum number of rows to be returned by the query.
      *
-     * @param limit
-     * The maximum number of results.
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @param limit The maximum number of results.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T limit(int limit) {
@@ -218,10 +207,8 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Sets the starting offset for the result set, primarily used for pagination.
      *
-     * @param offset
-     * The number of rows to skip.
-     * @return
-     * The fluent instance cast to the implementation type {@code T}.
+     * @param offset The number of rows to skip.
+     * @return The fluent instance cast to the implementation type {@code T}.
      */
     @SuppressWarnings("unchecked")
     public T offset(int offset) {
@@ -232,26 +219,22 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Retrieves the dialect-specific SQL verb used for INSERT operations.
      *
-     * @return
-     * A string containing the INSERT verb (e.g., "INSERT INTO ").
+     * @return A string containing the INSERT verb (e.g., "INSERT INTO ").
      */
     protected abstract String getInsertVerb();
 
     /**
      * Retrieves the dialect-specific SQL verb used for REPLACE operations.
      *
-     * @return
-     * A string containing the REPLACE verb (e.g., "REPLACE INTO ").
+     * @return A string containing the REPLACE verb (e.g., "REPLACE INTO ").
      */
     protected abstract String getReplaceVerb();
 
     /**
      * Executes the built data modification query synchronously.
      *
-     * @return
-     * The number of rows affected by the execution.
-     * @throws RuntimeException
-     * If a {@link SQLException} occurs during execution.
+     * @return The number of rows affected by the execution.
+     * @throws RuntimeException If a {@link SQLException} occurs during execution.
      */
     public int execute() {
         try {
@@ -269,8 +252,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Asynchronously executes the currently built data modification operation.
      *
-     * @return
-     * A {@link CompletableFuture} containing the number of rows affected.
+     * @return A {@link CompletableFuture} containing the number of rows affected.
      */
     public CompletableFuture<Integer> executeAsync() {
         return CompletableFuture.supplyAsync(this::execute, asyncPool);
@@ -279,12 +261,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Internal logic for executing INSERT and REPLACE statements.
      *
-     * @param verb
-     * The SQL verb to prepend to the statement.
-     * @return
-     * The number of rows affected.
-     * @throws SQLException
-     * If the SQL statement fails to execute.
+     * @param verb The SQL verb to prepend to the statement.
+     * @return The number of rows affected.
+     * @throws SQLException If the SQL statement fails to execute.
      */
     private int executeInsert(String verb) throws SQLException {
         StringBuilder sql = new StringBuilder(verb).append(table).append(" (");
@@ -304,10 +283,8 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Internal logic for executing UPDATE statements.
      *
-     * @return
-     * The number of rows affected.
-     * @throws SQLException
-     * If the SQL statement fails to execute.
+     * @return The number of rows affected.
+     * @throws SQLException If the SQL statement fails to execute.
      */
     private int executeUpdate() throws SQLException {
         StringBuilder sql = new StringBuilder("UPDATE " + table + " SET ");
@@ -330,10 +307,8 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Internal logic for executing DELETE statements.
      *
-     * @return
-     * The number of rows affected.
-     * @throws SQLException
-     * If the SQL statement fails to execute.
+     * @return The number of rows affected.
+     * @throws SQLException If the SQL statement fails to execute.
      */
     private int executeDelete() throws SQLException {
         StringBuilder sql = new StringBuilder("DELETE FROM " + table);
@@ -347,10 +322,8 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Executes a COUNT(*) query based on the current where clause configuration.
      *
-     * @return
-     * The total count of rows matching the query criteria.
-     * @throws RuntimeException
-     * If a {@link SQLException} occurs.
+     * @return The total count of rows matching the query criteria.
+     * @throws RuntimeException If a {@link SQLException} occurs.
      */
     public long count() {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM " + table);
@@ -371,8 +344,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Determines if at least one row matches the query criteria.
      *
-     * @return
-     * True if the matching count is greater than zero, false otherwise.
+     * @return True if the matching count is greater than zero, false otherwise.
      */
     public boolean exists() {
         return count() > 0;
@@ -381,12 +353,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Fetches the first row from the result set and transforms it using the provided mapper.
      *
-     * @param <R>
-     * The type of the resulting object.
-     * @param mapper
-     * The {@link ResultMapper} used to convert the {@link ResultSet} row into type R.
-     * @return
-     * The mapped object, or {@code null} if no matching rows were found.
+     * @param <R>    The type of the resulting object.
+     * @param mapper The {@link ResultMapper} used to convert the {@link ResultSet} row into type R.
+     * @return The mapped object, or {@code null} if no matching rows were found.
      */
     public <R> R first(ResultMapper<R> mapper) {
         List<R> list = limit(1).select(mapper);
@@ -396,12 +365,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Selects all columns (*) from the table and maps the results.
      *
-     * @param <R>
-     * The type of the resulting objects.
-     * @param mapper
-     * The mapper used for object transformation.
-     * @return
-     * A list of mapped results.
+     * @param <R>    The type of the resulting objects.
+     * @param mapper The mapper used for object transformation.
+     * @return A list of mapped results.
      */
     public <R> List<R> select(ResultMapper<R> mapper) {
         return select(mapper, "*");
@@ -410,16 +376,11 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Selects specific columns and maps the resulting rows into a list of objects.
      *
-     * @param <R>
-     * The type of the resulting objects.
-     * @param mapper
-     * The mapper used for object transformation.
-     * @param columns
-     * The column names to be included in the selection.
-     * @return
-     * A list of transformed result objects.
-     * @throws RuntimeException
-     * If an error occurs during execution or mapping.
+     * @param <R>     The type of the resulting objects.
+     * @param mapper  The mapper used for object transformation.
+     * @param columns The column names to be included in the selection.
+     * @return A list of transformed result objects.
+     * @throws RuntimeException If an error occurs during execution or mapping.
      */
     public <R> List<R> select(ResultMapper<R> mapper, String... columns) {
         List<R> results = new ArrayList<>();
@@ -452,12 +413,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Asynchronously selects all columns and maps the results.
      *
-     * @param <R>
-     * The target result type.
-     * @param mapper
-     * The mapper for object conversion.
-     * @return
-     * A {@link CompletableFuture} containing the list of results.
+     * @param <R>    The target result type.
+     * @param mapper The mapper for object conversion.
+     * @return A {@link CompletableFuture} containing the list of results.
      */
     public <R> CompletableFuture<List<R>> selectAsync(ResultMapper<R> mapper) {
         return CompletableFuture.supplyAsync(() -> select(mapper), asyncPool);
@@ -466,14 +424,10 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Asynchronously selects specific columns and maps the results.
      *
-     * @param <R>
-     * The target result type.
-     * @param mapper
-     * The mapper for object conversion.
-     * @param columns
-     * The column names to select.
-     * @return
-     * A {@link CompletableFuture} containing the list of results.
+     * @param <R>     The target result type.
+     * @param mapper  The mapper for object conversion.
+     * @param columns The column names to select.
+     * @return A {@link CompletableFuture} containing the list of results.
      */
     public <R> CompletableFuture<List<R>> selectAsync(ResultMapper<R> mapper, String... columns) {
         return CompletableFuture.supplyAsync(() -> select(mapper, columns), asyncPool);
@@ -482,8 +436,7 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Appends the WHERE clause to the provided SQL builder if criteria have been set.
      *
-     * @param sql
-     * The StringBuilder constructing the SQL statement.
+     * @param sql The StringBuilder constructing the SQL statement.
      */
     protected void appendWhereClause(StringBuilder sql) {
         if (whereClause != null && !whereClause.isEmpty()) {
@@ -494,12 +447,9 @@ public abstract class AbstractTableQuery<T extends AbstractTableQuery<T>> {
     /**
      * Binds an array of parameters to a PreparedStatement.
      *
-     * @param stmt
-     * The statement to bind parameters to.
-     * @param values
-     * The values to be bound as parameters.
-     * @throws SQLException
-     * If binding an object to the statement fails.
+     * @param stmt   The statement to bind parameters to.
+     * @param values The values to be bound as parameters.
+     * @throws SQLException If binding an object to the statement fails.
      */
     protected void setValues(PreparedStatement stmt, Object[] values) throws SQLException {
         if (values == null) {

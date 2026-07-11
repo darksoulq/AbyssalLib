@@ -36,12 +36,35 @@ public class BBAnimator {
         scale.sort(Comparator.comparingDouble(BBKeyframe::time));
     }
 
-    public String getName() { return name; }
-    public String getUuid() { return uuid; }
-    public String getType() { return type; }
-    public boolean isRotationGlobal() { return rotationGlobal; }
-    public boolean isQuaternionInterpolation() { return quaternionInterpolation; }
-    public List<BBKeyframe> getPosition() { return position; }
-    public List<BBKeyframe> getRotation() { return rotation; }
-    public List<BBKeyframe> getScale() { return scale; }
+    public String getName() {
+        return name;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public boolean isRotationGlobal() {
+        return rotationGlobal;
+    }
+
+    public boolean isQuaternionInterpolation() {
+        return quaternionInterpolation;
+    }
+
+    public List<BBKeyframe> getPosition() {
+        return position;
+    }
+
+    public List<BBKeyframe> getRotation() {
+        return rotation;
+    }
+
+    public List<BBKeyframe> getScale() {
+        return scale;
+    }
 }

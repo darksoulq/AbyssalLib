@@ -73,7 +73,8 @@ public class Atlas implements Asset {
             } else if (newType.equals("single") && obj.has("resource") && newSource.has("resource")) {
                 if (obj.get("resource").getAsString().equals(newSource.get("resource").getAsString())) return this;
             } else if (newType.equals("paletted_permutations") && obj.has("palette_key") && newSource.has("palette_key")) {
-                if (obj.get("palette_key").getAsString().equals(newSource.get("palette_key").getAsString())) return this;
+                if (obj.get("palette_key").getAsString().equals(newSource.get("palette_key").getAsString()))
+                    return this;
             } else if (obj.toString().equals(newSource.toString())) {
                 return this;
             }

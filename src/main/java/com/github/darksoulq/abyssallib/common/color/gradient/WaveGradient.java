@@ -8,13 +8,21 @@ import org.bukkit.util.Vector;
  * A color provider that applies a sinusoidal wave modulation to a base color provider.
  */
 public class WaveGradient implements ColorProvider {
-    /** The base provider used for the color stops. */
+    /**
+     * The base provider used for the color stops.
+     */
     private final ColorProvider base;
-    /** The normalized direction in which the wave propagates. */
+    /**
+     * The normalized direction in which the wave propagates.
+     */
     private final Vector direction;
-    /** The distance between consecutive wave peaks. */
+    /**
+     * The distance between consecutive wave peaks.
+     */
     private final double wavelength;
-    /** The speed at which the wave cycles based on the progress parameter. */
+    /**
+     * The speed at which the wave cycles based on the progress parameter.
+     */
     private final double speed;
 
     /**

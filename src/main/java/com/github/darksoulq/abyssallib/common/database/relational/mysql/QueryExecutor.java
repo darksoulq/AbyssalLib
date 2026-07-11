@@ -6,7 +6,9 @@ import java.sql.Statement;
  * A utility class to facilitate the creation of MySQL table builders and queries.
  */
 public class QueryExecutor {
-    /** The MySQL database instance. */
+    /**
+     * The MySQL database instance.
+     */
     private final Database database;
 
     /**
@@ -18,6 +20,7 @@ public class QueryExecutor {
 
     /**
      * Creates a query builder for a table.
+     *
      * @param name The table name.
      * @return A {@link TableQuery} instance.
      */
@@ -27,6 +30,7 @@ public class QueryExecutor {
 
     /**
      * Creates a table creation builder.
+     *
      * @param name The table name.
      * @return A {@link TableBuilder} instance.
      */

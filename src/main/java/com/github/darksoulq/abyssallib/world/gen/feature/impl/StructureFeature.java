@@ -52,7 +52,7 @@ public class StructureFeature extends Feature<StructureFeature.Config> {
         structure.place(context.level(), context.origin(), finalRotation, finalMirror, 1.0f);
 
         StructureLocator.record(
-            context.level().getWorld().getName(),
+            context.level().world().getName(),
             context.origin().getBlockX(),
             context.origin().getBlockY(),
             context.origin().getBlockZ(),
@@ -82,7 +82,8 @@ public class StructureFeature extends Feature<StructureFeature.Config> {
      * @param randomMirror   Flag to randomize the mirroring completely, overriding the configured mirror.
      * @param mirror         The explicitly defined structural mirror.
      */
-    public record Config(String structureId, boolean randomRotation, StructureRotation rotation, boolean randomMirror, Mirror mirror) implements FeatureConfig {
+    public record Config(String structureId, boolean randomRotation, StructureRotation rotation, boolean randomMirror,
+                         Mirror mirror) implements FeatureConfig {
 
         /**
          * The codec for serializing and deserializing the structure configuration.

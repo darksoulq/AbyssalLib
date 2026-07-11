@@ -14,14 +14,15 @@ import java.util.List;
 
 public class SuspiciousStewEffect extends DataComponent<List<SuspiciousEffectEntry>> implements Vanilla {
     public static final Codec<SuspiciousStewEffect> CODEC = ExtraCodecs.SUSPICIOUS_EFFECT_ENTRY.list().xmap(
-            SuspiciousStewEffect::new,
-            SuspiciousStewEffect::getValue
+        SuspiciousStewEffect::new,
+        SuspiciousStewEffect::getValue
     );
     public static final DataComponentType<SuspiciousStewEffect> TYPE = DataComponentType.valued(CODEC, v -> new SuspiciousStewEffect((SuspiciousStewEffects) v));
 
     public SuspiciousStewEffect(SuspiciousStewEffects effects) {
         super(effects.effects());
     }
+
     public SuspiciousStewEffect(List<SuspiciousEffectEntry> effects) {
         super(effects);
     }

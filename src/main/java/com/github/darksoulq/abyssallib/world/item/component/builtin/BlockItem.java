@@ -8,8 +8,8 @@ import net.kyori.adventure.key.Key;
 
 public class BlockItem extends DataComponent<Key> {
     public static final Codec<BlockItem> CODEC = Codecs.KEY.xmap(
-            BlockItem::new,
-            BlockItem::getValue
+        BlockItem::new,
+        BlockItem::getValue
     );
     public static final DataComponentType<BlockItem> TYPE = DataComponentType.simple(CODEC);
 

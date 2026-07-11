@@ -217,13 +217,15 @@ public class RecipeLoader {
             Bukkit.removeRecipe(NamespacedKey.fromString(recipe.getKey().asString()));
             try {
                 Bukkit.getPotionBrewer().removePotionMix(NamespacedKey.fromString(recipe.getKey().asString()));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         switch (recipe) {
             case BukkitRecipeProvider provider -> Bukkit.addRecipe(provider.toBukkit(), true);
             case PotionMixProvider provider -> Bukkit.getPotionBrewer().addPotionMix(provider.toPotionMix());
-            default -> {}
+            default -> {
+            }
         }
     }
 }

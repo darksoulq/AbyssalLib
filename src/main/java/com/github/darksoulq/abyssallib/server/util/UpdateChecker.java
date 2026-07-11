@@ -23,7 +23,8 @@ public class UpdateChecker {
     private final boolean isModrinth;
     private final Set<String> ignoredModifiers;
 
-    public record UpdateResult(Version version, String link) {}
+    public record UpdateResult(Version version, String link) {
+    }
 
     public UpdateChecker(Plugin plugin, String slug, boolean isModrinth, String... ignoredModifiers) {
         this.plugin = plugin;

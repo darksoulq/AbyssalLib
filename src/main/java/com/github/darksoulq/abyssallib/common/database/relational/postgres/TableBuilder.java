@@ -32,7 +32,11 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      * @throws RuntimeException If a database access error occurs.
      */
     private static Connection wrapConn(Database db) {
-        try { return db.getConnection(); } catch(SQLException e) { throw new RuntimeException(e); }
+        try {
+            return db.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -40,7 +44,9 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      * * @return {@code "SERIAL PRIMARY KEY"}
      */
     @Override
-    protected String getAutoIncrementKeyword() { return "SERIAL PRIMARY KEY"; }
+    protected String getAutoIncrementKeyword() {
+        return "SERIAL PRIMARY KEY";
+    }
 
     /**
      * Returns the table options suffix. PostgreSQL does not typically require
@@ -49,5 +55,7 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      * @return An empty string.
      */
     @Override
-    protected String getTableOptionsSuffix() { return ""; }
+    protected String getTableOptionsSuffix() {
+        return "";
+    }
 }

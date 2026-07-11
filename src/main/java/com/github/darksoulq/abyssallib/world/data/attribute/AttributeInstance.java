@@ -12,11 +12,17 @@ import java.util.Map;
  * Manages the base value and all applied modifiers to compute the final value.
  */
 public class AttributeInstance {
-    /** The attribute definition this instance represents. */
+    /**
+     * The attribute definition this instance represents.
+     */
     private final Attribute attribute;
-    /** The current un-modified base value. */
+    /**
+     * The current un-modified base value.
+     */
     private double baseValue;
-    /** Map of active modifiers applied to this instance, indexed by their unique key. */
+    /**
+     * Map of active modifiers applied to this instance, indexed by their unique key.
+     */
     private final Map<Key, AttributeModifier> modifiers = new LinkedHashMap<>();
 
     /**
@@ -63,7 +69,7 @@ public class AttributeInstance {
      * @param modifier The {@link AttributeModifier} to add.
      */
     public void addModifier(AttributeModifier modifier) {
-        modifiers.put(modifier.getKey(), modifier);
+        modifiers.put(modifier.key(), modifier);
     }
 
     /**
@@ -103,23 +109,23 @@ public class AttributeInstance {
         double value = baseValue;
 
         for (AttributeModifier mod : modifiers.values()) {
-            if (mod.getOperation() == Operation.ADD_NUMBER) {
-                value += mod.getAmount();
+            if (mod.operation() == Operation.ADD_NUMBER) {
+                value += mod.amount();
             }
         }
 
         double addedBase = value;
 
         for (AttributeModifier mod : modifiers.values()) {
-            if (mod.getOperation() == Operation.ADD_SCALAR) {
-                addedBase += value * mod.getAmount();
+            if (mod.operation() == Operation.ADD_SCALAR) {
+                addedBase += value * mod.amount();
             }
         }
         value = addedBase;
 
         for (AttributeModifier mod : modifiers.values()) {
-            if (mod.getOperation() == Operation.MULTIPLY_SCALAR_1) {
-                value += value * mod.getAmount();
+            if (mod.operation() == Operation.MULTIPLY_SCALAR_1) {
+                value += value * mod.amount();
             }
         }
 

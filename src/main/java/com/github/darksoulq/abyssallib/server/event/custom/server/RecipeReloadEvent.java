@@ -8,7 +8,8 @@ public class RecipeReloadEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    public RecipeReloadEvent() {}
+    public RecipeReloadEvent() {
+    }
 
     @Override
     public @NotNull HandlerList getHandlers() {

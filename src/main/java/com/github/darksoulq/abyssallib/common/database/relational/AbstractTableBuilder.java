@@ -15,23 +15,41 @@ import java.util.Map;
  * @param <T> The implementation type for fluent chaining.
  */
 public abstract class AbstractTableBuilder<T extends AbstractTableBuilder<T>> {
-    /** The connection used to execute the table creation. */
+    /**
+     * The connection used to execute the table creation.
+     */
     protected final Connection connection;
-    /** The name of the table to create. */
+    /**
+     * The name of the table to create.
+     */
     protected final String table;
-    /** If true, adds "IF NOT EXISTS" to the SQL statement. */
+    /**
+     * If true, adds "IF NOT EXISTS" to the SQL statement.
+     */
     protected boolean ifNotExists = false;
-    /** List of raw column definition strings. */
+    /**
+     * List of raw column definition strings.
+     */
     protected final List<String> columns = new ArrayList<>();
-    /** List of columns designated as primary keys. */
+    /**
+     * List of columns designated as primary keys.
+     */
     protected final List<String> primaryKeys = new ArrayList<>();
-    /** List of foreign key constraint definitions. */
+    /**
+     * List of foreign key constraint definitions.
+     */
     protected final List<String> foreignKeys = new ArrayList<>();
-    /** List of unique constraint definitions. */
+    /**
+     * List of unique constraint definitions.
+     */
     protected final List<String> uniqueColumns = new ArrayList<>();
-    /** List of check constraint expressions. */
+    /**
+     * List of check constraint expressions.
+     */
     protected final List<String> checkConstraints = new ArrayList<>();
-    /** Map of column names to their defined default values. */
+    /**
+     * Map of column names to their defined default values.
+     */
     protected final Map<String, String> defaultValues = new HashMap<>();
 
     /**
@@ -47,10 +65,14 @@ public abstract class AbstractTableBuilder<T extends AbstractTableBuilder<T>> {
 
     /**
      * Configures the builder to include the "IF NOT EXISTS" clause.
+     *
      * @return The current instance cast to {@code T}.
      */
     @SuppressWarnings("unchecked")
-    public T ifNotExists() { this.ifNotExists = true; return (T) this; }
+    public T ifNotExists() {
+        this.ifNotExists = true;
+        return (T) this;
+    }
 
     /**
      * Defines a column in the table.
@@ -83,12 +105,14 @@ public abstract class AbstractTableBuilder<T extends AbstractTableBuilder<T>> {
 
     /**
      * Returns the SQL keyword used for auto-incrementing columns.
+     *
      * @return A string like "AUTO_INCREMENT" (MySQL) or "AUTOINCREMENT" (SQLite).
      */
     protected abstract String getAutoIncrementKeyword();
 
     /**
      * Returns the table-level options suffix.
+     *
      * @return A string such as " ENGINE=InnoDB" or an empty string.
      */
     protected abstract String getTableOptionsSuffix();
@@ -159,6 +183,7 @@ public abstract class AbstractTableBuilder<T extends AbstractTableBuilder<T>> {
 
     /**
      * Drops the table if it exists in the database.
+     *
      * @throws RuntimeException If the drop operation fails.
      */
     public void dropIfExists() {
@@ -171,6 +196,7 @@ public abstract class AbstractTableBuilder<T extends AbstractTableBuilder<T>> {
 
     /**
      * Compiles and executes the CREATE TABLE SQL statement based on the provided configuration.
+     *
      * @throws RuntimeException If the table creation fails.
      */
     public void execute() {

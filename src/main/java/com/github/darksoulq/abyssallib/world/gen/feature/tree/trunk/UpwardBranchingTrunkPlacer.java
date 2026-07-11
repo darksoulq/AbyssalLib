@@ -77,7 +77,7 @@ public class UpwardBranchingTrunkPlacer extends TrunkPlacer {
 
         for (int i = 0; i < height; i++) {
             Location target = origin.clone().add(0, i, 0);
-            if (target.getBlockY() >= level.getWorld().getMaxHeight()) break;
+            if (target.getBlockY() >= level.world().getMaxHeight()) break;
 
             BlockInfo stateToPlace = trunkProvider.getState(random, target);
             if (stateToPlace != null) {
@@ -104,8 +104,8 @@ public class UpwardBranchingTrunkPlacer extends TrunkPlacer {
                     currentZ += direction.getModZ();
                 }
 
-                Location branchTarget = new Location(level.getWorld(), currentX, currentY, currentZ);
-                if (branchTarget.getBlockY() >= level.getWorld().getMaxHeight()) break;
+                Location branchTarget = new Location(level.world(), currentX, currentY, currentZ);
+                if (branchTarget.getBlockY() >= level.world().getMaxHeight()) break;
 
                 BlockInfo stateToPlace = trunkProvider.getState(random, branchTarget);
                 if (stateToPlace != null) {

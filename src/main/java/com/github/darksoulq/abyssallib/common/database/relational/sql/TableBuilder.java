@@ -25,7 +25,10 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      *
      * @return {@code "INTEGER PRIMARY KEY AUTOINCREMENT"}
      */
-    @Override protected String getAutoIncrementKeyword() { return "INTEGER PRIMARY KEY AUTOINCREMENT"; }
+    @Override
+    protected String getAutoIncrementKeyword() {
+        return "INTEGER PRIMARY KEY AUTOINCREMENT";
+    }
 
     /**
      * Returns the table options suffix for SQLite.
@@ -33,5 +36,8 @@ public class TableBuilder extends AbstractTableBuilder<TableBuilder> {
      *
      * @return An empty string.
      */
-    @Override protected String getTableOptionsSuffix() { return ""; }
+    @Override
+    protected String getTableOptionsSuffix() {
+        return "";
+    }
 }

@@ -19,20 +19,34 @@ import java.util.function.Function;
  * underlying {@link Connection}.
  */
 public class Database extends AbstractDatabase {
-    /** The hostname of the MariaDB server. */
+    /**
+     * The hostname of the MariaDB server.
+     */
     private final String host;
-    /** The port of the MariaDB server. */
+    /**
+     * The port of the MariaDB server.
+     */
     private final int port;
-    /** The name of the target database. */
+    /**
+     * The name of the target database.
+     */
     private final String database;
-    /** The database user. */
+    /**
+     * The database user.
+     */
     private final String user;
-    /** The database password. */
+    /**
+     * The database password.
+     */
     private final String password;
 
-    /** The active JDBC connection. */
+    /**
+     * The active JDBC connection.
+     */
     private Connection connection;
-    /** The scheduler for keep-alive operations. */
+    /**
+     * The scheduler for keep-alive operations.
+     */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     /**
@@ -72,7 +86,8 @@ public class Database extends AbstractDatabase {
             if (connection != null && !connection.isValid(2)) {
                 connect();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     /**

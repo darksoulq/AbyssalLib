@@ -11,14 +11,14 @@ public class LootTableModifier implements DeferredRegistryModifier {
         if (value instanceof LootTable table) {
             LootTable existing = Registries.LOOT_TABLES.get(id);
 
-            if (table.getMergeStrategy() == MergeStrategy.REPLACE) {
+            if (table.mergeStrategy() == MergeStrategy.REPLACE) {
                 if (existing != null) {
                     Registries.LOOT_TABLES.remove(id);
                 }
                 Registries.LOOT_TABLES.register(id, table);
-            } else if (table.getMergeStrategy() == MergeStrategy.MERGE) {
+            } else if (table.mergeStrategy() == MergeStrategy.MERGE) {
                 if (existing != null) {
-                    existing.getPools().addAll(table.getPools());
+                    existing.pools().addAll(table.pools());
                 } else {
                     Registries.LOOT_TABLES.register(id, table);
                 }

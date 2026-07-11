@@ -32,7 +32,9 @@ public class RarityFilterModifier extends PlacementModifier {
      */
     public static final PlacementModifierType<RarityFilterModifier> TYPE = () -> CODEC;
 
-    /** The denominator for the 1-in-X probability per chunk. */
+    /**
+     * The denominator for the 1-in-X probability per chunk.
+     */
     private final int chance;
 
     /**

@@ -8,7 +8,8 @@ public class RegionalCollections {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             folia = true;
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         IS_FOLIA = folia;
     }
 }

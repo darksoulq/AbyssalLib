@@ -8,13 +8,21 @@ import org.bukkit.util.Vector;
  * A procedural color provider that generates stripes alternating along a specific direction vector.
  */
 public class StripedPattern implements ColorProvider {
-    /** The first stripe color. */
+    /**
+     * The first stripe color.
+     */
     private final Color c1;
-    /** The second stripe color. */
+    /**
+     * The second stripe color.
+     */
     private final Color c2;
-    /** The width of each individual stripe. */
+    /**
+     * The width of each individual stripe.
+     */
     private final double width;
-    /** The normalized direction vector perpendicular to the stripes. */
+    /**
+     * The normalized direction vector perpendicular to the stripes.
+     */
     private final Vector direction;
 
     /**

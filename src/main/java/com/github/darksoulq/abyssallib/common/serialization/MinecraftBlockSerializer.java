@@ -42,9 +42,8 @@ public class MinecraftBlockSerializer {
      *
      * @param data The {@link BlockData} instance to serialize. Must not be null.
      * @param ops  The {@link DynamicOps} implementation defining the output format
-     * (e.g., JSON, NBT-like structures).
+     *             (e.g., JSON, NBT-like structures).
      * @param <D>  The generic data type used by the {@link DynamicOps} instance.
-     *
      * @return A map representing the serialized block state. Never null, but may be empty
      * if the block has no configurable properties.
      */
@@ -68,7 +67,7 @@ public class MinecraftBlockSerializer {
      *
      * @param data The target {@link BlockData} instance to modify. Must not be null.
      * @param map  The serialized property map previously produced by {@link #serialize}.
-     * May be null or empty, in which case no changes are applied.
+     *             May be null or empty, in which case no changes are applied.
      * @param ops  The {@link DynamicOps} instance used to interpret the map values.
      * @param <D>  The generic data type used by the {@link DynamicOps} instance.
      */
@@ -99,7 +98,6 @@ public class MinecraftBlockSerializer {
      * @param state The {@link BlockState} to extract tile data from.
      * @param ops   The {@link DynamicOps} implementation defining the output format.
      * @param <D>   The generic data type used by the {@link DynamicOps} instance.
-     *
      * @return A map containing serialized tile data, or {@code null} if:
      * <ul>
      * <li>The state is not a {@link TileState}</li>
@@ -133,7 +131,7 @@ public class MinecraftBlockSerializer {
      *
      * @param state The target {@link BlockState} to apply tile data to.
      * @param data  The serialized tile data map. May be null or empty, in which case
-     * no changes are applied.
+     *              no changes are applied.
      * @param ops   The {@link DynamicOps} instance used to interpret the serialized values.
      * @param <D>   The generic data type used by the {@link DynamicOps} instance.
      */

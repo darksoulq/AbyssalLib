@@ -39,7 +39,9 @@ public class BlockIgnoreProcessor extends StructureProcessor {
      */
     public static final StructureProcessorType<BlockIgnoreProcessor> TYPE = () -> CODEC;
 
-    /** The list of namespaced block identifiers to be excluded from placement. */
+    /**
+     * The list of namespaced block identifiers to be excluded from placement.
+     */
     private final List<String> ignoredIds;
 
     /**

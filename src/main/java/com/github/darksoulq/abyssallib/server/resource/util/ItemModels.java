@@ -15,7 +15,8 @@ public final class ItemModels {
     /**
      * Private constructor to prevent instantiation of utility class.
      */
-    private ItemModels() {}
+    private ItemModels() {
+    }
 
     /**
      * Creates a standard "generated" item model (flat item).

@@ -31,19 +31,29 @@ public class NoiseThresholdBlockStateProvider extends BlockStateProvider {
      */
     public static final BlockStateProviderType<NoiseThresholdBlockStateProvider> TYPE = () -> CODEC;
 
-    /** The frequency multiplier applied to coordinates before sampling. */
+    /**
+     * The frequency multiplier applied to coordinates before sampling.
+     */
     private final double scale;
 
-    /** The breakpoint value evaluating which state is returned. */
+    /**
+     * The breakpoint value evaluating which state is returned.
+     */
     private final double threshold;
 
-    /** The block state returned if the evaluated noise is less than or equal to the threshold. */
+    /**
+     * The block state returned if the evaluated noise is less than or equal to the threshold.
+     */
     private final BlockInfo normalState;
 
-    /** The block state returned if the evaluated noise exceeds the threshold. */
+    /**
+     * The block state returned if the evaluated noise exceeds the threshold.
+     */
     private final BlockInfo highState;
 
-    /** A lazily initialized noise generator tied to the world seed. */
+    /**
+     * A lazily initialized noise generator tied to the world seed.
+     */
     private transient SimplexNoiseGenerator noiseGenerator;
 
     /**
