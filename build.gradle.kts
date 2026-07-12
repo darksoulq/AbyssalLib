@@ -124,6 +124,10 @@ tasks {
         options.release.set(targetJavaVersion)
     }
 
+    named("assemble") {
+        dependsOn("sourcesJar", "javadocJar")
+    }
+
     named<xyz.jpenilla.runpaper.task.RunServer>("runServer") {
         minecraftVersion(mcVersion)
         jvmArgs("-Xms2G", "-Xmx2G", "-Dcom.mojang.eula.agree=true")
