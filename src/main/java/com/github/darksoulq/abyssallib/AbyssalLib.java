@@ -41,7 +41,6 @@ public final class AbyssalLib extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
         INSTANCE = this;
         LOGGER = getLogger();
         SCHEDULER = new Scheduler(this);
@@ -52,7 +51,6 @@ public final class AbyssalLib extends JavaPlugin {
         CONFIG = new PluginConfig();
         CONFIG.cfg.save();
 
-        RecipeSetup.init(this);
         Permissions.init(this);
         Events.init(this);
         Services.init();
@@ -64,7 +62,7 @@ public final class AbyssalLib extends JavaPlugin {
             metricsImpl.ready();
         }
 
-        new UpdateChecker(this, "abyssallib", true, "-alpha").check(result -> {
+        new UpdateChecker(this, "abyssallib", true).check(result -> {
             getLogger().warning("A new update is available: " + result.version().toString());
             getLogger().warning("Download at: " + result.link());
         });

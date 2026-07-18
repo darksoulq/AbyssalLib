@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.bootstrap.RecipeSetup;
 import com.github.darksoulq.abyssallib.common.energy.EnergyNetwork;
 import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.command.CommandBus;
@@ -91,6 +92,7 @@ public class ServerEvents {
                 WorldGenLoader.load();
                 AdvancementLoader.load();
                 AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
+                RecipeSetup.init(AbyssalLib.getInstance());
 
                 AbyssalLib.SCHEDULER.schedule(PlayerSidebarManager::updateAll).after(2L, Clock.TICKS).repeatEvery(2L, Clock.TICKS);
             }).after(10L, Clock.TICKS).once();
