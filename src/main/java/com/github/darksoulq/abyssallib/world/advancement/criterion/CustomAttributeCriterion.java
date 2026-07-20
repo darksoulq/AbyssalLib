@@ -62,4 +62,6 @@ public class CustomAttributeCriterion implements AdvancementCriterion {
         EntityAttributes attributes = EntityAttributes.of(player);
         return attributes.getValue(attribute) >= threshold;
     }
+
+    
 }

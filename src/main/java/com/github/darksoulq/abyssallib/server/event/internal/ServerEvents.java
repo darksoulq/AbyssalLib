@@ -85,7 +85,6 @@ public class ServerEvents {
                 EnergyNetwork.load();
                 EntityAttributes.init();
                 Try.run(PlayerStatistics::init);
-                RecipeLoader.reload();
                 TagLoader.loadFolder(new File(AbyssalLib.getInstance().getDataFolder(), "tags"));
                 NaturalSpawnRegistry.load();
                 StructureLoader.load();
@@ -93,6 +92,7 @@ public class ServerEvents {
                 AdvancementLoader.load();
                 AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
                 RecipeSetup.init(AbyssalLib.getInstance());
+                RecipeLoader.reload();
 
                 AbyssalLib.SCHEDULER.schedule(PlayerSidebarManager::updateAll).after(2L, Clock.TICKS).repeatEvery(2L, Clock.TICKS);
             }).after(10L, Clock.TICKS).once();

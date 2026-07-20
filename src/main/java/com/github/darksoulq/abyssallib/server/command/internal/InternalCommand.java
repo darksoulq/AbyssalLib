@@ -1,6 +1,10 @@
 package com.github.darksoulq.abyssallib.server.command.internal;
 
 import com.github.darksoulq.abyssallib.server.command.BaseCommand;
+import com.github.darksoulq.abyssallib.server.command.CommandResult;
+import org.bukkit.entity.Chicken;
+import org.bukkit.entity.IronGolem;
+import org.bukkit.entity.Player;
 
 public class InternalCommand extends BaseCommand {
 

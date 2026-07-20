@@ -3,8 +3,13 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.ExtraCodecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.potion.PotionEffectType;
+
+import java.util.Set;
 
 /**
  * An advancement criterion ensuring a player currently has a specific potion effect active.
@@ -48,5 +53,10 @@ public class PotionEffectCriterion implements AdvancementCriterion {
     @Override
     public boolean isMet(Player player) {
         return player.hasPotionEffect(effect);
+    }
+
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(EntityPotionEffectEvent.class);
     }
 }

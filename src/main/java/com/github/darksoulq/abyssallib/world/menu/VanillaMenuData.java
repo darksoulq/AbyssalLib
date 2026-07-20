@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.menu;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Experimental
 public final class VanillaMenuData {
 
     public static class Furnace extends ContainerData {

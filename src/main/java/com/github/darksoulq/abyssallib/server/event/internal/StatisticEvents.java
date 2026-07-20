@@ -2,6 +2,7 @@ package com.github.darksoulq.abyssallib.server.event.internal;
 
 import com.github.darksoulq.abyssallib.common.serialization.BlockInfo;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
+import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistics;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
@@ -17,24 +18,20 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Locale;
 
 public class StatisticEvents {
-
-    @SubscribeEvent(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @SubscribeEvent(priority = EventPriority.MONITOR)
     public void onBlockBreak(BlockBreakEvent e) {
-        Key blockId = Key.key(BlockInfo.resolve(e.getBlock()).getAsString());
+        // BlockInfo.resolve was overkill and logged too many warnings
+        CustomBlock custom = CustomBlock.resolve(e.getBlock());
+        Key blockId = custom == null ? e.getBlock().getType().key() : custom.getId();
         PlayerStatistics.of(e.getPlayer()).increment(Statistics.BLOCKS_MINED.get(blockId), 1);
     }
 
-    @SubscribeEvent(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @SubscribeEvent(priority = EventPriority.MONITOR)
     public void onEntityDeath(EntityDeathEvent e) {
         if (e.getEntity().getKiller() != null) {
-            String entityId;
             CustomEntity<?> custom = CustomEntity.resolve(e.getEntity());
-            if (custom != null) {
-                entityId = custom.getId().asString();
-            } else {
-                entityId = "minecraft:" + e.getEntity().getType().name().toLowerCase(Locale.ROOT);
-            }
-            PlayerStatistics.of(e.getEntity().getKiller()).increment(Statistics.ENTITIES_KILLED.get(Key.key(entityId)), 1);
+            Key entityId = custom == null ? e.getEntity().getType().key() : custom.getId();
+            PlayerStatistics.of(e.getEntity().getKiller()).increment(Statistics.ENTITIES_KILLED.get(entityId), 1);
         }
     }
 

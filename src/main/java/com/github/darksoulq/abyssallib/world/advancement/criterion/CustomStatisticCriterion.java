@@ -3,9 +3,13 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+
+import java.util.Set;
 
 /**
  * An advancement criterion evaluating a custom statistic tracked in the AbyssalLib database.
@@ -53,5 +57,10 @@ public class CustomStatisticCriterion implements AdvancementCriterion {
     @Override
     public boolean isMet(Player player) {
         return PlayerStatistics.of(player).get(stat) >= threshold;
+    }
+
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(PlayerStatisticChangeEvent.class);
     }
 }

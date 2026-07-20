@@ -6,6 +6,9 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Represents a logical condition that a player must fulfill to progress in an advancement.
  * Criteria can be evaluated statically or triggered by specific server events.
@@ -61,5 +64,15 @@ public interface AdvancementCriterion {
      */
     default boolean isMet(Player player, Event event) {
         return isMet(player);
+    }
+
+    /**
+     * Retrieves the specific Event class that this criterion listens for.
+     * If this returns empty set, the criterion will be treated as global and evaluated on state changes.
+     *
+     * @return The set of target {@link Event} classes, or empty if not event-specific.
+     */
+    default Set<Class<? extends Event>> getTargetEvents() {
+        return Collections.emptySet();
     }
 }

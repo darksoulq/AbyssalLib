@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.menu;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Experimental
 public class ContainerData {
     private final int[] data;
 

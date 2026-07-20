@@ -1,5 +1,8 @@
 package com.github.darksoulq.abyssallib.world.menu;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Experimental
 public abstract class DataSlot {
     private int prevValue;
 

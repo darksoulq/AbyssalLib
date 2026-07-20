@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.common.util.Try;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import net.kyori.adventure.key.Key;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
  * This loader scans the server's data folder for YAML files, deserializes them using
  * the configured codec, and injects them into the global entity predicate registry.
  */
+@ApiStatus.Experimental
 public class EntityPredicateLoader {
 
     /**

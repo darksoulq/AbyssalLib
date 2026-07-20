@@ -26,6 +26,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -47,6 +48,7 @@ import java.util.function.Function;
  *
  * @param <T> the concrete {@link LivingEntity} type backing this custom entity
  */
+@ApiStatus.Experimental
 public class CustomEntity<T extends LivingEntity> implements Cloneable {
 
     /**

@@ -5,12 +5,14 @@ import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryView;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ApiStatus.Experimental
 public class MenuManager {
     private static final Map<InventoryView, AbstractContainerMenu> OPEN_VIEWS = new ConcurrentHashMap<>();
     private static final Map<AbstractContainerMenu, ScheduledTask> TICK_TASKS = new ConcurrentHashMap<>();

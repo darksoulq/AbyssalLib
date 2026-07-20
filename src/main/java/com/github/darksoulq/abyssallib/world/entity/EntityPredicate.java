@@ -6,6 +6,7 @@ import com.github.darksoulq.abyssallib.common.serialization.*;
 import com.github.darksoulq.abyssallib.common.util.Condition;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import net.kyori.adventure.key.Key;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -15,6 +16,7 @@ import java.util.function.Predicate;
  * and raw serialized data. This class allows for complex conditional checks against an entity's
  * JSON-like data structure, identity keys, and nested predicate logic.
  */
+@ApiStatus.Experimental
 public class EntityPredicate implements Predicate<SavedEntity> {
 
     /**

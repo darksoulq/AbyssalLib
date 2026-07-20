@@ -2,7 +2,9 @@ package com.github.darksoulq.abyssallib.world.menu;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Experimental
 public interface Container {
     int getContainerSize();
 

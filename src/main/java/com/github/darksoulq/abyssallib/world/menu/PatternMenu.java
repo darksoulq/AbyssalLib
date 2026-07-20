@@ -4,12 +4,14 @@ import com.github.darksoulq.abyssallib.world.menu.slot.ReadOnly;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 @SuppressWarnings("UnstableApiUsage")
+@ApiStatus.Experimental
 public abstract class PatternMenu extends AbstractContainerMenu {
     private final Container dummyContainer = new DummyContainer();
     private Container playerContainer;

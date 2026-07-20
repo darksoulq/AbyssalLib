@@ -2,6 +2,10 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerJoinEvent;
+
+import java.util.Set;
 
 /**
  * An advancement criterion that automatically evaluates to true.
@@ -39,5 +43,10 @@ public class AutoGrantCriterion implements AdvancementCriterion {
     @Override
     public boolean isMet(Player player) {
         return true;
+    }
+    
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(PlayerJoinEvent.class);
     }
 }

@@ -2,11 +2,13 @@ package com.github.darksoulq.abyssallib.world.menu;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Experimental
 public class SimpleContainer implements Container {
     private final ItemStack[] items;
     private final List<ContainerListener> listeners = new ArrayList<>();

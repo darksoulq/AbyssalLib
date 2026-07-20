@@ -4,12 +4,14 @@ import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.entity.CustomEntity;
 import com.github.darksoulq.abyssallib.world.entity.SpawnCategory;
 import org.bukkit.entity.LivingEntity;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Experimental
 public final class NaturalSpawnRegistry {
     private static final Map<SpawnCategory, List<CustomEntity<? extends LivingEntity>>> REGISTRY = new EnumMap<>(SpawnCategory.class);
 

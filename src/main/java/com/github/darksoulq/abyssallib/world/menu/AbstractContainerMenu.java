@@ -17,6 +17,7 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings("UnstableApiUsage")
+@ApiStatus.Experimental
 public abstract class AbstractContainerMenu implements ContainerListener {
     public final int topSize;
     public final int maxSlots;

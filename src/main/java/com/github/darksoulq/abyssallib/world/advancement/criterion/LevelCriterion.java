@@ -3,7 +3,12 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
+
+import java.util.Set;
 
 /**
  * An advancement criterion ensuring a player reaches a specified vanilla XP level.
@@ -47,5 +52,10 @@ public class LevelCriterion implements AdvancementCriterion {
     @Override
     public boolean isMet(Player player) {
         return player.getLevel() >= level;
+    }
+
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(PlayerLevelChangeEvent.class);
     }
 }

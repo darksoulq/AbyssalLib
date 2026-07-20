@@ -4,11 +4,16 @@ import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.DataResult;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.key.Key;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerMoveEvent;
+
+import java.util.Set;
 
 /**
  * An advancement criterion evaluating the physical location (World and Biome) of the player.
@@ -68,5 +73,10 @@ public class LocationCriterion implements AdvancementCriterion {
     public boolean isMet(Player player) {
         if (worldName != null && !player.getWorld().getName().equals(worldName)) return false;
         return biome == null || player.getLocation().getBlock().getBiome() == biome;
+    }
+
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(PlayerMoveEvent.class);
     }
 }

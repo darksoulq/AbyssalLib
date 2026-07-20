@@ -3,8 +3,12 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+
+import java.util.Set;
 
 /**
  * An advancement criterion evaluating a standard vanilla Minecraft statistic.

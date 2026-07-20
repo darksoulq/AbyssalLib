@@ -4,12 +4,14 @@ import com.github.darksoulq.abyssallib.world.menu.slot.ReadOnly;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("UnstableApiUsage")
+@ApiStatus.Experimental
 public abstract class MappedContainerMenu extends AbstractContainerMenu {
     private final Map<Integer, Slot> mappedSlots = new HashMap<>();
     private final Container dummyContainer = new DummyContainer();

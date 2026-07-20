@@ -2,9 +2,14 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.Set;
 
 /**
  * An advancement criterion ensuring the player has an item matching a specified predicate in their inventory.
@@ -53,5 +58,10 @@ public class ItemHasCriterion implements AdvancementCriterion {
             }
         }
         return false;
+    }
+
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(PacketSendEvent.class);
     }
 }

@@ -3,11 +3,15 @@ package com.github.darksoulq.abyssallib.world.advancement.criterion;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.serialization.RecordBuilder;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.PlayerStatisticChangeEvent;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistic;
 import com.github.darksoulq.abyssallib.world.data.statistic.Statistics;
 import net.kyori.adventure.key.Key;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+
+import java.util.Set;
 
 /**
  * An advancement criterion tracking the amount of a specific item crafted by the player.
@@ -56,5 +60,10 @@ public class ItemCraftedCriterion implements AdvancementCriterion {
     public boolean isMet(Player player) {
         Statistic stat = Statistics.ITEMS_CRAFTED.get(itemId);
         return PlayerStatistics.of(player).get(stat) >= amount;
+    }
+
+    @Override
+    public Set<Class<? extends Event>> getTargetEvents() {
+        return Set.of(PlayerStatisticChangeEvent.class);
     }
 }
