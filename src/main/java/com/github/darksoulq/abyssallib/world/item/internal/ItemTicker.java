@@ -4,6 +4,8 @@ import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.scheduler.ScheduledTask;
 import com.github.darksoulq.abyssallib.world.item.Item;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -19,12 +21,9 @@ public class ItemTicker {
     public static void start() {
         if (task != null) return;
         task = AbyssalLib.SCHEDULER.schedule(() -> {
-            for (Map.Entry<Player, List<Item>> entry : items.entrySet()) {
-                Player player = entry.getKey();
-                if (player == null || !player.isOnline()) {
-                    continue;
-                }
-                List<Item> itemList = entry.getValue();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                updateSync(player);
+                List<Item> itemList = items.get(player);
                 if (itemList == null || itemList.isEmpty()) continue;
                 for (Item i : itemList) {
                     i.onInventoryTick(player);
@@ -33,20 +32,31 @@ public class ItemTicker {
         }).repeatEvery(5L, Clock.TICKS);
     }
 
+    private static void updateSync(Player player) {
+        if (player == null || !player.isOnline()) return;
+        GameMode gm = player.getGameMode();
+        if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) {
+            items.remove(player);
+            return;
+        }
+
+        List<Item> playerItems = new ArrayList<>();
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack == null) continue;
+            Item item = Item.resolve(stack);
+            if (item != null) playerItems.add(item);
+        }
+        if (playerItems.isEmpty()) {
+            items.remove(player);
+        } else {
+            items.put(player, playerItems);
+        }
+    }
+
     public static void update(Player player) {
         AbyssalLib.SCHEDULER.schedule(() -> {
-            List<Item> playerItems = new ArrayList<>();
-            for (ItemStack stack : player.getInventory().getContents()) {
-                if (stack == null) continue;
-                Item item = Item.resolve(stack);
-                if (item != null) playerItems.add(item);
-            }
-            if (playerItems.isEmpty()) {
-                remove(player);
-            } else {
-                items.put(player, playerItems);
-            }
-        }).async().once();
+            updateSync(player);
+        }).once();
     }
 
     public static void remove(Player player) {

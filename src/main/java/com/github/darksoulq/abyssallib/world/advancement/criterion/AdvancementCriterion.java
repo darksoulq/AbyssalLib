@@ -11,12 +11,11 @@ import java.util.Set;
 
 /**
  * Represents a logical condition that a player must fulfill to progress in an advancement.
- * Criteria can be evaluated statically or triggered by specific server events.
  */
 public interface AdvancementCriterion {
 
     /**
-     * Polymorphic codec governing precise evaluation boundaries mapped accurately.
+     * Codec for serialization.
      */
     Codec<AdvancementCriterion> CODEC = Codec.dispatch(
         AdvancementCriterion.class,
@@ -40,7 +39,6 @@ public interface AdvancementCriterion {
 
     /**
      * Retrieves the type definition associated with this specific criterion instance.
-     * This is used for identifying the logic and serialization codec.
      *
      * @return The {@link CriterionType} characterizing this instance.
      */
@@ -48,7 +46,6 @@ public interface AdvancementCriterion {
 
     /**
      * Evaluates whether the player currently meets the conditions of this criterion.
-     * This is typically used for continuous or state-based checks.
      *
      * @param player The {@link Player} to evaluate.
      * @return True if the condition is met, false otherwise.

@@ -30,15 +30,12 @@ import org.bukkit.event.Event;
 import java.util.*;
 
 /**
- * Represents a custom advancement within the AbyssalLib framework.
- * This class handles the serialization, NMS conversion, and evaluation logic
- * for player-driven progress and achievements.
+ * A custom advancement instance for registering new advancements VIA DeferredRegistry
  */
 public class Advancement {
 
     /**
-     * The codec responsible for serializing and deserializing advancements.
-     * Supports nested criteria, rewards, and display information.
+     * Codec for serialization
      */
     public static final Codec<Advancement> CODEC = RecordBuilder.create(instance -> instance.group(
         Codecs.KEY.fieldOf("id").forGetter(Advancement.class, Advancement::getId),

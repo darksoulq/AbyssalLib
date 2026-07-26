@@ -9,16 +9,11 @@ import org.bukkit.inventory.ItemStack;
 
 /**
  * Defines the visual representation of an advancement in the client menu.
- * This class encapsulates all metadata required by the client to render the
- * advancement's icon, title, description, and its relative position within the
- * advancement tab.
  */
 public class AdvancementDisplay {
 
     /**
-     * The codec responsible for serializing and deserializing advancement display data.
-     * This allows the display information to be easily saved to or loaded from
-     * various data formats like JSON or NBT.
+     * Codec for serialization
      */
     public static final Codec<AdvancementDisplay> CODEC = RecordBuilder.create(instance -> instance.group(
         Codecs.TEXT_COMPONENT.nullable().optionalFieldOf("title", null).forGetter(AdvancementDisplay.class, AdvancementDisplay::getTitle),
@@ -212,7 +207,7 @@ public class AdvancementDisplay {
     }
 
     /**
-     * Creates a new builder instance for constructing AdvancementDisplay objects.
+     * Creates a new builder instance for constructing AdvancementDisplay instances.
      *
      * @return A new {@link Builder} instance.
      */

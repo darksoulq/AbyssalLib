@@ -18,9 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * A utility for sending transient "Toast" notifications to players.
- * This class leverages the advancement packet system to display pop-up messages
- * in the top-right corner of the screen without adding actual permanent advancements.
+ * A utility for sending "Toast" notifications to players.
  */
 public class Toast {
 
@@ -35,7 +33,7 @@ public class Toast {
     private final Component subtitle;
 
     /**
-     * The item stack used as the visual icon for the notification.
+     * The item stack used as the icon for the notification.
      */
     private final ItemStack icon;
 
@@ -61,8 +59,6 @@ public class Toast {
 
     /**
      * Sends the toast notification to a specific player.
-     * This method generates a temporary "fake" advancement, sends completion packets
-     * to trigger the UI toast, and schedules a removal packet to clean up the client state.
      *
      * @param player The {@link Player} who should receive the toast.
      */
@@ -140,7 +136,7 @@ public class Toast {
     }
 
     /**
-     * A fluent builder for creating {@link Toast} notifications.
+     * A builder for creating {@link Toast} notifications.
      */
     public static class Builder {
         private Component title;

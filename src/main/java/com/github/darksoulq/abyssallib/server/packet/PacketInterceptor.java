@@ -5,6 +5,7 @@ import com.github.darksoulq.abyssallib.common.util.TextUtil;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketReceiveEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.server.PacketSendEvent;
+import com.github.darksoulq.abyssallib.server.translation.internal.ItemPacketModifier;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -46,39 +47,54 @@ public final class PacketInterceptor {
         if (pipeline.get(HANDLER) != null) return;
 
         ChannelDuplexHandler handler = new ChannelDuplexHandler() {
-            /**
-             * Intercepts Inbound packets (Client -> Server).
-             */
+
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                 if (msg instanceof Packet<?> packet) {
-                    PacketReceiveEvent event = EventBus.post(new PacketReceiveEvent(player, packet, true));
-                    if (event.isCancelled()) return;
+                    try {
+                        Packet<?> processed = ItemPacketModifier.processReceive(packet, player);
+                        Packet<?> result = processed;
 
-                    super.channelRead(ctx, event.getPacket());
+                        if (PacketReceiveEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                            PacketReceiveEvent event = EventBus.post(new PacketReceiveEvent(player, processed, true));
+                            if (event.isCancelled()) return;
+                            result = event.getPacket();
+                        }
+                        super.channelRead(ctx, result);
+                    } catch (Exception e) {
+                        AbyssalLib.getInstance().getLogger().warning("Error processing incoming packet: " + e.getMessage());
+                        super.channelRead(ctx, msg);
+                    }
                     return;
                 }
                 super.channelRead(ctx, msg);
             }
 
-            /**
-             * Intercepts Outbound packets (Server -> Client).
-             */
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
                 if (msg instanceof Packet<?> packet) {
-                    PacketSendEvent event = EventBus.post(new PacketSendEvent(player, packet, true));
-                    if (event.isCancelled()) {
-                        promise.setSuccess();
-                        return;
-                    }
+                    try {
+                        Packet<?> processed = ItemPacketModifier.processSend(packet, player);
+                        Packet<?> result = processed;
 
-                    Packet<?> result = event.getPacket();
-                    if (result == null) {
-                        connection.disconnect(PaperAdventure.asVanilla(TextUtil.parse("<red>Invalid packet modification</red>")));
-                        return;
+                        if (PacketSendEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                            PacketSendEvent event = EventBus.post(new PacketSendEvent(player, processed, true));
+                            if (event.isCancelled()) {
+                                promise.setSuccess();
+                                return;
+                            }
+                            result = event.getPacket();
+                        }
+
+                        if (result == null) {
+                            connection.disconnect(PaperAdventure.asVanilla(TextUtil.parse("<red>Invalid packet modification</red>")));
+                            return;
+                        }
+                        super.write(ctx, result, promise);
+                    } catch (Exception e) {
+                        AbyssalLib.getInstance().getLogger().warning("Error processing outgoing packet: " + e.getMessage());
+                        super.write(ctx, msg, promise);
                     }
-                    super.write(ctx, result, promise);
                     return;
                 }
                 super.write(ctx, msg, promise);

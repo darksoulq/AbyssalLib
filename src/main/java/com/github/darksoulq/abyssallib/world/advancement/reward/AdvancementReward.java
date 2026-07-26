@@ -7,13 +7,11 @@ import org.bukkit.entity.Player;
 
 /**
  * Represents a benefit or action granted to a player upon the completion of an advancement.
- * Rewards can range from simple experience points to complex item distributions or
- * custom command executions.
  */
 public interface AdvancementReward {
 
     /**
-     * Polymorphic codec managing seamless mapping execution mapping configurations.
+     * Codec for serialization.
      */
     Codec<AdvancementReward> CODEC = Codec.dispatch(
         AdvancementReward.class,
@@ -37,7 +35,6 @@ public interface AdvancementReward {
 
     /**
      * Retrieves the reward type definition associated with this instance.
-     * This is used to identify the logic and handle polymorphic serialization.
      *
      * @return The {@link RewardType} characterizing this specific reward.
      */

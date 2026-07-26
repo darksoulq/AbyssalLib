@@ -5,10 +5,11 @@ import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.server.translation.ClientItemModifier;
 import com.github.darksoulq.abyssallib.server.translation.ItemTranslationContext;
 import com.github.darksoulq.abyssallib.server.translation.ServerTranslator;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.mojang.datafixers.util.Pair;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
@@ -32,18 +33,27 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.scores.Objective;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Field;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class ItemPacketModifier {
-    private static final Map<UUID, Map<Integer, String>> TRANSLATION_STATES = new ConcurrentHashMap<>();
-    private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
+    private static final Map<UUID, Map<Integer, Integer>> TRANSLATION_STATES = new ConcurrentHashMap<>();
+
+    private static final Cache<UUID, ItemStack> ORIGINAL_ITEMS = CacheBuilder.newBuilder()
+        .maximumSize(20000)
+        .expireAfterAccess(Duration.of(2, ChronoUnit.HOURS))
+        .build();
+    private static final Map<ItemStack, UUID> ITEM_UUID_CACHE = Collections.synchronizedMap(new WeakHashMap<>());
+
     private static final Pattern LANG_PATTERN = Pattern.compile("<(?:lang|tr|translate):([^>]+)>");
     private static final Pattern LANG_OR_PATTERN = Pattern.compile("<(?:lang_or|tr_or|translate_or):([^:]+):([^>]+)>");
     private static final List<ClientItemModifier> MODIFIERS = new ArrayList<>();
@@ -52,14 +62,26 @@ public class ItemPacketModifier {
         MODIFIERS.add(modifier);
     }
 
+    public static void clearState(Player player) {
+        if (player != null) {
+            TRANSLATION_STATES.remove(player.getUniqueId());
+        }
+    }
+
     public static void startUpdater() {
         AbyssalLib.SCHEDULER.schedule(() -> {
             TRANSLATION_STATES.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
 
             for (Player player : Bukkit.getOnlinePlayers()) {
+                GameMode gm = player.getGameMode();
+                if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) {
+                    clearState(player);
+                    continue;
+                }
+
                 ServerPlayer sp = ((CraftPlayer) player).getHandle();
                 AbstractContainerMenu menu = sp.containerMenu;
-                Map<Integer, String> states = TRANSLATION_STATES.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
+                Map<Integer, Integer> states = TRANSLATION_STATES.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
                 int selectedSlot = sp.getInventory().getSelectedSlot();
 
                 for (int i = 0; i < menu.slots.size(); i++) {
@@ -73,15 +95,18 @@ public class ItemPacketModifier {
                         ItemStack original = slot.getItem();
                         ItemStack processed = processItemSend(original, player);
 
-                        String currentState = getTranslationState(processed);
-                        String lastState = states.get(i);
+                        int currentState = getTranslationState(processed);
+                        Integer lastState = states.get(i);
 
-                        if (!currentState.equals(lastState)) {
+                        if (lastState == null || currentState != lastState) {
                             states.put(i, currentState);
                             sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.getStateId(), i, processed));
                         }
                     } else {
-                        states.remove(i);
+                        Integer removed = states.remove(i);
+                        if (removed != null) {
+                            sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.getStateId(), i, ItemStack.EMPTY));
+                        }
                     }
                 }
 
@@ -89,37 +114,36 @@ public class ItemPacketModifier {
                 if (!carried.isEmpty()) {
                     ItemStack processedCarried = processItemSend(carried, player);
 
-                    String currentState = getTranslationState(processedCarried);
-                    String lastState = states.get(-1);
+                    int currentState = getTranslationState(processedCarried);
+                    Integer lastState = states.get(-1);
 
-                    if (!currentState.equals(lastState)) {
+                    if (lastState == null || currentState != lastState) {
                         states.put(-1, currentState);
                         sp.connection.send(new ClientboundSetCursorItemPacket(processedCarried));
                     }
                 } else {
-                    states.remove(-1);
+                    Integer removed = states.remove(-1);
+                    if (removed != null) {
+                        sp.connection.send(new ClientboundSetCursorItemPacket(ItemStack.EMPTY));
+                    }
                 }
             }
         }).after(AbyssalLib.CONFIG.features.serverTranslationTickDelay.get(), Clock.TICKS).repeatEvery(AbyssalLib.CONFIG.features.serverTranslationTickDelay.get(), Clock.TICKS);
     }
 
-    private static String getTranslationState(ItemStack stack) {
-        StringBuilder state = new StringBuilder();
+    private static int getTranslationState(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return 0;
+        int hash = 1;
         net.minecraft.network.chat.Component customName = stack.get(DataComponents.CUSTOM_NAME);
-        if (customName != null) {
-            state.append(GSON.serialize(PaperAdventure.asAdventure(customName)));
-        }
+        if (customName != null) hash = 31 * hash + customName.hashCode();
+
         net.minecraft.network.chat.Component itemName = stack.get(DataComponents.ITEM_NAME);
-        if (itemName != null) {
-            state.append(GSON.serialize(PaperAdventure.asAdventure(itemName)));
-        }
+        if (itemName != null) hash = 31 * hash + itemName.hashCode();
+
         ItemLore lore = stack.get(DataComponents.LORE);
-        if (lore != null) {
-            for (net.minecraft.network.chat.Component line : lore.lines()) {
-                state.append(GSON.serialize(PaperAdventure.asAdventure(line)));
-            }
-        }
-        return state.toString();
+        if (lore != null) hash = 31 * hash + lore.hashCode();
+
+        return hash;
     }
 
     public static Packet<?> processSend(Packet<?> packet, Player player) {
@@ -483,42 +507,59 @@ public class ItemPacketModifier {
         boolean needsTranslation = false;
         net.minecraft.network.chat.Component customName = workingCopy.get(DataComponents.CUSTOM_NAME);
         if (customName != null) {
-            workingCopy.set(DataComponents.CUSTOM_NAME, translateItemNMS(customName, player, workingCopy, ItemTranslationContext.CUSTOM_NAME));
-            needsTranslation = true;
+            net.minecraft.network.chat.Component translated = translateItemNMS(customName, player, workingCopy, ItemTranslationContext.CUSTOM_NAME);
+            if (translated != customName) {
+                workingCopy.set(DataComponents.CUSTOM_NAME, translated);
+                needsTranslation = true;
+            }
         }
 
         net.minecraft.network.chat.Component itemName = workingCopy.get(DataComponents.ITEM_NAME);
         if (itemName != null) {
-            workingCopy.set(DataComponents.ITEM_NAME, translateItemNMS(itemName, player, workingCopy, ItemTranslationContext.NAME));
-            needsTranslation = true;
+            net.minecraft.network.chat.Component translated = translateItemNMS(itemName, player, workingCopy, ItemTranslationContext.NAME);
+            if (translated != itemName) {
+                workingCopy.set(DataComponents.ITEM_NAME, translated);
+                needsTranslation = true;
+            }
         }
 
         ItemLore lore = workingCopy.get(DataComponents.LORE);
         if (lore != null) {
-            List<net.minecraft.network.chat.Component> translatedLines = new ArrayList<>();
-            for (net.minecraft.network.chat.Component line : lore.lines()) {
-                translatedLines.add(translateItemNMS(line, player, workingCopy, ItemTranslationContext.LORE));
+            List<net.minecraft.network.chat.Component> originalLines = lore.lines();
+            List<net.minecraft.network.chat.Component> translatedLines = new ArrayList<>(originalLines.size());
+            boolean loreChanged = false;
+            for (net.minecraft.network.chat.Component line : originalLines) {
+                net.minecraft.network.chat.Component translatedLine = translateItemNMS(line, player, workingCopy, ItemTranslationContext.LORE);
+                translatedLines.add(translatedLine);
+                if (translatedLine != line) {
+                    loreChanged = true;
+                }
             }
-            workingCopy.set(DataComponents.LORE, new ItemLore(translatedLines));
-            needsTranslation = true;
+            if (loreChanged) {
+                workingCopy.set(DataComponents.LORE, new ItemLore(translatedLines));
+                needsTranslation = true;
+            }
         }
 
         if (modified || needsTranslation) {
             CustomData existing = workingCopy.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
             CompoundTag rootTag = existing.copyTag();
 
-            byte[] serialized = CraftItemStack.asCraftMirror(untranslated).serializeAsBytes();
-            rootTag.putByteArray("OriginalItem", serialized);
+            UUID id = ITEM_UUID_CACHE.get(untranslated);
+            if (id == null) {
+                id = UUID.randomUUID();
+                ITEM_UUID_CACHE.put(untranslated, id);
+                ORIGINAL_ITEMS.put(id, untranslated.copy());
+            }
+
+            rootTag.putString("OriginalItemId", id.toString());
+            rootTag.remove("OriginalItem");
 
             workingCopy.set(DataComponents.CUSTOM_DATA, CustomData.of(rootTag));
             return workingCopy;
         }
 
-        if (wasUntranslated) {
-            return untranslated;
-        }
-
-        return stack;
+        return wasUntranslated ? untranslated : stack;
     }
 
     private static ItemStack untranslateItem(ItemStack stack, Player player) {
@@ -529,12 +570,28 @@ public class ItemPacketModifier {
 
         CompoundTag rootTag = customData.copyTag();
 
-        if (rootTag.contains("OriginalItem")) {
+        if (rootTag.contains("OriginalItemId")) {
+            Optional<String> idOpt = rootTag.getString("OriginalItemId");
+            if (idOpt.isPresent()) {
+                try {
+                    UUID id = UUID.fromString(idOpt.get());
+                    ItemStack original = ORIGINAL_ITEMS.getIfPresent(id);
+                    if (original != null) {
+                        ItemStack restored = original.copy();
+                        restored.setCount(stack.getCount());
+                        return restored;
+                    }
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        } else if (rootTag.contains("OriginalItem")) {
             Optional<byte[]> optBytes = rootTag.getByteArray("OriginalItem");
             if (optBytes.isPresent() && optBytes.get().length > 0) {
                 try {
                     org.bukkit.inventory.ItemStack restoredBukkit = org.bukkit.inventory.ItemStack.deserializeBytes(optBytes.get());
-                    return CraftItemStack.asNMSCopy(restoredBukkit);
+                    ItemStack restored = CraftItemStack.asNMSCopy(restoredBukkit);
+                    restored.setCount(stack.getCount());
+                    return restored;
                 } catch (Exception ignored) {
                 }
             }
@@ -552,13 +609,17 @@ public class ItemPacketModifier {
     }
 
     public static net.minecraft.network.chat.Component translateItemNMS(net.minecraft.network.chat.Component vanilla, Player player, ItemStack stack, ItemTranslationContext context) {
-        Component adventure = preProcessTags(PaperAdventure.asAdventure(vanilla));
+        if (vanilla == null) return null;
+        Component original = PaperAdventure.asAdventure(vanilla);
+        Component adventure = preProcessTags(original);
         org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
         Component translated = ServerTranslator.translateItemComponent(adventure, player, bukkitStack, context);
+        if (translated.equals(original)) return vanilla;
         return PaperAdventure.asVanilla(translated);
     }
 
     public static net.minecraft.network.chat.Component translateNMS(net.minecraft.network.chat.Component vanilla, Player player) {
+        if (vanilla == null) return null;
         Component adventure = preProcessTags(PaperAdventure.asAdventure(vanilla));
         Component translated = ServerTranslator.translate(adventure, player);
         return PaperAdventure.asVanilla(translated);

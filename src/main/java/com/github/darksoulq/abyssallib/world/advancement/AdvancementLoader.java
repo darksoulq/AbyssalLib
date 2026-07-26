@@ -21,6 +21,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +35,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Utility class handling the parsing, logic assimilation, and registration mapping
- * of standard JSON format custom advancements.
+ * Utility class to load Advancements from JSON files
  */
 public class AdvancementLoader {
 
@@ -43,8 +43,9 @@ public class AdvancementLoader {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
-     * Identifies, loads, and initializes the native advancement file structure.
+     * Loads advancements from the libraries advancements folder
      */
+    @ApiStatus.Internal
     public static void load() {
         if (!Files.exists(ADVANCEMENTS_FOLDER)) {
             try {
@@ -118,11 +119,11 @@ public class AdvancementLoader {
     }
 
     /**
-     * Resolves a structural format node directly resolving logic.
+     * Lads an advancement from a JDON with the provided ID for the instance
      *
      * @param path The target file location.
-     * @param id   The registered target mapping logic natively evaluated.
-     * @return The parsed object boundary instance.
+     * @param id   The ID to set for the advancement.
+     * @return The parsed advancement instance.
      */
     public static Advancement load(Path path, Key id) {
         return Try.of(() -> {
@@ -143,12 +144,12 @@ public class AdvancementLoader {
     }
 
     /**
-     * Maps an internal plugin file node directly into procedural evaluation boundaries structurally securely.
+     * Loads an advancement from a given file from within the resources/ folder of a plugin with the provided ID
      *
-     * @param plugin       The origin plugin context mapped targeting resources natively.
-     * @param resourcePath The internal JAR target structure identifying paths accurately.
-     * @param id           The registry configuration mapped key identity limits cleanly.
-     * @return The correctly evaluated target model mapping.
+     * @param plugin       The target Plugin.
+     * @param resourcePath The target file.
+     * @param id           The ID to set for the advancement.
+     * @return The parsed advancement instance.
      */
     public static Advancement loadResource(Plugin plugin, String resourcePath, Key id) {
         return Try.of(() -> {
@@ -172,11 +173,11 @@ public class AdvancementLoader {
     }
 
     /**
-     * Serializes mapped logical definitions explicitly returning configuration formats accurately saving files.
+     * Saves an advancement into the libraries advancement folder
      *
-     * @param id          The registry target natively establishing limits.
-     * @param advancement The logic instance targeting explicit mappings precisely.
-     * @return Execution confirmation reflecting safe I/O closures natively.
+     * @param id          The Location to store the advancement at (namespace:/path/to/file).
+     * @param advancement The advancement to save.
+     * @return Whether the save succeeded or not.
      */
     public static boolean save(Key id, Advancement advancement) {
         Path namespaceFolder = ADVANCEMENTS_FOLDER.resolve(id.namespace());
@@ -203,10 +204,10 @@ public class AdvancementLoader {
     }
 
     /**
-     * Calculates logic paths mapped against internal directory structures natively properly.
+     * Gets the ID of an advancement from a file
      *
-     * @param file The literal path node.
-     * @return The constructed namespace.
+     * @param file The target file.
+     * @return The ID of the advancement.
      */
     private static Key getAdvancementId(Path file) {
         Path relative = ADVANCEMENTS_FOLDER.relativize(file);
