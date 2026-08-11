@@ -66,7 +66,7 @@ public static final Advancement GET_DIAMOND = ADVANCEMENTS.register("get_diamond
         .build()
     )
     .criterion("has_diamond", new ItemHasCriterion(ItemPredicate.builder()
-        .material(Material.DIAMOND)
+        .id(Material.DIAMOND.key())
         .build())
     )
     .reward(new ItemReward(new ItemStack(Material.EMERALD))) // Grants an Emerald upon completion
@@ -138,7 +138,7 @@ To add more advancements to this tab, create a new JSON file and define the `par
     "has_diamond": {
       "type": "abyssallib:has_item",
       "predicate": {
-        "type": "DIAMOND"
+        "id": "DIAMOND"
       }
     }
   },

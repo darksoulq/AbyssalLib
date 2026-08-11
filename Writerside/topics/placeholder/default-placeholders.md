@@ -83,6 +83,31 @@ These placeholders retrieve specific values from the game, the player, or the se
 <td><code>&lt;placeholder:abyssallib:player_z&gt;</code></td>
 <td>Returns the player's exact Z coordinate.</td>
 </tr>
+<tr>
+<td><code>abyssallib:player_has_permission</code></td>
+<td><code>&lt;placeholder:abyssallib:player_has_permission:&lt;permission&gt;&gt;</code></td>
+<td>Returns whether the player has the permission.</td>
+</tr>
+<tr>
+<td><code>abyssallib:player_has_group</code></td>
+<td><code>&lt;placeholder:abyssallib:player_has_group:&lt;group&gt;&gt;</code></td>
+<td>Returns whether the player belongs to the group.</td>
+</tr>
+<tr>
+<td><code>abyssallib:player_groups</code></td>
+<td><code>&lt;placeholder:abyssallib:player_groups&gt;</code></td>
+<td>Returns all the groups the player belongs to (sorted).</td>
+</tr>
+<tr>
+<td><code>abyssallib:player_group</code></td>
+<td><code>&lt;placeholder:abyssallib:player_group:&lt;index&gt;&gt;</code></td>
+<td>Returns the players group at the given index in the list.</td>
+</tr>
+<tr>
+<td><code>abyssallib:player_primary_group</code></td>
+<td><code>&lt;placeholder:abyssallib:player_primary_group&gt;</code></td>
+<td>Returns the players group that has the highest weight.</td>
+</tr>
 
 <tr>
 <td><code>abyssallib:server_tps</code></td>

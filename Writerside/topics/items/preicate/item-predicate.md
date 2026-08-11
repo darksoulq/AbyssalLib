@@ -19,7 +19,7 @@ public final class PredicateExample {
 
     public static final ItemPredicate PRISTINE_SWORD = ItemPredicate.builder()
         // 1. Must be a Diamond Sword
-        .material(Material.DIAMOND_SWORD)
+        .id(Material.DIAMOND_SWORD.key())
         
         // 2. Must have Custom Model Data applied
         .with(Key.key("minecraft:custom_model_data"))

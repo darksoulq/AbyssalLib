@@ -12,15 +12,17 @@ If you plan to use the built-in resource pack features, also check out the <a hr
 </note>
 
 ### Adding the Build Dependency
-AbyssalLib artifacts are hosted on <a href="https://jitpack.io/#darksoulq/AbyssalLib">JitPack</a>.
+AbyssalLib artifacts are hosted on Maven Central since v2.4.0
 
 <tabs>
 <tab title="Gradle">
 <code-block lang="Gradle">
 repositories {
+    // NOT needed for 2.4.0+
     maven { url 'https://jitpack.io' }
 }
 dependencies {
+    // for versions 2.4.0+ &lt;version&gt; no longer starts with a "v"
     implementation('com.github.darksoulq:AbyssalLib:&lt;version&gt;')
 }
 </code-block>
@@ -28,6 +30,7 @@ dependencies {
 <tab title="Maven">
 <code-block lang="xml">
 &lt;repositories&gt;
+    # NOT needed for 2.4.0+
     &lt;repository&gt;
         &lt;id&gt;jitpack.io&lt;/id&gt;
         &lt;url&gt;https://jitpack.io&lt;/url&gt;

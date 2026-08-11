@@ -132,4 +132,29 @@ Changes to the configuration usually require a full server restart to take effec
 <td>The port to use for the web editor host.</td>
 <td><code>8081</code></td>
 </tr>
+<tr>
+<td>features.structure_blocks_per_tick</td>
+<td>How many blocks should be placed per tick when using structure block.</td>
+<td><code>200</code></td>
+</tr>
+<tr>
+<td>features.server_translation_delay</td>
+<td>How frequently server translations should update</td>
+<td><code>5</code></td>
+</tr>
+<tr>
+<td>features.tick_server_translations</td>
+<td>Whether or not server side translations should be updated</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>features.enable_item_ticking</td>
+<td>Whether the Item#onTick method should be called, Disabling can increase performance</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>features.enable_energy_network</td>
+<td>Whether the Energy API should be enabled</td>
+<td><code>true</code></td>
+</tr>
 </table>
