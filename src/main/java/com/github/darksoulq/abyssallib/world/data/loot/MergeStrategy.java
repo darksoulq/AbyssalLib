@@ -16,5 +16,9 @@ public enum MergeStrategy {
     /**
      * Append the pools of this table to the target vanilla loot table's existing pools.
      */
-    MERGE
+    MERGE,
+    /* Specific to JSON do not use in code */
+    REPLACE_INHERIT,
+    /* Specific to JSON do not use in code */
+    REPLACE_AND_MERGE
 }

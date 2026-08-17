@@ -84,6 +84,20 @@ public class LootLoader {
                         Registries.LOOT_TABLES.remove(targetId);
                     }
                     Registries.LOOT_TABLES.register(targetId, table);
+                } else if (table.mergeStrategy() == MergeStrategy.REPLACE_INHERIT) {
+                    if (existing != null) {
+                        Registries.LOOT_TABLES.remove(targetId);
+                        table = new LootTable(table.pools(), MergeStrategy.MERGE, existing.vanillaId());
+                    }
+                    Registries.LOOT_TABLES.register(targetId, table);
+                } else if (table.mergeStrategy() == MergeStrategy.REPLACE_AND_MERGE) {
+                    if (table.vanillaId() != null) {
+                        if (existing != null) {
+                            Registries.LOOT_TABLES.remove(targetId);
+                        }
+                        table = new LootTable(table.pools(), MergeStrategy.MERGE, table.vanillaId());
+                    }
+                    Registries.LOOT_TABLES.register(targetId, table);
                 } else if (table.mergeStrategy() == MergeStrategy.MERGE) {
                     if (existing != null) {
                         existing.pools().addAll(table.pools());
