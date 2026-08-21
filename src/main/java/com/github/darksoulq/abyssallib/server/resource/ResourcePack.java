@@ -98,7 +98,7 @@ public class ResourcePack {
         this.pluginId = pluginId;
         this.outputFile = plugin.getDataFolder().toPath().resolve("pack").resolve("resourcepack.zip");
 
-        UUID_MAP.put(pluginId, UUID.randomUUID());
+        UUID_MAP.put(pluginId, UUID.nameUUIDFromBytes(pluginId.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**

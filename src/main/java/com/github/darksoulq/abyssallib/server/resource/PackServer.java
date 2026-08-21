@@ -10,6 +10,7 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -106,7 +107,7 @@ public class PackServer {
             String hash = FileUtils.sha1(path);
             registeredPaths.put(packId, path);
             ResourcePack.EXTERNAL_CACHE.add(packId);
-            ResourcePack.UUID_MAP.put(packId, UUID.randomUUID());
+            ResourcePack.UUID_MAP.put(packId, UUID.nameUUIDFromBytes(packId.getBytes(StandardCharsets.UTF_8)));
             ResourcePack.HASH_MAP.put(packId, hash);
             loaded++;
         }
