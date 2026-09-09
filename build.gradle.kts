@@ -19,7 +19,7 @@ plugins {
 
 group = "io.github.darksoulq"
 val mcVersion = stonecutter.current.project
-version = "2.4.0-mc.${mcVersion}-alpha.5"
+version = "2.4.0-mc.${mcVersion}-alpha.6"
 
 val yamlParser = Yaml()
 
@@ -130,12 +130,12 @@ tasks {
 
     named<xyz.jpenilla.runpaper.task.RunServer>("runServer") {
         minecraftVersion(mcVersion)
-        jvmArgs("-Xms2G", "-Xmx2G", "-Dcom.mojang.eula.agree=true")
+        jvmArgs("-Xms512M", "-Xmx2G", "-Dcom.mojang.eula.agree=true")
     }
 
     named<xyz.jpenilla.runpaper.task.RunServer>("runFolia") {
         minecraftVersion(mcVersion)
-        jvmArgs("-Xms2G", "-Xmx2G", "-Dcom.mojang.eula.agree=true")
+        jvmArgs("-Xms512M", "-Xmx2G", "-Dcom.mojang.eula.agree=true")
     }
 
     processResources {

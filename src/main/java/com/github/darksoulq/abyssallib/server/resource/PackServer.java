@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.server.resource;
 
 import com.github.darksoulq.abyssallib.AbyssalLib;
+import com.github.darksoulq.abyssallib.common.util.Either;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
@@ -10,7 +11,6 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -40,7 +40,6 @@ public class PackServer {
                     httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
                     server = httpsServer;
                 } catch (Exception e) {
-                    AbyssalLib.getInstance().getLogger().severe("Failed to initialize HTTPS context: " + e.getMessage());
                     return;
                 }
             } else {
@@ -73,9 +72,7 @@ public class PackServer {
             server.setExecutor(null);
             server.start();
             this.enabled = true;
-            AbyssalLib.getInstance().getLogger().info("Hosting resource packs at " + protocol + "://" + host + ":" + port);
         } catch (IOException e) {
-            AbyssalLib.getInstance().getLogger().severe("ResourcePackServer failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -87,33 +84,41 @@ public class PackServer {
         ResourcePack.UUID_MAP.keySet().removeIf(id -> id.startsWith("external_"));
         ResourcePack.HASH_MAP.keySet().removeIf(id -> id.startsWith("external_"));
 
-        for (String value : AbyssalLib.CONFIG.rp.externalPacks.get()) {
+        for (Either<Map<String, Boolean>, String> entry : AbyssalLib.CONFIG.rp.externalPacks.get()) {
+            String value = entry.fold(
+                map -> map.keySet().iterator().next(),
+                str -> str
+            );
+            boolean compress = entry.fold(
+                map -> map.values().iterator().next(),
+                str -> AbyssalLib.CONFIG.rp.compress.get()
+            );
+
             String packId = "external_" + loaded;
             Path path = Path.of(value);
             if (!Files.exists(path) || !Files.isRegularFile(path)) {
-                AbyssalLib.LOGGER.warning(String.format("Skipping external resource pack (not found or not a file): %s", value));
                 continue;
             }
             if (!value.toLowerCase().endsWith(".zip")) {
-                AbyssalLib.LOGGER.warning(String.format("Skipping external resource pack (not a zip): %s", value));
                 continue;
             }
             try (ZipFile ignored = new ZipFile(path.toFile())) {
             } catch (Exception e) {
-                AbyssalLib.LOGGER.warning(String.format("Skipping external resource pack (invalid zip): %s", value));
                 continue;
+            }
+
+            if (compress) {
+                PackCompressor.processExternalPack(path);
             }
 
             String hash = FileUtils.sha1(path);
             registeredPaths.put(packId, path);
             ResourcePack.EXTERNAL_CACHE.add(packId);
-            ResourcePack.UUID_MAP.put(packId, UUID.nameUUIDFromBytes(packId.getBytes(StandardCharsets.UTF_8)));
+            ResourcePack.UUID_MAP.put(packId, UUID.randomUUID());
             ResourcePack.HASH_MAP.put(packId, hash);
             loaded++;
         }
-        AbyssalLib.LOGGER.info(String.format("Loaded %d External Resource Packs", loaded));
     }
-
 
     public void stop() {
         if (server != null) server.stop(0);
@@ -125,12 +130,10 @@ public class PackServer {
 
     public void registerResourcePack(String pluginid, Path resourcePackFile) {
         registeredPaths.put(pluginid, resourcePackFile);
-        AbyssalLib.getInstance().getLogger().info("Registered resource pack for /" + pluginid + "/resourcepack.zip");
     }
 
     public void unregisterResourcePack(String pluginid) {
         registeredPaths.remove(pluginid);
-        AbyssalLib.getInstance().getLogger().info("Unregistered resource pack for /" + pluginid + "/resourcepack.zip");
     }
 
     public String getUrl(String pluginId) {

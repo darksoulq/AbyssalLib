@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
@@ -12,13 +13,16 @@ import com.github.darksoulq.abyssallib.server.scheduler.Clock;
 import com.github.darksoulq.abyssallib.world.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
+import com.github.darksoulq.abyssallib.world.block.internal.BreakingService;
 import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlockEntity;
 import com.github.darksoulq.abyssallib.world.block.internal.structure.StructureBlockMenu;
 import com.github.darksoulq.abyssallib.world.data.loot.LootContext;
 import com.github.darksoulq.abyssallib.world.data.loot.LootTable;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.BlockItem;
+import com.github.darksoulq.abyssallib.world.item.component.builtin.CustomToolType;
 import com.github.darksoulq.abyssallib.world.util.BlockPersistentData;
+import io.papermc.paper.event.block.BlockBreakProgressUpdateEvent;
 import io.papermc.paper.event.entity.EntityMoveEvent;
 import net.kyori.adventure.key.Key;
 import org.bukkit.*;
@@ -44,6 +48,23 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BlockEvents {
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onServerTick(ServerTickEndEvent event) {
+        BreakingService.getInstance().updateBreakSpeeds();
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onBlockDamageProgressUpdate(BlockBreakProgressUpdateEvent event) {
+        if (event.getEntity() instanceof Player p) {
+            BreakingService.getInstance().wasActive(p);
+        }
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onBlockDamageAbort(BlockDamageAbortEvent event) {
+        BreakingService.getInstance().forceReset(event.getPlayer());
+    }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -108,6 +129,8 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockDamage(BlockDamageEvent event) {
+        BreakingService.getInstance().wasActive(event.getPlayer());
+
         CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
 
@@ -121,11 +144,18 @@ public class BlockEvents {
         ItemStack handItem = event.getItemInHand();
         Item heldItem = Item.resolve(handItem);
         Location loc = event.getBlock().getLocation();
+
+        if (BlockManager.get(loc) != null) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (heldItem == null) return;
         if (!heldItem.hasData(BlockItem.TYPE)) {
             event.setCancelled(true);
             return;
         }
+
         Key blockId = heldItem.getData(BlockItem.TYPE).getValue();
         CustomBlock block = Registries.BLOCKS.get(blockId.asString());
         if (block == null) return;
@@ -149,20 +179,53 @@ public class BlockEvents {
     }
 
     @SubscribeEvent(ignoreCancelled = false)
-    public void onBlockBreak(BlockBreakEvent event) {
-        CustomBlock block = CustomBlock.resolve(event.getBlock());
-        if (block == null) return;
+    public void onMultiBlockPlace(BlockMultiPlaceEvent event) {
+        for (org.bukkit.block.BlockState state : event.getReplacedBlockStates()) {
+            if (BlockManager.get(state.getLocation()) != null) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
 
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Location loc = event.getBlock().getLocation();
         ItemStack stack = player.getInventory().getItemInMainHand();
+
+        CustomToolType.ToolData toolData = null;
+        Item toolItem = Item.resolve(stack);
+        if (toolItem != null) {
+            toolItem.onMine(player, event.getBlock());
+            if (toolItem.hasData(CustomToolType.TYPE)) {
+                toolData = toolItem.getData(CustomToolType.TYPE).getValue();
+            }
+        }
+
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
+
+        if (block == null && toolData != null) {
+            if (!toolData.isSuitable(event.getBlock(), null)) {
+                event.setDropItems(false);
+            }
+        }
+
+        if (block == null) return;
 
         BlockProperties props = block.properties;
         boolean silkTouch = props.requireSilkTouch && stack.containsEnchantment(Enchantment.SILK_TOUCH);
         boolean allowFortune = props.allowFortune;
         int fortuneLevel = allowFortune ? stack.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
 
-        BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(player, block, fortuneLevel));
+        BlockBrokenEvent breakEvent = new BlockBrokenEvent(player, block, fortuneLevel);
+
+        if (toolData != null && !toolData.isSuitable(event.getBlock(), block)) {
+            breakEvent.setBaseDrops(false);
+        }
+
+        EventBus.post(breakEvent);
+
         if (breakEvent.isCancelled()) {
             event.setCancelled(true);
             return;
@@ -287,6 +350,8 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onPlayerMove(PlayerMoveEvent event) {
+        BreakingService.getInstance().wasActive(event.getPlayer());
+
         if (!event.hasChangedBlock()) return;
 
         CustomBlock block = CustomBlock.resolve(event.getTo().clone().add(0, -1, 0).getBlock());

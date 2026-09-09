@@ -1,6 +1,7 @@
 package com.github.darksoulq.abyssallib.world.block.internal.structure;
 
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
+import com.github.darksoulq.abyssallib.world.block.BlockProperties;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.component.builtin.ItemModel;
@@ -20,6 +21,9 @@ public class StructureBlock extends CustomBlock {
 
     public StructureBlock(Key id) {
         super(id, Material.STRUCTURE_BLOCK);
+        this.properties = BlockProperties.of()
+            .hardness(20)
+            .build();
     }
 
     @Override

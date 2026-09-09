@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -98,7 +99,7 @@ public class ResourcePack {
         this.pluginId = pluginId;
         this.outputFile = plugin.getDataFolder().toPath().resolve("pack").resolve("resourcepack.zip");
 
-        UUID_MAP.put(pluginId, UUID.nameUUIDFromBytes(pluginId.getBytes(StandardCharsets.UTF_8)));
+        UUID_MAP.put(pluginId, UUID.randomUUID());
     }
 
     /**
@@ -205,9 +206,16 @@ public class ResourcePack {
         try {
             Files.createDirectories(outputFile.getParent());
             try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(outputFile))) {
+                boolean compress = AbyssalLib.CONFIG.rp.compress.get();
+                zip.setLevel(compress ? Deflater.BEST_COMPRESSION : Deflater.DEFAULT_COMPRESSION);
+
                 for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+                    byte[] data = entry.getValue();
+                    if (compress && (entry.getKey().endsWith(".json") || entry.getKey().endsWith(".mcmeta"))) {
+                        data = PackCompressor.minifyJson(data);
+                    }
                     zip.putNextEntry(new ZipEntry(entry.getKey()));
-                    zip.write(entry.getValue());
+                    zip.write(data);
                     zip.closeEntry();
                 }
             }
@@ -246,7 +254,7 @@ public class ResourcePack {
      * @param attempt the current attempt number (0-indexed)
      */
     private void registerWithRspm(int attempt) {
-        final int maxAttempts = 100; // ~100s at 20 TPS; covers RSPM delayed init
+        final int maxAttempts = 100;
         try {
             ResourcePackManagerAPI.registerLocalResourcePack(
                 plugin.getName(),
@@ -330,11 +338,6 @@ public class ResourcePack {
      * @return JSON content of pack.mcmeta
      */
     private @NotNull String generatePackMeta() {
-        return "{\n" +
-            "  \"pack\": {\n" +
-            "    \"pack_format\": 55,\n" +
-            "    \"description\": \"" + pluginId + " internal Resource Pack\"\n" +
-            "  }\n" +
-            "}";
+        return "{\n  \"pack\": {\n    \"pack_format\": 55,\n    \"description\": \"" + pluginId + " internal Resource Pack\"\n  }\n}";
     }
 }
