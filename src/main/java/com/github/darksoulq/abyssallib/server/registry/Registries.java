@@ -82,5 +82,5 @@ public class Registries {
     public static final Registry<Placeholder<?>> PLACEHOLDERS = new Registry<>();
 
     public static final Registry<RecipeType<?>> RECIPE_TYPES = new Registry<>();
-    public static final Registry<CustomRecipe> RECIPES = new Registry<>();
+    public static final TypedRegistry<CustomRecipe, RecipeType<?>> RECIPES = new TypedRegistry<>(CustomRecipe::getType);
 }

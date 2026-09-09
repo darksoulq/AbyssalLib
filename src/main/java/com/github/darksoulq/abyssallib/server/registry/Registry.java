@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * @param <T> The type of object being registered.
  */
-public final class Registry<T> {
+public class Registry<T> {
 
     /**
      * The internal bidirectional map storing ID-to-Object relationships.

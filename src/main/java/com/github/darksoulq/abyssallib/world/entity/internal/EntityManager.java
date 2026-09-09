@@ -14,6 +14,7 @@ import net.kyori.adventure.key.Key;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,9 +64,11 @@ public class EntityManager {
                 ENTITIES.put(e.uuid, e);
             });
 
-            AbyssalLib.SCHEDULER.schedule(EntityManager::naturalSpawnTick).global().after(200L, Clock.TICKS).repeatEvery(20L, Clock.TICKS);
-            AbyssalLib.SCHEDULER.schedule(EntityManager::despawnTick).global().after(200L, Clock.TICKS).repeatEvery(200L, Clock.TICKS);
-            AbyssalLib.SCHEDULER.schedule(EntityManager::chunkCacheTick).global().repeatEvery(40L, Clock.TICKS);
+            if (AbyssalLib.CONFIG.features.enableNaturalSpawning.get()) {
+                AbyssalLib.SCHEDULER.schedule(EntityManager::naturalSpawnTick).global().after(200L, Clock.TICKS).repeatEvery(20L, Clock.TICKS);
+                AbyssalLib.SCHEDULER.schedule(EntityManager::chunkCacheTick).global().repeatEvery(40L, Clock.TICKS);
+                AbyssalLib.SCHEDULER.schedule(EntityManager::despawnTick).global().after(200L, Clock.TICKS).repeatEvery(200L, Clock.TICKS);
+            }
 
         } catch (Exception e) {
             AbyssalLib.LOGGER.severe("Failed to load entity system");
@@ -146,7 +149,7 @@ public class EntityManager {
         World world = entity.getWorld();
 
         double nearest = Double.MAX_VALUE;
-        for (org.bukkit.entity.Entity e : world.getNearbyEntities(loc, 128, 128, 128)) {
+        for (Entity e : world.getNearbyEntities(loc, 128, 128, 128)) {
             if (e instanceof Player p) {
                 nearest = Math.min(nearest, p.getLocation().distanceSquared(loc));
             }
