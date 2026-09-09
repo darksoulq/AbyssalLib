@@ -51,7 +51,9 @@ public class PlayerEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onJoin(PlayerJoinEvent event) {
-        BreakingService.getInstance().storeInitialSpeed(event.getPlayer());
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
+            BreakingService.getInstance().storeInitialSpeed(event.getPlayer());
+        }
         PacketInterceptor.inject(event.getPlayer());
         PlayerStatistics.of(event.getPlayer());
         if (AbyssalLib.PERMISSION_MANAGER != null) {
@@ -61,7 +63,9 @@ public class PlayerEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onLeave(PlayerQuitEvent event) {
-        BreakingService.getInstance().removeTrackedPlayer(event.getPlayer());
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
+            BreakingService.getInstance().removeTrackedPlayer(event.getPlayer());
+        }
         PacketInterceptor.uninject(event.getPlayer());
         if (AbyssalLib.PERMISSION_MANAGER != null) {
             AbyssalLib.PERMISSION_MANAGER.handleQuit(event.getPlayer());

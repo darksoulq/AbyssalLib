@@ -97,6 +97,7 @@ public class PluginConfig {
         public Config.Value<Boolean> enableItemTicking;
         public Config.Value<Boolean> enableEnergyNetwork;
         public Config.Value<Boolean> enableNaturalSpawning;
+        public Config.Value<Boolean> enableCustomBreakSpeeds;
 
         public Features(Config cfg) {
             structureBlocksPlacedPerTick = cfg.value("features.structure_blocks_per_tick", 200);
@@ -105,6 +106,7 @@ public class PluginConfig {
             enableItemTicking = cfg.value("features.enable_item_ticking", true);
             enableEnergyNetwork = cfg.value("features.enable_energy_network", true);
             enableNaturalSpawning = cfg.value("features.enable_natural_spawning", false);
+            enableCustomBreakSpeeds = cfg.value("features.enable_custom_break_speeds", true);
         }
     }
 

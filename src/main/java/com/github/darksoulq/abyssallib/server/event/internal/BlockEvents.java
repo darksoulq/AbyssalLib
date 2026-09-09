@@ -51,19 +51,23 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
-        BreakingService.getInstance().updateBreakSpeeds();
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
+            BreakingService.getInstance().updateBreakSpeeds();
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockDamageProgressUpdate(BlockBreakProgressUpdateEvent event) {
-        if (event.getEntity() instanceof Player p) {
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get() && event.getEntity() instanceof Player p) {
             BreakingService.getInstance().wasActive(p);
         }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockDamageAbort(BlockDamageAbortEvent event) {
-        BreakingService.getInstance().forceReset(event.getPlayer());
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
+            BreakingService.getInstance().forceReset(event.getPlayer());
+        }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
@@ -129,7 +133,9 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockDamage(BlockDamageEvent event) {
-        BreakingService.getInstance().wasActive(event.getPlayer());
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
+            BreakingService.getInstance().wasActive(event.getPlayer());
+        }
 
         CustomBlock block = CustomBlock.resolve(event.getBlock());
         if (block == null) return;
@@ -339,6 +345,10 @@ public class BlockEvents {
     public void onEntityMove(EntityMoveEvent event) {
         if (!event.hasChangedBlock()) return;
 
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get() && event.getEntity() instanceof Player p) {
+            BreakingService.getInstance().wasActive(p);
+        }
+
         CustomBlock block = CustomBlock.resolve(event.getTo().clone().add(0, -1, 0).getBlock());
         if (block == null) return;
         if (event.getEntity().getFallDistance() > 1) {
@@ -350,7 +360,9 @@ public class BlockEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onPlayerMove(PlayerMoveEvent event) {
-        BreakingService.getInstance().wasActive(event.getPlayer());
+        if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
+            BreakingService.getInstance().wasActive(event.getPlayer());
+        }
 
         if (!event.hasChangedBlock()) return;
 
