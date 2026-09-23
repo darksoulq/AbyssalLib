@@ -46,7 +46,9 @@ public class Components {
     public static DataComponentType<?> ITEM_MODEL = register("item_model", ItemModel.TYPE);
     public static DataComponentType<?> ITEM_NAME = register("item_name", ItemName.TYPE);
     public static DataComponentType<?> LORE = register("lore", Lore.TYPE);
-    public static DataComponentType<?> MAP_COLOR = register("map_color", MapColor.TYPE);
+    //? if <=26.2 {
+    /*public static DataComponentType<?> MAP_COLOR = register("map_color", MapColor.TYPE);
+    *///?}
     public static DataComponentType<?> MAP_DECORATIONS = register("map_decorations", MapDecorates.TYPE);
     public static DataComponentType<?> MAP_ID = register("map_id", MapID.TYPE);
     public static DataComponentType<?> MAP_POST_PROCESSING = register("map_post_processing", MapPostProcess.TYPE);

@@ -2,15 +2,24 @@ package com.github.darksoulq.abyssallib.world.recipe.type;
 
 import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
-import com.github.darksoulq.abyssallib.world.recipe.PotionMixProvider;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeType;
-import io.papermc.paper.potion.PotionMix;
 import org.bukkit.NamespacedKey;
+//? if <26.3 {
+/*import io.papermc.paper.potion.PotionMix;
+import com.github.darksoulq.abyssallib.world.recipe.PotionMixProvider;
+*///?} else {
+import org.bukkit.inventory.BrewingRecipe;
+import com.github.darksoulq.abyssallib.world.recipe.BukkitRecipeProvider;
+//?}
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.jspecify.annotations.NonNull;
 
-public class CustomPotionMix implements CustomRecipe, PotionMixProvider {
+//? if <=26.2 {
+/*public class CustomPotionMix implements CustomRecipe, PotionMixProvider {
+*///?} else
+public class CustomPotionMix implements CustomRecipe, BukkitRecipeProvider {
     public static final RecipeType<CustomPotionMix> TYPE = () -> Codecs.POTION_MIX;
 
     private final NamespacedKey id;
@@ -54,8 +63,15 @@ public class CustomPotionMix implements CustomRecipe, PotionMixProvider {
         return result;
     }
 
-    @Override
+    //? if <=26.2 {
+    /*@Override
     public PotionMix toPotionMix() {
         return new PotionMix(id, result, input, ingredient);
     }
+    *///?} else {
+    @Override
+    public BrewingRecipe toBukkit() {
+        return new BrewingRecipe(id, result, input, ingredient);
+    }
+    //?}
 }

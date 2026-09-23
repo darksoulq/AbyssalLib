@@ -10,3 +10,7 @@
   java: 25
   paperweight: '{version}.build.+'
   apiVersion: '{version}'
+26.3:
+  java: 25
+  paperweight: '{version}.build.+'
+  apiVersion: '{version}'

@@ -218,10 +218,6 @@ public class Advancement {
                 display.isAnnounceToChat(),
                 display.isHidden()
             );
-
-            if (!Float.isNaN(display.getX()) && !Float.isNaN(display.getY())) {
-                info.setLocation(display.getX(), display.getY());
-            }
             displayInfo = Optional.of(info);
         }
 

@@ -105,9 +105,11 @@ public class AdvancementLoader {
                 if (customAdv != null && customAdv.getDisplay() != null) {
                     float customX = customAdv.getDisplay().getX();
                     float customY = customAdv.getDisplay().getY();
-                    if (!Float.isNaN(customX) && !Float.isNaN(customY)) {
+                    //? <=26.2 {
+                    /*if (!Float.isNaN(customX) && !Float.isNaN(customY)) {
                         holder.value().display().ifPresent(info -> info.setLocation(customX, customY));
                     }
+                    *///?}
                 }
             }
 

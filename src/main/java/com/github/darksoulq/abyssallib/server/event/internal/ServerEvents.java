@@ -47,6 +47,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -172,7 +173,7 @@ public class ServerEvents {
                 if (killer != null) {
                     builder.looter(killer).killer(killer);
                     if (killer instanceof LivingEntity livingEntity) {
-                        builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
+                        builder.tool(livingEntity.getEquipment().getItemInMainHand());
                     }
                 }
 
@@ -203,7 +204,7 @@ public class ServerEvents {
                     if (killer != null) {
                         builder.looter(killer).killer(killer);
                         if (killer instanceof LivingEntity livingEntity)
-                            builder.tool(((CraftLivingEntity) livingEntity).getHandle().getMainHandItem().getBukkitStack());
+                            builder.tool((livingEntity.getEquipment().getItemInMainHand()));
                     }
 
                     List<ItemStack> generated = table.generate(builder.build());
@@ -303,7 +304,12 @@ public class ServerEvents {
                     float customX = customAdv.getDisplay().getX();
                     float customY = customAdv.getDisplay().getY();
                     if (!Float.isNaN(customX) && !Float.isNaN(customY)) {
-                        holder.value().display().ifPresent(info -> info.setLocation(customX, customY));
+                        AdvancementNode node = tree.get(holder);
+                        //? if >26.2 {
+                        if (node != null) {
+                            node.setLocation(customX, customY);
+                        }
+                        //?}
                     }
                 }
             }

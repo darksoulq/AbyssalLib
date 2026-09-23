@@ -212,10 +212,17 @@ public class ItemPacketModifier {
     }
 
     private static Packet<?> handlePlayerChat(ClientboundPlayerChatPacket packet, Player player) {
-        net.minecraft.network.chat.Component content = packet.unsignedContent();
+        //? if >26.2 {
+        Optional<net.minecraft.network.chat.Component> content = packet.unsignedContent();
+        if (content.isEmpty()) {
+            content = Optional.of(net.minecraft.network.chat.Component.literal(packet.body().content()));
+        }
+        //?} else {
+        /*net.minecraft.network.chat.Component content = packet.unsignedContent();
         if (content == null) {
             content = net.minecraft.network.chat.Component.literal(packet.body().content());
         }
+        *///?}
 
         ChatType.Bound chatType = packet.chatType();
         ChatType.Bound translatedChatType = new ChatType.Bound(
@@ -230,7 +237,10 @@ public class ItemPacketModifier {
             packet.index(),
             packet.signature(),
             packet.body(),
-            translateNMS(content, player),
+            //? if <=26.2 {
+            /*translateNMS(content, player),
+            *///?} else
+            Optional.of(translateNMS(content.get(), player)),
             packet.filterMask(),
             translatedChatType
         );
@@ -495,7 +505,10 @@ public class ItemPacketModifier {
         boolean wasUntranslated = (untranslated != stack);
 
         ItemStack workingCopy = untranslated.copy();
-        org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(workingCopy);
+        //? if <=26.2 {
+        /*org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(workingCopy);
+        *///?} else
+        org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asBukkitMirror(workingCopy);
 
         boolean modified = false;
         for (ClientItemModifier modifier : MODIFIERS) {
@@ -612,7 +625,10 @@ public class ItemPacketModifier {
         if (vanilla == null) return null;
         Component original = PaperAdventure.asAdventure(vanilla);
         Component adventure = preProcessTags(original);
-        org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
+        //? if <=26.2 {
+        /*org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asCraftMirror(stack);
+        *///?} else
+        org.bukkit.inventory.ItemStack bukkitStack = CraftItemStack.asBukkitMirror(stack);
         Component translated = ServerTranslator.translateItemComponent(adventure, player, bukkitStack, context);
         if (translated.equals(original)) return vanilla;
         return PaperAdventure.asVanilla(translated);

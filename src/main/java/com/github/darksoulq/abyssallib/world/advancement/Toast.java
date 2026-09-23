@@ -94,7 +94,10 @@ public class Toast {
 
         ClientboundUpdateAdvancementsPacket addPacket = new ClientboundUpdateAdvancementsPacket(
             false,
-            List.of(nmsHolder),
+            //? <=26.2 {
+            /*List.of(nmsHolder),
+            *///?} else
+            List.of(new ClientboundUpdateAdvancementsPacket.PositionedAdvancement(nmsHolder, 0, 0)),
             Set.of(),
             Map.of(),
             true

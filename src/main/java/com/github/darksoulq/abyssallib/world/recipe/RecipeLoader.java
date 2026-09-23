@@ -11,6 +11,7 @@ import com.github.darksoulq.abyssallib.common.serialization.ops.YamlOps;
 import com.github.darksoulq.abyssallib.common.util.FileUtils;
 import com.github.darksoulq.abyssallib.server.event.custom.server.RecipeReloadEvent;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
+import com.github.darksoulq.abyssallib.world.gen.feature.tree.root.SpreadingRootPlacer;
 import com.github.darksoulq.abyssallib.world.recipe.type.DisabledRecipe;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -244,11 +245,16 @@ public class RecipeLoader {
             return;
         }
 
-        switch (recipe) {
+        //? if <=26.2 {
+        /*switch (recipe) {
             case BukkitRecipeProvider provider -> Bukkit.addRecipe(provider.toBukkit(), true);
             case PotionMixProvider provider -> Bukkit.getPotionBrewer().addPotionMix(provider.toPotionMix());
-            default -> {}
+            default -> {
+            }
         }
+        *///?} else {
+        if (recipe instanceof BukkitRecipeProvider provider) Bukkit.addRecipe(provider.toBukkit(), true);
+        //?}
     }
 
     /**

@@ -1,7 +1,11 @@
 package com.github.darksoulq.abyssallib.world.entity.player;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.yggdrasil.ProfileResult;
+//? if <=26.2 {
+/*import com.mojang.authlib.yggdrasil.ProfileResult;
+*///?} else {
+import com.mojang.authlib.services.ProfileResult;
+//?}
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
