@@ -1,9 +1,11 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
+import com.github.darksoulq.abyssallib.server.event.custom.entity.FakePlayerReplaceEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
 import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
@@ -19,13 +21,19 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 
 public class PlayerEvents {
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onServerListPing(PaperServerListPingEvent event) {
+        int fakeCount = FakePlayer.FAKE_PLAYERS.size();
+        event.setNumPlayers(Math.max(0, event.getNumPlayers() - fakeCount));
+        event.getListedPlayers().removeIf(profile -> profile.id() != null && FakePlayer.FAKE_PLAYERS.containsKey(profile.id()));
+    }
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
@@ -37,6 +45,8 @@ public class PlayerEvents {
                 Bukkit.getScheduler().callSyncMethod(AbyssalLib.getInstance(), () -> {
                     FakePlayer fakePlayer = FakePlayer.FAKE_PLAYERS.get(event.getUniqueId());
                     if (fakePlayer != null) {
+                        FakePlayerReplaceEvent replaceEvent = new FakePlayerReplaceEvent(fakePlayer, event.getUniqueId());
+                        Bukkit.getPluginManager().callEvent(replaceEvent);
                         fakePlayer.remove();
                     } else if (hasData) {
                         OfflinePlayerData.forceUnload(event.getUniqueId());
@@ -86,18 +96,6 @@ public class PlayerEvents {
                 stack = stack.clone();
                 stack.setAmount(remaining.values().stream().toList().getFirst().getAmount());
                 event.getPlayer().getInventory().setItem(EquipmentSlot.HAND, stack);
-            }
-        }
-    }
-
-    @SubscribeEvent(ignoreCancelled = false)
-    public void onChunkUnload(ChunkUnloadEvent event) {
-        for (FakePlayer fakePlayer : FakePlayer.FAKE_PLAYERS.values()) {
-            Location loc = fakePlayer.getPlayer().getLocation();
-            if (loc.getWorld().equals(event.getChunk().getWorld())
-                && loc.getChunk().getX() == event.getChunk().getX()
-                && loc.getChunk().getZ() == event.getChunk().getZ()) {
-                fakePlayer.remove();
             }
         }
     }

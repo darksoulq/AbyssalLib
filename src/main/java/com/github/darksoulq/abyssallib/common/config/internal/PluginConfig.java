@@ -2,7 +2,9 @@ package com.github.darksoulq.abyssallib.common.config.internal;
 
 import com.github.darksoulq.abyssallib.common.config.Config;
 import com.github.darksoulq.abyssallib.common.serialization.Codec;
+import com.github.darksoulq.abyssallib.common.serialization.Codecs;
 import com.github.darksoulq.abyssallib.common.util.Either;
+import org.bukkit.event.inventory.PrepareAnvilEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,7 @@ public class PluginConfig {
             protocol = cfg.value("resource-pack.protocol", "http");
             ip = cfg.value("resource-pack.ip", "127.0.0.1");
             port = cfg.value("resource-pack.port", 8080);
-            externalPacks = cfg.value("resource-pack.external_packs", List.of());
+            externalPacks = cfg.value("resource-pack.external_packs", List.of(), Codec.either(Codec.map(Codecs.STRING, Codecs.BOOLEAN), Codecs.STRING).list());
         }
     }
 
