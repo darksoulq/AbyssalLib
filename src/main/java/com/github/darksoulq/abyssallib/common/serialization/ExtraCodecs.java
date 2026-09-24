@@ -120,6 +120,11 @@ public class ExtraCodecs {
         }
     ).describe("EntityType");
 
+    public static final Codec<RegistryKeySet<@NotNull EntityType>> ENTITY_TYPE_KEYS = ENTITY_TYPE.list().xmap(
+        l -> RegistrySet.keySetFromValues(RegistryKey.ENTITY_TYPE, l),
+        k -> k.resolve(Registry.ENTITY_TYPE).stream().toList()
+    ).describe("EntityTypeKeySet");
+
     public static final Codec<net.minecraft.world.entity.EntityType<?>> NMS_ENTITY_TYPE = Codecs.STRING.<net.minecraft.world.entity.EntityType<?>>flatXmap(
         s -> {
             try {
@@ -373,10 +378,19 @@ public class ExtraCodecs {
         new PotionEffect(type, duration, amplifier, ambient, particles, icon)
     )).describe("PotionEffect");
 
-    public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codecs.DOUBLE.xmap(
-        d -> ConsumeEffect.teleportRandomlyEffect(d.floatValue()),
-        e -> (double) e.diameter()
+    public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY_LEGACY = Codecs.FLOAT.xmap(
+        diameter -> ConsumeEffect.teleportRandomlyEffect(diameter),
+        e -> e.diameter()
     ).describe("ConsumeEffect.TeleportRandomly");
+    public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codec.either(CONSUME_TELEPORT_RANDOMLY_LEGACY,
+        RecordBuilder.create(instance -> instance.group(
+            Codecs.FLOAT.fieldOf("diameter").forGetter((ConsumeEffect.TeleportRandomly tp) -> tp.diameter()),
+            Codecs.BOOLEAN.fieldOf("directional_particles").forGetter((ConsumeEffect.TeleportRandomly tp) -> tp.directionalParticles())
+        ).apply(instance, (diameter, directionalParticles) -> ConsumeEffect.teleportRandomlyEffect(diameter, directionalParticles)))
+    ).xmap(
+        either -> either.fold(lf -> lf, rf -> rf),
+        teleportRandomly -> Either.right(teleportRandomly)
+    );
 
     public static final Codec<ConsumeEffect.PlaySound> CONSUME_PLAY_SOUND = Codecs.KEY.xmap(
         ConsumeEffect::playSoundConsumeEffect,

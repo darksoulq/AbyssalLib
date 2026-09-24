@@ -1,3 +1,5 @@
 com/github/darksoulq/abyssallib/world/item/component/builtin/SulfurCubeItem.java
 com/github/darksoulq/abyssallib/world/item/component/builtin/Dye.java
-com/github/darksoulq/abyssallib/world/recipe/type/CustomBrewingRecipe
+com/github/darksoulq/abyssallib/world/item/component/builtin/ProvidesPotPatterns.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/SignFrontText.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/SignBackText.java
