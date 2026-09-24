@@ -378,6 +378,12 @@ public class ExtraCodecs {
         new PotionEffect(type, duration, amplifier, ambient, particles, icon)
     )).describe("PotionEffect");
 
+    //? if <=26.2 {
+    /*public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY = Codecs.FLOAT.xmap(
+        diameter -> ConsumeEffect.teleportRandomlyEffect(diameter),
+        e -> e.diameter()
+    ).describe("ConsumeEffect.TeleportRandomly");
+    *///?} else {
     public static final Codec<ConsumeEffect.TeleportRandomly> CONSUME_TELEPORT_RANDOMLY_LEGACY = Codecs.FLOAT.xmap(
         diameter -> ConsumeEffect.teleportRandomlyEffect(diameter),
         e -> e.diameter()
@@ -391,6 +397,7 @@ public class ExtraCodecs {
         either -> either.fold(lf -> lf, rf -> rf),
         teleportRandomly -> Either.right(teleportRandomly)
     );
+    //?}
 
     public static final Codec<ConsumeEffect.PlaySound> CONSUME_PLAY_SOUND = Codecs.KEY.xmap(
         ConsumeEffect::playSoundConsumeEffect,

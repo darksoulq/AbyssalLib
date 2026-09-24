@@ -3,3 +3,10 @@ com/github/darksoulq/abyssallib/world/item/component/builtin/Dye.java
 com/github/darksoulq/abyssallib/world/item/component/builtin/ProvidesPotPatterns.java
 com/github/darksoulq/abyssallib/world/item/component/builtin/SignFrontText.java
 com/github/darksoulq/abyssallib/world/item/component/builtin/SignBackText.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/MobVisible.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/AttackAnimation.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/InteractAnimation.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/ProvidesPotteryPatterns.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/VillagersFood.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/Waxed.java
+com/github/darksoulq/abyssallib/world/item/component/builtin/CushionColor.java

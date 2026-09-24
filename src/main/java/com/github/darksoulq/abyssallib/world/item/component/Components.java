@@ -82,6 +82,17 @@ public class Components {
     public static DataComponentType<?> WEAPON = register("weapon", WeaponComponent.TYPE);
     public static DataComponentType<?> WRITABLE_BOOK_CONTENT = register("writable_book_content", WritableBookContents.TYPE);
     public static DataComponentType<?> WRITTEN_BOOK_CONTENT = register("written_book_content", WrittenBookContents.TYPE);
+    //? if >=26.3 {
+    public static DataComponentType<?> ATTACK_ANIMATION = register("attack_animation", AttackAnimation.TYPE);
+    public static DataComponentType<?> CUSHION_COLOR = register("cushion_color", CushionColor.TYPE);
+    public static DataComponentType<?> INTERACT_ANIMATION = register("interact_animation", InteractAnimation.TYPE);
+    public static DataComponentType<?> MOB_VISIBILITY = register("mob_visibility", MobVisible.TYPE);
+    public static DataComponentType<?> PROVIDES_POTTERY_PATTERN = register("provides_pottery_pattern", ProvidesPotteryPatterns.TYPE);
+    public static DataComponentType<?> SIGN_FRONT_TEXT = register("sign_front_text", SignFrontText.TYPE);
+    public static DataComponentType<?> SIGN_BACK_TEXT = register("sign_back_text", SignBackText.TYPE);
+    public static DataComponentType<?> VILLAGER_FOOD = register("villager_food", VillagersFood.TYPE);
+    public static DataComponentType<?> WAXED = register("waxed", Waxed.TYPE);
+    //?}
 
 
     private static DataComponentType<?> registerCustom(String name, DataComponentType<?> type) {
