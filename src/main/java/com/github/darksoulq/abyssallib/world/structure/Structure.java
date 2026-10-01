@@ -331,7 +331,7 @@ public class Structure {
             Object blockObj = null;
             if (entry.id().startsWith("minecraft:")) {
                 try {
-                    Material mat = Material.valueOf(entry.id().substring(10).toUpperCase());
+                    Material mat = Material.valueOf(entry.id().substring(10).toUpperCase(Locale.ROOT));
                     if (mat.isBlock()) {
                         blockObj = mat.createBlockData();
                     }

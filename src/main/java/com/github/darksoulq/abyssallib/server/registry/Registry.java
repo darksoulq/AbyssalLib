@@ -6,10 +6,14 @@ import com.google.common.collect.HashBiMap;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A generic registry system for managing library objects and their associated unique identifiers.
+ *
  * <p>
  * The registry uses a {@link BiMap} to ensure that every object has exactly one ID and every ID
  * points to exactly one object. This is essential for consistent serialization and lookup
@@ -26,6 +30,7 @@ public class Registry<T> {
 
     /**
      * Registers a new object with a unique identifier.
+     *
      * <p>
      * If the ID is already present in the registry, the registration is rejected
      * and a severe error is logged to the console to prevent accidental overwrites.
@@ -80,8 +85,23 @@ public class Registry<T> {
         return Collections.unmodifiableMap(entries);
     }
 
+    public Set<T> removeAll(String namespace) {
+        Set<T> removed = new HashSet<>();
+        String prefix = namespace + ":";
+        Iterator<Map.Entry<String, T>> iterator = entries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, T> entry = iterator.next();
+            if (entry.getKey().startsWith(prefix)) {
+                removed.add(entry.getValue());
+                iterator.remove();
+            }
+        }
+        return removed;
+    }
+
     /**
      * Removes an entry from the registry by its ID.
+     *
      * <p>
      * <b>Warning:</b> This method is intended for internal use only. Removing entries
      * from a registry at runtime can cause significant issues with existing data

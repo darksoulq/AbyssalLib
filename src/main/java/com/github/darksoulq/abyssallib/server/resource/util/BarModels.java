@@ -9,6 +9,7 @@ import java.util.*;
 /**
  * A utility class designed to programmatically generate complex, layered item models
  * for progress bars, health bars, and mana bars within a Minecraft resource pack.
+ *
  * <p>
  * This class automates the creation of {@link Selector} trees based on Custom Model Data,
  * allowing for dynamic textures that change based on progress states and custom string keys.
@@ -223,8 +224,8 @@ public class BarModels {
                     guiItemModelVertical(model);
                 }
 
-                model.display("gui", new Model.Display().translation(0, -0.9574f, 0));
-                model.display("fixed", new Model.Display().translation(0, 0, -0.25f));
+                model.display(DisplayPerspectives.GUI, new Model.Display().translation(0, -0.9574f, 0));
+                model.display(DisplayPerspectives.FIXED, new Model.Display().translation(0, 0, -0.25f));
                 return new Selector.Model(model);
             });
         }

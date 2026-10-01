@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class CommandBus {
         CommandBus.dispatcher = dispatcher;
     }
 
+    @Deprecated(forRemoval = true)
     public static void register(String pluginId, Object handler) {
         for (Method method : handler.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(Command.class)) {
@@ -45,6 +47,7 @@ public class CommandBus {
         registerToDispatcher(command.getRoot(), command.getAliasBuilders());
     }
 
+    @Deprecated(forRemoval = true)
     private static void registerLegacyMethod(String pluginId, Object handler, Method method, Command command) {
         String commandName = command.name();
         LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.literal(commandName);
@@ -92,6 +95,26 @@ public class CommandBus {
             }
         }
 
+        Bukkit.getOnlinePlayers().forEach(p -> {
+                //? if <=26.1.2 {
+                /*MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle());
+                 *///?} else {
+                MinecraftServer.getServer().getCommands().sendCommands(((CraftPlayer) p).getHandle());
+                //?}
+            }
+        );
+    }
+
+    public static void remove(BaseCommand command) {
+        CommandDispatcher<CommandSourceStack> dispatcher = getDispatcher();
+        dispatcher.getRoot().removeCommand(command.getName());
+        for (String alias : command.getAliases()) {
+            dispatcher.getRoot().removeCommand(alias);
+        }
+        registered.removeIf(r -> r.newCommand == command);
+    }
+
+    public static void resync() {
         Bukkit.getOnlinePlayers().forEach(p -> {
                 //? if <=26.1.2 {
                 /*MinecraftServer.getServer().resources.managers().commands.sendCommands(((CraftPlayer) p).getHandle());

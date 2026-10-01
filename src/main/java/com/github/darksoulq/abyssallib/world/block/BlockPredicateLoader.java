@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 /**
@@ -43,7 +44,7 @@ public class BlockPredicateLoader {
         try (Stream<Path> stream = Files.walk(PREDICATES_FOLDER)) {
             stream.filter(Files::isRegularFile)
                 .filter(path -> {
-                    String name = path.getFileName().toString().toLowerCase();
+                    String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
                     return name.endsWith(".yml") || name.endsWith(".yaml");
                 })
                 .forEach(BlockPredicateLoader::loadSingle);

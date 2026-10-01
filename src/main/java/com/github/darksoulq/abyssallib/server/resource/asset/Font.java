@@ -397,7 +397,7 @@ public class Font implements Asset {
      */
     private void ensureNotOccupied(char c) {
         if (occupied.contains(c)) throw new IllegalStateException(
-            "Unicode U+" + Integer.toHexString(c).toUpperCase() + " already occupied");
+            "Unicode U+" + Integer.toHexString(c).toUpperCase(Locale.ROOT) + " already occupied");
     }
 
     /**

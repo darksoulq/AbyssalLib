@@ -11,6 +11,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Locale;
+
 public class ItemStatisticFormatter implements StatisticFormatter {
 
     @Override
@@ -20,7 +22,7 @@ public class ItemStatisticFormatter implements StatisticFormatter {
             return new DefaultStatisticFormatter().formatDialog(stat, value);
         }
 
-        String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase()).isBlock() ? "block" : "item";
+        String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase(Locale.ROOT)).isBlock() ? "block" : "item";
         String langKey = "<lang:%s.%s.%s>".formatted(type, stat.target().namespace(), stat.target().value());
         return DialogContent.item(stack, DialogContent.text(TextUtil.parse("<green>" + langKey + "</green> <gray>=</gray> <yellow>" + value + "</yellow>")));
     }
@@ -28,7 +30,7 @@ public class ItemStatisticFormatter implements StatisticFormatter {
     @Override
     public Component formatChat(Statistic stat, int value) {
         String catKey = "<lang:stat_type.%s.%s>".formatted(stat.type().id().namespace(), stat.type().id().value());
-        String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase()).isBlock() ? "block" : "item";
+        String type = stat.target().namespace().equals("minecraft") && Material.valueOf(stat.target().value().toUpperCase(Locale.ROOT)).isBlock() ? "block" : "item";
         String langKey = "<lang:%s.%s.%s>".formatted(type, stat.target().namespace(), stat.target().value());
 
         ItemStack stack = getItem(stat);
@@ -42,7 +44,7 @@ public class ItemStatisticFormatter implements StatisticFormatter {
 
     private ItemStack getItem(Statistic stat) {
         if (stat.target().namespace().equals("minecraft")) {
-            Material mat = Material.matchMaterial(stat.target().value());
+            Material mat = Material.getMaterial(stat.target().value());
             if (mat != null) return new ItemStack(mat);
         } else {
             Item customItem = Registries.ITEMS.get(stat.target().asString());

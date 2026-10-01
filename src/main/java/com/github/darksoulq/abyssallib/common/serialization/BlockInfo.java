@@ -11,6 +11,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -71,7 +72,7 @@ public record BlockInfo(@Nullable Vector pos, Object block, @Nullable ObjectNode
         if (block instanceof CustomBlock cb) {
             return cb.getId().asString();
         } else if (block instanceof BlockData bd) {
-            return "minecraft:" + bd.getMaterial().name().toLowerCase();
+            return "minecraft:" + bd.getMaterial().name().toLowerCase(Locale.ROOT);
         }
         return "minecraft:air";
     }

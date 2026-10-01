@@ -13,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -32,7 +33,7 @@ public class UpdateChecker {
         this.isModrinth = isModrinth;
         this.ignoredModifiers = new HashSet<>();
         for (String modifier : ignoredModifiers) {
-            this.ignoredModifiers.add(modifier.toLowerCase());
+            this.ignoredModifiers.add(modifier.toLowerCase(Locale.ROOT));
         }
     }
 
@@ -54,7 +55,7 @@ public class UpdateChecker {
     }
 
     private boolean isAllowed(String version) {
-        String lower = version.toLowerCase();
+        String lower = version.toLowerCase(Locale.ROOT);
         for (String modifier : ignoredModifiers) {
             if (lower.contains(modifier)) {
                 return false;

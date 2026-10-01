@@ -570,7 +570,12 @@ public class Codecs {
 
                         Item item;
                         if ("minecraft".equals(itemID.namespace())) {
-                            Material mat = Material.matchMaterial(itemID.value().toUpperCase());
+                            if (itemID.value().equals("air")) {
+                                return DataResult.success(ItemStack.empty());
+                            }
+
+                            Material mat = Material.getMaterial(itemID.value().toUpperCase(Locale.ROOT));
+
                             if (mat == null)
                                 return DataResult.error(DataError.custom("Unknown vanilla material reference: " + itemID.value()));
                             item = new Item(new ItemStack(mat));
@@ -637,7 +642,11 @@ public class Codecs {
                     Item item = Registries.ITEMS.get(key.asString());
                     return item != null ? DataResult.success(item.clone().getStack()) : DataResult.error(DataError.custom("Unknown custom item identity"));
                 } else {
-                    Material mat = Material.matchMaterial(key.value().toUpperCase());
+                    if (key.value().equals("air")) {
+                        return DataResult.success(ItemStack.empty());
+                    }
+
+                    Material mat = Material.getMaterial(key.value().toUpperCase(Locale.ROOT));
                     return mat != null ? DataResult.success(new ItemStack(mat)) : DataResult.error(DataError.custom("Unknown core material execution"));
                 }
             },

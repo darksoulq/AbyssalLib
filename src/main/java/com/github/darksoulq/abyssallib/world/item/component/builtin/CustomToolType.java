@@ -19,6 +19,7 @@ import org.bukkit.block.BlockType;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class CustomToolType extends DataComponent<CustomToolType.ToolData> {
 
@@ -31,7 +32,7 @@ public class CustomToolType extends DataComponent<CustomToolType.ToolData> {
         List<Either<BlockType, Either<CustomBlock, BlockTag>>> unsuitableBlocks
     ) {
         public boolean isSuitable(Block bukkitBlock, CustomBlock customBlock) {
-            String blockId = customBlock != null ? customBlock.getId().asString() : "minecraft:" + bukkitBlock.getType().name().toLowerCase();
+            String blockId = customBlock != null ? customBlock.getId().asString() : "minecraft:" + bukkitBlock.getType().name().toLowerCase(Locale.ROOT);
             BlockType vanillaType = customBlock == null ? Registry.BLOCK.get(bukkitBlock.getType().getKey()) : null;
 
             if (unsuitableBlocks != null && !unsuitableBlocks.isEmpty()) {

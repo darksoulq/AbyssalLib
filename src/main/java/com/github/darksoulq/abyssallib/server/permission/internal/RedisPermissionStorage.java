@@ -11,10 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class RedisPermissionStorage implements PermissionStorage {
     private final Database db;
@@ -88,7 +85,7 @@ public class RedisPermissionStorage implements PermissionStorage {
 
     @Override
     public UUID getUuidFromName(String name) {
-        String uuidStr = db.executor().hget("permission_name_to_uuid", name.toLowerCase());
+        String uuidStr = db.executor().hget("permission_name_to_uuid", name.toLowerCase(Locale.ROOT));
         if (uuidStr != null) {
             return UUID.fromString(uuidStr);
         }
@@ -164,7 +161,7 @@ public class RedisPermissionStorage implements PermissionStorage {
         PipelineExecutor pipeline = db.executor().pipeline();
         pipeline.set("permission_user:" + user.getUuid().toString(), gson.toJson(obj));
         if (user.getName() != null) {
-            pipeline.hset("permission_name_to_uuid", user.getName().toLowerCase(), user.getUuid().toString());
+            pipeline.hset("permission_name_to_uuid", user.getName().toLowerCase(Locale.ROOT), user.getUuid().toString());
         }
         pipeline.execute();
     }

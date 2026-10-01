@@ -104,8 +104,7 @@ public final class DeferredRegistry<T> {
 
     /**
      * Finalizes the registration process by moving all deferred entries into the master registry.
-     * This method  runs all mapped
-     * {@link DeferredRegistryModifier} rules.
+     * This method runs all mapped {@link DeferredRegistryModifier} rules.
      */
     public void apply() {
         RegistryApplyEvent<T> event = new RegistryApplyEvent<>(registry, this);
@@ -135,7 +134,10 @@ public final class DeferredRegistry<T> {
         for (DeferredRegistryModifier modifier : activeModifiers) {
             modifier.postApply();
         }
+    }
 
+    public void unload() {
+        registry.removeAll(pluginId);
         entries.clear();
     }
 

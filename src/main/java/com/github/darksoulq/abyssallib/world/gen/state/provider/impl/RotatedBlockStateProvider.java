@@ -12,6 +12,7 @@ import org.bukkit.Axis;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 
+import java.util.Locale;
 import java.util.Random;
 
 /**
@@ -95,10 +96,10 @@ public class RotatedBlockStateProvider extends BlockStateProvider {
         }
 
         if (axis != null) {
-            statesNode.put("axis", axis.name().toLowerCase());
+            statesNode.put("axis", axis.name().toLowerCase(Locale.ROOT));
         }
         if (facing != null) {
-            statesNode.put("facing", facing.name().toLowerCase());
+            statesNode.put("facing", facing.name().toLowerCase(Locale.ROOT));
         }
         if (rotation != null) {
             statesNode.put("rotation", String.valueOf(rotation));

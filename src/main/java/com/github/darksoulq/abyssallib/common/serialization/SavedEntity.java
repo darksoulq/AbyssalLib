@@ -12,6 +12,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -93,7 +94,7 @@ public class SavedEntity {
             }
             return new SavedEntity(Either.right(custom), ops.createMap(map), ops);
         } else {
-            DataResult<D> idRes = Codecs.STRING.encode(ops, "minecraft:" + entity.getType().name().toLowerCase());
+            DataResult<D> idRes = Codecs.STRING.encode(ops, "minecraft:" + entity.getType().name().toLowerCase(Locale.ROOT));
             if (idRes.isError()) {
                 AbyssalLib.LOGGER.severe("Failed to serialize vanilla entity ID: " + idRes.error().get());
             } else {

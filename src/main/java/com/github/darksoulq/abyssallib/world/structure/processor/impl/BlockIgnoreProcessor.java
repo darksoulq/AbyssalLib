@@ -14,6 +14,7 @@ import org.bukkit.block.data.BlockData;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A structure processor that prevents specific blocks from being placed.
@@ -96,7 +97,7 @@ public class BlockIgnoreProcessor extends StructureProcessor {
         if (current.block() instanceof CustomBlock cb) {
             id = cb.getId().toString();
         } else if (current.block() instanceof BlockData bd) {
-            id = "minecraft:" + bd.getMaterial().name().toLowerCase();
+            id = "minecraft:" + bd.getMaterial().name().toLowerCase(Locale.ROOT);
         } else {
             return false;
         }

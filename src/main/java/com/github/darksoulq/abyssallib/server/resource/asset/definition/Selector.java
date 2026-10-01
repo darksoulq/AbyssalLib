@@ -505,7 +505,7 @@ public interface Selector {
                 @Override
                 public Map<String, Object> toJson() {
                     Map<String, Object> json = new LinkedHashMap<>();
-                    json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase() : when.stream().map(w -> w.name().toLowerCase()));
+                    json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase(Locale.ROOT) : when.stream().map(w -> w.name().toLowerCase(Locale.ROOT)));
                     json.put("model", model.toJson());
                     return json;
                 }
@@ -664,7 +664,7 @@ public interface Selector {
                 @Override
                 public Map<String, Object> toJson() {
                     Map<String, Object> json = new LinkedHashMap<>();
-                    json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase() : when.stream().map(w -> w.name().toLowerCase()));
+                    json.put("when", when.size() == 1 ? when.getFirst().name().toLowerCase(Locale.ROOT) : when.stream().map(w -> w.name().toLowerCase(Locale.ROOT)));
                     json.put("model", model.toJson());
                     return json;
                 }
@@ -1191,7 +1191,7 @@ public interface Selector {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
                 json.put("texture", texture.file());
-                json.put("part", part.name().toLowerCase());
+                json.put("part", part.name().toLowerCase(Locale.ROOT));
                 return json;
             }
 
@@ -1236,9 +1236,9 @@ public interface Selector {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
-                json.put("wood_type", type.name().toLowerCase());
+                json.put("wood_type", type.name().toLowerCase(Locale.ROOT));
                 json.put("texture", texture.file());
-                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase(Locale.ROOT));
                 return json;
             }
 
@@ -1283,9 +1283,9 @@ public interface Selector {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
-                json.put("wood_type", type.name().toLowerCase());
+                json.put("wood_type", type.name().toLowerCase(Locale.ROOT));
                 json.put("texture", texture.file());
-                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase(Locale.ROOT));
                 return json;
             }
 
@@ -1309,8 +1309,8 @@ public interface Selector {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
-                json.put("color", color.name().toLowerCase());
-                if (attachment != null) json.put("attachment", attachment.name().toLowerCase());
+                json.put("color", color.name().toLowerCase(Locale.ROOT));
+                if (attachment != null) json.put("attachment", attachment.name().toLowerCase(Locale.ROOT));
                 return json;
             }
 
@@ -1376,7 +1376,7 @@ public interface Selector {
                 json.put("type", id());
                 json.put("texture", texture.file());
                 json.put("openness", openness);
-                if (chestType != null) json.put("chest_type", chestType.name().toLowerCase());
+                if (chestType != null) json.put("chest_type", chestType.name().toLowerCase(Locale.ROOT));
                 return json;
             }
 
@@ -1407,7 +1407,7 @@ public interface Selector {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
-                json.put("effect", effect.name().toLowerCase());
+                json.put("effect", effect.name().toLowerCase(Locale.ROOT));
                 return json;
             }
 
@@ -1437,7 +1437,7 @@ public interface Selector {
             public Map<String, Object> toJson() {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", id());
-                json.put("kind", kind.name().toLowerCase());
+                json.put("kind", kind.name().toLowerCase(Locale.ROOT));
                 if (texture != null) {
                     json.put("texture", texture.file());
                 }

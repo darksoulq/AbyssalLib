@@ -13,10 +13,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.ZipFile;
 
 public class PackServer {
@@ -99,7 +96,7 @@ public class PackServer {
             if (!Files.exists(path) || !Files.isRegularFile(path)) {
                 continue;
             }
-            if (!value.toLowerCase().endsWith(".zip")) {
+            if (!value.toLowerCase(Locale.ROOT).endsWith(".zip")) {
                 continue;
             }
             try (ZipFile ignored = new ZipFile(path.toFile())) {

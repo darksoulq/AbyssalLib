@@ -80,7 +80,7 @@ public class Item implements Cloneable {
      */
     @ApiStatus.Internal
     public Item(ItemStack stack) {
-        this.id = NamespacedKey.minecraft(stack.getType().name().toLowerCase());
+        this.id = NamespacedKey.minecraft(stack.getType().name().toLowerCase(Locale.ROOT));
         this.stack = stack;
         componentMap = new ComponentMap(this);
     }

@@ -8,10 +8,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Model implements Asset {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -113,7 +110,7 @@ public class Model implements Asset {
             obj.add("texture_size", toArray(textureSize));
         }
 
-        obj.addProperty("gui_light", guiLight.name().toLowerCase());
+        obj.addProperty("gui_light", guiLight.name().toLowerCase(Locale.ROOT));
 
         if (!ambientOcclusion) {
             obj.addProperty("ambientocclusion", false);

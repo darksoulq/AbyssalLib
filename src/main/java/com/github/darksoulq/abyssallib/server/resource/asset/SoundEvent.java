@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -110,7 +111,7 @@ public class SoundEvent {
      * @return This {@link SoundEvent} instance for chaining.
      */
     public @NotNull SoundEvent category(@NotNull SoundCategory category) {
-        this.category = category.name().toLowerCase();
+        this.category = category.name().toLowerCase(Locale.ROOT);
         return this;
     }
 
@@ -153,7 +154,7 @@ public class SoundEvent {
      * @param pitch  The pitch scalar.
      */
     public void play(@NotNull Player player, float volume, float pitch) {
-        player.playSound(player.getLocation(), id(), SoundCategory.valueOf(category.toUpperCase()), volume, pitch);
+        player.playSound(player.getLocation(), id(), SoundCategory.valueOf(category.toUpperCase(Locale.ROOT)), volume, pitch);
     }
 
     /**
@@ -174,7 +175,7 @@ public class SoundEvent {
      */
     public void play(@NotNull Location location, float volume, float pitch) {
         if (location.getWorld() != null) {
-            location.getWorld().playSound(location, id(), SoundCategory.valueOf(category.toUpperCase()), volume, pitch);
+            location.getWorld().playSound(location, id(), SoundCategory.valueOf(category.toUpperCase(Locale.ROOT)), volume, pitch);
         }
     }
 

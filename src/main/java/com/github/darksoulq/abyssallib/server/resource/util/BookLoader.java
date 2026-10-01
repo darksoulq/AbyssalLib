@@ -28,8 +28,8 @@ import java.nio.charset.StandardCharsets;
  * }
  * }</pre>
  */
+@Deprecated(forRemoval = true)
 public class BookLoader {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     /**

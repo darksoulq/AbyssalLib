@@ -17,6 +17,7 @@ import org.bukkit.block.structure.StructureRotation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -66,7 +67,7 @@ public class WorldGenUtils {
             ? level.getType(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())
             : loc.getBlock().getType();
 
-        String vanillaId = "minecraft:" + mat.name().toLowerCase();
+        String vanillaId = "minecraft:" + mat.name().toLowerCase(Locale.ROOT);
 
         CustomBlock cb = CustomBlock.resolve(loc);
         String currentId = cb != null ? cb.getId().toString() : vanillaId;

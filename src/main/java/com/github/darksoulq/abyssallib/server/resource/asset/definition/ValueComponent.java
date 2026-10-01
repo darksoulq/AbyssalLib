@@ -115,8 +115,8 @@ public interface ValueComponent {
                         json.put("amount", amount);
                     } else json.put("amount", min);
                 }
-                if (operation != null) json.put("operation", operation.toString().toLowerCase());
-                if (slot != null) json.put("slot", slot.toString().toLowerCase());
+                if (operation != null) json.put("operation", operation.toString().toLowerCase(Locale.ROOT));
+                if (slot != null) json.put("slot", slot.toString().toLowerCase(Locale.ROOT));
                 return json;
             }
 
