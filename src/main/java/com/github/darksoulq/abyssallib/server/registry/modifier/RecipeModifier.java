@@ -2,7 +2,8 @@ package com.github.darksoulq.abyssallib.server.registry.modifier;
 
 import com.github.darksoulq.abyssallib.world.recipe.BukkitRecipeProvider;
 import com.github.darksoulq.abyssallib.world.recipe.CustomRecipe;
-import com.github.darksoulq.abyssallib.world.recipe.PotionMixProvider;
+//? <=26.2
+//import com.github.darksoulq.abyssallib.world.recipe.PotionMixProvider;
 import com.github.darksoulq.abyssallib.world.recipe.RecipeLoader;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
