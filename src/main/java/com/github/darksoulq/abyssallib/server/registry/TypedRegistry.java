@@ -1,10 +1,6 @@
 package com.github.darksoulq.abyssallib.server.registry;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public class TypedRegistry<T, Y> extends Registry<T> {
@@ -18,12 +14,25 @@ public class TypedRegistry<T, Y> extends Registry<T> {
 
     @Override
     public void register(String id, T object) {
-        if (contains(id)) {
-            super.register(id, object);
-            return;
-        }
         super.register(id, object);
         byType.computeIfAbsent(typeExtractor.apply(object), k -> new ArrayList<>()).add(object);
+    }
+
+    @Override
+    public Set<T> removeAll(String namespace) {
+        Set<T> removed = super.removeAll(namespace);
+        for (T obj : removed) {
+            Y type = typeExtractor.apply(obj);
+            List<T> list = byType.get(type);
+            if (list != null) {
+                list.remove(obj);
+                if (list.isEmpty()) {
+                    byType.remove(type);
+                }
+            }
+        }
+
+        return removed;
     }
 
     @Override

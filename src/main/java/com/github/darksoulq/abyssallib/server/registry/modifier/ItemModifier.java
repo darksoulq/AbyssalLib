@@ -15,4 +15,11 @@ public class ItemModifier implements DeferredRegistryModifier {
                 .build());
         }
     }
+
+    @Override
+    public void onUnload(String id, Object value) {
+        if (value instanceof Item) {
+            Registries.ITEM_PREDICATES.remove(id);
+        }
+    }
 }

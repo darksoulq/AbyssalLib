@@ -24,4 +24,14 @@ public class BlockModifier implements DeferredRegistryModifier {
             Registries.ITEMS.register(id, blockItem);
         }
     }
+
+    @Override
+    public void onUnload(String id, Object value) {
+        if (value instanceof CustomBlock block && block.generateItem()) {
+            Registries.BLOCK_PREDICATES.remove(id);
+
+            Registries.ITEM_PREDICATES.remove(id);
+            Registries.ITEMS.remove(id);
+        }
+    }
 }

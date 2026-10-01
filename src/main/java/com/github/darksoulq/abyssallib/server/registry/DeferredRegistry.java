@@ -137,8 +137,25 @@ public final class DeferredRegistry<T> {
     }
 
     public void unload() {
-        registry.removeAll(pluginId);
+        List<DeferredRegistryModifier> activeModifiers = new ArrayList<>();
+        for (Supplier<DeferredRegistryModifier> supplier : MODIFIERS) {
+            activeModifiers.add(supplier.get());
+        }
+
+        for (Map.Entry<String, Holder<T>> entry : entries.entrySet()) {
+            T value = entry.getValue().get();
+            String idString = pluginId + ":" + entry.getKey();
+
+            for (DeferredRegistryModifier modifier : activeModifiers) {
+                modifier.onUnload(idString, value);
+            }
+            registry.remove(idString);
+        }
         entries.clear();
+
+        for (DeferredRegistryModifier modifier : activeModifiers) {
+            modifier.postUnload();
+        }
     }
 
     /**

@@ -15,4 +15,11 @@ public class EntityModifier implements DeferredRegistryModifier {
                 .build());
         }
     }
+
+    @Override
+    public void onUnload(String id, Object value) {
+        if (value instanceof CustomEntity<?>) {
+            Registries.ENTITY_PREDICATES.remove(id);
+        }
+    }
 }
