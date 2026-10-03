@@ -66,7 +66,7 @@ public class CustomBlock implements Cloneable, Locatable {
     /**
      * The task handling ticking execution sequentially.
      */
-    private ScheduledTask tickTask;
+    protected ScheduledTask tickTask;
 
     /**
      * The physical and interaction properties of this block.
@@ -369,12 +369,21 @@ public class CustomBlock implements Cloneable, Locatable {
     }
 
     /**
-     * Intelligently starts regional tick evaluations.
+     * Validates whether the block is still correct state or not
+     * @param block the block to check
+     * @return whether its valid
+     */
+    public boolean isValidState(Block block) {
+        return block.getType() == material;
+    }
+
+    /**
+     * starts regional ticking.
      */
     protected void startTicking() {
         if (tickTask == null && location != null) {
             tickTask = AbyssalLib.SCHEDULER.schedule(() -> {
-                if (location.getBlock().getType() != material) {
+                if (isValidState(location.getBlock())) {
                     stopTicking();
                     BlockManager.remove(location);
                     return;
