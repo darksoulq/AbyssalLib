@@ -16,7 +16,10 @@ import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,10 +49,16 @@ public class ReloadCommand extends BaseCommand {
 
         addSyntax(ctx -> {
             refreshInternalPacks();
-            List<ResourcePackInfo> rps = new ArrayList<>();
-            loadRPInfos(rps, true);
-            if (!rps.isEmpty()) {
-                Bukkit.getServer().sendResourcePacks(ResourcePackRequest.resourcePackRequest().packs(rps).build());
+            if (AbyssalLib.PACK_SERVER != null) {
+                AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
+            }
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                String hostOverride = getHostOverride(player.getAddress(), player.getVirtualHost());
+                List<ResourcePackInfo> rps = new ArrayList<>();
+                loadRPInfos(rps, false, hostOverride);
+                if (!rps.isEmpty()) {
+                    player.sendResourcePacks(ResourcePackRequest.resourcePackRequest().packs(rps).build());
+                }
             }
             CommandUtil.reply(ctx, "Reload complete");
             return CommandResult.success();
@@ -62,12 +71,22 @@ public class ReloadCommand extends BaseCommand {
         }, translations);
     }
 
-    public static void loadRPInfos(List<ResourcePackInfo> rps, boolean reload) {
+    public static String getHostOverride(InetSocketAddress remoteAddress, InetSocketAddress virtualHost) {
+        if (remoteAddress == null || remoteAddress.getAddress() == null) return null;
+        InetAddress address = remoteAddress.getAddress();
+        if (address.isLoopbackAddress() || address.isSiteLocalAddress()) {
+            if (virtualHost != null) return virtualHost.getHostString();
+            return address.isLoopbackAddress() ? "127.0.0.1" : null;
+        }
+        return null;
+    }
+
+    public static void loadRPInfos(List<ResourcePackInfo> rps, boolean reload, String hostOverride) {
         if (reload) AbyssalLib.PACK_SERVER.loadThirdPartyPacks();
         for (String pluginId : AbyssalLib.PACK_SERVER.registeredPluginIDs()) {
             rps.add(ResourcePackInfo.resourcePackInfo()
                 .id(UUID_MAP.get(pluginId))
-                .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(pluginId)))
+                .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(pluginId, hostOverride)))
                 .hash(HASH_MAP.get(pluginId))
                 .build()
             );
@@ -75,7 +94,7 @@ public class ReloadCommand extends BaseCommand {
         for (String path : ResourcePack.EXTERNAL_CACHE) {
             rps.add(ResourcePackInfo.resourcePackInfo()
                 .id(UUID_MAP.get(path))
-                .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(path)))
+                .uri(URI.create(AbyssalLib.PACK_SERVER.getUrl(path, hostOverride)))
                 .hash(HASH_MAP.get(path))
                 .build());
         }

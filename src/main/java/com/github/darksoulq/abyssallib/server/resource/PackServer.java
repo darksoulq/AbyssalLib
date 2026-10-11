@@ -134,7 +134,12 @@ public class PackServer {
     }
 
     public String getUrl(String pluginId) {
-        return protocol + "://" + host + ":" + port + "/" + pluginId + "/resourcepack.zip";
+        return getUrl(pluginId, null);
+    }
+
+    public String getUrl(String pluginId, String hostOverride) {
+        String targetHost = hostOverride != null ? hostOverride : this.host;
+        return protocol + "://" + targetHost + ":" + port + "/" + pluginId + "/resourcepack.zip";
     }
 
     public Path getPath(String pluginId) {

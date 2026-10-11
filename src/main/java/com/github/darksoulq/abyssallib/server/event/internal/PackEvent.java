@@ -7,6 +7,7 @@ import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
 import io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.ArrayList;
@@ -17,8 +18,9 @@ public class PackEvent {
     @SubscribeEvent
     public void onPLayerJoin(PlayerJoinEvent e) {
         if (!AbyssalLib.CONFIG.rp.sendPhase.get().equals(PluginConfig.SendPhase.JOIN)) return;
+        String hostOverride = ReloadCommand.getHostOverride(e.getPlayer().getAddress(), e.getPlayer().getVirtualHost());
         List<ResourcePackInfo> rps = new ArrayList<>();
-        ReloadCommand.loadRPInfos(rps, false);
+        ReloadCommand.loadRPInfos(rps, false, hostOverride);
         if (!rps.isEmpty()) {
             e.getPlayer().sendResourcePacks(ResourcePackRequest.resourcePackRequest()
                 .packs(rps)
@@ -31,8 +33,10 @@ public class PackEvent {
     @SubscribeEvent
     public void onPlayerConfig(AsyncPlayerConnectionConfigureEvent e) {
         if (!AbyssalLib.CONFIG.rp.sendPhase.get().equals(PluginConfig.SendPhase.CONFIGURATION)) return;
+
+        String hostOverride = null;
         List<ResourcePackInfo> rps = new ArrayList<>();
-        ReloadCommand.loadRPInfos(rps, false);
+        ReloadCommand.loadRPInfos(rps, false, hostOverride);
 
         if (!rps.isEmpty()) {
             final Object lock = new Object();

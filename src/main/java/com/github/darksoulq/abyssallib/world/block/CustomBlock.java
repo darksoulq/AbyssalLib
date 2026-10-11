@@ -383,7 +383,7 @@ public class CustomBlock implements Cloneable, Locatable {
     protected void startTicking() {
         if (tickTask == null && location != null) {
             tickTask = AbyssalLib.SCHEDULER.schedule(() -> {
-                if (isValidState(location.getBlock())) {
+                if (!isValidState(location.getBlock())) {
                     stopTicking();
                     BlockManager.remove(location);
                     return;
