@@ -19,6 +19,7 @@ import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.World;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -158,6 +159,124 @@ public class BlockManager {
                 .where("world = ? AND x = ? AND y = ? AND z = ?",
                     loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())
                 .execute();
+        }).async().once();
+    }
+
+    public static void unloadById(String blockId) {
+        List<BlockPos> toRemove = new ArrayList<>();
+        for (CustomBlock block : BLOCKS.values()) {
+            if (block.getId().asString().equals(blockId)) {
+                toRemove.add(new BlockPos(block.getLocation()));
+            }
+        }
+
+        for (BlockPos pos : toRemove) {
+            CustomBlock block = BLOCKS.remove(pos);
+            if (block != null) block.onUnLoad();
+        }
+    }
+
+    public static void unloadByNamespace(String namespace) {
+        List<BlockPos> toRemove = new ArrayList<>();
+        for (CustomBlock block : BLOCKS.values()) {
+            if (block.getId().namespace().equals(namespace)) {
+                toRemove.add(new BlockPos(block.getLocation()));
+            }
+        }
+
+        for (BlockPos pos : toRemove) {
+            CustomBlock block = BLOCKS.remove(pos);
+            if (block != null) block.onUnLoad();
+        }
+    }
+
+    public static void removeById(String blockId) {
+        List<BlockPos> toRemove = new ArrayList<>();
+        for (CustomBlock block : BLOCKS.values()) {
+            if (block.getId().asString().equals(blockId)) {
+                toRemove.add(new BlockPos(block.getLocation()));
+            }
+        }
+
+        for (BlockPos pos : toRemove) {
+            CustomBlock block = BLOCKS.remove(pos);
+            if (block != null) block.onUnLoad();
+        }
+
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            DATABASE.executor().table("blocks").delete()
+                .where("block_id = ?", blockId)
+                .execute();
+        }).async().once();
+    }
+
+    public static void removeByNamespace(String namespace) {
+        List<BlockPos> toRemove = new ArrayList<>();
+        for (CustomBlock block : BLOCKS.values()) {
+            if (block.getId().namespace().equals(namespace)) {
+                toRemove.add(new BlockPos(block.getLocation()));
+            }
+        }
+
+        for (BlockPos pos : toRemove) {
+            CustomBlock block = BLOCKS.remove(pos);
+            if (block != null) block.onUnLoad();
+        }
+
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            DATABASE.executor().table("blocks").delete()
+                .where("block_id LIKE ?", namespace + ":%")
+                .execute();
+        }).async().once();
+    }
+
+    public static void reindexChunks() {
+        AbyssalLib.SCHEDULER.schedule(() -> {
+            List<BlockRow> rows = DATABASE.executor().table("blocks").select(rs ->
+                new BlockRow(rs.getString("world"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("block_id"), rs.getString("data")));
+
+            AbyssalLib.SCHEDULER.schedule(() -> {
+                int loadedCount = 0;
+                for (BlockRow row : rows) {
+                    World world = Bukkit.getWorld(row.world);
+                    if (world == null) continue;
+
+                    int cx = row.x >> 4;
+                    int cz = row.z >> 4;
+
+                    if (world.isChunkLoaded(cx, cz)) {
+                        Location loc = new Location(world, row.x, row.y, row.z);
+                        BlockPos pos = new BlockPos(loc);
+
+                        if (BLOCKS.get(pos) == null) {
+                            if (!Registries.BLOCKS.contains(row.blockId)) continue;
+
+                            CustomBlock block = Registries.BLOCKS.get(row.blockId).clone();
+                            block.setLocation(loc);
+
+                            BlockEntity entity = block.createBlockEntity(loc);
+                            if (entity != null) {
+                                Try.run(() -> {
+                                    DataResult<Void> res = entity.deserialize(JsonOps.INSTANCE, new JsonMapper().readTree(row.dataJson));
+                                    if (res.isError()) {
+                                        AbyssalLib.LOGGER.warning("Failed to deserialize block entity at " + loc + ": " + res.error().get());
+                                    } else if (res.isPartial()) {
+                                        res.warnings().forEach(w -> AbyssalLib.LOGGER.warning("Warning deserializing block entity at " + loc + ": " + w.message()));
+                                    }
+                                    entity.onLoad();
+                                    block.setEntity(entity);
+                                }).onFailure(Throwable::printStackTrace);
+                            }
+                            block.onLoad();
+                            BLOCKS.put(pos, block);
+                            loadedCount++;
+                        }
+                    }
+                }
+                if (loadedCount > 0) {
+                    AbyssalLib.LOGGER.info("Reindexed and loaded " + loadedCount + " blocks in active chunks.");
+                }
+            }).global().once();
         }).async().once();
     }
 

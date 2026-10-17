@@ -3,6 +3,7 @@ package com.github.darksoulq.abyssallib.server.registry.modifier;
 import com.github.darksoulq.abyssallib.server.registry.Registries;
 import com.github.darksoulq.abyssallib.world.block.BlockPredicate;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
+import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import com.github.darksoulq.abyssallib.world.item.ItemPredicate;
 import net.kyori.adventure.key.Key;
@@ -28,6 +29,8 @@ public class BlockModifier implements DeferredRegistryModifier {
     @Override
     public void onUnload(String id, Object value) {
         if (value instanceof CustomBlock block && block.generateItem()) {
+            BlockManager.unloadById(id);
+
             Registries.BLOCK_PREDICATES.remove(id);
 
             Registries.ITEM_PREDICATES.remove(id);

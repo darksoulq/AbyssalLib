@@ -1,5 +1,6 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
+import com.destroystokyo.paper.event.block.BlockDestroyEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
 import com.github.darksoulq.abyssallib.server.event.ActionResult;
@@ -29,11 +30,15 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -42,12 +47,12 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class BlockEvents {
+    private static final Map<UUID, CustomBlock> FALLING_BLOCKS = new HashMap<>();
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onServerTick(ServerTickEndEvent event) {
@@ -194,6 +199,38 @@ public class BlockEvents {
         }
     }
 
+    @SubscribeEvent(ignoreCancelled = false, priority = EventPriority.HIGH)
+    public void onBlockDestroy(BlockDestroyEvent event) {
+        CustomBlock block = CustomBlock.resolve(event.getBlock());
+        if (block == null) return;
+
+        if (!block.properties.allowPhysics) {
+            event.setCancelled(true);
+            return;
+        }
+
+        BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, block, 0));
+
+        if (breakEvent.isCancelled()) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (event.willDrop()) {
+            event.setWillDrop(false);
+            dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR), breakEvent, false, 0);
+        }
+
+        BlockManager.remove(block.getLocation());
+    }
+
+    @SubscribeEvent
+    public void onEntityRemoveFromWorld(com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent event) {
+        if (event.getEntityType() == EntityType.FALLING_BLOCK) {
+            FALLING_BLOCKS.remove(event.getEntity().getUniqueId());
+        }
+    }
+
     @SubscribeEvent(ignoreCancelled = false)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -295,13 +332,17 @@ public class BlockEvents {
                         return;
                     }
                     case DESTROY -> {
+                        if (event instanceof Cancellable c) c.setCancelled(true);
+
                         BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, cb, 0));
-                        dropBlockLoot(cb.getLocation(), cb, new ItemStack(Material.AIR), breakEvent, false, 0);
-                        BlockManager.remove(cb.getLocation());
-                        b.setType(Material.AIR);
+                        if (!breakEvent.isCancelled()) {
+                            dropBlockLoot(cb.getLocation(), cb, new ItemStack(Material.AIR), breakEvent, false, 0);
+                            BlockManager.remove(cb.getLocation());
+                            b.setType(Material.AIR);
+                        }
+                        return;
                     }
                     case MOVE -> {
-                        if (event instanceof Cancellable c) c.setCancelled(false);
                     }
                 }
             }
@@ -378,53 +419,104 @@ public class BlockEvents {
     @SubscribeEvent(ignoreCancelled = false)
     public void onEntityChangeBlock(EntityChangeBlockEvent event) {
         CustomBlock block = CustomBlock.resolve(event.getBlock());
+
         if (block != null) {
-            event.setCancelled(true);
-        }
-    }
+            if (event.getEntityType() == EntityType.FALLING_BLOCK && block.properties.allowPhysics) {
+                FallingBlock fb = (FallingBlock) event.getEntity();
 
-    @SubscribeEvent(ignoreCancelled = false)
-    public void onBlockExplode(BlockExplodeEvent event) {
-        Iterator<Block> it = event.blockList().iterator();
-        while (it.hasNext()) {
-            Block bukkitBlock = it.next();
-            CustomBlock block = CustomBlock.resolve(bukkitBlock);
-            if (block == null) continue;
+                fb.getPersistentDataContainer().set(
+                    new NamespacedKey(AbyssalLib.getInstance(), "custom_block_id"),
+                    PersistentDataType.STRING,
+                    block.getId().asString()
+                );
 
-            ActionResult result = block.onDestroyedByExplosion(null, event.getBlock());
-            if (result == ActionResult.CANCEL) {
-                it.remove();
+                FALLING_BLOCKS.put(fb.getUniqueId(), block);
+                BlockManager.remove(event.getBlock().getLocation());
             } else {
-                BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, block, 0));
-                if (breakEvent.isCancelled()) {
-                    it.remove();
-                    return;
+                event.setCancelled(true);
+            }
+        } else if (event.getEntityType() == EntityType.FALLING_BLOCK) {
+            FallingBlock fb = (FallingBlock) event.getEntity();
+
+            if (FALLING_BLOCKS.containsKey(fb.getUniqueId())) {
+                CustomBlock instance = FALLING_BLOCKS.remove(fb.getUniqueId());
+
+                AbyssalLib.SCHEDULER.schedule(() -> {
+                    instance.setLocation(event.getBlock().getLocation());
+                    BlockManager.register(instance);
+                }).region(event.getBlock().getLocation()).after(1, Clock.TICKS).once();
+
+            } else {
+                NamespacedKey key = new NamespacedKey(AbyssalLib.getInstance(), "custom_block_id");
+                if (fb.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+                    String blockId = fb.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+
+                    AbyssalLib.SCHEDULER.schedule(() -> {
+                        CustomBlock cb = Registries.BLOCKS.get(blockId);
+                        if (cb != null) {
+                            CustomBlock instance = cb.clone();
+                            instance.setLocation(event.getBlock().getLocation());
+                            BlockManager.register(instance);
+                        }
+                    }).region(event.getBlock().getLocation()).after(1, Clock.TICKS).once();
                 }
-                dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR), breakEvent, false, 0);
-                BlockManager.remove(block);
             }
         }
     }
 
     @SubscribeEvent(ignoreCancelled = false)
+    public void onEntityDropItem(EntityDropItemEvent event) {
+        if (event.getEntityType() == EntityType.FALLING_BLOCK) {
+            FallingBlock fb = (FallingBlock) event.getEntity();
+            CustomBlock instance = FALLING_BLOCKS.remove(fb.getUniqueId());
+
+            if (instance == null) {
+                NamespacedKey key = new NamespacedKey(AbyssalLib.getInstance(), "custom_block_id");
+                if (fb.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+                    String blockId = fb.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+                    instance = Registries.BLOCKS.get(blockId);
+                }
+            }
+
+            if (instance != null) {
+                event.setCancelled(true);
+
+                BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, instance, 0));
+                if (!breakEvent.isCancelled()) {
+                    dropBlockLoot(fb.getLocation(), instance, new ItemStack(Material.AIR), breakEvent, false, 0);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        handleExplosion(event.blockList(), event.getBlock(), null);
+    }
+
+    @SubscribeEvent(ignoreCancelled = false)
     public void onEntityExplode(EntityExplodeEvent event) {
-        Iterator<Block> it = event.blockList().iterator();
+        handleExplosion(event.blockList(), null, event.getEntity());
+    }
+
+    private void handleExplosion(List<Block> blockList, Block sourceBlock, Entity sourceEntity) {
+        Iterator<Block> it = blockList.iterator();
         while (it.hasNext()) {
             Block bukkitBlock = it.next();
             CustomBlock block = CustomBlock.resolve(bukkitBlock);
             if (block == null) continue;
 
-            ActionResult result = block.onDestroyedByExplosion(event.getEntity(), null);
-            if (result == ActionResult.CANCEL) {
-                it.remove();
-            } else {
+            ActionResult result = block.onDestroyedByExplosion(sourceEntity, sourceBlock);
+
+            it.remove();
+
+            if (result != ActionResult.CANCEL) {
                 BlockBrokenEvent breakEvent = EventBus.post(new BlockBrokenEvent(null, block, 0));
-                if (breakEvent.isCancelled()) {
-                    it.remove();
-                    return;
+                if (!breakEvent.isCancelled()) {
+                    dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR), breakEvent, false, 0);
+                    BlockManager.remove(block);
+                    bukkitBlock.setType(Material.AIR);
                 }
-                dropBlockLoot(block.getLocation(), block, new ItemStack(Material.AIR), breakEvent, false, 0);
-                BlockManager.remove(block);
             }
         }
     }
