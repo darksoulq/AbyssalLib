@@ -108,7 +108,8 @@ public class ItemPredicate implements Predicate<ItemStack> {
         Condition.codec(Codecs.KEY).list().optionalFieldOf("with", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.with),
         Condition.codec(COMPONENT_ENTRY_CODEC).list().optionalFieldOf("components", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.valued),
         Condition.codec(Codec.<ItemPredicate>recursive(ignored -> ItemPredicate.CODEC)).list().optionalFieldOf("predicates", Collections.emptyList()).forGetter(ItemPredicate.class, p -> p.predicates),
-        Codecs.KEY.nullable().optionalFieldOf("id", null).forGetter(ItemPredicate.class, p -> p.id)
+        Codecs.KEY.nullable().optionalFieldOf("id", null).forGetter(ItemPredicate.class, p -> p.id),
+        Codecs.BOOLEAN.fieldOf("vanilla_matching").forGetter(ItemPredicate.class, p -> p.vanillaMatching)
     ).apply(instance, ItemPredicate::new)).describe("InlineItemPredicate");
 
     /**
@@ -163,6 +164,11 @@ public class ItemPredicate implements Predicate<ItemStack> {
     private final Key id;
 
     /**
+     * Whether to bypass predicate matching and use .isSimilar instead (use with either material or id)
+     */
+    private final boolean vanillaMatching;
+
+    /**
      * Constructs a new ItemPredicate with the specified conditional rules.
      *
      * @param without    The list of exclusionary component conditions.
@@ -170,13 +176,15 @@ public class ItemPredicate implements Predicate<ItemStack> {
      * @param valued     The list of specific value-matching component conditions.
      * @param predicates The list of nested predicate conditions.
      * @param id         The base item Key that must match (nullable for any item).
+     * @param vanillaMatching Whether to bypass predicate matching and use .isSimilar instead (use with either material or id)
      */
-    public ItemPredicate(List<Condition<Key>> without, List<Condition<Key>> with, List<Condition<DataComponent<?>>> valued, List<Condition<ItemPredicate>> predicates, Key id) {
+    public ItemPredicate(List<Condition<Key>> without, List<Condition<Key>> with, List<Condition<DataComponent<?>>> valued, List<Condition<ItemPredicate>> predicates, Key id, boolean vanillaMatching) {
         this.without = without;
         this.with = with;
         this.valued = valued;
         this.predicates = predicates;
         this.id = id;
+        this.vanillaMatching = vanillaMatching;
     }
 
     /**
@@ -239,6 +247,12 @@ public class ItemPredicate implements Predicate<ItemStack> {
 
         if (id != null && !id.equals(finalItem.getId())) {
             return false;
+        }
+
+        if (id != null && vanillaMatching) {
+            ItemStack vanilla = new ItemStack(stack.getType());
+
+            return stack.isSimilar(vanilla);
         }
 
         for (Condition<Key> condition : without) {
@@ -337,6 +351,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
         private final List<Condition<DataComponent<?>>> valued = new ArrayList<>();
         private final List<Condition<ItemPredicate>> predicates = new ArrayList<>();
         private Key id = null;
+        private boolean vanillaMatching = false;
 
         /**
          * Mandates that the item matches a specific base Key.
@@ -357,6 +372,15 @@ public class ItemPredicate implements Predicate<ItemStack> {
          */
         public Builder material(Material material) {
             this.id = Key.key(Key.MINECRAFT_NAMESPACE, material.name().toLowerCase(Locale.ROOT));
+            return this;
+        }
+
+        /**
+         * Enabled vanilla matching which  use .isSimilar instead (use with either material or id)
+         * @return This builder instance
+         */
+        public Builder vanillaMatching() {
+            vanillaMatching = true;
             return this;
         }
 
@@ -497,7 +521,7 @@ public class ItemPredicate implements Predicate<ItemStack> {
          * @return The configured {@link ItemPredicate} instance.
          */
         public ItemPredicate build() {
-            return new ItemPredicate(without, with, valued, predicates, id);
+            return new ItemPredicate(without, with, valued, predicates, id, vanillaMatching);
         }
     }
 }

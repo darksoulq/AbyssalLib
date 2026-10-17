@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated(forRemoval = true)
 @ApiStatus.Experimental
 public class FakePlayer {
     public static final Map<UUID, FakePlayer> FAKE_PLAYERS = new ConcurrentHashMap<>();
