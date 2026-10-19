@@ -19,7 +19,7 @@ plugins {
 
 group = "io.github.darksoulq"
 val mcVersion = stonecutter.current.project
-version = "2.5.0-mc.${mcVersion}-alpha.5"
+version = "2.5.0-mc.${mcVersion}-alpha.6"
 
 val yamlParser = Yaml()
 

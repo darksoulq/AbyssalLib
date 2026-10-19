@@ -24,4 +24,14 @@ public abstract class BlockEntity extends AbstractPropertyEntity<CustomBlock> {
     public CustomBlock getBlock() {
         return getType();
     }
+
+    /**
+     * Marks the associated block as dirty so its data is saved to the database.
+     */
+    @Override
+    public void markDirty() {
+        if (getBlock() != null) {
+            getBlock().markDirty();
+        }
+    }
 }

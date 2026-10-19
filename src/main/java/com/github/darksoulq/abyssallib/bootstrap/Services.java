@@ -9,6 +9,6 @@ public final class Services {
     public static void init() {
         if (AbyssalLib.CONFIG.features.enableItemTicking.get()) ItemTicker.start();
         if (AbyssalLib.CONFIG.features.tickServerTranslations.get()) ItemPacketModifier.startUpdater();
-        if (AbyssalLib.CONFIG.features.enableEnergyNetwork.get()) EnergyNetwork.init();
+        if (AbyssalLib.CONFIG.features.enableEnergyNetwork.get()) EnergyNetwork.enable();
     }
 }

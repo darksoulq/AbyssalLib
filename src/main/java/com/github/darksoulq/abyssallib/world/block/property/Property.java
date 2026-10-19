@@ -30,6 +30,11 @@ public class Property<T> {
     private final T defaultValue;
 
     /**
+     * A callback triggered whenever the value is modified.
+     */
+    private Runnable onChange;
+
+    /**
      * Constructs a new Property with a codec and an initial value.
      *
      * @param codec        the codec for serialization
@@ -39,6 +44,15 @@ public class Property<T> {
         this.codec = codec;
         this.value = initialValue;
         this.defaultValue = initialValue;
+    }
+
+    /**
+     * Sets the change listener callback for this property.
+     *
+     * @param onChange the runnable to execute on changes
+     */
+    public void onChange(Runnable onChange) {
+        this.onChange = onChange;
     }
 
     /**
@@ -60,12 +74,15 @@ public class Property<T> {
     }
 
     /**
-     * Updates the current value of the property.
+     * Updates the current value of the property and triggers the change listener.
      *
      * @param value the new value to set
      */
     public void set(T value) {
         this.value = value;
+        if (this.onChange != null) {
+            this.onChange.run();
+        }
     }
 
     /**
@@ -94,6 +111,9 @@ public class Property<T> {
         }
 
         this.value = result.getOrThrow();
+        if (this.onChange != null) {
+            this.onChange.run();
+        }
 
         if (result.isPartial()) {
             return DataResult.partial(null, result.warnings());

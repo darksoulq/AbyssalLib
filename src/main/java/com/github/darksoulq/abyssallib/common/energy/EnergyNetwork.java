@@ -68,7 +68,7 @@ public final class EnergyNetwork {
     /**
      * Initializes the network scheduler and database.
      */
-    public static void init() {
+    public static void enable() {
         AbyssalLib.SCHEDULER.schedule(EnergyNetwork::distribute).global().repeatEvery(1L, Clock.TICKS);
         AbyssalLib.SCHEDULER.schedule(EnergyNetwork::save).global().async().after(2400L, Clock.TICKS).repeatEvery(6000L, Clock.TICKS);
 

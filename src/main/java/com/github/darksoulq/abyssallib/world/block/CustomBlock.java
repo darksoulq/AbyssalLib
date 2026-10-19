@@ -74,6 +74,11 @@ public class CustomBlock implements Cloneable, Locatable {
     public BlockProperties properties = BlockProperties.of().build();
 
     /**
+     * Indicates whether the block or its entity data has been modified.
+     */
+    private boolean dirty = true;
+
+    /**
      * Constructs a new CustomBlock with the given identifier.
      *
      * @param id the unique identifier
@@ -145,13 +150,16 @@ public class CustomBlock implements Cloneable, Locatable {
     }
 
     /**
-     * Sets the active block entity for this block instance.
+     * Sets the active block entity for this block instance and binds its properties.
      *
      * @param entity the entity to set
      */
     @ApiStatus.Internal
     public void setEntity(BlockEntity entity) {
         this.entity = entity;
+        if (this.entity != null) {
+            this.entity.bindProperties();
+        }
     }
 
     /**
@@ -183,6 +191,31 @@ public class CustomBlock implements Cloneable, Locatable {
     }
 
     /**
+     * Checks if the block has been modified since the last save.
+     *
+     * @return true if the block is dirty
+     */
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    /**
+     * Sets the dirty state of this block.
+     *
+     * @param dirty the dirty state
+     */
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+    }
+
+    /**
+     * Marks this block as dirty, ensuring it will be saved during the next chunk save cycle.
+     */
+    public void markDirty() {
+        this.dirty = true;
+    }
+
+    /**
      * Places the block at the specified Bukkit block location.
      *
      * @param block   the target block
@@ -203,6 +236,7 @@ public class CustomBlock implements Cloneable, Locatable {
                 setEntity(newEntity);
             }
 
+            markDirty();
             BlockManager.register(this);
             startTicking();
         } else {
@@ -231,6 +265,7 @@ public class CustomBlock implements Cloneable, Locatable {
             setEntity(newEntity);
         }
 
+        markDirty();
         BlockManager.register(this);
     }
 

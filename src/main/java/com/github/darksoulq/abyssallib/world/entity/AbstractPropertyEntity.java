@@ -46,6 +46,30 @@ public abstract class AbstractPropertyEntity<T> {
     }
 
     /**
+     * Marks the entity and its owner as dirty, flagging it for saving.
+     */
+    public abstract void markDirty();
+
+    /**
+     * Binds all discovered Property fields to trigger markDirty() upon modification.
+     */
+    public void bindProperties() {
+        ReflectClass<?> rc = Reflect.of(getClass());
+        while (rc != null && rc.getUnderlyingClass() != AbstractPropertyEntity.class && rc.getUnderlyingClass() != Object.class) {
+            for (Field rawField : rc.getUnderlyingClass().getDeclaredFields()) {
+                ReflectField<Object> field = rc.field(rawField.getName()).getOrNull();
+                if (field == null || field.isStatic()) continue;
+
+                Object obj = field.get(this).getOrNull();
+                if (obj instanceof Property<?> prop) {
+                    prop.onChange(this::markDirty);
+                }
+            }
+            rc = rc.getSuperclass().getOrNull();
+        }
+    }
+
+    /**
      * Called when the entity is loaded into the world.
      */
     public void onLoad() {

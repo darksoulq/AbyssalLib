@@ -7,7 +7,7 @@ import com.github.darksoulq.abyssallib.world.block.internal.BlockManager;
 public final class PluginShutdown {
 
     public static void execute() {
-        BlockManager.save();
+        BlockManager.shutdown();
         EnergyNetwork.save();
 
         if (AbyssalLib.PACK_SERVER != null && AbyssalLib.PACK_SERVER.isEnabled()) {
