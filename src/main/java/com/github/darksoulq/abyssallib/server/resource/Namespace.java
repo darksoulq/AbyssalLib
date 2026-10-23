@@ -7,13 +7,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents a logical namespace inside a resource pack.
+ *
  * <p>
- * All emitted files are placed under {@code assets/<namespace>/}. This class
+ *  All emitted files are placed under {@code assets/<namespace>/}. This class
  * provides factory methods for all supported asset types (textures, models, lang, etc.)
  * and maintains a list of registered assets for the final emission process.
  */
@@ -34,10 +39,11 @@ public class Namespace {
      */
     private final ResourcePack pack;
 
-    /**
-     * The list of all {@link Asset} objects registered under this namespace.
-     */
-    private final List<Asset> assets = new ArrayList<>();
+    private final Map<Class<? extends Asset>, Map<String, Asset>> typedAssets = new HashMap<>();
+
+    private final List<AssetLoaderEntry> loaders = new ArrayList<>();
+
+    private record AssetLoaderEntry(Pattern pattern, BiFunction<String, byte[], Asset> loader) {}
 
     /**
      * An optional {@link Texture} used as a visual icon for this namespace in library menus.
@@ -54,59 +60,139 @@ public class Namespace {
         this.plugin = pack.getPlugin();
         this.namespace = namespace;
         this.pack = pack;
+
+        registerLoader("^sounds\\.json$", (_, data) -> sounds(data));
+        registerLoader("^textures/(.*)\\.png$", this::texture);
+        registerLoader("^textures/(.*)\\.png\\.mcmeta$", this::mcmeta);
+        registerLoader("^models/(.*)\\.json$", this::model);
+        registerLoader("^font/(.*)\\.json$", this::font);
+        registerLoader("^lang/(.*)\\.json$", this::lang);
+        registerLoader("^blockstates/(.*)\\.json$", this::blockstate);
+        registerLoader("^items/(.*)\\.json$", this::itemDefinition);
+        registerLoader("^equipment/(.*)\\.json$", this::equipment);
+        registerLoader("^atlases/(.*)\\.json$", this::atlas);
+        registerLoader("^post_effect/(.*)\\.json$", this::postEffect);
+        registerLoader("^waypoint_style/(.*)\\.json$", this::waypointStyle);
+        registerLoader("^shaders/core/(.*)\\.(vsh|fsh|json)$", (id, _) -> {
+            CoreShader c = getAsset(CoreShader.class, id);
+            if (c == null) {
+                c = new CoreShader(namespace, id, (byte[]) null, null, null);
+                putAsset(CoreShader.class, id, c);
+            }
+            return c;
+        });
+        registerLoader("^shaders/include/(.*)\\.glsl$", this::includeShader);
+        registerLoader("^(.*)$", this::rawAsset);
+    }
+
+    private void registerLoader(String regex, BiFunction<String, byte[], Asset> loader) {
+        loaders.add(new AssetLoaderEntry(Pattern.compile(regex), loader));
+    }
+
+    public void loadFromScan(String assetPath, byte[] data) {
+        for (AssetLoaderEntry entry : loaders) {
+            Matcher m = entry.pattern().matcher(assetPath);
+            if (m.matches()) {
+                entry.loader().apply(m.group(1), data);
+                return;
+            }
+        }
+
+        if (assetPath.endsWith(".json")) {
+            String id = assetPath.substring(0, assetPath.length() - 5);
+            putAsset(JsonAsset.class, assetPath, new JsonAsset(namespace, id, data));
+        } else {
+            putAsset(RawAsset.class, assetPath, new RawAsset(namespace, assetPath, data));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Asset> T getAsset(Class<T> clazz, String id) {
+        Map<String, Asset> map = typedAssets.get(clazz);
+        return map != null ? (T) map.get(id) : null;
+    }
+
+    private <T extends Asset> void putAsset(Class<T> clazz, String id, T asset) {
+        typedAssets.computeIfAbsent(clazz, k -> new HashMap<>()).put(id, asset);
+    }
+
+    public RawAsset rawAsset(String path, byte[] data) {
+        RawAsset r = getAsset(RawAsset.class, path);
+        if (r != null) return r;
+        r = new RawAsset(namespace, path, data);
+        putAsset(RawAsset.class, path, r);
+        return r;
+    }
+
+    public @NotNull Sounds sounds(byte[] data) {
+        Sounds s = getAsset(Sounds.class, "sounds");
+        if (s != null) return s;
+        s = new Sounds(plugin, namespace, data);
+        putAsset(Sounds.class, "sounds", s);
+        return s;
     }
 
     public @NotNull Atlas atlas(@NotNull String id, boolean autoLoad) {
-        for (Asset a : assets) {
-            if (a instanceof Atlas atlas && atlas.getId().equals(id)) return atlas;
-        }
+        Atlas a = getAsset(Atlas.class, id);
+        if (a != null) return a;
         Atlas atlas = autoLoad ? new Atlas(plugin, namespace, id) : new Atlas(namespace, id);
-        assets.add(atlas);
+        putAsset(Atlas.class, id, atlas);
         return atlas;
     }
 
     public @NotNull Atlas atlas(@NotNull String id, byte[] data) {
-        for (Asset a : assets) {
-            if (a instanceof Atlas atlas && atlas.getId().equals(id)) return atlas;
-        }
+        Atlas a = getAsset(Atlas.class, id);
+        if (a != null) return a;
         Atlas atlas = new Atlas(namespace, id, data);
-        assets.add(atlas);
+        putAsset(Atlas.class, id, atlas);
         return atlas;
     }
 
     public CoreShader coreShader(String name) {
-        CoreShader c = new CoreShader(plugin, namespace, name);
-        assets.add(c);
+        CoreShader c = getAsset(CoreShader.class, name);
+        if (c != null) return c;
+        c = new CoreShader(plugin, namespace, name);
+        putAsset(CoreShader.class, name, c);
         return c;
     }
 
     public CoreShader coreShader(String name, byte[] vsh, byte[] fsh, byte[] json) {
-        CoreShader c = new CoreShader(namespace, name, vsh, fsh, json);
-        assets.add(c);
+        CoreShader c = getAsset(CoreShader.class, name);
+        if (c != null) return c;
+        c = new CoreShader(namespace, name, vsh, fsh, json);
+        putAsset(CoreShader.class, name, c);
         return c;
     }
 
     public CoreShader coreShader(String name, String vsh, String fsh, String json) {
-        CoreShader c = new CoreShader(namespace, name, vsh, fsh, json);
-        assets.add(c);
+        CoreShader c = getAsset(CoreShader.class, name);
+        if (c != null) return c;
+        c = new CoreShader(namespace, name, vsh, fsh, json);
+        putAsset(CoreShader.class, name, c);
         return c;
     }
 
     public IncludeShader includeShader(String name) {
-        IncludeShader i = new IncludeShader(plugin, namespace, name);
-        assets.add(i);
+        IncludeShader i = getAsset(IncludeShader.class, name);
+        if (i != null) return i;
+        i = new IncludeShader(plugin, namespace, name);
+        putAsset(IncludeShader.class, name, i);
         return i;
     }
 
     public IncludeShader includeShader(String name, byte[] glsl) {
-        IncludeShader i = new IncludeShader(namespace, name, glsl);
-        assets.add(i);
+        IncludeShader i = getAsset(IncludeShader.class, name);
+        if (i != null) return i;
+        i = new IncludeShader(namespace, name, glsl);
+        putAsset(IncludeShader.class, name, i);
         return i;
     }
 
     public IncludeShader includeShader(String name, String glsl) {
-        IncludeShader i = new IncludeShader(namespace, name, glsl);
-        assets.add(i);
+        IncludeShader i = getAsset(IncludeShader.class, name);
+        if (i != null) return i;
+        i = new IncludeShader(namespace, name, glsl);
+        putAsset(IncludeShader.class, name, i);
         return i;
     }
 
@@ -128,8 +214,10 @@ public class Namespace {
      * @return The registered {@link Texture} asset.
      */
     public @NotNull Texture texture(@NotNull String path, byte @Nullable [] data) {
-        Texture t = data == null ? new Texture(plugin, namespace, path) : new Texture(namespace, path, data);
-        assets.add(t);
+        Texture t = getAsset(Texture.class, path);
+        if (t != null) return t;
+        t = data == null ? new Texture(plugin, namespace, path) : new Texture(namespace, path, data);
+        putAsset(Texture.class, path, t);
         return t;
     }
 
@@ -141,8 +229,10 @@ public class Namespace {
      * @return The registered {@link McMeta} asset.
      */
     public McMeta mcmeta(String path, boolean autoLoad) {
-        McMeta m = autoLoad ? new McMeta(plugin, namespace, path) : new McMeta(namespace, path);
-        assets.add(m);
+        McMeta m = getAsset(McMeta.class, path);
+        if (m != null) return m;
+        m = autoLoad ? new McMeta(plugin, namespace, path) : new McMeta(namespace, path);
+        putAsset(McMeta.class, path, m);
         return m;
     }
 
@@ -154,8 +244,10 @@ public class Namespace {
      * @return The registered {@link McMeta} asset.
      */
     public McMeta mcmeta(String path, byte[] data) {
-        McMeta m = new McMeta(namespace, path, data);
-        assets.add(m);
+        McMeta m = getAsset(McMeta.class, path);
+        if (m != null) return m;
+        m = new McMeta(namespace, path, data);
+        putAsset(McMeta.class, path, m);
         return m;
     }
 
@@ -167,8 +259,10 @@ public class Namespace {
      * @return The registered {@link WaypointStyle} asset.
      */
     public WaypointStyle waypointStyle(String name, boolean autoLoad) {
-        WaypointStyle w = autoLoad ? new WaypointStyle(plugin, namespace, name) : new WaypointStyle(namespace, name);
-        assets.add(w);
+        WaypointStyle w = getAsset(WaypointStyle.class, name);
+        if (w != null) return w;
+        w = autoLoad ? new WaypointStyle(plugin, namespace, name) : new WaypointStyle(namespace, name);
+        putAsset(WaypointStyle.class, name, w);
         return w;
     }
 
@@ -180,8 +274,10 @@ public class Namespace {
      * @return The registered {@link WaypointStyle} asset.
      */
     public WaypointStyle waypointStyle(String name, byte[] data) {
-        WaypointStyle w = new WaypointStyle(namespace, name, data);
-        assets.add(w);
+        WaypointStyle w = getAsset(WaypointStyle.class, name);
+        if (w != null) return w;
+        w = new WaypointStyle(namespace, name, data);
+        putAsset(WaypointStyle.class, name, w);
         return w;
     }
 
@@ -193,8 +289,10 @@ public class Namespace {
      * @return The registered {@link PostEffect} asset.
      */
     public PostEffect postEffect(String name, boolean autoLoad) {
-        PostEffect p = autoLoad ? new PostEffect(plugin, namespace, name) : new PostEffect(namespace, name);
-        assets.add(p);
+        PostEffect p = getAsset(PostEffect.class, name);
+        if (p != null) return p;
+        p = autoLoad ? new PostEffect(plugin, namespace, name) : new PostEffect(namespace, name);
+        putAsset(PostEffect.class, name, p);
         return p;
     }
 
@@ -206,8 +304,10 @@ public class Namespace {
      * @return The registered {@link PostEffect} asset.
      */
     public PostEffect postEffect(String name, byte[] data) {
-        PostEffect p = new PostEffect(namespace, name, data);
-        assets.add(p);
+        PostEffect p = getAsset(PostEffect.class, name);
+        if (p != null) return p;
+        p = new PostEffect(namespace, name, data);
+        putAsset(PostEffect.class, name, p);
         return p;
     }
 
@@ -219,8 +319,10 @@ public class Namespace {
      * @return The registered {@link Font} asset.
      */
     public @NotNull Font font(@NotNull String name, boolean autoLoad) {
-        Font f = autoLoad ? new Font(plugin, namespace, name) : new Font(namespace, name);
-        assets.add(f);
+        Font f = getAsset(Font.class, name);
+        if (f != null) return f;
+        f = autoLoad ? new Font(plugin, namespace, name) : new Font(namespace, name);
+        putAsset(Font.class, name, f);
         return f;
     }
 
@@ -232,8 +334,10 @@ public class Namespace {
      * @return The registered {@link Font} asset.
      */
     public @NotNull Font font(@NotNull String name, byte[] data) {
-        Font f = new Font(namespace, name, data);
-        assets.add(f);
+        Font f = getAsset(Font.class, name);
+        if (f != null) return f;
+        f = new Font(namespace, name, data);
+        putAsset(Font.class, name, f);
         return f;
     }
 
@@ -245,8 +349,10 @@ public class Namespace {
      * @return The registered {@link Model} asset.
      */
     public @NotNull Model model(@NotNull String name, boolean autoLoad) {
-        Model m = autoLoad ? new Model(plugin, namespace, name) : new Model(namespace, name);
-        assets.add(m);
+        Model m = getAsset(Model.class, name);
+        if (m != null) return m;
+        m = autoLoad ? new Model(plugin, namespace, name) : new Model(namespace, name);
+        putAsset(Model.class, name, m);
         return m;
     }
 
@@ -258,22 +364,26 @@ public class Namespace {
      * @return The registered {@link Model} asset.
      */
     public @NotNull Model model(@NotNull String name, byte[] data) {
-        Model m = new Model(namespace, name, data);
-        assets.add(m);
+        Model m = getAsset(Model.class, name);
+        if (m != null) return m;
+        m = new Model(namespace, name, data);
+        putAsset(Model.class, name, m);
         return m;
     }
 
     /**
      * Registers a blank model with specific texture resolution hints.
      *
-     * @param name      Model name.
+     * @param name     Model name.
      * @param texWidth  Target texture width.
      * @param texHeight Target texture height.
      * @return The registered {@link Model} asset.
      */
     public @NotNull Model model(@NotNull String name, int texWidth, int texHeight) {
-        Model m = new Model(namespace, name, texWidth, texHeight);
-        assets.add(m);
+        Model m = getAsset(Model.class, name);
+        if (m != null) return m;
+        m = new Model(namespace, name, texWidth, texHeight);
+        putAsset(Model.class, name, m);
         return m;
     }
 
@@ -285,8 +395,10 @@ public class Namespace {
      * @return The registered {@link BlockState} asset.
      */
     public BlockState blockstate(String name, boolean autoLoad) {
-        BlockState b = autoLoad ? new BlockState(plugin, namespace, name) : new BlockState(namespace, name);
-        assets.add(b);
+        BlockState b = getAsset(BlockState.class, name);
+        if (b != null) return b;
+        b = autoLoad ? new BlockState(plugin, namespace, name) : new BlockState(namespace, name);
+        putAsset(BlockState.class, name, b);
         return b;
     }
 
@@ -298,8 +410,10 @@ public class Namespace {
      * @return The registered {@link BlockState} asset.
      */
     public BlockState blockstate(String name, byte[] data) {
-        BlockState b = new BlockState(namespace, name, data);
-        assets.add(b);
+        BlockState b = getAsset(BlockState.class, name);
+        if (b != null) return b;
+        b = new BlockState(namespace, name, data);
+        putAsset(BlockState.class, name, b);
         return b;
     }
 
@@ -311,8 +425,10 @@ public class Namespace {
      * @return The registered {@link Lang} asset.
      */
     public @NotNull Lang lang(@NotNull String locale, boolean autoLoad) {
-        Lang lang = autoLoad ? new Lang(plugin, namespace, locale) : new Lang(namespace, locale);
-        assets.add(lang);
+        Lang lang = getAsset(Lang.class, locale);
+        if (lang != null) return lang;
+        lang = autoLoad ? new Lang(plugin, namespace, locale) : new Lang(namespace, locale);
+        putAsset(Lang.class, locale, lang);
         return lang;
     }
 
@@ -324,8 +440,10 @@ public class Namespace {
      * @return The registered {@link Lang} asset.
      */
     public @NotNull Lang lang(@NotNull String locale, byte[] data) {
-        Lang lang = new Lang(namespace, locale, data);
-        assets.add(lang);
+        Lang lang = getAsset(Lang.class, locale);
+        if (lang != null) return lang;
+        lang = new Lang(namespace, locale, data);
+        putAsset(Lang.class, locale, lang);
         return lang;
     }
 
@@ -335,8 +453,10 @@ public class Namespace {
      * @return The registered {@link Sounds} asset.
      */
     public @NotNull Sounds sounds() {
-        Sounds s = new Sounds(plugin, namespace);
-        assets.add(s);
+        Sounds s = getAsset(Sounds.class, "sounds");
+        if (s != null) return s;
+        s = new Sounds(plugin, namespace);
+        putAsset(Sounds.class, "sounds", s);
         return s;
     }
 
@@ -347,8 +467,10 @@ public class Namespace {
      * @return The registered definition.
      */
     public @NotNull ItemDefinition itemDefinition(@NotNull String name) {
-        ItemDefinition def = new ItemDefinition(plugin, namespace, name);
-        assets.add(def);
+        ItemDefinition def = getAsset(ItemDefinition.class, name);
+        if (def != null) return def;
+        def = new ItemDefinition(plugin, namespace, name);
+        putAsset(ItemDefinition.class, name, def);
         return def;
     }
 
@@ -360,8 +482,10 @@ public class Namespace {
      * @return The registered definition.
      */
     public @NotNull ItemDefinition itemDefinition(@NotNull String name, byte[] data) {
-        ItemDefinition def = new ItemDefinition(namespace, name, data);
-        assets.add(def);
+        ItemDefinition def = getAsset(ItemDefinition.class, name);
+        if (def != null) return def;
+        def = new ItemDefinition(namespace, name, data);
+        putAsset(ItemDefinition.class, name, def);
         return def;
     }
 
@@ -411,8 +535,10 @@ public class Namespace {
      * @return The registered definition.
      */
     public ItemDefinition itemDefinition(@NotNull String name, @NotNull Selector selector, boolean handAnimationOnSwap, boolean oversizedInGui, double swapAnimationScale) {
-        ItemDefinition def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap, oversizedInGui, swapAnimationScale);
-        assets.add(def);
+        ItemDefinition def = getAsset(ItemDefinition.class, name);
+        if (def != null) return def;
+        def = new ItemDefinition(namespace, name, selector, handAnimationOnSwap, oversizedInGui, swapAnimationScale);
+        putAsset(ItemDefinition.class, name, def);
         return def;
     }
 
@@ -424,8 +550,10 @@ public class Namespace {
      * @return The registered {@link Equipment} asset.
      */
     public Equipment equipment(String path, boolean autoLoad) {
-        Equipment e = autoLoad ? new Equipment(plugin, namespace, path) : new Equipment(namespace, path);
-        assets.add(e);
+        Equipment e = getAsset(Equipment.class, path);
+        if (e != null) return e;
+        e = autoLoad ? new Equipment(plugin, namespace, path) : new Equipment(namespace, path);
+        putAsset(Equipment.class, path, e);
         return e;
     }
 
@@ -437,8 +565,10 @@ public class Namespace {
      * @return The registered {@link Equipment} asset.
      */
     public Equipment equipment(String path, byte[] data) {
-        Equipment e = new Equipment(namespace, path, data);
-        assets.add(e);
+        Equipment e = getAsset(Equipment.class, path);
+        if (e != null) return e;
+        e = new Equipment(namespace, path, data);
+        putAsset(Equipment.class, path, e);
         return e;
     }
 
@@ -450,8 +580,10 @@ public class Namespace {
      * @return The registered {@link JsonAsset}.
      */
     public JsonAsset json(String path, boolean autoLoad) {
-        JsonAsset j = autoLoad ? new JsonAsset(plugin, namespace, path) : new JsonAsset(namespace, path);
-        assets.add(j);
+        JsonAsset j = getAsset(JsonAsset.class, path);
+        if (j != null) return j;
+        j = autoLoad ? new JsonAsset(plugin, namespace, path) : new JsonAsset(namespace, path);
+        putAsset(JsonAsset.class, path, j);
         return j;
     }
 
@@ -477,8 +609,10 @@ public class Namespace {
      * @param files The map containing output file paths and byte data.
      */
     public void emit(@NotNull Map<String, byte[]> files) {
-        for (Asset asset : assets) {
-            asset.emit(files);
+        for (Map<String, Asset> map : typedAssets.values()) {
+            for (Asset asset : map.values()) {
+                asset.emit(files);
+            }
         }
     }
 

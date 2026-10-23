@@ -21,6 +21,12 @@ public class JsonAsset implements Asset {
         this.root = new JsonObject();
     }
 
+    public JsonAsset(String namespace, String path, byte[] data) {
+        this.namespace = namespace;
+        this.path = path;
+        this.root = JsonParser.parseString(new String(data, StandardCharsets.UTF_8)).getAsJsonObject();
+    }
+
     public JsonAsset(Plugin plugin, String namespace, String path) {
         this.namespace = namespace;
         this.path = path;
@@ -49,7 +55,6 @@ public class JsonAsset implements Asset {
     private void setNested(JsonObject root, String dottedKey, JsonElement value) {
         String[] keys = dottedKey.split("\\.");
         JsonObject current = root;
-
         for (int i = 0; i < keys.length - 1; i++) {
             String key = keys[i];
             if (!current.has(key) || !current.get(key).isJsonObject()) {
@@ -57,7 +62,6 @@ public class JsonAsset implements Asset {
             }
             current = current.getAsJsonObject(key);
         }
-
         current.add(keys[keys.length - 1], value);
     }
 }

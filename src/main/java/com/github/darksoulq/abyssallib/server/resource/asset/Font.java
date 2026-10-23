@@ -24,6 +24,7 @@ import java.util.zip.ZipInputStream;
 
 /**
  * Represents a Minecraft font resource supporting bitmap, space, TTF, and Unihex providers,
+ *
  * with full Unicode occupation tracking.
  */
 public class Font implements Asset {
@@ -59,11 +60,6 @@ public class Font implements Asset {
     private int unicodeBase = 0xE000;
 
     /**
-     * The raw byte data representing pre-compiled JSON font files, bypassing dynamic generation when present.
-     */
-    private byte[] rawData = null;
-
-    /**
      * Retrieves a mapped glyph component globally by its registered namespace and name.
      *
      * @param namespace The namespace the glyph was registered under.
@@ -95,7 +91,7 @@ public class Font implements Asset {
     public Font(@NotNull String namespace, @NotNull String id, byte[] data) {
         this.namespace = namespace;
         this.id = id;
-        this.rawData = data;
+        parseJson(new String(data, StandardCharsets.UTF_8));
     }
 
     /**
@@ -113,26 +109,88 @@ public class Font implements Asset {
         String path = "resourcepack/" + namespace + "/font/" + id + ".json";
         try (InputStream in = plugin.getResource(path)) {
             if (in == null) throw new IllegalStateException("Font not found: " + path);
-            JsonArray providers = JsonParser.parseReader(
-                    new InputStreamReader(in, StandardCharsets.UTF_8))
-                .getAsJsonObject()
-                .getAsJsonArray("providers");
-            for (JsonElement el : providers) {
-                JsonObject p = el.getAsJsonObject();
-                if ("bitmap".equals(p.get("type").getAsString())) {
-                    JsonArray chars = p.getAsJsonArray("chars");
-                    if (chars.size() == 1 && chars.get(0).getAsString().length() == 1) {
-                        String file = p.get("file").getAsString().replaceFirst("\\.png$", "");
-                        int h = p.has("height") ? p.get("height").getAsInt() : 8;
-                        int a = p.has("ascent") ? p.get("ascent").getAsInt() : h;
-                        char c = chars.get(0).getAsString().charAt(0);
-                        Texture tex = new Texture(plugin, namespace, file);
-                        addTextureGlyph(tex, c, h, a);
-                    }
-                }
-            }
+            parseJson(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void parseJson(String json) {
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        if (!root.has("providers")) return;
+        JsonArray providers = root.getAsJsonArray("providers");
+        for (JsonElement el : providers) {
+            JsonObject p = el.getAsJsonObject();
+            String type = p.has("type") ? p.get("type").getAsString() : "";
+
+            switch (type) {
+                case "bitmap": {
+                    if (!p.has("chars") || !p.has("file")) continue;
+                    JsonArray chars = p.getAsJsonArray("chars");
+                    String file = p.get("file").getAsString().replaceFirst("\\.png$", "");
+                    int h = p.has("height") ? p.get("height").getAsInt() : 8;
+                    int a = p.has("ascent") ? p.get("ascent").getAsInt() : h;
+
+                    if (chars.size() == 1 && chars.get(0).getAsString().length() == 1) {
+                        char c = chars.get(0).getAsString().charAt(0);
+                        Texture tex = new Texture(namespace, file, new byte[0]);
+                        addTextureGlyph(tex, c, h, a);
+                    }
+                    break;
+                }
+                case "space": {
+                    if (!p.has("advances")) continue;
+                    JsonObject advances = p.getAsJsonObject("advances");
+                    LinkedList<Glyph> list = new LinkedList<>();
+                    for (Map.Entry<String, JsonElement> entry : advances.entrySet()) {
+                        if (entry.getKey().length() == 1) {
+                            char c = entry.getKey().charAt(0);
+                            int adv = entry.getValue().getAsInt();
+                            OffsetGlyph g = new OffsetGlyph(Key.key(namespace, id), c, adv);
+                            list.add(g);
+                            occupied.add(c);
+                        }
+                    }
+                    if (!list.isEmpty()) glyphGroups.add(list);
+                    break;
+                }
+                case "ttf": {
+                    if (!p.has("file")) continue;
+                    String file = p.get("file").getAsString();
+                    int shiftX = 0, shiftY = 0;
+                    if (p.has("shift")) {
+                        JsonArray shift = p.getAsJsonArray("shift");
+                        if (shift.size() >= 2) {
+                            shiftX = shift.get(0).getAsInt();
+                            shiftY = shift.get(1).getAsInt();
+                        }
+                    }
+                    int size = p.has("size") ? p.get("size").getAsInt() : 11;
+                    int oversample = p.has("oversample") ? p.get("oversample").getAsInt() : 1;
+                    LinkedList<Glyph> list = new LinkedList<>();
+                    list.add(new TtfFont(Key.key(namespace, id), file, shiftX, shiftY, size, oversample));
+                    glyphGroups.add(list);
+                    break;
+                }
+                case "unihex": {
+                    if (!p.has("hex_file")) continue;
+                    String file = p.get("hex_file").getAsString();
+                    List<UnihexFont.Override> overrides = new ArrayList<>();
+                    if (p.has("size_overrides")) {
+                        for (JsonElement overrideEl : p.getAsJsonArray("size_overrides")) {
+                            JsonObject o = overrideEl.getAsJsonObject();
+                            overrides.add(new UnihexFont.Override(
+                                o.get("from").getAsInt(), o.get("to").getAsInt(),
+                                o.get("left").getAsInt(), o.get("right").getAsInt()
+                            ));
+                        }
+                    }
+                    LinkedList<Glyph> list = new LinkedList<>();
+                    list.add(new UnihexFont(Key.key(namespace, id), file, overrides));
+                    glyphGroups.add(list);
+                    break;
+                }
+            }
         }
     }
 
@@ -273,10 +331,6 @@ public class Font implements Asset {
      */
     @Override
     public void emit(@NotNull Map<String, byte[]> files) {
-        if (rawData != null) {
-            files.put("assets/" + namespace + "/font/" + id + ".json", rawData);
-            return;
-        }
         JsonArray providers = new JsonArray();
 
         Map<BitmapKey, LinkedList<TextureGlyph>> bitmapGroups = new LinkedHashMap<>();

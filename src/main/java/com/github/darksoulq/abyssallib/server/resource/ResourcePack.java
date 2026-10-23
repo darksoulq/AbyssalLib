@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -38,7 +39,9 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Handles creation, namespacing, and compilation of a resource pack.
- * Output is written to a ZIP at {@code pluginFolder/pack/output.zip}.
+ *
+ * Output is written to a ZIP at
+ * {@code pluginFolder/pack/output.zip}.
  */
 public class ResourcePack {
     public static final Set<String> EXTERNAL_CACHE = new HashSet<>();
@@ -54,7 +57,8 @@ public class ResourcePack {
     private final String pluginId;
 
     /**
-     * Output path: {@code <plugin>/pack/resourcepack.zip}
+     * Output path:
+     * {@code <plugin>/pack/resourcepack.zip}
      */
     private final Path outputFile;
 
@@ -102,6 +106,48 @@ public class ResourcePack {
         UUID_MAP.put(pluginId, UUID.randomUUID());
     }
 
+    public void scan() {
+        List<String> paths = FileUtils.getFilePathList(plugin, "resourcepack/");
+
+        paths.sort((a, b) -> {
+            boolean aJson = a.endsWith(".json");
+            boolean bJson = b.endsWith(".json");
+            if (aJson && !bJson) return -1;
+            if (!aJson && bJson) return 1;
+            return a.compareTo(b);
+        });
+
+        for (String path : paths) {
+            String relative = path.substring("resourcepack/".length());
+            int slash = relative.indexOf('/');
+            if (slash == -1) {
+                if (relative.equals("pack.mcmeta")) {
+                    byte[] data = loadResource(path);
+                    if (data != null) mcmeta(new PackMcMeta(data));
+                } else if (relative.equals("pack.png")) {
+                    byte[] data = loadResource(path);
+                    if (data != null) icon(data);
+                }
+                continue;
+            }
+
+            String nsName = relative.substring(0, slash);
+            String assetPath = relative.substring(slash + 1);
+
+            byte[] data = loadResource(path);
+            if (data == null) continue;
+
+            namespace(nsName).loadFromScan(assetPath, data);
+        }
+    }
+
+    private byte[] loadResource(String path) {
+        try (InputStream in = plugin.getResource(path)) {
+            if (in != null) return in.readAllBytes();
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     /**
      * Returns or creates a namespace container.
      *
@@ -122,7 +168,8 @@ public class ResourcePack {
     }
 
     /**
-     * Autoloads the Icon for this pack from {@code resourcepack/pack.png}
+     * Autoloads the Icon for this pack from
+     * {@code resourcepack/pack.png}
      */
     public void icon() {
         this.icon = new Icon(plugin);
@@ -243,13 +290,6 @@ public class ResourcePack {
 
     /**
      * Registers this pack with ResourcePackManager.
-     * <p>
-     * RSPM's API is documented as callable during onEnable, but some RSPM builds
-     * do not finish loading their own config until a later (delayed-init) phase.
-     * Calling the API before that completes throws (e.g. NPE from a null
-     * priorityOrder list) and aborts AbyssalLib's enable. To stay robust against
-     * RSPM's init timing we attempt the call and, if it fails, retry on a short
-     * delay until it succeeds or we exhaust a bounded number of attempts.
      *
      * @param attempt the current attempt number (0-indexed)
      */
@@ -333,7 +373,8 @@ public class ResourcePack {
     }
 
     /**
-     * Builds the default {@code pack.mcmeta} file as a string.
+     * Builds the default
+     * {@code pack.mcmeta} file as a string.
      *
      * @return JSON content of pack.mcmeta
      */

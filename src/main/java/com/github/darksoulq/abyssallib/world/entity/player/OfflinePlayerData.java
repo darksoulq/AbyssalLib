@@ -1,11 +1,6 @@
 package com.github.darksoulq.abyssallib.world.entity.player;
 
 import com.mojang.authlib.GameProfile;
-//? if <=26.2 {
-/*import com.mojang.authlib.yggdrasil.ProfileResult;
-*///?} else {
-import com.mojang.authlib.services.ProfileResult;
-//?}
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
@@ -30,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OfflinePlayerData {
@@ -57,21 +53,19 @@ public class OfflinePlayerData {
 
         GameProfile profile = new GameProfile(uuid, profileName);
 
-        Optional<GameProfile> cached = server.services().profileResolver().fetchById(uuid);
-        if (cached.isPresent()) {
-            profile = cached.get();
-        } else {
-            ProfileResult profileResult = server.services().sessionService().fetchProfile(uuid, true);
-            if (profileResult != null) {
-                profile = profileResult.profile();
-            }
-        }
-
         this.serverPlayer = new ServerPlayer(server, level, profile, ClientInformation.createDefault());
 
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
         this.serverPlayer.connection = new NoOpListener(server, connection, this.serverPlayer, CommonListenerCookie.createInitial(profile, false));
         this.bukkitPlayer = this.serverPlayer.getBukkitEntity();
+    }
+
+    public void fetchSkinSync(boolean skipSessionServer) {
+        SkinCache.fetchSkinSync(this.serverPlayer.getGameProfile(), skipSessionServer);
+    }
+
+    public CompletableFuture<Void> fetchSkinAsync(boolean skipSessionServer) {
+        return SkinCache.fetchSkinAsync(this.serverPlayer.getGameProfile(), skipSessionServer);
     }
 
     public static OfflinePlayerData getOrLoad(UUID uuid) {
@@ -86,23 +80,14 @@ public class OfflinePlayerData {
         return CACHE.computeIfAbsent(uuid, k -> {
             OfflinePlayerData data = new OfflinePlayerData(uuid, name, defaultLocation);
 
-            Object result = ((CraftServer) Bukkit.getServer()).getHandle().playerIo.load(data.serverPlayer.nameAndId());
-            if (result != null) {
-                CompoundTag tag = null;
-                if (result instanceof Optional<?> opt) {
-                    if (opt.isPresent()) {
-                        tag = (CompoundTag) opt.get();
-                    }
-                } else if (result instanceof CompoundTag cTag) {
-                    tag = cTag;
-                }
+            Optional<CompoundTag> result = ((CraftServer) Bukkit.getServer()).getHandle().playerIo.load(data.serverPlayer.nameAndId());
+            CompoundTag tag = result.orElse(null);
 
-                if (tag != null) {
-                    try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(data.serverPlayer.problemPath(), MinecraftServer.LOGGER)) {
-                        ValueInput input = TagValueInput.create(reporter, data.serverPlayer.registryAccess(), tag);
-                        data.serverPlayer.load(input);
-                    } catch (Exception ignored) {}
-                }
+            if (tag != null) {
+                try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(data.serverPlayer.problemPath(), MinecraftServer.LOGGER)) {
+                    ValueInput input = TagValueInput.create(reporter, data.serverPlayer.registryAccess(), tag);
+                    data.serverPlayer.load(input);
+                } catch (Exception ignored) {}
             }
 
             return data;

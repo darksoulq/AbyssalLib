@@ -2,7 +2,11 @@ package com.github.darksoulq.abyssallib.server.resource.asset;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.bukkit.SoundCategory;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +54,47 @@ public class Sounds implements Asset {
     public Sounds(@NotNull Plugin plugin, @NotNull String namespace) {
         this.plugin = plugin;
         this.namespace = namespace;
+    }
+
+    public Sounds(@NotNull Plugin plugin, @NotNull String namespace, byte[] data) {
+        this.plugin = plugin;
+        this.namespace = namespace;
+        parseJson(new String(data, StandardCharsets.UTF_8));
+    }
+
+    private void parseJson(String json) {
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+            String eventName = entry.getKey();
+            JsonObject eventObj = entry.getValue().getAsJsonObject();
+            SoundEvent event = event(eventName);
+
+            if (eventObj.has("category")) event.category(SoundCategory.valueOf(eventObj.get("category").getAsString().toUpperCase()));
+            if (eventObj.has("subtitle")) event.subtitle(eventObj.get("subtitle").getAsString());
+            if (eventObj.has("replace")) event.replace(eventObj.get("replace").getAsBoolean());
+
+            if (eventObj.has("sounds")) {
+                JsonArray soundsArr = eventObj.getAsJsonArray("sounds");
+                for (JsonElement soundEl : soundsArr) {
+                    if (soundEl.isJsonPrimitive()) {
+                        String name = soundEl.getAsString().replace(namespace + ":", "");
+                        event.addVariant(name);
+                    } else if (soundEl.isJsonObject()) {
+                        JsonObject soundObj = soundEl.getAsJsonObject();
+                        String name = soundObj.get("name").getAsString().replace(namespace + ":", "");
+                        SoundEntry sEntry = event.addVariant(name);
+
+                        if (soundObj.has("volume")) sEntry.volume(soundObj.get("volume").getAsFloat());
+                        if (soundObj.has("pitch")) sEntry.pitch(soundObj.get("pitch").getAsFloat());
+                        if (soundObj.has("weight")) sEntry.weight(soundObj.get("weight").getAsInt());
+                        if (soundObj.has("stream")) sEntry.stream(soundObj.get("stream").getAsBoolean());
+                        if (soundObj.has("attenuation_distance")) sEntry.attenuationDistance(soundObj.get("attenuation_distance").getAsInt());
+                        if (soundObj.has("preload")) sEntry.preload(soundObj.get("preload").getAsBoolean());
+                        if (soundObj.has("type")) sEntry.type(soundObj.get("type").getAsString());
+                    }
+                }
+            }
+        }
     }
 
     /**

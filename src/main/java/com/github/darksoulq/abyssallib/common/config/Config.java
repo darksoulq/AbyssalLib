@@ -59,6 +59,14 @@ public class Config {
         this.yaml = YamlConfiguration.loadConfiguration(file);
     }
 
+    public Config(File directory, String name) {
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        this.file = new File(directory, name + ".yml");
+        this.yaml = YamlConfiguration.loadConfiguration(file);
+    }
+
     /**
      * Initializes a migration chain for this specific configuration file.
      *

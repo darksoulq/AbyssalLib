@@ -1,24 +1,19 @@
 package com.github.darksoulq.abyssallib.server.event.internal;
 
-import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.github.darksoulq.abyssallib.AbyssalLib;
-import com.github.darksoulq.abyssallib.server.event.EventBus;
 import com.github.darksoulq.abyssallib.server.event.SubscribeEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.block.BlockInteractionEvent;
-import com.github.darksoulq.abyssallib.server.event.custom.entity.FakePlayerReplaceEvent;
 import com.github.darksoulq.abyssallib.server.packet.PacketInterceptor;
 import com.github.darksoulq.abyssallib.server.scoreboard.internal.PlayerSidebarManager;
 import com.github.darksoulq.abyssallib.world.block.CustomBlock;
 import com.github.darksoulq.abyssallib.world.block.internal.BreakingService;
 import com.github.darksoulq.abyssallib.world.data.statistic.PlayerStatistics;
-import com.github.darksoulq.abyssallib.world.entity.player.FakePlayer;
 import com.github.darksoulq.abyssallib.world.entity.player.OfflinePlayerData;
+import com.github.darksoulq.abyssallib.world.entity.player.SkinCache;
 import com.github.darksoulq.abyssallib.world.item.Item;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -29,28 +24,13 @@ import java.util.HashMap;
 public class PlayerEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
-    public void onServerListPing(PaperServerListPingEvent event) {
-        int fakeCount = FakePlayer.FAKE_PLAYERS.size();
-        event.setNumPlayers(Math.max(0, event.getNumPlayers() - fakeCount));
-        event.getListedPlayers().removeIf(profile -> profile.id() != null && FakePlayer.FAKE_PLAYERS.containsKey(profile.id()));
-    }
-
-    @SubscribeEvent(ignoreCancelled = false)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
-        boolean hasFake = FakePlayer.FAKE_PLAYERS.containsKey(event.getUniqueId());
         boolean hasData = OfflinePlayerData.hasData(event.getUniqueId());
 
-        if (hasFake || hasData) {
+        if (hasData) {
             try {
                 Bukkit.getScheduler().callSyncMethod(AbyssalLib.getInstance(), () -> {
-                    FakePlayer fakePlayer = FakePlayer.FAKE_PLAYERS.get(event.getUniqueId());
-                    if (fakePlayer != null) {
-                        FakePlayerReplaceEvent replaceEvent = new FakePlayerReplaceEvent(fakePlayer, event.getUniqueId());
-                        Bukkit.getPluginManager().callEvent(replaceEvent);
-                        fakePlayer.remove();
-                    } else if (hasData) {
-                        OfflinePlayerData.forceUnload(event.getUniqueId());
-                    }
+                    OfflinePlayerData.forceUnload(event.getUniqueId());
                     return null;
                 }).get();
             } catch (Exception e) {
@@ -61,6 +41,8 @@ public class PlayerEvents {
 
     @SubscribeEvent(ignoreCancelled = false)
     public void onJoin(PlayerJoinEvent event) {
+        SkinCache.updateCacheAsync(((CraftPlayer) event.getPlayer()).getProfile());
+
         if (AbyssalLib.CONFIG.features.enableCustomBreakSpeeds.get()) {
             BreakingService.getInstance().storeInitialSpeed(event.getPlayer());
         }
