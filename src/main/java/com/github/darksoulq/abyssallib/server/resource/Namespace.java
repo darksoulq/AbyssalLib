@@ -61,7 +61,7 @@ public class Namespace {
         this.namespace = namespace;
         this.pack = pack;
 
-        registerLoader("^sounds\\.json$", (_, data) -> sounds(data));
+        registerLoader("^sounds\\.json$", (id, data) -> sounds(data));
         registerLoader("^textures/(.*)\\.png$", this::texture);
         registerLoader("^textures/(.*)\\.png\\.mcmeta$", this::mcmeta);
         registerLoader("^models/(.*)\\.json$", this::model);
@@ -73,7 +73,7 @@ public class Namespace {
         registerLoader("^atlases/(.*)\\.json$", this::atlas);
         registerLoader("^post_effect/(.*)\\.json$", this::postEffect);
         registerLoader("^waypoint_style/(.*)\\.json$", this::waypointStyle);
-        registerLoader("^shaders/core/(.*)\\.(vsh|fsh|json)$", (id, _) -> {
+        registerLoader("^shaders/core/(.*)\\.(vsh|fsh|json)$", (id, data) -> {
             CoreShader c = getAsset(CoreShader.class, id);
             if (c == null) {
                 c = new CoreShader(namespace, id, (byte[]) null, null, null);
