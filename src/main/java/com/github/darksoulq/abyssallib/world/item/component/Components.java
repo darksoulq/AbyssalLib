@@ -9,12 +9,11 @@ public class Components {
     public static final DeferredRegistry<DataComponentType<?>> DATA_COMPONENTS = DeferredRegistry.create(Registries.DATA_COMPONENT_TYPES, AbyssalLib.PLUGIN_ID);
     public static final DeferredRegistry<DataComponentType<?>> DATA_COMPONENTS_VANILLA = DeferredRegistry.create(Registries.DATA_COMPONENT_TYPES, "minecraft");
 
-    // CUSTOM
+    // Custom
     public static DataComponentType<?> ITEM_MARKER = registerCustom("marker", CustomMarker.TYPE);
     public static DataComponentType<?> BLOCK_ITEM = registerCustom("block_item", BlockItem.TYPE);
-    public static DataComponentType<?> CUSTOM_BOOK = registerCustom("custom_book", CustomBookItem.TYPE);
 
-     // VANILLA
+    // Vanilla
     public static DataComponentType<?> ATTRIBUTE_MODIFIERS = register("attribute_modifiers", ItemAttributeModifier.TYPE);
     public static DataComponentType<?> BANNER_PATTERNS = register("banner_patterns", BannerPatterns.TYPE);
     public static DataComponentType<?> BASE_COLOR = register("base_color", BaseColor.TYPE);
@@ -47,6 +46,9 @@ public class Components {
     public static DataComponentType<?> ITEM_MODEL = register("item_model", ItemModel.TYPE);
     public static DataComponentType<?> ITEM_NAME = register("item_name", ItemName.TYPE);
     public static DataComponentType<?> LORE = register("lore", Lore.TYPE);
+    //? if <=26.2 {
+    /*public static DataComponentType<?> MAP_COLOR = register("map_color", MapColor.TYPE);
+    *///?}
     public static DataComponentType<?> MAP_DECORATIONS = register("map_decorations", MapDecorates.TYPE);
     public static DataComponentType<?> MAP_ID = register("map_id", MapID.TYPE);
     public static DataComponentType<?> MAP_POST_PROCESSING = register("map_post_processing", MapPostProcess.TYPE);
@@ -67,7 +69,10 @@ public class Components {
     public static DataComponentType<?> DAMAGE_RESISTAMT = register("damage_resistant", ResistantDamage.TYPE);
     public static DataComponentType<?> SHULKER_COLOR = register("shulker_color", ShulkerColor.TYPE);
     public static DataComponentType<?> STORED_ENCHANTMENTS = register("stored_enchantments", StoredEnchantments.TYPE);
+    //? if >26.1.2 {
     public static DataComponentType<?> DYE = register("dye", Dye.TYPE);
+    /*public static DataComponentType<?> SULFUR_CUBE_CONTENT = register("sulfur_cube_content", SulfurCubeItem.TYPE);
+     *///?}
     public static DataComponentType<?> SUSPICIOUS_STEW_EFFECTS = register("suspicious_stew_effects", SuspiciousStewEffect.TYPE);
     public static DataComponentType<?> TOOL = register("tool", ToolComponent.TYPE);
     public static DataComponentType<?> TOOLTIP_STYLE = register("tooltip_style", TooltipStyle.TYPE);
@@ -77,6 +82,7 @@ public class Components {
     public static DataComponentType<?> WEAPON = register("weapon", WeaponComponent.TYPE);
     public static DataComponentType<?> WRITABLE_BOOK_CONTENT = register("writable_book_content", WritableBookContents.TYPE);
     public static DataComponentType<?> WRITTEN_BOOK_CONTENT = register("written_book_content", WrittenBookContents.TYPE);
+    //? if >=26.3 {
     public static DataComponentType<?> ATTACK_ANIMATION = register("attack_animation", AttackAnimation.TYPE);
     public static DataComponentType<?> CUSHION_COLOR = register("cushion_color", CushionColor.TYPE);
     public static DataComponentType<?> INTERACT_ANIMATION = register("interact_animation", InteractAnimation.TYPE);
@@ -86,6 +92,8 @@ public class Components {
     public static DataComponentType<?> SIGN_BACK_TEXT = register("sign_back_text", SignBackText.TYPE);
     public static DataComponentType<?> VILLAGER_FOOD = register("villager_food", VillagersFood.TYPE);
     public static DataComponentType<?> WAXED = register("waxed", Waxed.TYPE);
+    //?}
+
 
     private static DataComponentType<?> registerCustom(String name, DataComponentType<?> type) {
         return DATA_COMPONENTS.register(name, (id) -> type);
