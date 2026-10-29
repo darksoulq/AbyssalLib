@@ -64,6 +64,4 @@ public enum WoodType {
      * Warped
      */
     WARPED,
-
-    POPULAR
 }
