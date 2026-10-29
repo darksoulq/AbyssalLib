@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * A wrapper for Bukkit's {@link YamlConfiguration} that provides a fluent API,
@@ -23,18 +24,11 @@ import java.util.*;
  */
 public class Config {
 
-    /**
-     * The physical file on the disk.
-     */
     private final File file;
-    /**
-     * The underlying Bukkit YAML configuration instance.
-     */
     private final YamlConfiguration yaml;
-    /**
-     * A map storing comments associated with specific configuration paths.
-     */
     private final Map<String, List<String>> comments = new HashMap<>();
+    private final List<Value<?>> registeredValues = new ArrayList<>();
+    private final List<String> declarationOrder = new ArrayList<>();
 
     /**
      * Constructs a new Config instance located in a subfolder.
@@ -86,8 +80,10 @@ public class Config {
      * @return A {@link Value} object to interact with this configuration node.
      */
     public <T> Value<T> value(String path, T defaultValue) {
+        declarationOrder.add(path);
         Value<T> val = new Value<>(path, defaultValue, null);
         if (!yaml.contains(path)) val.set(defaultValue);
+        registeredValues.add(val);
         return val;
     }
 
@@ -101,8 +97,10 @@ public class Config {
      * @return A {@link Value} object.
      */
     public <T> Value<T> value(String path, T defaultValue, Codec<T> codec) {
+        declarationOrder.add(path);
         Value<T> val = new Value<>(path, defaultValue, codec);
         if (!yaml.contains(path)) val.set(defaultValue);
+        registeredValues.add(val);
         return val;
     }
 
@@ -113,7 +111,7 @@ public class Config {
      * @param commentLines The lines of text to add as comments.
      */
     public void addComment(String path, String... commentLines) {
-        comments.put(path, Arrays.asList(commentLines));
+        comments.put(path, List.of(commentLines));
     }
 
     /**
@@ -123,6 +121,7 @@ public class Config {
      */
     public void save() {
         try {
+            enforceOrder();
             yaml.save(file);
             writeComments();
         } catch (IOException e) {
@@ -139,8 +138,39 @@ public class Config {
         yaml.options().copyDefaults(true);
         try {
             yaml.load(file);
+            for (Value<?> val : registeredValues) {
+                val.invalidate();
+            }
         } catch (IOException | InvalidConfigurationException e) {
             throw new RuntimeException("Failed to reload configuration file: " + file, e);
+        }
+    }
+
+    private void enforceOrder() {
+        Map<String, Object> savedValues = new LinkedHashMap<>();
+
+        for (String path : yaml.getKeys(true)) {
+            if (!yaml.isConfigurationSection(path)) {
+                savedValues.put(path, yaml.get(path));
+            }
+        }
+
+        for (String key : yaml.getKeys(false)) {
+            yaml.set(key, null);
+        }
+
+        if (savedValues.containsKey("config_version")) {
+            yaml.set("config_version", savedValues.remove("config_version"));
+        }
+
+        for (String path : declarationOrder) {
+            if (savedValues.containsKey(path)) {
+                yaml.set(path, savedValues.remove(path));
+            }
+        }
+
+        for (Map.Entry<String, Object> entry : savedValues.entrySet()) {
+            yaml.set(entry.getKey(), entry.getValue());
         }
     }
 
@@ -152,8 +182,10 @@ public class Config {
      * @return A normalized Map representation of the section.
      */
     private Map<String, Object> extractMap(ConfigurationSection section) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        for (String key : section.getKeys(false)) {
+        Set<String> keys = section.getKeys(false);
+        Map<String, Object> map = new LinkedHashMap<>(Math.max(16, (int) (keys.size() / 0.75f) + 1));
+
+        for (String key : keys) {
             Object obj = section.get(key);
             if (obj instanceof ConfigurationSection child) {
                 map.put(key, extractMap(child));
@@ -174,12 +206,13 @@ public class Config {
      * @return A newly formatted list containing normalized elements.
      */
     private List<Object> normalizeList(List<?> list) {
-        List<Object> newList = new ArrayList<>();
+        List<Object> newList = new ArrayList<>(list.size());
+
         for (Object item : list) {
             if (item instanceof ConfigurationSection child) {
                 newList.add(extractMap(child));
             } else if (item instanceof Map<?, ?> map) {
-                Map<String, Object> stringMap = new LinkedHashMap<>();
+                Map<String, Object> stringMap = new LinkedHashMap<>(Math.max(16, (int) (map.size() / 0.75f) + 1));
                 for (Map.Entry<?, ?> entry : map.entrySet()) {
                     stringMap.put(entry.getKey().toString(), entry.getValue());
                 }
@@ -214,15 +247,9 @@ public class Config {
         }
     }
 
-    /**
-     * Internal method to manually parse the saved file and inject comments above keys.
-     * This compensates for standard Bukkit YAML not supporting per-key comments in older versions.
-     *
-     * @throws IOException If the file cannot be read or written.
-     */
     private void writeComments() throws IOException {
         List<String> lines = Files.readAllLines(file.toPath());
-        List<String> newLines = new ArrayList<>();
+        List<String> newLines = new ArrayList<>(lines.size() + 20);
         Deque<String> pathStack = new ArrayDeque<>();
 
         for (String line : lines) {
@@ -257,8 +284,9 @@ public class Config {
             boolean alreadyPresent = false;
             if (hasComments) {
                 alreadyPresent = true;
-                for (int j = 0; j < commentLines.size(); j++) {
-                    int checkLineIndex = newLines.size() - commentLines.size() + j;
+                int size = commentLines.size();
+                for (int j = 0; j < size; j++) {
+                    int checkLineIndex = newLines.size() - size + j;
                     if (checkLineIndex < 0 || !newLines.get(checkLineIndex).trim().equals("# " + commentLines.get(j))) {
                         alreadyPresent = false;
                         break;
@@ -281,8 +309,9 @@ public class Config {
             }
 
             if (hasComments && !alreadyPresent) {
+                String prefix = "  ".repeat(indent) + "# ";
                 for (String commentLine : commentLines) {
-                    newLines.add("  ".repeat(indent) + "# " + commentLine);
+                    newLines.add(prefix + commentLine);
                 }
             }
 
@@ -296,15 +325,10 @@ public class Config {
         Files.write(file.toPath(), newLines);
     }
 
-    /**
-     * Counts the number of leading spaces in a string to determine YAML indentation.
-     *
-     * @param line The string to check.
-     * @return The number of spaces.
-     */
     private int countLeadingSpaces(String line) {
         int count = 0;
-        while (count < line.length() && line.charAt(count) == ' ') count++;
+        int len = line.length();
+        while (count < len && line.charAt(count) == ' ') count++;
         return count;
     }
 
@@ -364,8 +388,10 @@ public class Config {
 
             if (currentData instanceof Map<?, ?>) {
                 Map<String, Object> fixedMap = (Map<String, Object>) currentData;
-                fixedMap.put("config_version", targetVersion);
-                applyMap(yaml, fixedMap);
+                Map<String, Object> orderedMap = new LinkedHashMap<>(Math.max(16, (int) ((fixedMap.size() + 1) / 0.75f) + 1));
+                orderedMap.put("config_version", targetVersion);
+                orderedMap.putAll(fixedMap);
+                applyMap(yaml, orderedMap);
                 save();
                 reload();
             }
@@ -380,7 +406,7 @@ public class Config {
      *
      * @param <T> The type of the value.
      */
-    public class Value<T> {
+    public class Value<T> implements Supplier<T> {
 
         /**
          * The configuration path for this value.
@@ -395,6 +421,9 @@ public class Config {
          */
         private final Codec<T> codec;
 
+        private T cachedValue;
+        private boolean isCached = false;
+
         /**
          * Constructs a new Config Value.
          *
@@ -408,23 +437,38 @@ public class Config {
             this.codec = codec;
         }
 
+        protected void invalidate() {
+            this.isCached = false;
+            this.cachedValue = null;
+        }
+
         /**
          * Retrieves the value from the configuration.
          *
          * @return The stored value, or the default if not present.
          * @throws RuntimeException If a decoding error occurs.
          */
+        @Override
         @SuppressWarnings({"unchecked"})
         public T get() {
+            if (isCached) {
+                return cachedValue;
+            }
+
             Object raw = yaml.get(path, defaultValue);
             Object normalized = normalize(raw);
+
             if (codec != null) {
                 DataResult<T> res = codec.decode(YamlOps.INSTANCE, normalized);
                 if (res.isError())
                     throw new RuntimeException("Failed to decode value at path '" + path + "': " + res.error().get());
-                return res.getOrThrow();
+                this.cachedValue = res.getOrThrow();
+            } else {
+                this.cachedValue = (T) normalized;
             }
-            return (T) normalized;
+
+            this.isCached = true;
+            return this.cachedValue;
         }
 
         /**
@@ -440,9 +484,12 @@ public class Config {
                 if (res.isError())
                     throw new RuntimeException("Failed to encode value at path '" + path + "': " + res.error().get());
                 yaml.set(path, res.getOrThrow());
-                return;
+            } else {
+                yaml.set(path, value);
             }
-            yaml.set(path, value);
+
+            this.cachedValue = value;
+            this.isCached = true;
         }
 
         /**
@@ -456,22 +503,16 @@ public class Config {
             return this;
         }
 
-        /**
-         * Recursively processes configuration objects to ensure they are compatible
-         * with the codec system and Java collection types.
-         *
-         * @param obj The raw object from the YAML configuration.
-         * @return The processed object (Map, List, or decoded object).
-         */
         private Object normalize(Object obj) {
             if (obj instanceof ConfigurationSection section) {
-                Map<String, Object> map = new LinkedHashMap<>();
-                for (String key : section.getKeys(false)) {
+                Set<String> keys = section.getKeys(false);
+                Map<String, Object> map = new LinkedHashMap<>(Math.max(16, (int) (keys.size() / 0.75f) + 1));
+                for (String key : keys) {
                     map.put(key, normalize(section.get(key)));
                 }
                 return map;
             } else if (obj instanceof List<?> list) {
-                List<Object> newList = new ArrayList<>();
+                List<Object> newList = new ArrayList<>(list.size());
                 for (Object item : list) {
                     newList.add(normalize(item));
                 }
